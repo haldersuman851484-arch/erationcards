@@ -8,7 +8,6 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-      
       {/* Hero Section */}
       <section className="bg-slate-50 border-b border-slate-200">
         <div className="container mx-auto px-4 py-20 md:py-32 flex flex-col md:flex-row items-center gap-12">
@@ -19,7 +18,7 @@ export default function Home() {
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Get Your PVC <br className="hidden md:block" />
-              <span className="text-primary">Ration Card</span> Today
+              <span className="text-primary font-extrabold"> Card</span> Today
             </h1>
             <p className="text-lg text-slate-600 max-w-xl leading-relaxed">
               Order a durable, high-quality PVC printed ration card delivered straight to your doorstep. Fast, secure, and officially recognized.
@@ -47,7 +46,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Quick Actions */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -107,7 +105,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* 3 Easy Steps */}
       <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto px-4">
@@ -143,7 +140,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Features */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -188,7 +184,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       <Footer />
     </div>
   );
