@@ -3,13 +3,22 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: PVC Ration Card Portal API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: orders
+    description: PVC card order operations
+  - name: operators
+    description: Operator (printing partner) operations
+  - name: auth
+    description: Authentication operations
+  - name: dashboard
+    description: Admin/manager dashboard operations
+
 paths:
   /healthz:
     get:
@@ -24,6 +33,359 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ── Orders ──────────────────────────────────────────────────────────────────
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List all orders (admin/manager)
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+        - in: query
+          name: operatorId
+          schema:
+            type: ["integer", "null"]
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderListResponse"
+    post:
+      operationId: createOrder
+      tags: [orders]
+      summary: Place a new PVC card print order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderInput"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/track:
+    get:
+      operationId: trackOrder
+      tags: [orders]
+      summary: Track order by order number or ration card number
+      parameters:
+        - in: query
+          name: orderNumber
+          schema:
+            type: string
+        - in: query
+          name: rationCardNumber
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order tracking info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /orders/stats:
+    get:
+      operationId: getOrderStats
+      tags: [orders]
+      summary: Get order statistics summary
+      responses:
+        "200":
+          description: Order stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderStats"
+
+  /orders/recent:
+    get:
+      operationId: listRecentOrders
+      tags: [orders]
+      summary: List recent orders (last 10)
+      responses:
+        "200":
+          description: Recent orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateOrderStatus
+      tags: [orders]
+      summary: Update order status (operator/admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderStatusUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}/assign:
+    patch:
+      operationId: assignOrderToOperator
+      tags: [orders]
+      summary: Assign order to an operator
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrderAssignment"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  # ── Operators ────────────────────────────────────────────────────────────────
+  /operators:
+    get:
+      operationId: listOperators
+      tags: [operators]
+      summary: List all operators (admin)
+      responses:
+        "200":
+          description: List of operators
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Operator"
+    post:
+      operationId: registerOperator
+      tags: [operators]
+      summary: Register as an operator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OperatorInput"
+      responses:
+        "201":
+          description: Operator registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorAuthResponse"
+
+  /operators/login:
+    post:
+      operationId: loginOperator
+      tags: [operators, auth]
+      summary: Operator login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorAuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /operators/me:
+    get:
+      operationId: getCurrentOperator
+      tags: [operators, auth]
+      summary: Get currently logged-in operator
+      responses:
+        "200":
+          description: Current operator profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Operator"
+        "401":
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /operators/logout:
+    post:
+      operationId: logoutOperator
+      tags: [operators, auth]
+      summary: Logout operator
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /operators/me/orders:
+    get:
+      operationId: getOperatorOrders
+      tags: [operators]
+      summary: Get orders assigned to current operator
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Operator's orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+
+  /operators/me/stats:
+    get:
+      operationId: getOperatorStats
+      tags: [operators]
+      summary: Get stats for current operator
+      responses:
+        "200":
+          description: Operator stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorStats"
+
+  # ── Admin Auth ───────────────────────────────────────────────────────────────
+  /admin/login:
+    post:
+      operationId: loginAdmin
+      tags: [auth]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/me:
+    get:
+      operationId: getCurrentAdmin
+      tags: [auth]
+      summary: Get currently logged-in admin session
+      responses:
+        "200":
+          description: Admin session
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminAuthResponse"
+
+  /admin/logout:
+    post:
+      operationId: logoutAdmin
+      tags: [auth]
+      summary: Logout admin
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +396,332 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required:
+        - success
+
+    # ── Order Schemas ──────────────────────────────────────────────────────────
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: ["string", "null"]
+        rationCardNumber:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        district:
+          type: string
+        pincode:
+          type: string
+        cardType:
+          type: string
+        quantity:
+          type: integer
+        amount:
+          type: number
+        paymentStatus:
+          type: string
+        paymentMethod:
+          type: ["string", "null"]
+        status:
+          type: string
+        operatorId:
+          type: ["integer", "null"]
+        operatorName:
+          type: ["string", "null"]
+        trackingNumber:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - orderNumber
+        - customerName
+        - customerPhone
+        - rationCardNumber
+        - address
+        - state
+        - district
+        - pincode
+        - cardType
+        - quantity
+        - amount
+        - paymentStatus
+        - status
+        - createdAt
+        - updatedAt
+
+    OrderInput:
+      type: object
+      properties:
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        customerEmail:
+          type: string
+        rationCardNumber:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        district:
+          type: string
+        pincode:
+          type: string
+        cardType:
+          type: string
+        quantity:
+          type: integer
+        amount:
+          type: number
+        paymentStatus:
+          type: string
+        paymentMethod:
+          type: string
+      required:
+        - customerName
+        - customerPhone
+        - rationCardNumber
+        - address
+        - state
+        - district
+        - pincode
+        - cardType
+        - quantity
+        - amount
+
+    OrderStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+        trackingNumber:
+          type: string
+        notes:
+          type: string
+
+    OrderAssignment:
+      type: object
+      properties:
+        operatorId:
+          type: integer
+      required:
+        - operatorId
+
+    OrderListResponse:
+      type: object
+      properties:
+        orders:
+          type: array
+          items:
+            $ref: "#/components/schemas/Order"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - orders
+        - total
+        - page
+        - limit
+
+    OrderStats:
+      type: object
+      properties:
+        totalOrders:
+          type: integer
+        pendingOrders:
+          type: integer
+        processingOrders:
+          type: integer
+        printedOrders:
+          type: integer
+        dispatchedOrders:
+          type: integer
+        deliveredOrders:
+          type: integer
+        totalRevenue:
+          type: number
+        todayOrders:
+          type: integer
+        todayRevenue:
+          type: number
+      required:
+        - totalOrders
+        - pendingOrders
+        - processingOrders
+        - printedOrders
+        - dispatchedOrders
+        - deliveredOrders
+        - totalRevenue
+        - todayOrders
+        - todayRevenue
+
+    # ── Operator Schemas ───────────────────────────────────────────────────────
+    Operator:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        shopName:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        district:
+          type: string
+        pincode:
+          type: string
+        status:
+          type: string
+        walletBalance:
+          type: number
+        totalOrdersHandled:
+          type: integer
+        createdAt:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - phone
+        - shopName
+        - address
+        - state
+        - district
+        - pincode
+        - status
+        - walletBalance
+        - totalOrdersHandled
+        - createdAt
+
+    OperatorInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+        shopName:
+          type: string
+        address:
+          type: string
+        state:
+          type: string
+        district:
+          type: string
+        pincode:
+          type: string
+      required:
+        - name
+        - email
+        - phone
+        - password
+        - shopName
+        - address
+        - state
+        - district
+        - pincode
+
+    OperatorAuthResponse:
+      type: object
+      properties:
+        operator:
+          $ref: "#/components/schemas/Operator"
+        token:
+          type: string
+      required:
+        - operator
+        - token
+
+    OperatorStats:
+      type: object
+      properties:
+        totalAssigned:
+          type: integer
+        pending:
+          type: integer
+        processing:
+          type: integer
+        printed:
+          type: integer
+        dispatched:
+          type: integer
+        delivered:
+          type: integer
+        walletBalance:
+          type: number
+      required:
+        - totalAssigned
+        - pending
+        - processing
+        - printed
+        - dispatched
+        - delivered
+        - walletBalance
+
+    LoginInput:
+      type: object
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+      required:
+        - email
+        - password
+
+    AdminAuthResponse:
+      type: object
+      properties:
+        role:
+          type: string
+        email:
+          type: string
+      required:
+        - role
+        - email
