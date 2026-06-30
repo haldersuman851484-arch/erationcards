@@ -9,9 +9,7 @@ export function Navbar() {
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">
             ID
           </div>
-          <span className="font-bold text-lg text-slate-900 tracking-tight">
-            PVC Ration Card Portal
-          </span>
+          <span className="font-bold text-lg text-slate-900 tracking-tight">PVC Card Portal</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
