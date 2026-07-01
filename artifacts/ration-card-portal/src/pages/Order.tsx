@@ -9,10 +9,17 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useCreateOrder } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CreditCard, MapPin, User } from "lucide-react";
+import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, ShieldCheck, User } from "lucide-react";
 import { useLocation } from "wouter";
+
+const SIDEBAR_FAQS = [
+  { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
+  { q: "What does PVC Ration Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
+  { q: "How to Order PVC e Ration Card?", a: "Simply enter your card holder name, ration card number, and select your card category below, then follow the steps to complete your address and payment details." },
+];
 
 const orderSchema = z.object({
   customerName: z.string().min(2, "Name must be at least 2 characters"),
@@ -151,57 +158,96 @@ export default function Order() {
       </div>
 
       <main className="flex-1 py-10">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)}>
-              {step === 1 && (
-                <Card className="border-slate-200 shadow-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
-                    <CardDescription>Enter the card holder's information</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <FormField control={form.control} name="customerName" render={({ field }) => (
+        <div className="container mx-auto px-4 max-w-6xl grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          <div className="lg:col-span-2 space-y-6">
+            {step === 1 && (
+              <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary/90 via-sky-500/80 to-cyan-400/80 p-6 md:p-8 text-white shadow-lg">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-white/10 rounded-full blur-2xl" />
+                <div className="absolute bottom-0 left-1/3 w-32 h-32 bg-fuchsia-400/20 rounded-full blur-2xl" />
+                <div className="relative flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">
+                      Get Your <span className="text-yellow-300">e Ration</span> Card
+                    </h2>
+                    <p className="text-white/80 text-sm mt-2 max-w-xs">Order for <span className="font-bold">₹50/-</span> (inclusive of GST &amp; Normal Post charges)</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 max-w-xs justify-end">
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 gap-1"><ShieldCheck className="w-3 h-3" /> No Hologram</Badge>
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0">Durable</Badge>
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0">Scannable Bar Code in Backside</Badge>
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0">10 year Paint Guarantee</Badge>
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0">Premium Quality PVC Card</Badge>
+                    <Badge className="bg-white/20 hover:bg-white/20 text-white border-0">Secure QR Code</Badge>
+                  </div>
+                </div>
+              </div>
+            )}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)}>
+                {step === 1 && (
+                  <Card className="border-slate-200 shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
+                      <CardDescription>Type Ration Card Holder Name, Card Number &amp; Select Ration Card Category</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-5">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <FormField control={form.control} name="customerName" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Full Name *</FormLabel>
+                            <FormControl><Input data-testid="input-customer-name" placeholder="As on ration card" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="customerPhone" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Mobile Number *</FormLabel>
+                            <FormControl><Input data-testid="input-phone" placeholder="10-digit mobile number" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <FormField control={form.control} name="customerEmail" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name *</FormLabel>
-                          <FormControl><Input data-testid="input-customer-name" placeholder="As on ration card" {...field} /></FormControl>
+                          <FormLabel>Email Address (optional)</FormLabel>
+                          <FormControl><Input data-testid="input-email" type="email" placeholder="For order updates" {...field} /></FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <FormField control={form.control} name="customerPhone" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Mobile Number *</FormLabel>
-                          <FormControl><Input data-testid="input-phone" placeholder="10-digit mobile number" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                    </div>
-                    <FormField control={form.control} name="customerEmail" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address (optional)</FormLabel>
-                        <FormControl><Input data-testid="input-email" type="email" placeholder="For order updates" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ration Card Number *</FormLabel>
-                        <FormControl><Input data-testid="input-ration-card-number" placeholder="e.g. RC-MH-2024-001234" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
-                    <div className="pt-2">
-                      <Button type="button" data-testid="button-next-step1" className="bg-primary hover:bg-primary/90 px-8" onClick={async () => {
-                        const ok = await form.trigger(["customerName", "customerPhone", "rationCardNumber"]);
-                        if (ok) setStep(2);
-                      }}>Continue</Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ration Card Number *</FormLabel>
+                            <FormControl><Input data-testid="input-ration-card-number" placeholder="00000 00000" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                        <FormField control={form.control} name="cardType" render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Card Category *</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                <SelectItem value="APL">APL — Above Poverty Line</SelectItem>
+                                <SelectItem value="BPL">BPL — Below Poverty Line</SelectItem>
+                                <SelectItem value="AAY">AAY — Antyodaya Anna Yojana</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )} />
+                      </div>
+                      <div className="pt-2">
+                        <Button type="button" data-testid="button-next-step1" className="w-full sm:w-auto bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={async () => {
+                          const ok = await form.trigger(["customerName", "customerPhone", "rationCardNumber"]);
+                          if (ok) setStep(2);
+                        }}>Next</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-              {step === 2 && (
+                {step === 2 && (
                 <Card className="border-slate-200 shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2"><MapPin className="w-5 h-5 text-primary" /> Delivery Address</CardTitle>
@@ -326,8 +372,43 @@ export default function Order() {
                   </CardContent>
                 </Card>
               )}
-            </form>
-          </Form>
+              </form>
+            </Form>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="border-slate-200 shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg"><MessageCircle className="w-5 h-5 text-primary" /> Frequently Asked Questions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {SIDEBAR_FAQS.map((faq, idx) => (
+                    <AccordionItem key={idx} value={`sidebar-faq-${idx}`} className="border border-slate-200 rounded-lg px-3 bg-slate-50/50">
+                      <AccordionTrigger className="text-left text-sm font-medium text-slate-900 py-3 hover:no-underline hover:text-primary">
+                        {faq.q}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-slate-600 text-sm leading-relaxed pb-3">
+                        {faq.a}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+
+            <Card className="border-slate-200 shadow-sm overflow-hidden">
+              <div className="relative bg-gradient-to-br from-slate-900 to-slate-700 h-40 flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 to-transparent" />
+                <button type="button" className="relative z-10 w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 transition-colors flex items-center justify-center shadow-lg" aria-label="Play video">
+                  <Play className="w-6 h-6 text-white fill-white" />
+                </button>
+                <p className="absolute bottom-3 left-4 right-4 text-white font-bold text-sm leading-tight">
+                  HOW TO ORDER PVC E RATION — full process in five minutes!
+                </p>
+              </div>
+            </Card>
+          </div>
         </div>
       </main>
       <Footer />
