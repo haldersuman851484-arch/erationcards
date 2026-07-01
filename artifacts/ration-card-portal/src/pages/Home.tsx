@@ -38,6 +38,11 @@ export default function Home() {
           </div>
           <div className="flex-1 relative">
             <div className="absolute inset-0 bg-gradient-to-tr from-primary/20 to-transparent rounded-3xl transform rotate-3 scale-105" />
+            <img 
+              src="https://images.unsplash.com/photo-1620912189868-30778f9037c8?q=80&w=2000&auto=format&fit=crop" 
+              alt="Professional PVC Card Printing" 
+              className="relative rounded-3xl shadow-2xl object-cover w-full h-[400px] border border-slate-200"
+            />
           </div>
         </div>
       </section>
