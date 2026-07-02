@@ -10,10 +10,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useCreateOrder } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, ShieldCheck, User } from "lucide-react";
+import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User } from "lucide-react";
 import { useLocation } from "wouter";
+
+const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
+
+type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
 const SIDEBAR_FAQS = [
   { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
@@ -51,9 +56,48 @@ const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-
 export default function Order() {
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
+  const [familyCards, setFamilyCards] = useState<FamilyCardEntry[]>([]);
+  const [showFamilyDialog, setShowFamilyDialog] = useState(false);
+  const [addCardView, setAddCardView] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [subCard, setSubCard] = useState<FamilyCardEntry>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+  const [subError, setSubError] = useState("");
   const createOrder = useCreateOrder();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+
+  function openAddCard(index: number | null = null) {
+    if (index !== null) {
+      setSubCard(familyCards[index]);
+      setEditIndex(index);
+    } else {
+      setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+      setEditIndex(null);
+    }
+    setSubError("");
+    setAddCardView(true);
+  }
+
+  function saveSubCard() {
+    if (subCard.customerName.trim().length < 2) { setSubError("Enter card holder name"); return; }
+    if (subCard.rationCardNumber.trim().length < 5) { setSubError("Enter a valid ration card number"); return; }
+    setFamilyCards((prev) => {
+      const next = [...prev];
+      const entry = {
+        customerName: subCard.customerName.trim(),
+        rationCardNumber: subCard.rationCardNumber.trim(),
+        cardType: subCard.cardType,
+      };
+      if (editIndex !== null) next[editIndex] = entry;
+      else next.push(entry);
+      return next;
+    });
+    setAddCardView(false);
+  }
+
+  function removeFamilyCard(index: number) {
+    setFamilyCards((prev) => prev.filter((_, i) => i !== index));
+  }
 
   const form = useForm<OrderForm>({
     resolver: zodResolver(orderSchema),
@@ -73,8 +117,8 @@ export default function Order() {
   });
 
   const cardType = form.watch("cardType");
-  const quantity = form.watch("quantity") || 1;
-  const amount = (CARD_PRICES[cardType] || 50) * quantity;
+  const totalCards = 1 + familyCards.length;
+  const amount = (CARD_PRICES[cardType] || 50) * totalCards;
 
   async function onSubmit(data: OrderForm) {
     createOrder.mutate(
@@ -89,7 +133,8 @@ export default function Order() {
           district: data.district,
           pincode: data.pincode,
           cardType: data.cardType,
-          quantity: data.quantity,
+          familyCards,
+          quantity: totalCards,
           amount,
           paymentStatus: "paid",
           paymentMethod: data.paymentMethod,
@@ -127,7 +172,17 @@ export default function Order() {
               <p className="text-sm text-slate-500">Save this number to track your order. Expected delivery: 5–7 working days.</p>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setLocation("/track")}>Track Order</Button>
-                <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={() => { setSuccess(null); form.reset(); setStep(1); }}>New Order</Button>
+                <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={() => {
+                  setSuccess(null);
+                  form.reset();
+                  setStep(1);
+                  setFamilyCards([]);
+                  setAddCardView(false);
+                  setEditIndex(null);
+                  setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+                  setSubError("");
+                  setShowFamilyDialog(false);
+                }}>New Order</Button>
               </div>
             </CardContent>
           </Card>
@@ -184,7 +239,7 @@ export default function Order() {
             )}
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)}>
-                {step === 1 && (
+                {step === 1 && !addCardView && (
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
@@ -223,11 +278,79 @@ export default function Order() {
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <div className="pt-2">
-                        <Button type="button" data-testid="button-next-step1" className="w-full sm:w-auto bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={async () => {
+                      {familyCards.length > 0 && (
+                        <div className="rounded-lg bg-slate-100 border border-slate-200 p-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-slate-700">{familyCards.length} Extra Card{familyCards.length > 1 ? "s" : ""}</span>
+                            <span className="text-sm font-medium text-slate-700">Total Cards: {String(totalCards).padStart(2, "0")}</span>
+                          </div>
+                          <div className="space-y-2">
+                            {familyCards.map((fc, idx) => (
+                              <div key={idx} className="flex items-center justify-between bg-white rounded-md border border-slate-200 px-3 py-2" data-testid={`family-card-${idx}`}>
+                                <span className="text-sm text-slate-700 truncate">
+                                  <span className="font-medium">{fc.customerName}</span> • {fc.rationCardNumber} • {fc.cardType}
+                                </span>
+                                <div className="flex items-center gap-2 shrink-0 ml-3">
+                                  <button type="button" aria-label="Edit card" data-testid={`button-edit-family-${idx}`} className="text-slate-500 hover:text-primary" onClick={() => openAddCard(idx)}>
+                                    <Pencil className="w-4 h-4" />
+                                  </button>
+                                  <button type="button" aria-label="Delete card" data-testid={`button-delete-family-${idx}`} className="text-slate-500 hover:text-red-600" onClick={() => removeFamilyCard(idx)}>
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex flex-wrap gap-3 pt-2">
+                        <Button type="button" variant="secondary" data-testid="button-add-another" className="bg-slate-800 hover:bg-slate-900 text-white px-6" onClick={async () => {
                           const ok = await form.trigger(["customerName", "rationCardNumber", "cardType"]);
-                          if (ok) setStep(2);
+                          if (ok) openAddCard();
+                        }}>
+                          <Plus className="w-4 h-4 mr-1" /> Add Another
+                        </Button>
+                        <Button type="button" data-testid="button-next-step1" className="bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={async () => {
+                          const ok = await form.trigger(["customerName", "rationCardNumber", "cardType"]);
+                          if (!ok) return;
+                          if (familyCards.length > 0) setStep(2);
+                          else setShowFamilyDialog(true);
                         }}>Next</Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {step === 1 && addCardView && (
+                  <Card className="border-slate-200 shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Add Another Card Details</CardTitle>
+                      <CardDescription>Type Ration Card Holder Name, Card Number &amp; Select Ration Card Category</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-5">
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Card Holder Name *</label>
+                        <Input data-testid="input-family-name" placeholder="CARD HOLDER NAME" value={subCard.customerName} onChange={(e) => setSubCard((s) => ({ ...s, customerName: e.target.value }))} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-slate-700">Ration Card Number *</label>
+                          <Input data-testid="input-family-number" placeholder="00000 00000" value={subCard.rationCardNumber} onChange={(e) => setSubCard((s) => ({ ...s, rationCardNumber: e.target.value }))} />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-sm font-medium text-slate-700">Card Category *</label>
+                          <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
+                            <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Category" /></SelectTrigger>
+                            <SelectContent>
+                              {CARD_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      {subError && <p className="text-sm text-red-600">{subError}</p>}
+                      <div className="flex gap-3 pt-2">
+                        <Button type="button" variant="outline" data-testid="button-family-back" onClick={() => setAddCardView(false)}>Back</Button>
+                        <Button type="button" data-testid="button-family-save" className="bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={saveSubCard}>Save</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -324,16 +447,10 @@ export default function Order() {
                           <FormMessage />
                         </FormItem>
                       )} />
-                      <FormField control={form.control} name="quantity" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <Select onValueChange={(v) => field.onChange(Number(v))} defaultValue={String(field.value)}>
-                            <FormControl><SelectTrigger data-testid="select-quantity"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>{[1,2,3,4,5].map(n => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}</SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
+                      <div className="space-y-1">
+                        <label className="text-sm font-medium text-slate-700">Total Cards</label>
+                        <div className="flex h-10 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700" data-testid="text-total-cards">{totalCards}</div>
+                      </div>
                     </div>
 
                     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
@@ -342,8 +459,8 @@ export default function Order() {
                         <span>₹{CARD_PRICES[cardType] || 50}</span>
                       </div>
                       <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-600">Quantity</span>
-                        <span>{quantity}</span>
+                        <span className="text-slate-600">Total Cards</span>
+                        <span>{totalCards}</span>
                       </div>
                       <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between font-semibold text-lg">
                         <span>Total Amount</span>
@@ -416,6 +533,19 @@ export default function Order() {
         </div>
       </main>
       <Footer />
+
+      <Dialog open={showFamilyDialog} onOpenChange={setShowFamilyDialog}>
+        <DialogContent className="sm:max-w-md" data-testid="dialog-family-member">
+          <DialogHeader>
+            <DialogTitle>Family Member</DialogTitle>
+            <DialogDescription>Do you want to order for any other family member's card?</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row justify-end gap-3 sm:justify-end">
+            <Button type="button" variant="outline" data-testid="button-family-no" className="min-w-24" onClick={() => { setShowFamilyDialog(false); setStep(2); }}>No</Button>
+            <Button type="button" data-testid="button-family-yes" className="min-w-24 bg-primary hover:bg-primary/90" onClick={() => { setShowFamilyDialog(false); openAddCard(); }}>Yes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

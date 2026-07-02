@@ -18,6 +18,12 @@ export interface SuccessResponse {
   message?: string;
 }
 
+export type OrderFamilyCardsItem = {
+  customerName: string;
+  rationCardNumber: string;
+  cardType: string;
+};
+
 export interface Order {
   id: number;
   orderNumber: string;
@@ -31,6 +37,7 @@ export interface Order {
   district: string;
   pincode: string;
   cardType: string;
+  familyCards?: OrderFamilyCardsItem[];
   quantity: number;
   amount: number;
   paymentStatus: string;
@@ -49,6 +56,12 @@ export interface Order {
   updatedAt: string;
 }
 
+export type OrderInputFamilyCardsItem = {
+  customerName: string;
+  rationCardNumber: string;
+  cardType: string;
+};
+
 export interface OrderInput {
   customerName: string;
   customerPhone: string;
@@ -59,6 +72,7 @@ export interface OrderInput {
   district: string;
   pincode: string;
   cardType: string;
+  familyCards?: OrderInputFamilyCardsItem[];
   quantity: number;
   amount: number;
   paymentStatus?: string;

@@ -13,6 +13,23 @@ import { generateOrderNumber } from "../lib/auth";
 
 const router = Router();
 
+const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"];
+const CARD_PRICE = 50;
+
+type FamilyCardInput = { customerName: string; rationCardNumber: string; cardType: string };
+
+function sanitizeFamilyCards(input: unknown): FamilyCardInput[] {
+  if (!Array.isArray(input)) return [];
+  return input.map((c: any) => {
+    const cardType = ALLOWED_CARD_TYPES.includes(c?.cardType) ? c.cardType : ALLOWED_CARD_TYPES[0];
+    return {
+      customerName: String(c?.customerName ?? "").trim(),
+      rationCardNumber: String(c?.rationCardNumber ?? "").trim(),
+      cardType,
+    };
+  }).filter((c) => c.customerName.length >= 2 && c.rationCardNumber.length >= 5);
+}
+
 // GET /orders - list all orders
 router.get("/orders", async (req: Request, res: Response) => {
   try {
@@ -51,6 +68,15 @@ router.post("/orders", async (req: Request, res: Response) => {
     const body = CreateOrderBody.parse(req.body);
     const orderNumber = generateOrderNumber();
 
+    if (!ALLOWED_CARD_TYPES.includes(body.cardType)) {
+      res.status(400).json({ error: "Invalid card category" });
+      return;
+    }
+
+    const familyCards = sanitizeFamilyCards(body.familyCards);
+    const quantity = 1 + familyCards.length;
+    const amount = CARD_PRICE * quantity;
+
     const [order] = await db
       .insert(ordersTable)
       .values({
@@ -63,9 +89,10 @@ router.post("/orders", async (req: Request, res: Response) => {
         state: body.state,
         district: body.district,
         pincode: body.pincode,
-        cardType: body.cardType as any,
-        quantity: body.quantity,
-        amount: String(body.amount),
+        cardType: body.cardType,
+        familyCards: familyCards as any,
+        quantity,
+        amount: String(amount),
         paymentStatus: (body.paymentStatus ?? "paid") as any,
         paymentMethod: body.paymentMethod ?? "online",
       })
@@ -240,6 +267,7 @@ function formatOrder(o: any) {
     district: o.district,
     pincode: o.pincode,
     cardType: o.cardType,
+    familyCards: o.familyCards ?? [],
     quantity: o.quantity,
     amount: Number(o.amount),
     paymentStatus: o.paymentStatus,

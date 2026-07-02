@@ -40,6 +40,11 @@ export const ListOrdersResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -71,6 +76,11 @@ export const CreateOrderBody = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string().optional(),
@@ -89,6 +99,11 @@ export const CreateOrderResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -123,6 +138,11 @@ export const TrackOrderResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -168,6 +188,11 @@ export const ListRecentOrdersResponseItem = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -202,6 +227,11 @@ export const GetOrderResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -241,6 +271,11 @@ export const UpdateOrderStatusResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -278,6 +313,11 @@ export const AssignOrderToOperatorResponse = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),
@@ -424,6 +464,11 @@ export const GetOperatorOrdersResponseItem = zod.object({
   "district": zod.string(),
   "pincode": zod.string(),
   "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string(),

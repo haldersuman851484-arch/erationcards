@@ -1,6 +1,12 @@
-import { pgTable, text, serial, timestamp, numeric, integer, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer, pgEnum, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+export type FamilyCard = {
+  customerName: string;
+  rationCardNumber: string;
+  cardType: string;
+};
 
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
@@ -18,8 +24,6 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "refunded",
 ]);
 
-export const cardTypeEnum = pgEnum("card_type", ["APL", "BPL", "AAY"]);
-
 export const ordersTable = pgTable("orders", {
   id: serial("id").primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
@@ -31,7 +35,8 @@ export const ordersTable = pgTable("orders", {
   state: text("state").notNull(),
   district: text("district").notNull(),
   pincode: text("pincode").notNull(),
-  cardType: cardTypeEnum("card_type").notNull(),
+  cardType: text("card_type").notNull(),
+  familyCards: jsonb("family_cards").$type<FamilyCard[]>().notNull().default([]),
   quantity: integer("quantity").notNull().default(1),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),

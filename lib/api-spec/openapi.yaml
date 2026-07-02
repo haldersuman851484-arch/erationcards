@@ -440,6 +440,21 @@ components:
           type: string
         cardType:
           type: string
+        familyCards:
+          type: array
+          items:
+            type: object
+            properties:
+              customerName:
+                type: string
+              rationCardNumber:
+                type: string
+              cardType:
+                type: string
+            required:
+              - customerName
+              - rationCardNumber
+              - cardType
         quantity:
           type: integer
         amount:
@@ -501,6 +516,21 @@ components:
           type: string
         cardType:
           type: string
+        familyCards:
+          type: array
+          items:
+            type: object
+            properties:
+              customerName:
+                type: string
+              rationCardNumber:
+                type: string
+              cardType:
+                type: string
+            required:
+              - customerName
+              - rationCardNumber
+              - cardType
         quantity:
           type: integer
         amount:

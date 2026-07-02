@@ -5,6 +5,7 @@
  * PVC Ration Card Portal API
  * OpenAPI spec version: 0.1.0
  */
+import type { OrderInputFamilyCardsItem } from './orderInputFamilyCardsItem';
 
 export interface OrderInput {
   customerName: string;
@@ -16,6 +17,7 @@ export interface OrderInput {
   district: string;
   pincode: string;
   cardType: string;
+  familyCards?: OrderInputFamilyCardsItem[];
   quantity: number;
   amount: number;
   paymentStatus?: string;
