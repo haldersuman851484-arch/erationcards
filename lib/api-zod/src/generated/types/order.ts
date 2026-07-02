@@ -15,7 +15,11 @@ export interface Order {
   /** @nullable */
   customerEmail?: string | null;
   rationCardNumber: string;
+  /** @nullable */
+  deliveryName?: string | null;
   address: string;
+  /** @nullable */
+  postOffice?: string | null;
   state: string;
   district: string;
   pincode: string;

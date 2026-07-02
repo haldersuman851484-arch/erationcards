@@ -430,8 +430,12 @@ components:
           type: ["string", "null"]
         rationCardNumber:
           type: string
+        deliveryName:
+          type: ["string", "null"]
         address:
           type: string
+        postOffice:
+          type: ["string", "null"]
         state:
           type: string
         district:
@@ -506,7 +510,11 @@ components:
           type: string
         rationCardNumber:
           type: string
+        deliveryName:
+          type: string
         address:
+          type: string
+        postOffice:
           type: string
         state:
           type: string

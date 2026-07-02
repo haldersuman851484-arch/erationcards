@@ -12,7 +12,9 @@ export interface OrderInput {
   customerPhone: string;
   customerEmail?: string;
   rationCardNumber: string;
+  deliveryName?: string;
   address: string;
+  postOffice?: string;
   state: string;
   district: string;
   pincode: string;

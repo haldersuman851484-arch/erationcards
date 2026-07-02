@@ -29,9 +29,10 @@ const SIDEBAR_FAQS = [
 const orderSchema = z.object({
   customerName: z.string().min(2, "Name must be at least 2 characters"),
   customerPhone: z.string().min(10, "Enter a valid 10-digit phone number"),
-  customerEmail: z.string().email("Invalid email").optional().or(z.literal("")),
   rationCardNumber: z.string().min(5, "Enter a valid ration card number"),
+  deliveryName: z.string().min(2, "Enter full name"),
   address: z.string().min(10, "Enter complete address"),
+  postOffice: z.string().min(2, "Enter post office"),
   state: z.string().min(1, "Select your state"),
   district: z.string().min(2, "Enter your district"),
   pincode: z.string().length(6, "Pincode must be 6 digits"),
@@ -104,9 +105,10 @@ export default function Order() {
     defaultValues: {
       customerName: "",
       customerPhone: "",
-      customerEmail: "",
       rationCardNumber: "",
+      deliveryName: "",
       address: "",
+      postOffice: "",
       state: "",
       district: "",
       pincode: "",
@@ -126,9 +128,10 @@ export default function Order() {
         data: {
           customerName: data.customerName,
           customerPhone: data.customerPhone,
-          customerEmail: data.customerEmail || undefined,
           rationCardNumber: data.rationCardNumber,
+          deliveryName: data.deliveryName,
           address: data.address,
+          postOffice: data.postOffice,
           state: data.state,
           district: data.district,
           pincode: data.pincode,
@@ -363,10 +366,24 @@ export default function Order() {
                     <CardDescription>Where should we deliver your card?</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
+                    <FormField control={form.control} name="deliveryName" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name *</FormLabel>
+                        <FormControl><Input data-testid="input-delivery-name" placeholder="Receiver's full name" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <FormField control={form.control} name="address" render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full Address *</FormLabel>
                         <FormControl><Input data-testid="input-address" placeholder="House No, Street, Area" {...field} /></FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="postOffice" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Post Office *</FormLabel>
+                        <FormControl><Input data-testid="input-post-office" placeholder="Your post office" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
@@ -405,17 +422,10 @@ export default function Order() {
                         </FormItem>
                       )} />
                     </div>
-                    <FormField control={form.control} name="customerEmail" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email Address (optional)</FormLabel>
-                        <FormControl><Input data-testid="input-email" type="email" placeholder="For order updates" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
                     <div className="flex gap-3 pt-2">
                       <Button type="button" variant="outline" onClick={() => setStep(1)}>Back</Button>
                       <Button type="button" data-testid="button-next-step2" className="bg-primary hover:bg-primary/90 px-8" onClick={async () => {
-                        const ok = await form.trigger(["address", "state", "district", "pincode", "customerPhone"]);
+                        const ok = await form.trigger(["deliveryName", "address", "postOffice", "state", "district", "pincode", "customerPhone"]);
                         if (ok) setStep(3);
                       }}>Continue</Button>
                     </div>
