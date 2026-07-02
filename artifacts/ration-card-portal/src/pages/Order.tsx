@@ -30,7 +30,7 @@ const orderSchema = z.object({
   state: z.string().min(1, "Select your state"),
   district: z.string().min(2, "Enter your district"),
   pincode: z.string().length(6, "Pincode must be 6 digits"),
-  cardType: z.enum(["APL", "BPL", "AAY"]),
+  cardType: z.enum(["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"]),
   quantity: z.coerce.number().min(1).max(10),
   paymentMethod: z.string().min(1, "Select payment method"),
 });
@@ -46,7 +46,7 @@ const STATES = [
   "Delhi", "Jammu & Kashmir", "Ladakh",
 ];
 
-const CARD_PRICES: Record<string, number> = { APL: 50, BPL: 50, AAY: 50 };
+const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-I": 50, "RKSY-II": 50 };
 
 export default function Order() {
   const [step, setStep] = useState(1);
@@ -66,7 +66,7 @@ export default function Order() {
       state: "",
       district: "",
       pincode: "",
-      cardType: "APL",
+      cardType: "AAY",
       quantity: 1,
       paymentMethod: "",
     },
@@ -194,27 +194,11 @@ export default function Order() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <FormField control={form.control} name="customerName" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name *</FormLabel>
-                            <FormControl><Input data-testid="input-customer-name" placeholder="As on ration card" {...field} /></FormControl>
+                            <FormLabel>Card Holder Name *</FormLabel>
+                            <FormControl><Input data-testid="input-customer-name" placeholder="CARD HOLDER NAME" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="customerPhone" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Mobile Number *</FormLabel>
-                            <FormControl><Input data-testid="input-phone" placeholder="10-digit mobile number" {...field} /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                      </div>
-                      <FormField control={form.control} name="customerEmail" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email Address (optional)</FormLabel>
-                          <FormControl><Input data-testid="input-email" type="email" placeholder="For order updates" {...field} /></FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
                           <FormItem>
                             <FormLabel>Ration Card Number *</FormLabel>
@@ -222,24 +206,26 @@ export default function Order() {
                             <FormMessage />
                           </FormItem>
                         )} />
-                        <FormField control={form.control} name="cardType" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Card Category *</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                <SelectItem value="APL">APL — Above Poverty Line</SelectItem>
-                                <SelectItem value="BPL">BPL — Below Poverty Line</SelectItem>
-                                <SelectItem value="AAY">AAY — Antyodaya Anna Yojana</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
                       </div>
+                      <FormField control={form.control} name="cardType" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Card Category *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <SelectItem value="AAY">AAY</SelectItem>
+                              <SelectItem value="PHH">PHH</SelectItem>
+                              <SelectItem value="SPHH">SPHH</SelectItem>
+                              <SelectItem value="RKSY-I">RKSY-I</SelectItem>
+                              <SelectItem value="RKSY-II">RKSY-II</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
                       <div className="pt-2">
                         <Button type="button" data-testid="button-next-step1" className="w-full sm:w-auto bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={async () => {
-                          const ok = await form.trigger(["customerName", "customerPhone", "rationCardNumber"]);
+                          const ok = await form.trigger(["customerName", "rationCardNumber", "cardType"]);
                           if (ok) setStep(2);
                         }}>Next</Button>
                       </div>
@@ -280,17 +266,33 @@ export default function Order() {
                         </FormItem>
                       )} />
                     </div>
-                    <FormField control={form.control} name="pincode" render={({ field }) => (
-                      <FormItem className="max-w-xs">
-                        <FormLabel>PIN Code *</FormLabel>
-                        <FormControl><Input data-testid="input-pincode" placeholder="6-digit PIN code" maxLength={6} {...field} /></FormControl>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                      <FormField control={form.control} name="pincode" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>PIN Code *</FormLabel>
+                          <FormControl><Input data-testid="input-pincode" placeholder="6-digit PIN code" maxLength={6} {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                      <FormField control={form.control} name="customerPhone" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Mobile Number *</FormLabel>
+                          <FormControl><Input data-testid="input-phone" placeholder="10-digit mobile number" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                    </div>
+                    <FormField control={form.control} name="customerEmail" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email Address (optional)</FormLabel>
+                        <FormControl><Input data-testid="input-email" type="email" placeholder="For order updates" {...field} /></FormControl>
                         <FormMessage />
                       </FormItem>
                     )} />
                     <div className="flex gap-3 pt-2">
                       <Button type="button" variant="outline" onClick={() => setStep(1)}>Back</Button>
                       <Button type="button" data-testid="button-next-step2" className="bg-primary hover:bg-primary/90 px-8" onClick={async () => {
-                        const ok = await form.trigger(["address", "state", "district", "pincode"]);
+                        const ok = await form.trigger(["address", "state", "district", "pincode", "customerPhone"]);
                         if (ok) setStep(3);
                       }}>Continue</Button>
                     </div>
@@ -302,7 +304,7 @@ export default function Order() {
                 <Card className="border-slate-200 shadow-sm">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Card & Payment</CardTitle>
-                    <CardDescription>Select card type and complete payment</CardDescription>
+                    <CardDescription>Review card category and complete payment</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -312,9 +314,11 @@ export default function Order() {
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger data-testid="select-card-type"><SelectValue /></SelectTrigger></FormControl>
                             <SelectContent>
-                              <SelectItem value="APL">APL — Above Poverty Line</SelectItem>
-                              <SelectItem value="BPL">BPL — Below Poverty Line</SelectItem>
-                              <SelectItem value="AAY">AAY — Antyodaya Anna Yojana</SelectItem>
+                              <SelectItem value="AAY">AAY</SelectItem>
+                              <SelectItem value="PHH">PHH</SelectItem>
+                              <SelectItem value="SPHH">SPHH</SelectItem>
+                              <SelectItem value="RKSY-I">RKSY-I</SelectItem>
+                              <SelectItem value="RKSY-II">RKSY-II</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
