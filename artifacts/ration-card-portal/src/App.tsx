@@ -15,6 +15,9 @@ import FAQ from "./pages/FAQ";
 import OperatorRegister from "./pages/operator/Register";
 import OperatorLogin from "./pages/operator/Login";
 import OperatorDashboard from "./pages/operator/Dashboard";
+import OperatorPlaceOrder from "./pages/operator/PlaceOrder";
+import OperatorTrackOrder from "./pages/operator/OperatorTrackOrder";
+import OperatorDownloadCard from "./pages/operator/OperatorDownloadCard";
 
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
@@ -35,6 +38,9 @@ function Router() {
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />
       <Route path="/operator/dashboard" component={OperatorDashboard} />
+      <Route path="/operator/order" component={OperatorPlaceOrder} />
+      <Route path="/operator/track" component={OperatorTrackOrder} />
+      <Route path="/operator/download" component={OperatorDownloadCard} />
 
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
