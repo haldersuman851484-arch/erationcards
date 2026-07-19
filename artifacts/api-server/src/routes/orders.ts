@@ -9,12 +9,13 @@ import {
   ListOrdersQueryParams,
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
-import { generateOrderNumber } from "../lib/auth";
+import { generateOrderNumber, parseOperatorToken } from "../lib/auth";
 
 const router = Router();
 
 const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"];
 const CARD_PRICE = 50;
+const OPERATOR_CARD_PRICE = 40;
 
 type FamilyCardInput = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -88,7 +89,8 @@ router.post("/orders", async (req: Request, res: Response) => {
 
     const familyCards = sanitizeFamilyCards(body.familyCards);
     const quantity = 1 + familyCards.length;
-    const amount = CARD_PRICE * quantity;
+    const isOperator = parseOperatorToken(req) !== null;
+    const amount = (isOperator ? OPERATOR_CARD_PRICE : CARD_PRICE) * quantity;
 
     const [order] = await db
       .insert(ordersTable)

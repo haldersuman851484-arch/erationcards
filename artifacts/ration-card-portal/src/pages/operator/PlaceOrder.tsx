@@ -101,7 +101,7 @@ export default function PlaceOrder() {
 
   const { data: upiConfig } = useGetUpiConfig();
   const merchantUpiId = upiConfig?.merchantUpiId || "";
-  const createOrder = useCreateOrder();
+  const createOrder = useCreateOrder({ request: { headers: getAuthHeader() } } as any);
   const uploadScreenshot = useUploadPaymentScreenshot();
   const logoutOperator = useLogoutOperator();
 
