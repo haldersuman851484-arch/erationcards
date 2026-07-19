@@ -217,8 +217,8 @@ export default function Order() {
                 <p className="text-xl font-mono font-bold text-primary" data-testid="text-order-number">{success.orderNumber}</p>
               </div>
               <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-left">
-                <p className="text-sm text-amber-800 font-medium mb-1">Payment Under Review</p>
-                <p className="text-xs text-amber-700">Once your payment is confirmed, we will start printing your card. Expected delivery: 5–7 working days after confirmation.</p>
+                <p className="text-sm text-amber-800 font-medium mb-1">⏳ Payment NOT yet confirmed</p>
+                <p className="text-xs text-amber-700">Our team will manually check your payment screenshot. <strong>Your card will NOT be printed until we verify your payment.</strong> If your screenshot is invalid or fake, your order will be cancelled. Verified orders are delivered in 5–7 working days.</p>
               </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setLocation("/track")}>Track Order</Button>
@@ -559,22 +559,31 @@ export default function Order() {
                           </div>
                         </div>
 
-                        <div className="border-t border-slate-200 pt-5">
-                          <p className="text-sm font-medium text-slate-700 mb-3">
-                            After paying, upload your payment screenshot *
+                        <div className="border-t border-slate-200 pt-5 space-y-4">
+                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
+                            <span className="text-red-500 text-lg leading-none mt-0.5">⚠️</span>
+                            <div>
+                              <p className="text-sm font-semibold text-red-700">Upload your UPI payment screenshot only</p>
+                              <p className="text-xs text-red-600 mt-0.5">Uploading any other photo (selfie, tree, random image, etc.) will cause your order to be <strong>cancelled with no refund</strong>. Our team manually verifies every screenshot.</p>
+                            </div>
+                          </div>
+
+                          <p className="text-sm font-medium text-slate-700">
+                            Upload UPI payment screenshot *
                           </p>
                           <input
                             ref={fileInputRef}
                             type="file"
-                            accept="image/*"
+                            accept="image/jpeg,image/png,image/webp"
                             className="hidden"
                             onChange={handleScreenshotChange}
                             data-testid="input-screenshot"
                           />
                           {screenshotPreview ? (
                             <div className="space-y-3">
-                              <div className="relative w-full max-w-xs rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                              <div className="relative w-full max-w-xs rounded-lg overflow-hidden border-2 border-emerald-300 shadow-sm">
                                 <img src={screenshotPreview} alt="Payment screenshot" className="w-full object-cover max-h-48" />
+                                <div className="absolute top-2 left-2 bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">Screenshot selected</div>
                               </div>
                               <Button
                                 type="button"
@@ -593,8 +602,8 @@ export default function Order() {
                               className="w-full border-2 border-dashed border-slate-300 hover:border-primary/50 rounded-xl p-6 text-center transition-colors cursor-pointer bg-slate-50/50 hover:bg-primary/5"
                             >
                               <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                              <p className="text-sm font-medium text-slate-700">Click to upload screenshot</p>
-                              <p className="text-xs text-slate-400 mt-1">JPG, PNG up to 5 MB</p>
+                              <p className="text-sm font-medium text-slate-700">Click to upload UPI payment screenshot</p>
+                              <p className="text-xs text-slate-400 mt-1">Must be your UPI payment success screen · JPG or PNG</p>
                             </button>
                           )}
                         </div>
