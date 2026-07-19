@@ -45,11 +45,11 @@ const orderSchema = z.object({
 type OrderForm = z.infer<typeof orderSchema>;
 
 const WB_DISTRICTS = [
-  "Alipurduar", "Cooch Behar", "Darjeeling", "Jalpaiguri", "Kalimpong",
-  "Dakshin Dinajpur", "Malda", "Murshidabad", "Uttar Dinajpur", "Birbhum",
-  "Paschim Bardhaman", "Purba Bardhaman", "Purulia", "Howrah", "Kolkata",
-  "Nadia", "North 24 Parganas", "South 24 Parganas", "Bankura", "Jhargram",
-  "Paschim Medinipur", "Purba Medinipur", "Hooghly",
+  "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
+  "Darjeeling", "Hooghly", "Howrah", "Jalpaiguri", "Jhargram",
+  "Kalimpong", "Kolkata", "Malda", "Murshidabad", "Nadia",
+  "North 24 Parganas", "Paschim Bardhaman", "Paschim Medinipur", "Purba Bardhaman", "Purba Medinipur",
+  "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
 const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-I": 50, "RKSY-II": 50 };
