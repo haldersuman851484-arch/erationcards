@@ -219,10 +219,10 @@ export default function OperatorRegister() {
                         </FormItem>
                       )} />
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                        <FormItem>
-                          <FormLabel>State</FormLabel>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium leading-none">State</label>
                           <Input value="West Bengal" disabled className="bg-slate-50 text-slate-500" />
-                        </FormItem>
+                        </div>
                         <FormField control={form.control} name="district" render={({ field }) => (
                           <FormItem>
                             <FormLabel>District *</FormLabel>
