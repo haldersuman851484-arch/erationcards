@@ -47,7 +47,7 @@ const FAQS = [
   },
   {
     q: "My order shows 'delivered' but I haven't received it. What do I do?",
-    a: "Please contact our support team at support@rationcardportal.in or call our toll-free helpline with your order number. Our team will investigate and assist you within 24 hours.",
+    a: "Please contact our support team at help@erationcards.in or call +91 96359 60507 with your order number. Our team will investigate and assist you within 24 hours.",
   },
   {
     q: "Can I get a refund if I cancel my order?",

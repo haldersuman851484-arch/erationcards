@@ -23,7 +23,7 @@ type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardTyp
 
 const SIDEBAR_FAQS = [
   { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
-  { q: "What does PVC Ration Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
+  { q: "What does PVC Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
   { q: "How to Order PVC e Ration Card?", a: "Simply enter your card holder name, ration card number, and select your card category below, then follow the steps to complete your address and payment details." },
 ];
 
