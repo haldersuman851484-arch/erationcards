@@ -44,13 +44,12 @@ const orderSchema = z.object({
 
 type OrderForm = z.infer<typeof orderSchema>;
 
-const STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka",
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram",
-  "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu",
-  "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
-  "Delhi", "Jammu & Kashmir", "Ladakh",
+const WB_DISTRICTS = [
+  "Alipurduar", "Cooch Behar", "Darjeeling", "Jalpaiguri", "Kalimpong",
+  "Dakshin Dinajpur", "Malda", "Murshidabad", "Uttar Dinajpur", "Birbhum",
+  "Paschim Bardhaman", "Purba Bardhaman", "Purulia", "Howrah", "Kolkata",
+  "Nadia", "North 24 Parganas", "South 24 Parganas", "Bankura", "Jhargram",
+  "Paschim Medinipur", "Purba Medinipur", "Hooghly",
 ];
 
 const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-I": 50, "RKSY-II": 50 };
@@ -119,7 +118,7 @@ export default function Order() {
       deliveryName: "",
       address: "",
       postOffice: "",
-      state: "",
+      state: "West Bengal",
       district: "",
       pincode: "",
       cardType: "AAY",
@@ -440,18 +439,33 @@ export default function Order() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                       <FormField control={form.control} name="state" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>State *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-state"><SelectValue placeholder="Select state" /></SelectTrigger></FormControl>
-                            <SelectContent>{STATES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                          </Select>
+                          <FormLabel>State</FormLabel>
+                          <FormControl>
+                            <Input
+                              data-testid="input-state"
+                              value={field.value}
+                              readOnly
+                              className="bg-slate-50 text-slate-700 cursor-default"
+                            />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )} />
                       <FormField control={form.control} name="district" render={({ field }) => (
                         <FormItem>
                           <FormLabel>District *</FormLabel>
-                          <FormControl><Input data-testid="input-district" placeholder="Your district" {...field} /></FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger data-testid="select-district">
+                                <SelectValue placeholder="Select your district" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="max-h-60 overflow-y-auto">
+                              {WB_DISTRICTS.map(d => (
+                                <SelectItem key={d} value={d}>{d}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <FormMessage />
                         </FormItem>
                       )} />
