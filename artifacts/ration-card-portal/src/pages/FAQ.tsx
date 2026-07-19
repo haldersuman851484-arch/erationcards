@@ -1,4 +1,5 @@
 import { Navbar, Footer } from "@/components/layout";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ const FAQS = [
 ];
 
 export default function FAQ() {
+  usePageTitle("FAQ");
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />

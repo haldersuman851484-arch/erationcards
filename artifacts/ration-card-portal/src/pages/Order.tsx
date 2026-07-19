@@ -15,6 +15,7 @@ import { useCreateOrder } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User } from "lucide-react";
 import { useLocation } from "wouter";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
 
@@ -55,6 +56,7 @@ const STATES = [
 const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-I": 50, "RKSY-II": 50 };
 
 export default function Order() {
+  usePageTitle("Order PVC Card");
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const [familyCards, setFamilyCards] = useState<FamilyCardEntry[]>([]);

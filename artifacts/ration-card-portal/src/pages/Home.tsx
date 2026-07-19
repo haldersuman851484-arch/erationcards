@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { CreditCard, Search, Download, Users, FileText, CheckCircle, Clock, Shield } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function Home() {
+  usePageTitle();
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />

@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { Navbar, Footer } from "@/components/layout";
+import { usePageTitle } from "@/hooks/use-page-title";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Download, FileText, Shield, AlertCircle } from "lucide-react";
 
 export default function DownloadCard() {
+  usePageTitle("Download e-Card");
   const [rationCardNumber, setRationCardNumber] = useState("");
   const [searched, setSearched] = useState(false);
 

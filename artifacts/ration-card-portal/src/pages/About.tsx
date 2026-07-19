@@ -1,7 +1,9 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
 import { Shield, Users, Award, Clock } from "lucide-react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function About() {
+  usePageTitle("About Us");
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />

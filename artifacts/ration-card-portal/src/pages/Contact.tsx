@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
+import { usePageTitle } from "@/hooks/use-page-title";
 
 export default function Contact() {
+  usePageTitle("Contact Support");
   const [submitted, setSubmitted] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {
