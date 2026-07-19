@@ -211,6 +211,10 @@ orderNumber?: string;
 rationCardNumber?: string;
 };
 
+export type UploadPaymentScreenshotBody = {
+  screenshot: Blob;
+};
+
 export type GetOperatorOrdersParams = {
 status?: string;
 };

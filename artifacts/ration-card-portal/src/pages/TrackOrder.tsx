@@ -66,10 +66,9 @@ export default function TrackOrder() {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number</label>
                   <Input
                     data-testid="input-order-number"
-                    placeholder="Enter order number (digits only)"
-                    inputMode="numeric"
+                    placeholder="e.g. PVCABC1234XY"
                     value={orderNumber}
-                    onChange={(e) => setOrderNumber(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setOrderNumber(e.target.value)}
                   />
                 </div>
                 <div className="flex items-center gap-3">
@@ -81,10 +80,9 @@ export default function TrackOrder() {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Ration Card Number</label>
                   <Input
                     data-testid="input-ration-card-number"
-                    placeholder="Enter ration card number (digits only)"
-                    inputMode="numeric"
+                    placeholder="Enter ration card number"
                     value={rationCardNumber}
-                    onChange={(e) => setRationCardNumber(e.target.value.replace(/\D/g, ""))}
+                    onChange={(e) => setRationCardNumber(e.target.value)}
                   />
                 </div>
                 <Button type="submit" data-testid="button-track-search" className="w-full bg-primary hover:bg-primary/90 h-11" disabled={isLoading || (!orderNumber && !rationCardNumber)}>

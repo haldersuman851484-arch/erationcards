@@ -31,3 +31,4 @@ export * from './paymentStatusUpdateResponse';
 export * from './successResponse';
 export * from './trackOrderParams';
 export * from './upiConfig';
+export * from './uploadPaymentScreenshotBody';

@@ -374,6 +374,18 @@ export const AssignOrderToOperatorResponse = zod.object({
 
 
 /**
+ * @summary Upload a UPI payment screenshot
+ */
+export const UploadPaymentScreenshotBody = zod.object({
+  "screenshot": zod.instanceof(File)
+})
+
+export const UploadPaymentScreenshotResponse = zod.object({
+  "url": zod.string()
+})
+
+
+/**
  * @summary Get merchant UPI ID for display and QR code generation
  */
 export const GetUpiConfigResponse = zod.object({

@@ -243,6 +243,36 @@ paths:
                 $ref: "#/components/schemas/Order"
 
   # ── Payments ─────────────────────────────────────────────────────────────────
+  /payments/upload-screenshot:
+    post:
+      operationId: uploadPaymentScreenshot
+      tags: [orders]
+      summary: Upload a UPI payment screenshot
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [screenshot]
+              properties:
+                screenshot:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: Screenshot uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentScreenshotUploadResponse"
+        "400":
+          description: No screenshot provided
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /payments/upi-config:
     get:
       operationId: getUpiConfig

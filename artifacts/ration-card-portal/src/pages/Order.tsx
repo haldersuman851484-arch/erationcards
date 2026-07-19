@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useCreateOrder, useGetUpiConfig } from "@workspace/api-client-react";
+import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
@@ -71,6 +71,7 @@ export default function Order() {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
+  const uploadScreenshot = useUploadPaymentScreenshot();
   const { data: upiConfig } = useGetUpiConfig();
   const merchantUpiId = upiConfig?.merchantUpiId || "";
   const { toast } = useToast();
@@ -156,12 +157,8 @@ export default function Order() {
     setIsUploading(true);
     let screenshotUrl = "";
     try {
-      const formData = new FormData();
-      formData.append("screenshot", screenshotFile);
-      const res = await fetch("/api/payments/upload-screenshot", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Upload failed");
-      const json = await res.json();
-      screenshotUrl = json.url;
+      const result = await uploadScreenshot.mutateAsync({ data: { screenshot: screenshotFile } });
+      screenshotUrl = result.url;
     } catch {
       toast({ title: "Upload failed", description: "Could not upload payment screenshot. Please try again.", variant: "destructive" });
       setIsUploading(false);

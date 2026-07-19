@@ -7,6 +7,7 @@ import { db } from "@workspace/db";
 import { ordersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { parseAdminToken } from "../lib/auth";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -58,6 +59,11 @@ router.post(
 );
 
 router.patch("/orders/:id/payment-status", async (req: Request, res: Response) => {
+  const admin = parseAdminToken(req);
+  if (!admin) {
+    res.status(401).json({ error: "Admin authentication required" });
+    return;
+  }
   try {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) {

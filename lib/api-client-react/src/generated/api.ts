@@ -36,11 +36,13 @@ import type {
   OrderListResponse,
   OrderStats,
   OrderStatusUpdate,
+  PaymentScreenshotUploadResponse,
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
   SuccessResponse,
   TrackOrderParams,
-  UpiConfig
+  UpiConfig,
+  UploadPaymentScreenshotBody
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -828,6 +830,78 @@ export const useAssignOrderToOperator = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAssignOrderToOperatorMutationOptions(options));
+    }
+
+export const getUploadPaymentScreenshotUrl = () => {
+
+
+
+
+  return `/api/payments/upload-screenshot`
+}
+
+/**
+ * @summary Upload a UPI payment screenshot
+ */
+export const uploadPaymentScreenshot = async (uploadPaymentScreenshotBody: UploadPaymentScreenshotBody, options?: RequestInit): Promise<PaymentScreenshotUploadResponse> => {
+    const formData = new FormData();
+formData.append(`screenshot`, uploadPaymentScreenshotBody.screenshot);
+
+  return customFetch<PaymentScreenshotUploadResponse>(getUploadPaymentScreenshotUrl(),
+  {
+    ...options,
+    method: 'POST'
+    ,
+    body: formData
+  }
+);}
+
+
+
+
+export const getUploadPaymentScreenshotMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext> => {
+
+const mutationKey = ['uploadPaymentScreenshot'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, {data: BodyType<UploadPaymentScreenshotBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  uploadPaymentScreenshot(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UploadPaymentScreenshotMutationResult = NonNullable<Awaited<ReturnType<typeof uploadPaymentScreenshot>>>
+    export type UploadPaymentScreenshotMutationBody = BodyType<UploadPaymentScreenshotBody>
+    export type UploadPaymentScreenshotMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Upload a UPI payment screenshot
+ */
+export const useUploadPaymentScreenshot = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof uploadPaymentScreenshot>>,
+        TError,
+        {data: BodyType<UploadPaymentScreenshotBody>},
+        TContext
+      > => {
+      return useMutation(getUploadPaymentScreenshotMutationOptions(options));
     }
 
 export const getGetUpiConfigUrl = () => {
