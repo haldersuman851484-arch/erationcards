@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { mkdirSync } from "fs";
 import { db } from "@workspace/db";
-import { ordersTable } from "@workspace/db";
+import { ordersTable, paymentVerificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { parseAdminToken } from "../lib/auth";
@@ -87,6 +87,17 @@ router.patch("/orders/:id/payment-status", async (req: Request, res: Response) =
       res.status(404).json({ error: "Order not found" });
       return;
     }
+
+    if (body.paymentStatus === "confirmed" || body.paymentStatus === "rejected") {
+      await db.insert(paymentVerificationsTable).values({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        action: body.paymentStatus,
+        adminEmail: admin.email,
+        screenshotUrl: order.paymentScreenshotUrl ?? null,
+      });
+    }
+
     res.json({ id: order.id, paymentStatus: order.paymentStatus });
   } catch (err) {
     req.log.error({ err }, "Failed to update payment status");
