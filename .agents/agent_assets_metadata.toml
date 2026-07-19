@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "shvechSnOcUwxmSAjut8n"
+uri = "file://pvc-portal-production.zip"
+type = "unspecified"
+title = "PVC Ration Card Portal — Production Build"
