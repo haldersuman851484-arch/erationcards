@@ -339,10 +339,10 @@ export default function PlaceOrder() {
                         <FormControl><Input placeholder="Post office" {...field} /></FormControl>
                         <FormMessage /></FormItem>
                     )} />
-                    <FormItem>
-                      <FormLabel>State</FormLabel>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium leading-none text-slate-700">State</label>
                       <Input value="West Bengal" disabled className="bg-slate-50 text-slate-500" />
-                    </FormItem>
+                    </div>
                     <FormField control={form.control} name="district" render={({ field }) => (
                       <FormItem><FormLabel>District *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
