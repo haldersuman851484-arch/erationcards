@@ -33,7 +33,7 @@ const WB_DISTRICTS = [
 ];
 
 const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
-const CARD_PRICE = 50;
+const CARD_PRICE = 40;
 
 type FamilyCard = { customerName: string; rationCardNumber: string; cardType: string };
 
