@@ -1,4 +1,4 @@
-import { Navbar, Footer } from "@/components/layout";
+import { Navbar, Footer, BRAND } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,9 +36,9 @@ export default function Contact() {
             </div>
 
             {[
-              { icon: Phone, label: "Helpline", value: "1800-XXX-XXXX (Toll-Free)", sub: "Mon–Sat, 9 AM – 6 PM" },
-              { icon: Mail, label: "Email Support", value: "support@rationcardportal.in", sub: "Response within 24 hours" },
-              { icon: MapPin, label: "Head Office", value: "New Delhi, India", sub: "Government Authorized Portal" },
+              { icon: Phone, label: "Phone / WhatsApp", value: BRAND.phone, sub: BRAND.hours },
+              { icon: Mail, label: "Email Support", value: BRAND.email, sub: "Response within 24 hours" },
+              { icon: MapPin, label: "Office Address", value: BRAND.address, sub: BRAND.city },
               { icon: Clock, label: "Working Hours", value: "Monday – Saturday", sub: "9:00 AM to 6:00 PM IST" },
             ].map(({ icon: Icon, label, value, sub }) => (
               <div key={label} className="flex items-start gap-4">

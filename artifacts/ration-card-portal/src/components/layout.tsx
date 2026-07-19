@@ -1,15 +1,25 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
+export const BRAND = {
+  name: "PVC Card Portal",
+  phone: "+91 96359 60507",
+  email: "help@erationcards.in",
+  address: "26 Krishna Nibas, Kolkata, South 24 Parganas – 700001",
+  city: "Kolkata, West Bengal",
+  hours: "Monday – Saturday, 9:00 AM – 6:00 PM IST",
+  tagline: "A secure and efficient platform for citizens to order high-quality PVC printed ration cards.",
+};
+
 export function Navbar() {
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">
-            ID
+          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
+            PVC
           </div>
-          <span className="font-bold text-lg text-slate-900 tracking-tight">PVC Card Portal</span>
+          <span className="font-bold text-lg text-slate-900 tracking-tight">{BRAND.name}</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
           <Link href="/" className="hover:text-primary transition-colors">Home</Link>
@@ -38,16 +48,19 @@ export function Footer() {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-lg">
-              ID
+            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
+              PVC
             </div>
             <span className="font-bold text-lg text-white tracking-tight">
-              PVC Ration Card
+              {BRAND.name}
             </span>
           </div>
-          <p className="text-sm text-slate-400 mb-4 leading-relaxed">
-            A secure and efficient platform for citizens to order high-quality PVC printed ration cards, fulfilling e-governance standards.
-          </p>
+          <p className="text-sm text-slate-400 mb-4 leading-relaxed">{BRAND.tagline}</p>
+          <div className="space-y-1 text-xs text-slate-500">
+            <p>{BRAND.address}</p>
+            <p><a href={`tel:${BRAND.phone}`} className="hover:text-primary transition-colors">{BRAND.phone}</a></p>
+            <p><a href={`mailto:${BRAND.email}`} className="hover:text-primary transition-colors">{BRAND.email}</a></p>
+          </div>
         </div>
         <div>
           <h3 className="text-white font-semibold mb-4">Services</h3>
@@ -75,7 +88,7 @@ export function Footer() {
         </div>
       </div>
       <div className="container mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center">
-        <p>© {new Date().getFullYear()} PVC Ration Card Portal. All rights reserved.</p>
+        <p>© {new Date().getFullYear()} {BRAND.name}. All rights reserved.</p>
         <div className="flex gap-4 mt-4 md:mt-0">
           <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
           <Link href="/terms" className="hover:text-white transition-colors">Terms of Service</Link>

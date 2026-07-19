@@ -1,4 +1,4 @@
-import { Navbar, Footer } from "@/components/layout";
+import { Navbar, Footer, BRAND } from "@/components/layout";
 import { Shield, Users, Award, Clock } from "lucide-react";
 
 export default function About() {
@@ -8,9 +8,9 @@ export default function About() {
 
       <div className="bg-primary/5 border-b border-primary/10 py-16">
         <div className="container mx-auto px-4 max-w-3xl text-center">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">About PVC Ration Card Portal</h1>
+          <h1 className="text-4xl font-bold text-slate-900 mb-4">About {BRAND.name}</h1>
           <p className="text-lg text-slate-600 leading-relaxed">
-            A modern, citizen-friendly digital platform to help millions of beneficiaries obtain high-quality PVC printed ration cards quickly and conveniently.
+            A modern, citizen-friendly digital platform based in {BRAND.city} to help millions of beneficiaries obtain high-quality PVC printed ration cards quickly and conveniently.
           </p>
         </div>
       </div>
