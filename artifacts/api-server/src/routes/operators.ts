@@ -14,8 +14,11 @@ const router = Router();
 // GET /operators
 router.get("/operators", async (req: Request, res: Response) => {
   try {
-    const operators = await db.select().from(operatorsTable);
-    res.json(operators.map(formatOperator));
+    const statusFilter = req.query.status as string | undefined;
+    const rows = statusFilter
+      ? await db.select().from(operatorsTable).where(eq(operatorsTable.status, statusFilter as any))
+      : await db.select().from(operatorsTable);
+    res.json(rows.map(formatOperator));
   } catch (err) {
     req.log.error({ err }, "Failed to list operators");
     res.status(500).json({ error: "Failed to list operators" });
@@ -42,7 +45,7 @@ router.post("/operators", async (req: Request, res: Response) => {
         state: body.state,
         district: body.district,
         pincode: body.pincode,
-        status: "active",
+        status: "pending",
       })
       .returning();
 
@@ -66,6 +69,7 @@ router.post("/operators/login", async (req: Request, res: Response) => {
       .where(and(eq(operatorsTable.email, body.email), eq(operatorsTable.passwordHash, passwordHash)));
 
     if (!operator) { res.status(401).json({ error: "Invalid email or password" }); return; }
+    if (operator.status === "pending") { res.status(403).json({ error: "Your application is under review. Please wait for admin approval." }); return; }
     if (operator.status === "suspended") { res.status(403).json({ error: "Account suspended. Contact admin." }); return; }
 
     const token = createOperatorToken(operator.id);

@@ -564,6 +564,25 @@ export const GetOperatorStatsResponse = zod.object({
 
 
 /**
+ * @summary Approve or suspend an operator (admin)
+ */
+export const UpdateOperatorStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateOperatorStatusBody = zod.object({
+  "status": zod.enum(['active', 'pending', 'suspended'])
+})
+
+export const UpdateOperatorStatusResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "status": zod.string()
+})
+
+
+/**
  * @summary List payment verification history (admin)
  */
 export const ListPaymentVerificationsQueryParams = zod.object({

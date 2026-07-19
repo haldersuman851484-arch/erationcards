@@ -31,6 +31,7 @@ import type {
   OperatorAuthResponse,
   OperatorInput,
   OperatorStats,
+  OperatorStatusResponse,
   Order,
   OrderAssignment,
   OrderInput,
@@ -43,6 +44,7 @@ import type {
   PaymentVerificationListResponse,
   SuccessResponse,
   TrackOrderParams,
+  UpdateOperatorStatusInput,
   UpiConfig,
   UploadPaymentScreenshotBody
 } from './api.schemas';
@@ -1507,6 +1509,77 @@ export function useGetOperatorStats<TData = Awaited<ReturnType<typeof getOperato
 
 
 
+
+export const getUpdateOperatorStatusUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/operators/${id}/status`
+}
+
+/**
+ * @summary Approve or suspend an operator (admin)
+ */
+export const updateOperatorStatus = async (id: number,
+    updateOperatorStatusInput: UpdateOperatorStatusInput, options?: RequestInit): Promise<OperatorStatusResponse> => {
+
+  return customFetch<OperatorStatusResponse>(getUpdateOperatorStatusUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateOperatorStatusInput)
+  }
+);}
+
+
+
+
+export const getUpdateOperatorStatusMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOperatorStatus>>, TError,{id: number;data: BodyType<UpdateOperatorStatusInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOperatorStatus>>, TError,{id: number;data: BodyType<UpdateOperatorStatusInput>}, TContext> => {
+
+const mutationKey = ['updateOperatorStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOperatorStatus>>, {id: number;data: BodyType<UpdateOperatorStatusInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateOperatorStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOperatorStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateOperatorStatus>>>
+    export type UpdateOperatorStatusMutationBody = BodyType<UpdateOperatorStatusInput>
+    export type UpdateOperatorStatusMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Approve or suspend an operator (admin)
+ */
+export const useUpdateOperatorStatus = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOperatorStatus>>, TError,{id: number;data: BodyType<UpdateOperatorStatusInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateOperatorStatus>>,
+        TError,
+        {id: number;data: BodyType<UpdateOperatorStatusInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateOperatorStatusMutationOptions(options));
+    }
 
 export const getListPaymentVerificationsUrl = (params?: ListPaymentVerificationsParams,) => {
   const normalizedParams = new URLSearchParams();

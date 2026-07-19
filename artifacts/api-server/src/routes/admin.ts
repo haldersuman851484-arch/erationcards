@@ -2,8 +2,8 @@ import { Router, Request, Response } from "express";
 import { LoginAdminBody } from "@workspace/api-zod";
 import { ADMIN_EMAIL, ADMIN_PASSWORD, createAdminToken, parseAdminToken } from "../lib/auth";
 import { db } from "@workspace/db";
-import { paymentVerificationsTable } from "@workspace/db";
-import { desc, sql } from "drizzle-orm";
+import { paymentVerificationsTable, operatorsTable } from "@workspace/db";
+import { desc, sql, eq } from "drizzle-orm";
 
 const router = Router();
 
@@ -36,6 +36,40 @@ router.get("/admin/verifications", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to list verifications");
     res.status(500).json({ error: "Failed to list verifications" });
+  }
+});
+
+// PATCH /admin/operators/:id/status
+router.patch("/admin/operators/:id/status", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid operator ID" }); return; }
+
+    const { status } = req.body;
+    if (!["active", "pending", "suspended"].includes(status)) {
+      res.status(400).json({ error: "Invalid status value" }); return;
+    }
+
+    const [operator] = await db
+      .update(operatorsTable)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(operatorsTable.id, id))
+      .returning();
+
+    if (!operator) { res.status(404).json({ error: "Operator not found" }); return; }
+
+    res.json({
+      id: operator.id,
+      name: operator.name,
+      email: operator.email,
+      status: operator.status,
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update operator status");
+    res.status(500).json({ error: "Failed to update operator status" });
   }
 });
 

@@ -196,6 +196,26 @@ export interface AdminAuthResponse {
   email: string;
 }
 
+export type UpdateOperatorStatusInputStatus = typeof UpdateOperatorStatusInputStatus[keyof typeof UpdateOperatorStatusInputStatus];
+
+
+export const UpdateOperatorStatusInputStatus = {
+  active: 'active',
+  pending: 'pending',
+  suspended: 'suspended',
+} as const;
+
+export interface UpdateOperatorStatusInput {
+  status: UpdateOperatorStatusInputStatus;
+}
+
+export interface OperatorStatusResponse {
+  id: number;
+  name: string;
+  email: string;
+  status: string;
+}
+
 export interface PaymentVerification {
   id: number;
   orderId: number;

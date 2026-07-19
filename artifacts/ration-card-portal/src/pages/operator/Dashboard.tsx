@@ -94,7 +94,51 @@ export default function OperatorDashboard() {
   if (opLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-slate-500">Loading dashboard...</div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-slate-500 text-sm">Loading dashboard…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (operator?.status === "pending") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
+        <style>{`
+          @keyframes popIn {
+            0%   { opacity: 0; transform: scale(0.9) translateY(12px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+          }
+          @keyframes pulse-ring {
+            0%   { transform: scale(1); opacity: 0.5; }
+            70%  { transform: scale(1.4); opacity: 0; }
+            100% { transform: scale(1.4); opacity: 0; }
+          }
+        `}</style>
+        <div className="max-w-sm w-full text-center space-y-5" style={{ animation: "popIn 0.4s ease both" }}>
+          <div className="relative mx-auto w-20 h-20">
+            <span className="absolute inset-0 rounded-full bg-amber-400/30" style={{ animation: "pulse-ring 2s ease-out infinite" }} />
+            <div className="relative w-20 h-20 rounded-full bg-amber-100 border-4 border-amber-300 flex items-center justify-center">
+              <Clock className="w-9 h-9 text-amber-500" />
+            </div>
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900">Account Under Review</h1>
+            <p className="text-slate-500 text-sm mt-1 leading-relaxed">
+              Hello <strong>{operator.name}</strong>, your operator application is being reviewed by our admin team. You'll be able to access your dashboard once approved.
+            </p>
+          </div>
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-left text-sm text-amber-800 space-y-1">
+            <p className="font-semibold">Your application details:</p>
+            <p>Shop: <span className="font-medium">{operator.shopName}</span></p>
+            <p>District: <span className="font-medium">{operator.district}</span></p>
+            <p>Email: <span className="font-medium">{operator.email}</span></p>
+          </div>
+          <Button variant="outline" className="w-full" onClick={handleLogout}>
+            <LogOut className="w-4 h-4 mr-1" /> Logout
+          </Button>
+        </div>
       </div>
     );
   }

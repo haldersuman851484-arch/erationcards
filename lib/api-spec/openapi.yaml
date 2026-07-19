@@ -414,6 +414,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/OperatorStats"
 
+  # ── Admin Operator Management ─────────────────────────────────────────────────
+  /admin/operators/{id}/status:
+    patch:
+      operationId: updateOperatorStatus
+      tags: [dashboard]
+      summary: Approve or suspend an operator (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOperatorStatusInput"
+      responses:
+        "200":
+          description: Operator status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperatorStatusResponse"
+
   # ── Admin ─────────────────────────────────────────────────────────────────────
   /admin/verifications:
     get:
@@ -906,6 +932,32 @@ components:
       required:
         - role
         - email
+
+    UpdateOperatorStatusInput:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, pending, suspended]
+      required:
+        - status
+
+    OperatorStatusResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        status:
+          type: string
+      required:
+        - id
+        - name
+        - email
+        - status
 
     PaymentVerification:
       type: object
