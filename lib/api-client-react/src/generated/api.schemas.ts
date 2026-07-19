@@ -196,6 +196,26 @@ export interface AdminAuthResponse {
   email: string;
 }
 
+export interface PaymentVerification {
+  id: number;
+  orderId: number;
+  orderNumber: string;
+  action: string;
+  adminEmail: string;
+  /** @nullable */
+  screenshotUrl?: string | null;
+  /** @nullable */
+  notes?: string | null;
+  verifiedAt: string;
+}
+
+export interface PaymentVerificationListResponse {
+  verifications: PaymentVerification[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export type ListOrdersParams = {
 status?: string;
 /**
@@ -221,5 +241,10 @@ export type UploadPaymentScreenshotBody = {
 
 export type GetOperatorOrdersParams = {
 status?: string;
+};
+
+export type ListPaymentVerificationsParams = {
+page?: number;
+limit?: number;
 };
 

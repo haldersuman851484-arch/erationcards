@@ -25,6 +25,7 @@ import type {
   GetOperatorOrdersParams,
   HealthStatus,
   ListOrdersParams,
+  ListPaymentVerificationsParams,
   LoginInput,
   Operator,
   OperatorAuthResponse,
@@ -39,6 +40,7 @@ import type {
   PaymentScreenshotUploadResponse,
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
+  PaymentVerificationListResponse,
   SuccessResponse,
   TrackOrderParams,
   UpiConfig,
@@ -1494,6 +1496,90 @@ export function useGetOperatorStats<TData = Awaited<ReturnType<typeof getOperato
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetOperatorStatsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListPaymentVerificationsUrl = (params?: ListPaymentVerificationsParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/verifications?${stringifiedParams}` : `/api/admin/verifications`
+}
+
+/**
+ * @summary List payment verification history (admin)
+ */
+export const listPaymentVerifications = async (params?: ListPaymentVerificationsParams, options?: RequestInit): Promise<PaymentVerificationListResponse> => {
+
+  return customFetch<PaymentVerificationListResponse>(getListPaymentVerificationsUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPaymentVerificationsQueryKey = (params?: ListPaymentVerificationsParams,) => {
+    return [
+    `/api/admin/verifications`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListPaymentVerificationsQueryOptions = <TData = Awaited<ReturnType<typeof listPaymentVerifications>>, TError = ErrorType<unknown>>(params?: ListPaymentVerificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPaymentVerificationsQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPaymentVerifications>>> = ({ signal }) => listPaymentVerifications(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPaymentVerificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listPaymentVerifications>>>
+export type ListPaymentVerificationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List payment verification history (admin)
+ */
+
+export function useListPaymentVerifications<TData = Awaited<ReturnType<typeof listPaymentVerifications>>, TError = ErrorType<unknown>>(
+ params?: ListPaymentVerificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPaymentVerificationsQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

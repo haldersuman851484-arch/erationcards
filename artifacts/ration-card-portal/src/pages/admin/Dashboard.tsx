@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -21,13 +22,15 @@ import {
   useUpdateOrderStatus,
   useUpdateOrderPaymentStatus,
   useLogoutAdmin,
+  useListPaymentVerifications,
+  getListPaymentVerificationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Package, Clock, Printer, Truck, CheckCircle, CheckCircle2, XCircle,
+  Package, Clock, Truck, CheckCircle, CheckCircle2, XCircle,
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
-  Phone, CreditCard, Calendar, Hash,
+  Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -60,11 +63,26 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+function AnimatedRow({ children, index }: { children: React.ReactNode; index: number }) {
+  return (
+    <TableRow
+      className="hover:bg-slate-50/60 transition-colors"
+      style={{
+        animation: `fadeSlideIn 0.35s ease both`,
+        animationDelay: `${index * 45}ms`,
+      }}
+    >
+      {children}
+    </TableRow>
+  );
+}
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState("orders");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput, 350);
@@ -90,10 +108,7 @@ export default function AdminDashboard() {
   const { data: ordersData, isLoading: ordersLoading } = useListOrders(
     listParams,
     {
-      query: {
-        queryKey: getListOrdersQueryKey(listParams),
-        enabled: !!admin,
-      },
+      query: { queryKey: getListOrdersQueryKey(listParams), enabled: !!admin },
       request: { headers: getAuthHeader() },
     } as any
   );
@@ -110,6 +125,18 @@ export default function AdminDashboard() {
     query: { queryKey: getListOperatorsQueryKey(), enabled: !!admin },
     request: { headers: getAuthHeader() },
   } as any);
+
+  const { data: verificationsData, isLoading: verificationsLoading } = useListPaymentVerifications(
+    {},
+    {
+      query: {
+        queryKey: getListPaymentVerificationsQueryKey({}),
+        enabled: !!admin && activeTab === "verifications",
+        refetchInterval: activeTab === "verifications" ? 15000 : false,
+      },
+      request: { headers: getAuthHeader() },
+    } as any
+  );
 
   const assignOrder = useAssignOrderToOperator();
   const updateStatus = useUpdateOrderStatus();
@@ -134,9 +161,7 @@ export default function AdminDashboard() {
         onSuccess: () => {
           toast({ title: paymentStatus === "confirmed" ? "Payment confirmed!" : "Payment rejected." });
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
-          if (selectedOrderId === orderId) {
-            queryClient.invalidateQueries({ queryKey: ["/api/orders/", orderId] });
-          }
+          queryClient.invalidateQueries({ queryKey: getListPaymentVerificationsQueryKey({}) });
         },
         onError: () => toast({ title: "Failed to update payment status", variant: "destructive" }),
       }
@@ -150,7 +175,6 @@ export default function AdminDashboard() {
         onSuccess: () => {
           toast({ title: "Order status updated." });
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
-          queryClient.invalidateQueries({ queryKey: ["/api/orders/", orderId] });
         },
         onError: () => toast({ title: "Failed to update status", variant: "destructive" }),
       }
@@ -182,447 +206,478 @@ export default function AdminDashboard() {
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
-        <div className="text-slate-500">Loading admin dashboard...</div>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-slate-500 text-sm">Loading dashboard…</p>
+        </div>
       </div>
     );
   }
 
   const orders = ordersData?.orders ?? [];
+  const verifications = verificationsData?.verifications ?? [];
   const pendingDeliveries = (stats?.pendingOrders ?? 0) + (stats?.processingOrders ?? 0) + (stats?.printedOrders ?? 0) + (stats?.dispatchedOrders ?? 0);
 
   return (
-    <div className="min-h-screen bg-slate-100">
-      <header className="bg-slate-900 text-white sticky top-0 z-50 shadow-lg">
-        <div className="container mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Shield className="w-5 h-5 text-primary" />
-            <span className="font-semibold">Admin Dashboard</span>
-            <Badge className="bg-primary/20 text-primary border-primary/30 text-xs ml-1">Manager</Badge>
-          </div>
-          <div className="flex items-center gap-4">
-            <span className="text-slate-300 text-sm hidden sm:block">{admin?.email}</span>
-            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" data-testid="button-admin-logout" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-1" /> Logout
-            </Button>
-          </div>
-        </div>
-      </header>
+    <>
+      <style>{`
+        @keyframes fadeSlideIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes popIn {
+          0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+          100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .stat-card { animation: popIn 0.4s ease both; }
+        .tab-panel { animation: fadeSlideIn 0.3s ease both; }
+      `}</style>
 
-      <main className="container mx-auto px-4 py-8 space-y-6">
-        {/* Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {[
-            { label: "Total Orders", value: stats?.totalOrders ?? 0, icon: Package, color: "text-slate-700", testId: "stat-total-orders" },
-            { label: "Pending Payment", value: stats?.pendingOrders ?? 0, icon: Clock, color: "text-amber-600", testId: "stat-pending" },
-            { label: "Pending Delivery", value: pendingDeliveries, icon: Truck, color: "text-blue-600", testId: "stat-pending-delivery" },
-            { label: "Delivered", value: stats?.deliveredOrders ?? 0, icon: CheckCircle, color: "text-emerald-600", testId: "stat-delivered" },
-          ].map(({ label, value, icon: Icon, color, testId }) => (
-            <Card key={label} className="border-0 shadow-sm bg-white">
+      <div className="min-h-screen bg-slate-100">
+        <header className="bg-slate-900 text-white sticky top-0 z-50 shadow-lg">
+          <div className="container mx-auto px-4 h-14 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Shield className="w-5 h-5 text-primary" />
+              <span className="font-semibold">Admin Dashboard</span>
+              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs ml-1">Manager</Badge>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-slate-300 text-sm hidden sm:block">{admin?.email}</span>
+              <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" data-testid="button-admin-logout" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-1" /> Logout
+              </Button>
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8 space-y-6">
+          {/* Stat Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[
+              { label: "Total Orders", value: stats?.totalOrders ?? 0, icon: Package, color: "text-slate-700", delay: 0 },
+              { label: "Pending Payment", value: stats?.pendingOrders ?? 0, icon: Clock, color: "text-amber-600", delay: 1 },
+              { label: "Pending Delivery", value: pendingDeliveries, icon: Truck, color: "text-blue-600", delay: 2 },
+              { label: "Delivered", value: stats?.deliveredOrders ?? 0, icon: CheckCircle, color: "text-emerald-600", delay: 3 },
+            ].map(({ label, value, icon: Icon, color, delay }) => (
+              <Card key={label} className="stat-card border-0 shadow-sm bg-white overflow-hidden" style={{ animationDelay: `${delay * 80}ms` }}>
+                <CardContent className="pt-5 pb-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
+                    <Icon className={`w-4 h-4 ${color}`} />
+                  </div>
+                  <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="stat-card border-0 shadow-sm bg-white" style={{ animationDelay: "320ms" }}>
               <CardContent className="pt-5 pb-4">
                 <div className="flex justify-between items-start mb-3">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
-                  <Icon className={`w-4 h-4 ${color}`} />
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Revenue</p>
+                  <IndianRupee className="w-4 h-4 text-emerald-600" />
                 </div>
-                <p className={`text-3xl font-bold ${color}`} data-testid={testId}>{value}</p>
+                <p className="text-3xl font-bold text-emerald-600">₹{stats?.totalRevenue?.toLocaleString("en-IN") ?? 0}</p>
+                <p className="text-xs text-slate-400 mt-1">Today: ₹{stats?.todayRevenue ?? 0} · {stats?.todayOrders ?? 0} orders</p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex justify-between items-start mb-3">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Revenue</p>
-                <IndianRupee className="w-4 h-4 text-emerald-600" />
-              </div>
-              <p className="text-3xl font-bold text-emerald-600" data-testid="stat-revenue">₹{stats?.totalRevenue?.toLocaleString("en-IN") ?? 0}</p>
-              <p className="text-xs text-slate-400 mt-1">Today: ₹{stats?.todayRevenue ?? 0} · {stats?.todayOrders ?? 0} orders</p>
-            </CardContent>
-          </Card>
-          <Card className="border-0 shadow-sm bg-white">
-            <CardContent className="pt-5 pb-4">
-              <div className="flex justify-between items-start mb-3">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Operators</p>
-                <Users className="w-4 h-4 text-primary" />
-              </div>
-              <p className="text-3xl font-bold text-primary">{operators?.length ?? 0}</p>
-              <p className="text-xs text-slate-400 mt-1">Registered printing partners</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Orders Table */}
-        <Card className="border-0 shadow-sm bg-white">
-          <CardHeader className="pb-4">
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-              <CardTitle className="text-base">All Orders {ordersData ? <span className="text-slate-400 font-normal text-sm ml-1">({ordersData.total})</span> : null}</CardTitle>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <div className="relative flex-1 sm:w-56">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    data-testid="input-admin-search"
-                    placeholder="Search name, phone, order #"
-                    className="pl-8 h-8 text-xs"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                  />
-                  {searchInput && (
-                    <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchInput("")}>
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+            <Card className="stat-card border-0 shadow-sm bg-white" style={{ animationDelay: "400ms" }}>
+              <CardContent className="pt-5 pb-4">
+                <div className="flex justify-between items-start mb-3">
+                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Operators</p>
+                  <Users className="w-4 h-4 text-primary" />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-36 h-8 text-xs shrink-0" data-testid="select-status-filter">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">All statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="processing">Processing</SelectItem>
-                    <SelectItem value="printed">Printed</SelectItem>
-                    <SelectItem value="dispatched">Dispatched</SelectItem>
-                    <SelectItem value="delivered">Delivered</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {ordersLoading ? (
-              <div className="py-12 text-center text-slate-400">Loading orders...</div>
-            ) : orders.length === 0 ? (
-              <div className="py-12 text-center text-slate-400">
-                <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
-                <p>{debouncedSearch || statusFilter ? "No orders match your search" : "No orders yet"}</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-slate-50">
-                      <TableHead>Order #</TableHead>
-                      <TableHead>Customer</TableHead>
-                      <TableHead>Type / Qty</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Delivery</TableHead>
-                      <TableHead>Payment</TableHead>
-                      <TableHead>Operator</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orders.map((order) => (
-                      <TableRow
-                        key={order.id}
-                        data-testid={`row-order-${order.id}`}
-                        className="hover:bg-slate-50/60 cursor-pointer"
-                        onClick={() => openDetail(order.id)}
-                      >
-                        <TableCell className="font-mono text-xs font-medium text-primary">{order.orderNumber}</TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <p className="font-medium text-sm">{order.customerName}</p>
-                          <p className="text-xs text-slate-500">{order.customerPhone}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="text-xs">{order.cardType}</Badge>
-                          <span className="text-xs text-slate-500 ml-1">x{order.quantity}</span>
-                        </TableCell>
-                        <TableCell className="font-medium text-sm">₹{order.amount}</TableCell>
-                        <TableCell>
-                          <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>
-                            {order.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <div className="flex flex-col gap-1.5 min-w-[130px]">
-                            {order.paymentScreenshotUrl && (
-                              <a
-                                href={order.paymentScreenshotUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1 text-xs text-primary hover:underline"
-                                data-testid={`link-screenshot-${order.id}`}
-                              >
-                                <ImageIcon className="w-3.5 h-3.5" />
-                                Screenshot
-                              </a>
-                            )}
-                            {order.paymentStatus === "pending" ? (
-                              <div className="flex gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                                  data-testid={`button-confirm-payment-${order.id}`}
-                                  onClick={() => handlePaymentStatus(order.id, "confirmed")}
-                                  disabled={updatePaymentStatus.isPending}
-                                >
-                                  <CheckCircle2 className="w-3 h-3 mr-0.5" /> Confirm
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-6 px-1.5 text-xs text-red-700 border-red-300 hover:bg-red-50"
-                                  data-testid={`button-reject-payment-${order.id}`}
-                                  onClick={() => handlePaymentStatus(order.id, "rejected")}
-                                  disabled={updatePaymentStatus.isPending}
-                                >
-                                  <XCircle className="w-3 h-3 mr-0.5" /> Reject
-                                </Button>
-                              </div>
-                            ) : (
-                              <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                                {order.paymentStatus ?? "—"}
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          {operators && operators.length > 0 ? (
-                            <Select
-                              value={order.operatorId ? String(order.operatorId) : ""}
-                              onValueChange={(v) => handleAssign(order.id, v)}
-                            >
-                              <SelectTrigger className="w-32 h-7 text-xs" data-testid={`select-operator-${order.id}`}>
-                                <SelectValue placeholder="Assign..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {operators.map((op) => (
-                                  <SelectItem key={op.id} value={String(op.id)}>{op.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-xs text-slate-400">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-xs text-slate-500 whitespace-nowrap">
-                          {new Date(order.createdAt).toLocaleDateString("en-IN")}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 px-2 text-xs text-primary hover:bg-primary/10"
-                            data-testid={`button-view-order-${order.id}`}
-                            onClick={(e) => { e.stopPropagation(); openDetail(order.id); }}
-                          >
-                            View
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </main>
+                <p className="text-3xl font-bold text-primary">{operators?.length ?? 0}</p>
+                <p className="text-xs text-slate-400 mt-1">Registered printing partners</p>
+              </CardContent>
+            </Card>
+          </div>
 
-      {/* Order Detail Dialog */}
-      <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Hash className="w-4 h-4 text-primary" />
-              Order Details
-              {selectedOrder && (
-                <span className="font-mono text-primary">{selectedOrder.orderNumber}</span>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {selectedOrder
-                ? `Placed on ${new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`
-                : "Loading order details…"}
-            </DialogDescription>
-          </DialogHeader>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="bg-white border border-slate-200 shadow-sm h-11 p-1">
+              <TabsTrigger value="orders" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <Package className="w-4 h-4" /> Orders
+                {ordersData && <span className="bg-primary/20 text-primary data-[state=active]:bg-white/20 data-[state=active]:text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <ShieldCheck className="w-4 h-4" /> Verification Log
+                {verificationsData && <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">{verificationsData.total}</span>}
+              </TabsTrigger>
+            </TabsList>
 
-          {selectedOrder ? (
-            <div className="space-y-5 mt-1">
-              {/* Customer Info */}
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Customer</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-start gap-2">
-                    <Users className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-slate-500">Name</p>
-                      <p className="font-medium text-slate-900">{selectedOrder.customerName}</p>
+            {/* ── Orders Tab ── */}
+            <TabsContent value="orders" className="tab-panel mt-4">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                    <CardTitle className="text-base">All Orders</CardTitle>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:w-56">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          data-testid="input-admin-search"
+                          placeholder="Search name, phone, order #"
+                          className="pl-8 h-8 text-xs"
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
+                        />
+                        {searchInput && (
+                          <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchInput("")}>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-36 h-8 text-xs shrink-0" data-testid="select-status-filter">
+                          <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="printed">Printed</SelectItem>
+                          <SelectItem value="dispatched">Dispatched</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <Phone className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-slate-500">Phone</p>
-                      <p className="font-medium text-slate-900">{selectedOrder.customerPhone}</p>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {ordersLoading ? (
+                    <div className="py-14 flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                      <p className="text-slate-400 text-sm">Loading orders…</p>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CreditCard className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-slate-500">Ration Card No</p>
-                      <p className="font-mono text-slate-900 text-xs">{selectedOrder.rationCardNumber}</p>
+                  ) : orders.length === 0 ? (
+                    <div className="py-14 text-center text-slate-400">
+                      <Package className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                      <p>{debouncedSearch || statusFilter ? "No orders match your search" : "No orders yet"}</p>
                     </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <Package className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
-                    <div>
-                      <p className="text-xs text-slate-500">Card Type · Qty</p>
-                      <p className="font-medium text-slate-900">{selectedOrder.cardType} × {selectedOrder.quantity}</p>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              {/* Family Cards */}
-              {selectedOrder.familyCards && selectedOrder.familyCards.length > 0 && (
-                <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Family Cards ({selectedOrder.familyCards.length})</h3>
-                  <div className="rounded-lg border border-slate-200 overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="bg-slate-50 text-xs">
-                          <TableHead className="py-2">Name</TableHead>
-                          <TableHead className="py-2">Ration Card No</TableHead>
-                          <TableHead className="py-2">Type</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedOrder.familyCards.map((fc, i) => (
-                          <TableRow key={i} className="text-xs">
-                            <TableCell className="py-2">{(fc as any).customerName}</TableCell>
-                            <TableCell className="py-2 font-mono">{(fc as any).rationCardNumber}</TableCell>
-                            <TableCell className="py-2">{(fc as any).cardType}</TableCell>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50">
+                            <TableHead>Order #</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Type / Qty</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Delivery</TableHead>
+                            <TableHead>Payment</TableHead>
+                            <TableHead>Operator</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead></TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {orders.map((order, i) => (
+                            <AnimatedRow key={order.id} index={i}>
+                              <TableCell className="font-mono text-xs font-medium text-primary cursor-pointer" onClick={() => openDetail(order.id)}>{order.orderNumber}</TableCell>
+                              <TableCell>
+                                <p className="font-medium text-sm">{order.customerName}</p>
+                                <p className="text-xs text-slate-500">{order.customerPhone}</p>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-xs">{order.cardType}</Badge>
+                                <span className="text-xs text-slate-500 ml-1">x{order.quantity}</span>
+                              </TableCell>
+                              <TableCell className="font-medium text-sm">₹{order.amount}</TableCell>
+                              <TableCell>
+                                <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>{order.status}</Badge>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <div className="flex flex-col gap-1.5 min-w-[130px]">
+                                  {order.paymentScreenshotUrl && (
+                                    <a href={order.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                      <ImageIcon className="w-3.5 h-3.5" /> Screenshot
+                                    </a>
+                                  )}
+                                  {order.paymentStatus === "pending" ? (
+                                    <div className="flex gap-1">
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-confirm-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
+                                        <CheckCircle2 className="w-3 h-3 mr-0.5" /> Confirm
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-red-700 border-red-300 hover:bg-red-50" data-testid={`button-reject-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "rejected")} disabled={updatePaymentStatus.isPending}>
+                                        <XCircle className="w-3 h-3 mr-0.5" /> Reject
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                {operators && operators.length > 0 ? (
+                                  <Select value={order.operatorId ? String(order.operatorId) : ""} onValueChange={(v) => handleAssign(order.id, v)}>
+                                    <SelectTrigger className="w-32 h-7 text-xs" data-testid={`select-operator-${order.id}`}><SelectValue placeholder="Assign…" /></SelectTrigger>
+                                    <SelectContent>{operators.map((op) => <SelectItem key={op.id} value={String(op.id)}>{op.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                ) : <span className="text-xs text-slate-400">—</span>}
+                              </TableCell>
+                              <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
+                              <TableCell>
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:bg-primary/10" data-testid={`button-view-order-${order.id}`} onClick={() => openDetail(order.id)}>View</Button>
+                              </TableCell>
+                            </AnimatedRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Verification Log Tab ── */}
+            <TabsContent value="verifications" className="tab-panel mt-4">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-primary" />
+                      Payment Verification Log
+                      {verificationsData && (
+                        <span className="text-slate-400 font-normal text-sm ml-1">({verificationsData.total} records)</span>
+                      )}
+                    </CardTitle>
+                    <span className="text-xs text-slate-400">Auto-refreshes every 15s</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {verificationsLoading ? (
+                    <div className="py-14 flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                      <p className="text-slate-400 text-sm">Loading verification records…</p>
+                    </div>
+                  ) : verifications.length === 0 ? (
+                    <div className="py-16 text-center">
+                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
+                        <ShieldCheck className="w-8 h-8 text-slate-300" />
+                      </div>
+                      <p className="text-slate-500 font-medium">No verifications yet</p>
+                      <p className="text-slate-400 text-sm mt-1">Records appear here when you confirm or reject a payment.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50">
+                            <TableHead className="w-12">#</TableHead>
+                            <TableHead>Order Number</TableHead>
+                            <TableHead>Decision</TableHead>
+                            <TableHead>Verified By</TableHead>
+                            <TableHead>Screenshot</TableHead>
+                            <TableHead>Date & Time</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {verifications.map((v, i) => (
+                            <AnimatedRow key={v.id} index={i}>
+                              <TableCell className="text-xs text-slate-400 font-mono">{v.id}</TableCell>
+                              <TableCell>
+                                <span className="font-mono text-sm font-semibold text-primary">{v.orderNumber}</span>
+                              </TableCell>
+                              <TableCell>
+                                {v.action === "confirmed" ? (
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                    <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 gap-1">
+                                      <CheckCircle2 className="w-3 h-3" /> Confirmed
+                                    </Badge>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-2 h-2 rounded-full bg-red-500" />
+                                    <Badge className="bg-red-100 text-red-700 border border-red-200 gap-1">
+                                      <XCircle className="w-3 h-3" /> Rejected
+                                    </Badge>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                    <Shield className="w-3 h-3 text-primary" />
+                                  </div>
+                                  <span className="text-xs text-slate-600">{v.adminEmail}</span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {v.screenshotUrl ? (
+                                  <a href={v.screenshotUrl} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1.5">
+                                    <img
+                                      src={v.screenshotUrl}
+                                      alt="Payment screenshot"
+                                      className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
+                                    />
+                                    <span className="text-xs text-primary group-hover:underline hidden sm:block">View</span>
+                                  </a>
+                                ) : (
+                                  <span className="text-xs text-slate-400">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex flex-col">
+                                  <span className="text-xs font-medium text-slate-700">
+                                    {new Date(v.verifiedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                  </span>
+                                  <span className="text-xs text-slate-400">
+                                    {new Date(v.verifiedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                </div>
+                              </TableCell>
+                            </AnimatedRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </main>
+
+        {/* Order Detail Dialog */}
+        <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-base">
+                <Hash className="w-4 h-4 text-primary" />
+                Order Details
+                {selectedOrder && <span className="font-mono text-primary">{selectedOrder.orderNumber}</span>}
+              </DialogTitle>
+              <DialogDescription>
+                {selectedOrder
+                  ? `Placed on ${new Date(selectedOrder.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}`
+                  : "Loading order details…"}
+              </DialogDescription>
+            </DialogHeader>
+
+            {selectedOrder ? (
+              <div className="space-y-5 mt-1">
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Customer</h3>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-start gap-2">
+                      <Users className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-slate-500">Name</p><p className="font-medium text-slate-900">{selectedOrder.customerName}</p></div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Phone className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-slate-500">Phone</p><p className="font-medium text-slate-900">{selectedOrder.customerPhone}</p></div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CreditCard className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-slate-500">Ration Card No</p><p className="font-mono text-slate-900 text-xs">{selectedOrder.rationCardNumber}</p></div>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Package className="w-4 h-4 text-slate-400 mt-0.5 shrink-0" />
+                      <div><p className="text-xs text-slate-500">Card Type · Qty</p><p className="font-medium text-slate-900">{selectedOrder.cardType} × {selectedOrder.quantity}</p></div>
+                    </div>
                   </div>
                 </section>
-              )}
 
-              {/* Delivery Address */}
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Delivery Address</h3>
-                <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-sm space-y-0.5">
-                  {selectedOrder.deliveryName && <p className="font-medium text-slate-900">{selectedOrder.deliveryName}</p>}
-                  <p className="text-slate-700">{selectedOrder.address}</p>
-                  {selectedOrder.postOffice && <p className="text-slate-600">P.O.: {selectedOrder.postOffice}</p>}
-                  <p className="text-slate-600">{selectedOrder.district}, {selectedOrder.state} — {selectedOrder.pincode}</p>
-                </div>
-              </section>
+                {selectedOrder.familyCards && selectedOrder.familyCards.length > 0 && (
+                  <section>
+                    <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Family Cards ({selectedOrder.familyCards.length})</h3>
+                    <div className="rounded-lg border border-slate-200 overflow-hidden">
+                      <Table>
+                        <TableHeader><TableRow className="bg-slate-50 text-xs"><TableHead className="py-2">Name</TableHead><TableHead className="py-2">Ration Card No</TableHead><TableHead className="py-2">Type</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                          {selectedOrder.familyCards.map((fc, i) => (
+                            <TableRow key={i} className="text-xs">
+                              <TableCell className="py-2">{(fc as any).customerName}</TableCell>
+                              <TableCell className="py-2 font-mono">{(fc as any).rationCardNumber}</TableCell>
+                              <TableCell className="py-2">{(fc as any).cardType}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </section>
+                )}
 
-              {/* Payment */}
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><IndianRupee className="w-3.5 h-3.5" /> Payment</h3>
-                <div className="flex flex-wrap gap-3 items-start">
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-sm flex-1 min-w-[160px]">
-                    <div className="flex justify-between mb-1">
-                      <span className="text-slate-500">Amount</span>
-                      <span className="font-semibold text-primary">₹{selectedOrder.amount}</span>
-                    </div>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-slate-500">Method</span>
-                      <span className="capitalize">{selectedOrder.paymentMethod ?? "UPI"}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500">Status</span>
-                      <Badge className={`text-xs border capitalize ${PAYMENT_STATUS_BADGE[selectedOrder.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                        {selectedOrder.paymentStatus}
-                      </Badge>
-                    </div>
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Delivery Address</h3>
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-sm space-y-0.5">
+                    {selectedOrder.deliveryName && <p className="font-medium text-slate-900">{selectedOrder.deliveryName}</p>}
+                    <p className="text-slate-700">{selectedOrder.address}</p>
+                    {selectedOrder.postOffice && <p className="text-slate-600">P.O.: {selectedOrder.postOffice}</p>}
+                    <p className="text-slate-600">{selectedOrder.district}, {selectedOrder.state} — {selectedOrder.pincode}</p>
                   </div>
-                  {selectedOrder.paymentScreenshotUrl && (
-                    <div className="shrink-0">
-                      <p className="text-xs text-slate-500 mb-1.5">Payment Screenshot</p>
-                      <a href={selectedOrder.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="block">
-                        <img
-                          src={selectedOrder.paymentScreenshotUrl}
-                          alt="Payment screenshot"
-                          className="w-28 h-28 object-cover rounded-lg border border-slate-200 shadow-sm hover:opacity-90 transition-opacity"
-                          data-testid={`img-screenshot-${selectedOrder.id}`}
-                        />
-                      </a>
+                </section>
+
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><IndianRupee className="w-3.5 h-3.5" /> Payment</h3>
+                  <div className="flex flex-wrap gap-3 items-start">
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200 text-sm flex-1 min-w-[160px]">
+                      <div className="flex justify-between mb-1"><span className="text-slate-500">Amount</span><span className="font-semibold text-primary">₹{selectedOrder.amount}</span></div>
+                      <div className="flex justify-between mb-1"><span className="text-slate-500">Method</span><span className="capitalize">{selectedOrder.paymentMethod ?? "UPI"}</span></div>
+                      <div className="flex justify-between items-center"><span className="text-slate-500">Status</span>
+                        <Badge className={`text-xs border capitalize ${PAYMENT_STATUS_BADGE[selectedOrder.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{selectedOrder.paymentStatus}</Badge>
+                      </div>
+                    </div>
+                    {selectedOrder.paymentScreenshotUrl && (
+                      <div className="shrink-0">
+                        <p className="text-xs text-slate-500 mb-1.5">Payment Screenshot</p>
+                        <a href={selectedOrder.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="block">
+                          <img src={selectedOrder.paymentScreenshotUrl} alt="Payment screenshot" className="w-28 h-28 object-cover rounded-lg border border-slate-200 shadow-sm hover:opacity-90 transition-opacity" />
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                  {selectedOrder.paymentStatus === "pending" && (
+                    <div className="flex gap-2 mt-3">
+                      <Button size="sm" variant="outline" className="text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid="button-dialog-confirm-payment" onClick={() => handlePaymentStatus(selectedOrder.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
+                        <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm Payment
+                      </Button>
+                      <Button size="sm" variant="outline" className="text-red-700 border-red-300 hover:bg-red-50" data-testid="button-dialog-reject-payment" onClick={() => handlePaymentStatus(selectedOrder.id, "rejected")} disabled={updatePaymentStatus.isPending}>
+                        <XCircle className="w-4 h-4 mr-1" /> Reject Payment
+                      </Button>
                     </div>
                   )}
-                </div>
-                {selectedOrder.paymentStatus === "pending" && (
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-emerald-700 border-emerald-300 hover:bg-emerald-50"
-                      data-testid={`button-dialog-confirm-payment`}
-                      onClick={() => handlePaymentStatus(selectedOrder.id, "confirmed")}
-                      disabled={updatePaymentStatus.isPending}
-                    >
-                      <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm Payment
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-red-700 border-red-300 hover:bg-red-50"
-                      data-testid={`button-dialog-reject-payment`}
-                      onClick={() => handlePaymentStatus(selectedOrder.id, "rejected")}
-                      disabled={updatePaymentStatus.isPending}
-                    >
-                      <XCircle className="w-4 h-4 mr-1" /> Reject Payment
-                    </Button>
-                  </div>
-                )}
-              </section>
+                </section>
 
-              {/* Delivery Status Update */}
-              <section>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><Truck className="w-3.5 h-3.5" /> Delivery Status</h3>
-                <div className="flex items-center gap-3">
-                  <Badge className={`${STATUS_BADGE[selectedOrder.status] || ""} border capitalize text-sm px-3 py-1`}>
-                    {selectedOrder.status}
-                  </Badge>
-                  <span className="text-slate-400 text-xs">→ Update to:</span>
-                  <Select
-                    value=""
-                    onValueChange={(v) => handleStatusUpdate(selectedOrder.id, v)}
-                    disabled={updateStatus.isPending}
-                  >
-                    <SelectTrigger className="w-40 h-8 text-xs" data-testid="select-dialog-status">
-                      <SelectValue placeholder="Change status…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                      <SelectItem value="printed">Printed</SelectItem>
-                      <SelectItem value="dispatched">Dispatched</SelectItem>
-                      <SelectItem value="delivered">Delivered</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {selectedOrder.trackingNumber && (
-                  <div className="mt-2 bg-slate-50 rounded-lg p-2 border border-slate-200 text-xs">
-                    <span className="text-slate-500">Tracking: </span>
-                    <span className="font-mono font-medium text-primary">{selectedOrder.trackingNumber}</span>
+                <section>
+                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><Truck className="w-3.5 h-3.5" /> Delivery Status</h3>
+                  <div className="flex items-center gap-3">
+                    <Badge className={`${STATUS_BADGE[selectedOrder.status] || ""} border capitalize text-sm px-3 py-1`}>{selectedOrder.status}</Badge>
+                    <span className="text-slate-400 text-xs">→ Update to:</span>
+                    <Select value="" onValueChange={(v) => handleStatusUpdate(selectedOrder.id, v)} disabled={updateStatus.isPending}>
+                      <SelectTrigger className="w-40 h-8 text-xs" data-testid="select-dialog-status"><SelectValue placeholder="Change status…" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="processing">Processing</SelectItem>
+                        <SelectItem value="printed">Printed</SelectItem>
+                        <SelectItem value="dispatched">Dispatched</SelectItem>
+                        <SelectItem value="delivered">Delivered</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                )}
-                {selectedOrder.notes && (
-                  <p className="mt-2 text-xs text-slate-600 bg-slate-50 rounded-lg p-2 border border-slate-200">{selectedOrder.notes}</p>
-                )}
-              </section>
+                  {selectedOrder.trackingNumber && (
+                    <div className="mt-2 bg-slate-50 rounded-lg p-2 border border-slate-200 text-xs">
+                      <span className="text-slate-500">Tracking: </span>
+                      <span className="font-mono font-medium text-primary">{selectedOrder.trackingNumber}</span>
+                    </div>
+                  )}
+                </section>
 
-              <div className="flex items-center gap-2 text-xs text-slate-400 pt-1 border-t border-slate-100">
-                <Calendar className="w-3.5 h-3.5" />
-                Created: {new Date(selectedOrder.createdAt).toLocaleString("en-IN")}
-                <span className="ml-auto">Updated: {new Date(selectedOrder.updatedAt).toLocaleString("en-IN")}</span>
+                <div className="flex items-center gap-2 text-xs text-slate-400 pt-1 border-t border-slate-100">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Created: {new Date(selectedOrder.createdAt).toLocaleString("en-IN")}
+                  <span className="ml-auto">Updated: {new Date(selectedOrder.updatedAt).toLocaleString("en-IN")}</span>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center text-slate-400 text-sm">Loading…</div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
+            ) : (
+              <div className="py-8 text-center text-slate-400 text-sm">Loading…</div>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
+    </>
   );
 }

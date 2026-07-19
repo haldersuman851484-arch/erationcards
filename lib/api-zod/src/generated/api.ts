@@ -564,6 +564,31 @@ export const GetOperatorStatsResponse = zod.object({
 
 
 /**
+ * @summary List payment verification history (admin)
+ */
+export const ListPaymentVerificationsQueryParams = zod.object({
+  "page": zod.coerce.number().optional(),
+  "limit": zod.coerce.number().optional()
+})
+
+export const ListPaymentVerificationsResponse = zod.object({
+  "verifications": zod.array(zod.object({
+  "id": zod.number(),
+  "orderId": zod.number(),
+  "orderNumber": zod.string(),
+  "action": zod.string(),
+  "adminEmail": zod.string(),
+  "screenshotUrl": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "verifiedAt": zod.string()
+})),
+  "total": zod.number(),
+  "page": zod.number(),
+  "limit": zod.number()
+})
+
+
+/**
  * @summary Admin login
  */
 export const LoginAdminBody = zod.object({

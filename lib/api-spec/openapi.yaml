@@ -414,6 +414,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/OperatorStats"
 
+  # ── Admin ─────────────────────────────────────────────────────────────────────
+  /admin/verifications:
+    get:
+      operationId: listPaymentVerifications
+      tags: [dashboard]
+      summary: List payment verification history (admin)
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payment verification records
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentVerificationListResponse"
+
   # ── Admin Auth ───────────────────────────────────────────────────────────────
   /admin/login:
     post:
@@ -883,3 +906,49 @@ components:
       required:
         - role
         - email
+
+    PaymentVerification:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderId:
+          type: integer
+        orderNumber:
+          type: string
+        action:
+          type: string
+        adminEmail:
+          type: string
+        screenshotUrl:
+          type: ["string", "null"]
+        notes:
+          type: ["string", "null"]
+        verifiedAt:
+          type: string
+      required:
+        - id
+        - orderId
+        - orderNumber
+        - action
+        - adminEmail
+        - verifiedAt
+
+    PaymentVerificationListResponse:
+      type: object
+      properties:
+        verifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/PaymentVerification"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required:
+        - verifications
+        - total
+        - page
+        - limit
