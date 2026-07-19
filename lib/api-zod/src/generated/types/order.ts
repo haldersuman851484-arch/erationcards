@@ -30,6 +30,8 @@ export interface Order {
   paymentStatus: string;
   /** @nullable */
   paymentMethod?: string | null;
+  /** @nullable */
+  paymentScreenshotUrl?: string | null;
   status: string;
   /** @nullable */
   operatorId?: number | null;

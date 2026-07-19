@@ -95,8 +95,9 @@ router.post("/orders", async (req: Request, res: Response) => {
         familyCards: familyCards as any,
         quantity,
         amount: String(amount),
-        paymentStatus: (body.paymentStatus ?? "paid") as any,
-        paymentMethod: body.paymentMethod ?? "online",
+        paymentStatus: (body.paymentStatus ?? "pending") as any,
+        paymentMethod: body.paymentMethod ?? "upi",
+        paymentScreenshotUrl: body.paymentScreenshotUrl ?? null,
       })
       .returning();
 
@@ -276,6 +277,7 @@ function formatOrder(o: any) {
     amount: Number(o.amount),
     paymentStatus: o.paymentStatus,
     paymentMethod: o.paymentMethod ?? null,
+    paymentScreenshotUrl: o.paymentScreenshotUrl ?? null,
     status: o.status,
     operatorId: o.operatorId ?? null,
     operatorName: null as string | null,

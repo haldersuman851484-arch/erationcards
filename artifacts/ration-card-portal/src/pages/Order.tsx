@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { QRCodeSVG } from "qrcode.react";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -11,9 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useCreateOrder } from "@workspace/api-client-react";
+import { useCreateOrder, useGetUpiConfig } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User } from "lucide-react";
+import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { usePageTitle } from "@/hooks/use-page-title";
 
@@ -39,7 +40,6 @@ const orderSchema = z.object({
   pincode: z.string().length(6, "Pincode must be 6 digits"),
   cardType: z.enum(["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"]),
   quantity: z.coerce.number().min(1).max(10),
-  paymentMethod: z.string().min(1, "Select payment method"),
 });
 
 type OrderForm = z.infer<typeof orderSchema>;
@@ -65,7 +65,14 @@ export default function Order() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [subCard, setSubCard] = useState<FamilyCardEntry>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
   const [subError, setSubError] = useState("");
+  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [copiedUpi, setCopiedUpi] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
+  const { data: upiConfig } = useGetUpiConfig();
+  const merchantUpiId = upiConfig?.merchantUpiId || "";
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -116,7 +123,6 @@ export default function Order() {
       pincode: "",
       cardType: "AAY",
       quantity: 1,
-      paymentMethod: "",
     },
   });
 
@@ -124,7 +130,44 @@ export default function Order() {
   const totalCards = 1 + familyCards.length;
   const amount = (CARD_PRICES[cardType] || 50) * totalCards;
 
+  function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setScreenshotFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  function copyUpiId() {
+    if (!merchantUpiId) return;
+    navigator.clipboard.writeText(merchantUpiId).then(() => {
+      setCopiedUpi(true);
+      setTimeout(() => setCopiedUpi(false), 2000);
+    });
+  }
+
   async function onSubmit(data: OrderForm) {
+    if (!screenshotFile) {
+      toast({ title: "Screenshot required", description: "Please upload your UPI payment screenshot.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploading(true);
+    let screenshotUrl = "";
+    try {
+      const formData = new FormData();
+      formData.append("screenshot", screenshotFile);
+      const res = await fetch("/api/payments/upload-screenshot", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Upload failed");
+      const json = await res.json();
+      screenshotUrl = json.url;
+    } catch {
+      toast({ title: "Upload failed", description: "Could not upload payment screenshot. Please try again.", variant: "destructive" });
+      setIsUploading(false);
+      return;
+    }
+
     createOrder.mutate(
       {
         data: {
@@ -141,15 +184,18 @@ export default function Order() {
           familyCards,
           quantity: totalCards,
           amount,
-          paymentStatus: "paid",
-          paymentMethod: data.paymentMethod,
+          paymentStatus: "pending",
+          paymentMethod: "upi",
+          paymentScreenshotUrl: screenshotUrl,
         },
       },
       {
         onSuccess: (order) => {
+          setIsUploading(false);
           setSuccess({ orderNumber: order.orderNumber });
         },
         onError: () => {
+          setIsUploading(false);
           toast({ title: "Failed to place order", description: "Please try again.", variant: "destructive" });
         },
       }
@@ -163,18 +209,21 @@ export default function Order() {
         <main className="flex-1 flex items-center justify-center py-20 px-4">
           <Card className="max-w-md w-full text-center border-slate-200 shadow-lg" data-testid="order-success-card">
             <CardContent className="pt-12 pb-10 space-y-6">
-              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
-                <CheckCircle className="w-10 h-10 text-emerald-500" />
+              <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
+                <Clock className="w-10 h-10 text-amber-500" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-2">Order Placed!</h2>
-                <p className="text-slate-600">Your PVC card order has been received successfully.</p>
+                <p className="text-slate-600">We have received your order. Our team is reviewing your payment screenshot.</p>
               </div>
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <p className="text-sm text-slate-500 mb-1">Your Order Number</p>
                 <p className="text-xl font-mono font-bold text-primary" data-testid="text-order-number">{success.orderNumber}</p>
               </div>
-              <p className="text-sm text-slate-500">Save this number to track your order. Expected delivery: 5–7 working days.</p>
+              <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-left">
+                <p className="text-sm text-amber-800 font-medium mb-1">Payment Under Review</p>
+                <p className="text-xs text-amber-700">Once your payment is confirmed, we will start printing your card. Expected delivery: 5–7 working days after confirmation.</p>
+              </div>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setLocation("/track")}>Track Order</Button>
                 <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={() => {
@@ -187,6 +236,8 @@ export default function Order() {
                   setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
                   setSubError("");
                   setShowFamilyDialog(false);
+                  setScreenshotFile(null);
+                  setScreenshotPreview(null);
                 }}>New Order</Button>
               </div>
             </CardContent>
@@ -438,33 +489,10 @@ export default function Order() {
               {step === 3 && (
                 <Card className="border-slate-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Card & Payment</CardTitle>
-                    <CardDescription>Review card category and complete payment</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Pay via UPI</CardTitle>
+                    <CardDescription>Scan the QR code or use the UPI ID below, then upload your payment screenshot</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <FormField control={form.control} name="cardType" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Card Category *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-card-type"><SelectValue /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              <SelectItem value="AAY">AAY</SelectItem>
-                              <SelectItem value="PHH">PHH</SelectItem>
-                              <SelectItem value="SPHH">SPHH</SelectItem>
-                              <SelectItem value="RKSY-I">RKSY-I</SelectItem>
-                              <SelectItem value="RKSY-II">RKSY-II</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
-                      <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Total Cards</label>
-                        <div className="flex h-10 items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-700" data-testid="text-total-cards">{totalCards}</div>
-                      </div>
-                    </div>
-
                     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-slate-600">Rate per card</span>
@@ -475,31 +503,106 @@ export default function Order() {
                         <span>{totalCards}</span>
                       </div>
                       <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between font-semibold text-lg">
-                        <span>Total Amount</span>
+                        <span>Amount to Pay</span>
                         <span className="text-primary">₹{amount}</span>
                       </div>
                     </div>
 
-                    <FormField control={form.control} name="paymentMethod" render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Method *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger data-testid="select-payment-method"><SelectValue placeholder="Select payment method" /></SelectTrigger></FormControl>
-                          <SelectContent>
-                            <SelectItem value="upi">UPI / GPay / PhonePe</SelectItem>
-                            <SelectItem value="netbanking">Net Banking</SelectItem>
-                            <SelectItem value="card">Debit / Credit Card</SelectItem>
-                            <SelectItem value="cash">Cash on Delivery</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )} />
+                    {merchantUpiId ? (
+                      <>
+                        <div className="flex flex-col sm:flex-row gap-6 items-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="p-3 bg-white border-2 border-primary/20 rounded-xl shadow-sm">
+                              <QRCodeSVG
+                                value={`upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Card+Order`}
+                                size={160}
+                                fgColor="#00afc8"
+                                data-testid="upi-qr-code"
+                              />
+                            </div>
+                            <p className="text-xs text-slate-500 text-center">Scan with any UPI app</p>
+                          </div>
+                          <div className="flex-1 space-y-4 w-full">
+                            <div>
+                              <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">UPI ID</p>
+                              <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm text-slate-900 select-all" data-testid="text-merchant-upi-id">
+                                  {merchantUpiId}
+                                </div>
+                                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={copyUpiId} data-testid="button-copy-upi">
+                                  <Copy className="w-4 h-4 mr-1" />
+                                  {copiedUpi ? "Copied!" : "Copy"}
+                                </Button>
+                              </div>
+                            </div>
+                            <a
+                              href={`upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Card+Order`}
+                              data-testid="link-open-upi-app"
+                            >
+                              <Button type="button" className="w-full bg-primary hover:bg-primary/90 gap-2">
+                                <Smartphone className="w-4 h-4" />
+                                Open in UPI App
+                              </Button>
+                            </a>
+                            <p className="text-xs text-slate-500">Works with PhonePe, GPay, Paytm &amp; all UPI apps</p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-slate-200 pt-5">
+                          <p className="text-sm font-medium text-slate-700 mb-3">
+                            After paying, upload your payment screenshot *
+                          </p>
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleScreenshotChange}
+                            data-testid="input-screenshot"
+                          />
+                          {screenshotPreview ? (
+                            <div className="space-y-3">
+                              <div className="relative w-full max-w-xs rounded-lg overflow-hidden border border-slate-200 shadow-sm">
+                                <img src={screenshotPreview} alt="Payment screenshot" className="w-full object-cover max-h-48" />
+                              </div>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
+                              >
+                                Change Screenshot
+                              </Button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              data-testid="button-upload-screenshot"
+                              onClick={() => fileInputRef.current?.click()}
+                              className="w-full border-2 border-dashed border-slate-300 hover:border-primary/50 rounded-xl p-6 text-center transition-colors cursor-pointer bg-slate-50/50 hover:bg-primary/5"
+                            >
+                              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                              <p className="text-sm font-medium text-slate-700">Click to upload screenshot</p>
+                              <p className="text-xs text-slate-400 mt-1">JPG, PNG up to 5 MB</p>
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-center py-6 text-slate-500 text-sm">
+                        Loading payment details…
+                      </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
                       <Button type="button" variant="outline" onClick={() => setStep(2)}>Back</Button>
-                      <Button type="submit" data-testid="button-submit-order" className="bg-primary hover:bg-primary/90 px-8" disabled={createOrder.isPending}>
-                        {createOrder.isPending ? "Processing..." : `Pay ₹${amount} & Order`}
+                      <Button
+                        type="submit"
+                        data-testid="button-submit-order"
+                        className="bg-primary hover:bg-primary/90 px-8"
+                        disabled={isUploading || createOrder.isPending || !screenshotFile || !merchantUpiId}
+                      >
+                        {isUploading || createOrder.isPending ? "Submitting…" : "Submit Order"}
                       </Button>
                     </div>
                   </CardContent>

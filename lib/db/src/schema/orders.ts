@@ -22,6 +22,8 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "paid",
   "failed",
   "refunded",
+  "confirmed",
+  "rejected",
 ]);
 
 export const ordersTable = pgTable("orders", {
@@ -43,6 +45,7 @@ export const ordersTable = pgTable("orders", {
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
   paymentMethod: text("payment_method"),
+  paymentScreenshotUrl: text("payment_screenshot_url"),
   status: orderStatusEnum("status").notNull().default("pending"),
   operatorId: integer("operator_id"),
   trackingNumber: text("tracking_number"),

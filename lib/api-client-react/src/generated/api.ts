@@ -36,8 +36,11 @@ import type {
   OrderListResponse,
   OrderStats,
   OrderStatusUpdate,
+  PaymentStatusUpdate,
+  PaymentStatusUpdateResponse,
   SuccessResponse,
-  TrackOrderParams
+  TrackOrderParams,
+  UpiConfig
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -685,6 +688,77 @@ export const useUpdateOrderStatus = <TError = ErrorType<unknown>,
       return useMutation(getUpdateOrderStatusMutationOptions(options));
     }
 
+export const getUpdateOrderPaymentStatusUrl = (id: number,) => {
+
+
+
+
+  return `/api/orders/${id}/payment-status`
+}
+
+/**
+ * @summary Confirm or reject a payment (admin)
+ */
+export const updateOrderPaymentStatus = async (id: number,
+    paymentStatusUpdate: PaymentStatusUpdate, options?: RequestInit): Promise<PaymentStatusUpdateResponse> => {
+
+  return customFetch<PaymentStatusUpdateResponse>(getUpdateOrderPaymentStatusUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(paymentStatusUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateOrderPaymentStatusMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext> => {
+
+const mutationKey = ['updateOrderPaymentStatus'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, {id: number;data: BodyType<PaymentStatusUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateOrderPaymentStatus(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOrderPaymentStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrderPaymentStatus>>>
+    export type UpdateOrderPaymentStatusMutationBody = BodyType<PaymentStatusUpdate>
+    export type UpdateOrderPaymentStatusMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Confirm or reject a payment (admin)
+ */
+export const useUpdateOrderPaymentStatus = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateOrderPaymentStatus>>,
+        TError,
+        {id: number;data: BodyType<PaymentStatusUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateOrderPaymentStatusMutationOptions(options));
+    }
+
 export const getAssignOrderToOperatorUrl = (id: number,) => {
 
 
@@ -755,6 +829,83 @@ export const useAssignOrderToOperator = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getAssignOrderToOperatorMutationOptions(options));
     }
+
+export const getGetUpiConfigUrl = () => {
+
+
+
+
+  return `/api/payments/upi-config`
+}
+
+/**
+ * @summary Get merchant UPI ID for display and QR code generation
+ */
+export const getUpiConfig = async ( options?: RequestInit): Promise<UpiConfig> => {
+
+  return customFetch<UpiConfig>(getGetUpiConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUpiConfigQueryKey = () => {
+    return [
+    `/api/payments/upi-config`
+    ] as const;
+    }
+
+
+export const getGetUpiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getUpiConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUpiConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUpiConfig>>> = ({ signal }) => getUpiConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUpiConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getUpiConfig>>>
+export type GetUpiConfigQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get merchant UPI ID for display and QR code generation
+ */
+
+export function useGetUpiConfig<TData = Awaited<ReturnType<typeof getUpiConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUpiConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getListOperatorsUrl = () => {
 

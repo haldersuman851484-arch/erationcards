@@ -24,4 +24,5 @@ export interface OrderInput {
   amount: number;
   paymentStatus?: string;
   paymentMethod?: string;
+  paymentScreenshotUrl?: string;
 }

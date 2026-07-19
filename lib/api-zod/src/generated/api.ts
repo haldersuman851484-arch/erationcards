@@ -51,6 +51,7 @@ export const ListOrdersResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -88,7 +89,8 @@ export const CreateOrderBody = zod.object({
   "quantity": zod.number(),
   "amount": zod.number(),
   "paymentStatus": zod.string().optional(),
-  "paymentMethod": zod.string().optional()
+  "paymentMethod": zod.string().optional(),
+  "paymentScreenshotUrl": zod.string().optional()
 })
 
 export const CreateOrderResponse = zod.object({
@@ -114,6 +116,7 @@ export const CreateOrderResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -155,6 +158,7 @@ export const TrackOrderResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -207,6 +211,7 @@ export const ListRecentOrdersResponseItem = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -248,6 +253,7 @@ export const GetOrderResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -294,6 +300,7 @@ export const UpdateOrderStatusResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -301,6 +308,23 @@ export const UpdateOrderStatusResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Confirm or reject a payment (admin)
+ */
+export const UpdateOrderPaymentStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateOrderPaymentStatusBody = zod.object({
+  "paymentStatus": zod.enum(['confirmed', 'rejected', 'pending'])
+})
+
+export const UpdateOrderPaymentStatusResponse = zod.object({
+  "id": zod.number(),
+  "paymentStatus": zod.string()
 })
 
 
@@ -338,6 +362,7 @@ export const AssignOrderToOperatorResponse = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
@@ -345,6 +370,14 @@ export const AssignOrderToOperatorResponse = zod.object({
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Get merchant UPI ID for display and QR code generation
+ */
+export const GetUpiConfigResponse = zod.object({
+  "merchantUpiId": zod.string()
 })
 
 
@@ -491,6 +524,7 @@ export const GetOperatorOrdersResponseItem = zod.object({
   "amount": zod.number(),
   "paymentStatus": zod.string(),
   "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
   "status": zod.string(),
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),

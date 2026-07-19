@@ -47,6 +47,8 @@ export interface Order {
   paymentStatus: string;
   /** @nullable */
   paymentMethod?: string | null;
+  /** @nullable */
+  paymentScreenshotUrl?: string | null;
   status: string;
   /** @nullable */
   operatorId?: number | null;
@@ -83,6 +85,33 @@ export interface OrderInput {
   amount: number;
   paymentStatus?: string;
   paymentMethod?: string;
+  paymentScreenshotUrl?: string;
+}
+
+export interface UpiConfig {
+  merchantUpiId: string;
+}
+
+export interface PaymentScreenshotUploadResponse {
+  url: string;
+}
+
+export type PaymentStatusUpdatePaymentStatus = typeof PaymentStatusUpdatePaymentStatus[keyof typeof PaymentStatusUpdatePaymentStatus];
+
+
+export const PaymentStatusUpdatePaymentStatus = {
+  confirmed: 'confirmed',
+  rejected: 'rejected',
+  pending: 'pending',
+} as const;
+
+export interface PaymentStatusUpdate {
+  paymentStatus: PaymentStatusUpdatePaymentStatus;
+}
+
+export interface PaymentStatusUpdateResponse {
+  id: number;
+  paymentStatus: string;
 }
 
 export interface OrderStatusUpdate {
