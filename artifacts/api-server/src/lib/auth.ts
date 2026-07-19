@@ -49,9 +49,7 @@ export function createAdminToken(email: string, role: string): string {
 }
 
 export function generateOrderNumber(): string {
-  const ts = Date.now().toString().slice(-6);
-  const rand = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-  return `${ts}${rand}`;
+  return Date.now().toString().slice(-10);
 }
 
 export function hashPassword(password: string): string {
