@@ -17,10 +17,17 @@ export const uploadsDir =
 
 mkdirSync(uploadsDir, { recursive: true });
 
+const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MIME_TO_EXT: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadsDir),
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || ".jpg";
+    const ext = MIME_TO_EXT[file.mimetype] ?? ".jpg";
     cb(null, `screenshot-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
   },
 });
@@ -29,8 +36,8 @@ const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) cb(null, true);
-    else cb(new Error("Only image files are allowed"));
+    if (ALLOWED_MIME_TYPES.has(file.mimetype)) cb(null, true);
+    else cb(new Error("Only JPEG, PNG, and WebP images are allowed"));
   },
 });
 

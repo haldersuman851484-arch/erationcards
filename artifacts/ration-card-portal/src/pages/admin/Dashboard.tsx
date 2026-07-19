@@ -77,7 +77,9 @@ export default function AdminDashboard() {
 
   const assignOrder = useAssignOrderToOperator();
   const updateStatus = useUpdateOrderStatus();
-  const updatePaymentStatus = useUpdateOrderPaymentStatus();
+  const updatePaymentStatus = useUpdateOrderPaymentStatus({
+    request: { headers: getAuthHeader() },
+  } as any);
   const logoutAdmin = useLogoutAdmin();
 
   useEffect(() => {
@@ -85,13 +87,8 @@ export default function AdminDashboard() {
   }, [adminError, setLocation]);
 
   function handlePaymentStatus(orderId: number, paymentStatus: "confirmed" | "rejected") {
-    const token = localStorage.getItem("adminToken");
     updatePaymentStatus.mutate(
-      {
-        id: orderId,
-        data: { paymentStatus },
-        ...(token ? { request: { headers: { Authorization: `Bearer ${token}` } } } : {}),
-      } as any,
+      { id: orderId, data: { paymentStatus } },
       {
         onSuccess: () => {
           toast({ title: paymentStatus === "confirmed" ? "Payment confirmed!" : "Payment rejected." });

@@ -34,7 +34,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/uploads", express.static(uploadsDir));
+app.use("/api/uploads", (req, res, next) => {
+  res.setHeader("Content-Type", "application/octet-stream");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  next();
+}, express.static(uploadsDir, { dotfiles: "deny" }));
 app.use("/api", router);
 
 // Serve React frontend static files in production
