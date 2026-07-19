@@ -23,6 +23,7 @@ export const HealthCheckResponse = zod.object({
 export const ListOrdersQueryParams = zod.object({
   "status": zod.coerce.string().optional(),
   "operatorId": zod.coerce.number().nullish(),
+  "search": zod.coerce.string().optional().describe('Search by order number, customer name, or phone'),
   "page": zod.coerce.number().optional(),
   "limit": zod.coerce.number().optional()
 })

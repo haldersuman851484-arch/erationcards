@@ -12,6 +12,10 @@ status?: string;
  * @nullable
  */
 operatorId?: number | null;
+/**
+ * Search by order number, customer name, or phone
+ */
+search?: string;
 page?: number;
 limit?: number;
 };

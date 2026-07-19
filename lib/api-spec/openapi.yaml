@@ -50,6 +50,11 @@ paths:
           schema:
             type: ["integer", "null"]
         - in: query
+          name: search
+          schema:
+            type: string
+          description: Search by order number, customer name, or phone
+        - in: query
           name: page
           schema:
             type: integer

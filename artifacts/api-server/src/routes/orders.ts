@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { ordersTable } from "@workspace/db";
-import { eq, and, desc, gte, sql, or } from "drizzle-orm";
+import { eq, and, desc, gte, sql, or, ilike } from "drizzle-orm";
 import {
   CreateOrderBody,
   UpdateOrderStatusBody,
@@ -34,18 +34,31 @@ function sanitizeFamilyCards(input: unknown): FamilyCardInput[] {
 router.get("/orders", async (req: Request, res: Response) => {
   try {
     const params = ListOrdersQueryParams.parse(req.query);
+    const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
     const page = params.page ?? 1;
     const limit = params.limit ?? 20;
     const offset = (page - 1) * limit;
 
-    const conditions: ReturnType<typeof eq>[] = [];
+    const conditions = [];
     if (params.status) conditions.push(eq(ordersTable.status, params.status as any));
     if (params.operatorId) conditions.push(eq(ordersTable.operatorId, params.operatorId));
+    if (search) {
+      const term = `%${search}%`;
+      conditions.push(
+        or(
+          ilike(ordersTable.customerName, term),
+          ilike(ordersTable.customerPhone, term),
+          ilike(ordersTable.orderNumber, term)
+        )!
+      );
+    }
+
+    const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
     const orders = await db
       .select()
       .from(ordersTable)
-      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .where(whereClause)
       .orderBy(desc(ordersTable.createdAt))
       .limit(limit)
       .offset(offset);
@@ -53,7 +66,7 @@ router.get("/orders", async (req: Request, res: Response) => {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(ordersTable)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .where(whereClause);
 
     res.json({ orders: orders.map(formatOrder), total: Number(count), page, limit });
   } catch (err) {
