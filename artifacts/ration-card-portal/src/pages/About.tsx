@@ -32,7 +32,6 @@ export default function About() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-
       <main className="flex-1">
         {/* Hero section */}
         <section className="py-16 px-4">
@@ -52,7 +51,7 @@ export default function About() {
                 fair-price shops in printed or digital form.
               </p>
               <p>
-                <span className="font-semibold text-slate-800">e-Ration Card Portal</span> is a
+                <span className="font-semibold text-slate-800">Our platform erationcard.inl</span> is a
                 private PVC card printing service managed by PVC ID Card Printing Service. We help
                 citizens print their already-approved e-Ration Cards on durable PVC cards for
                 convenience and ease of use. Customers simply upload their downloaded e-Ration Card
@@ -68,7 +67,7 @@ export default function About() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {pillars.map(({ icon: Icon, title, desc }) => (
                 <div key={title} className="bg-white rounded-2xl p-6 shadow-sm">
-                  <div className="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center mb-4">
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center mb-4 bg-[#41b8f0]">
                     <Icon className="w-5 h-5 text-amber-400" />
                   </div>
                   <p className="font-bold text-slate-900 mb-2">{title}</p>
@@ -112,7 +111,6 @@ export default function About() {
           </div>
         </section>
       </main>
-
       <Footer />
     </div>
   );
