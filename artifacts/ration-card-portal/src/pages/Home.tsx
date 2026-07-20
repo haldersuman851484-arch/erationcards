@@ -57,10 +57,10 @@ export default function Home() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/order">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary group-hover:text-white transition-colors text-primary">
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-primary">
                     <CreditCard className="w-6 h-6" />
                   </div>
                   <CardTitle>Order PVC Card</CardTitle>
@@ -69,10 +69,10 @@ export default function Home() {
               </Link>
             </Card>
             
-            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/track">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-blue-500 group-hover:text-white transition-colors text-blue-500">
+                  <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-blue-500">
                     <Search className="w-6 h-6" />
                   </div>
                   <CardTitle>Track Order</CardTitle>
@@ -81,10 +81,10 @@ export default function Home() {
               </Link>
             </Card>
 
-            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/download">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-emerald-500 group-hover:text-white transition-colors text-emerald-500">
+                  <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-emerald-500">
                     <Download className="w-6 h-6" />
                   </div>
                   <CardTitle>Download e-Card</CardTitle>
@@ -93,10 +93,10 @@ export default function Home() {
               </Link>
             </Card>
 
-            <Card className="border-slate-200 shadow-sm hover:shadow-md transition-shadow group cursor-pointer">
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/operator/register">
                 <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-purple-500 group-hover:text-white transition-colors text-purple-500">
+                  <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-purple-500">
                     <Users className="w-6 h-6" />
                   </div>
                   <CardTitle>Operator Portal</CardTitle>
