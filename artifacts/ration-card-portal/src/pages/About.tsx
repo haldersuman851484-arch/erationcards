@@ -51,7 +51,7 @@ export default function About() {
                 fair-price shops in printed or digital form.
               </p>
               <p>
-                <span className="font-semibold text-slate-800">Our platform erationcard.inl</span> is a
+                <span className="font-semibold text-slate-800">Our platform erationcard.in</span> is a
                 private PVC card printing service managed by PVC ID Card Printing Service. We help
                 citizens print their already-approved e-Ration Cards on durable PVC cards for
                 convenience and ease of use. Customers simply upload their downloaded e-Ration Card
