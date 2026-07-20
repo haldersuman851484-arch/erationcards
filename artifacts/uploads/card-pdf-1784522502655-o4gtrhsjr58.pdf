@@ -1,0 +1,901 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>
+	Food & Supplies Department, Government of West Bengal
+</title>
+    <!-- Meta -->
+    <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="description" /><meta name="author" />
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="fabicon/favicon.ico" />
+    <!-- Web Fonts -->
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" /><link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Open+Sans:400,300,600&amp;subset=cyrillic,latin" />
+    <!-- CSS Global Compulsory -->
+    <link rel="stylesheet" href="assets/plugins/bootstrap/css/bootstrap.min.css" /><link rel="stylesheet" href="assets/css/style.css" />
+    <!-- CSS Header and Footer -->
+    <link rel="stylesheet" href="assets/css/headers/header-default.css" /><link rel="stylesheet" href="assets/css/footers/footer-v1.css" />
+    <!-- CSS Implementing Plugins -->
+    <link rel="stylesheet" href="assets/plugins/animate.css" /><link rel="stylesheet" href="assets/plugins/line-icons/line-icons.css" /><link rel="stylesheet" href="assets/plugins/font-awesome/css/font-awesome.css" /><link rel="stylesheet" href="assets/plugins/parallax-slider/css/parallax-slider.css" /><link rel="stylesheet" href="assets/plugins/owl-carousel/owl.carousel.css" />
+    <!-- CSS Theme -->
+    <link id="ctl00_style_color" rel="stylesheet" href="assets/css/theme-colors/default.css" /><link rel="stylesheet" href="assets/css/theme-skins/dark.css" />
+    <!-- CSS Customization -->
+    <link rel="stylesheet" href="assets/css/custom.css" />
+    <style type="text/css">
+        label {
+            color: #030303;
+        }
+
+        .table,
+        .table tr,
+        .table td {
+            background-color: white !important;
+        }
+
+        .jumbotron {
+            line-height: 24px;
+        }
+
+        .RowStyle {
+            height: 50px;
+        }
+
+        .AlternateRowStyle {
+            height: 50px;
+        }
+
+        .tempMsgdv {
+            background: #c54b4b !important;
+            color: white !important;
+        }
+
+        .refresh-cls {
+            border: none;
+            background: transparent;
+            color: #51a658;
+        }
+
+        .fa-refresh {
+            font-size: 42px;
+        }
+
+        .jumbotron {
+            padding: 12px !important;
+        }
+
+        .nameBlockDetailsCls {
+            background: #b3d9fe;
+            font-size: 15px;
+        }
+
+        .statusdateCls {
+            background: #FFF;
+        }
+
+        .inputfield {
+            display: flex;
+            justify-content: space-between;
+            flex-grow: 1;
+            width: 40%;
+            margin: 0 auto;
+            margin-bottom: 2rem;
+        }
+
+            .inputfield input {
+                width: 40px;
+                height: 40px;
+            }
+
+        input#ctl00_ContentPlaceHolder1_resendOTP {
+            margin: 0 auto;
+            margin-top: -8px;
+            text-align: center;
+            display: block;
+            font-size: 10px;
+            outline: none;
+            border: none;
+            background-color: transparent;
+            color: #835500;
+        }
+
+        .ChkBoxClass input {
+            width: 25px;
+            height: 25px;
+        }
+
+        input[type="checkbox"]:disabled {
+            background: red;
+        }
+
+        .glow-btn {
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0% {
+                box-shadow: 0 0 5px #3fcef2;
+            }
+
+            50% {
+                box-shadow: 0 0 20px #3fcef2;
+            }
+
+            100% {
+                box-shadow: 0 0 5px #3fcef2;
+                     
+            }
+
+                    
+        }
+
+
+        .box {
+            background-color: #d3e3e1;
+            /*transform: rotateX(45deg) rotateY(45deg);*/
+            transform-origin: center;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .croos-icon-cls {
+            font-size: 30px;
+        }
+
+        .gap_cs_cls {
+            width: 60%;
+        }
+
+        .vertical-line {
+            border-left: 2px solid black; /* You can change the color and width as needed */
+            height: 100%; /* This makes sure the line spans the full height of the div */
+        }
+        .loader {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: rgba(36 152 187 / 45%);
+            font-size: 49px;
+            color: #a90505;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+ <form name="aspnetForm" method="post" action="./E_Card_Download.aspx" id="aspnetForm" autocomplete="off" role="form">
+<div>
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__LASTFOCUS" id="__LASTFOCUS" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="QqWnvAdS9C8Ec2EWJA9+Mwf0HLXjLxYQm+adqjIJbSZloGhcREpJWr/sVq6NmZf0s6fyDia2coYeBDYQlwXgjQu4FMBUaRYlNKNScoS42qer1VHz84Oi5cGuQJJ3xfkxTWOF60pkTkzNyCePNvBfEpbyGHgRDbSaSklrs2oe9SFqE+iLblX9lGyoo3wRmJqMbizw7YnBR4KeoCQymEFek6HNROBo2j5T7ciAFgAhqw3xsHTp2BQmKN5XpLhO9p/p0r3F3EFW5Sq8aICAv6ofFvmmse8esN+GpG6trQigzarxA8W22N+E6ndoRhmWvcbIxZm1Th0w3en0kQnTQ9E1Sapl9Dc3j0rMC19ak1BlmKdmaG5rjnMjGaVN61lKQgjWHGF/mcbCi1QfkS7Jm1X2pYotWMK6qgvyK/v9xVT8lg8hIpj1g0RtLICwrbfZga6anbcJs0JVPblMlkA9ayI50DOr5Yc91dIq3sTRhik04jJJoBC4cke0TjSGhh1fkHPY4L9uIj1DLn+ta3aKkG5Z1V4hnjiFz2lfjfiaFq1gu3qclTUG6D0EOCLwtiIAjd4imGMpl7LASv2eHqPrf71DAHWNYf1tk13F9OOt1PYzAP8vNcC5fVccNLNOfmvi/soTqDfrJsOuC4etJjT9TkKdFE1qt0810WHQq1r6Yw2lH2X1i5ePzMCTo8Fg+lb73Qq85Y7DCsx9KxmkdUvza7GagyFn6x5BW0+cgzsHICiWZI24bmuF947q/WkhsUZjq+5micglOw==" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['aspnetForm'];
+if (!theForm) {
+    theForm = document.aspnetForm;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=pynGkmcFUV13He1Qd6_TZEdeY3vSsDD9JeK_cdU4VT0iMzJNT64m_OIhUJZE2xDUAKPehA2&amp;t=639149648198536487" type="text/javascript"></script>
+
+
+<script src="/ScriptResource.axd?d=myY3Two0UxZV16VMBw4qxXMz1yMPr8CQ8Dxgj8XRAWeyXTuWqY7WMu4XbqINnokVOcUHGuqei7IX-Un7OLjH-emY6_hP3qQLSEqyPPK54nhDcTPu0&amp;t=ffffffffdc32f924" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+if (typeof(Sys) === 'undefined') throw new Error('ASP.NET Ajax client-side framework failed to load.');
+//]]>
+</script>
+
+<script src="/ScriptResource.axd?d=on1t6Pk2_uvvrXX5hXL_DUjUvavP1Yw4iC3He2SF74rgp_TmmrG7dU55FDSsrlDRA3T4FUVp_XoJjiJF5ItrMCszWbuSw65AaABqBA_KQvoyT4K5yqvKBR8Y6mfrH-YVDgZetw2&amp;t=ffffffffdc32f924" type="text/javascript"></script>
+<div>
+
+	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="9AF89D3F" />
+	<input type="hidden" name="__VIEWSTATEENCRYPTED" id="__VIEWSTATEENCRYPTED" value="" />
+</div>
+        <script type="text/javascript">
+//<![CDATA[
+Sys.WebForms.PageRequestManager._initialize('ctl00$ScriptManager2', 'aspnetForm', ['tctl00$upMaster','','tctl00$ContentPlaceHolder1$upForm3',''], [], ['ctl00$ContentPlaceHolder1$btn_sendotp_button',''], 90, 'ctl00');
+//]]>
+</script>
+
+        <div id="ctl00_upMaster">
+	
+
+
+                <div class="wrapper">
+                    <div class="banner">
+                        <div class="col-md-2 col-lg-2 visible-md visible-lg sidebar">
+                            <span style="text-align: center;">
+                                <img src="assets/img/banner/banner-national-emblem.png?id=1" style="max-width: 100px;"
+                                    alt="Logo"></span>
+                        </div>
+                        <div class="col-xs-12 col-sm-12 col-md-8 col-lg-8 midddlebar">
+                            
+                            <h3><strong>RATION CARD LIFE CYCLE MANAGEMENT</strong>
+                            </h3>
+                            <h4>DEPT. OF FOOD AND SUPPLIES, GOVT. OF WEST BENGAL
+                            </h4>
+                        </div>
+                        <div class="col-md-2 col-lg-2 visible-md visible-lg sidebar">
+                            <span style="text-align: center;">
+                                
+
+                            </span>
+                        </div>
+                    </div>
+
+                    <!--=== Header ===-->
+                   
+                    <!--=== End Header ===-->
+
+                    <!--=== Login Panel ===-->
+                    <div class="container">
+                        <!-- Modal -->
+                        <div class="modal fade" id="myModal" role="dialog">
+                            <div class="modal-dialog">
+                                <!-- Modal content-->
+                                <div class="modal-content">
+                                    <div class="modal-header" style="padding: 35px 50px;">
+                                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                                        <h2><span class="fa fa-lock"></span>Login</h2>
+                                    </div>
+                                    <div class="modal-body" style="padding: 40px 50px;">
+                                        <div class="form-group">
+                                            <label for="usrname"><span class="fa fa-user"></span>Username</label>
+                                            <input name="ctl00$txtUserName" type="text" id="ctl00_txtUserName" class="form-control" placeholder="Enter User Name" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label><span class="fa fa-key"></span>Password</label>
+                                            <input name="ctl00$txtPassword" type="password" id="ctl00_txtPassword" class="form-control" placeholder="Enter Password" />
+                                        </div>
+                                        <div class="form-group">
+                                            <span id="ctl00_lblMessage" class="label label-danger"></span>
+                                        </div>
+                                        <a id="ctl00_btnLogin" class="btn btn-success btn-block" href="javascript:__doPostBack(&#39;ctl00$btnLogin&#39;,&#39;&#39;)"><span class="fa fa-sign-in"></span> Login</a>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="submit" class="btn btn-danger btn-default pull-right" data-dismiss="modal">
+                                            <span class="fa fa-remove"></span>Cancel</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!--=== End Login Panel ===-->
+
+                    <div class="bg-color-light" style="min-height:400px">
+                        <div class="container content-md">
+                            <ul class="row list-row margin-bottom-10">
+                                <li class="col-md-12 md-margin-bottom-30">
+                                   
+                                            
+    <div id="ctl00_ContentPlaceHolder1_upForm3">
+		
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+
+
+                <section id="ctl00_ContentPlaceHolder1_applicationdetails" class="content">
+                    <div id="ctl00_ContentPlaceHolder1_Div4" class="card card-default">
+                        <div class="card-header" style="background: #51c6d8; padding: 5px 5px; text-align: center;">
+                            <h3 class="card-title" style="color: white; font-size: 26px; font-weight: bold;">Download E-Ration Card</h3>
+
+                            <div class="card-tools">
+                            </div>
+                        </div>
+                        <!-- /.card-header -->
+                        <div id="ctl00_ContentPlaceHolder1_div_ser_sec" class="card-body">
+
+
+                            <div id="ctl00_ContentPlaceHolder1_Div2" class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group" style="padding: 5px 5px;">
+                                        <label>Please Enter Ration Card Number<span style="color: red;"> *</span></label>
+                                        <input name="ctl00$ContentPlaceHolder1$txt_rcno" type="text" maxlength="10" id="ctl00_ContentPlaceHolder1_txt_rcno" class="form-control" placeholder="Enter Ration Card Number" />
+                                    </div>
+                                </div>
+
+                                
+                            </div>
+
+                            <div id="ctl00_ContentPlaceHolder1_Div3" class="row">
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <img id="ctl00_ContentPlaceHolder1_Image2" src="Captcha.aspx?time=06/07/2026 16:29:13" style="height:55px;width:186px;border-width:0px;" />
+                                        <input type="image" name="ctl00$ContentPlaceHolder1$Imagerefresh" id="ctl00_ContentPlaceHolder1_Imagerefresh" src="img/reload-arrow.png" style="height:20px;border-width:0px;" />
+
+
+                                    </div>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <div class="form-group">
+                                        <input name="ctl00$ContentPlaceHolder1$txtimgcode" type="text" id="ctl00_ContentPlaceHolder1_txtimgcode" class="form-control" placeholder="Enter Captcha" />
+                                    </div>
+                                </div>
+
+                            </div>
+
+                            <div id="ctl00_ContentPlaceHolder1_Div5" class="row">
+                                <div id="ctl00_ContentPlaceHolder1_Div1" class="col-md-3 mt-2" style="margin-top: 25px;">
+
+                                    <input type="submit" name="ctl00$ContentPlaceHolder1$btn_srch" value="Search" id="ctl00_ContentPlaceHolder1_btn_srch" class="btn btn-block" style="background-color:#3FCEF2;border-color:Black;border-style:Solid;font-size:20px;font-weight:bold;" />
+                                </div>
+                            </div>
+                        </div>
+                        <br />
+                        <br />
+                        
+
+
+
+                        <br />
+                        
+
+
+
+
+                        
+
+                        
+
+
+                        <div class="modal fade bs-example-modal-sm" id="exampleModalLong" tabindex="-1" data-backdrop="static" role="dialog" style="padding-left: 50px" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-xl" role="document" style="max-width: 50%">
+                                <div id="ctl00_ContentPlaceHolder1_modalmo" class="modal-content">
+                                    <div class="modal-header" style="background-color: cornflowerblue !important; color: white !important;">
+
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true" class="croos-icon-cls">&times;</span>
+                                        </button>
+                                        <h3 style="color: white" class="modal-title" id="exampleModalLongTitle">Please enter a valid 4-digit OTP</h3>
+                                    </div>
+                                    <div class="modal-body">
+
+
+                                        <div id="ctl00_ContentPlaceHolder1_timeout_div" class="top-right alert alert-danger" role="alert">
+                                            <span id="ctl00_ContentPlaceHolder1_count"></span>
+                                        </div>
+
+                                        
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="inputfield">
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp" type="text" maxlength="1" id="enter_otp" class="form-control" onkeyup="return runScript(event,&#39;enter_otp&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp1" type="text" maxlength="1" id="enter_otp1" class="form-control" onkeyup="return runScript(event,&#39;enter_otp1&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp2" type="text" maxlength="1" id="enter_otp2" class="form-control" onkeyup="return runScript(event,&#39;enter_otp2&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp3" type="text" maxlength="1" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ContentPlaceHolder1$enter_otp3\&#39;,\&#39;\&#39;)&#39;, 0)" onkeypress="if (WebForm_TextBoxKeyHandler(event) == false) return false;" id="enter_otp3" class="form-control" onkeyup="return runScript(event,&#39;enter_otp3&#39;,this)" oninput="handleTextChange()" />
+
+                                                </div>
+                                            </div>
+
+                                            <div id="ctl00_ContentPlaceHolder1_divResendBtn" class="col-md-12" style="display: none">
+                                                <input type="submit" name="ctl00$ContentPlaceHolder1$resendOTP" value="Resend OTP" id="ctl00_ContentPlaceHolder1_resendOTP" class="resendOtp" />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+                        <div class="modal fade bs-example-modal-sm" id="exampleModalLongAdhar" tabindex="-1" data-backdrop="static" role="dialog" style="padding-left: 50px" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-xl" role="document" style="max-width: 50%">
+                                <div id="ctl00_ContentPlaceHolder1_Div8" class="modal-content">
+                                    <div class="modal-header" style="background-color: cornflowerblue !important; color: white !important;">
+
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true" class="croos-icon-cls">&times;</span>
+                                        </button>
+                                        <h3 style="color: white" class="modal-title" id="exampleModalLongTitleAdhar">Please enter a valid 6-digit OTP</h3>
+
+                                    </div>
+                                    <div class="modal-body">
+
+
+                                        <div id="ctl00_ContentPlaceHolder1_timeout_divAdhar" class="top-right alert alert-danger" role="alert">
+                                            <span id="ctl00_ContentPlaceHolder1_countAdhar"></span>
+                                        </div>
+
+                                        
+
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="inputfield gap_cs_cls">
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar" type="text" maxlength="1" id="enter_otp_adhar" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar1" type="text" maxlength="1" id="enter_otp_adhar1" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar1&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar2" type="text" maxlength="1" id="enter_otp_adhar2" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar2&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar3" type="text" maxlength="1" id="enter_otp_adhar3" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar3&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar4" type="text" maxlength="1" id="enter_otp_adhar4" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar4&#39;,this)" />
+                                                    <input name="ctl00$ContentPlaceHolder1$enter_otp_adhar5" type="text" maxlength="1" onchange="javascript:setTimeout(&#39;__doPostBack(\&#39;ctl00$ContentPlaceHolder1$enter_otp_adhar5\&#39;,\&#39;\&#39;)&#39;, 0)" onkeypress="if (WebForm_TextBoxKeyHandler(event) == false) return false;" id="enter_otp_adhar5" class="form-control" onkeyup="return runScriptAdhar(event,&#39;enter_otp_adhar5&#39;,this)" oninput="handleTextChangeAdhar()" />
+
+                                                </div>
+                                            </div>
+
+                                            <div id="ctl00_ContentPlaceHolder1_div10Adhar" class="col-md-12" style="display: none">
+                                                <input type="submit" name="ctl00$ContentPlaceHolder1$resendOtpAdhar" value="Resend OTP" id="ctl00_ContentPlaceHolder1_resendOtpAdhar" class="resendOtp" />
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+
+                                </div>
+
+                            </div>
+                        </div>
+
+
+
+                        <div class="modal fade  bs-example-modal-sm" id="exampleModalLong2" tabindex="-1" data-backdrop="static" role="dialog" style="padding-left: 50px" aria-labelledby="exampleModalLongTitle2" aria-hidden="true">
+                            <div class="modal-dialog modal-xl" role="document" style="max-width: 50%">
+                                <div id="ctl00_ContentPlaceHolder1_Div7" class="modal-content">
+                                    <div class="modal-header" style="background-color: cornflowerblue !important; color: white !important;">
+                                        <h3 style="color: white" class="modal-title" id="exampleModalLongTitle2">Alert</h3>
+
+                                    </div>
+                                    <div class="modal-body">
+
+                                        <span id="ctl00_ContentPlaceHolder1_endTimeLabel" style="margin-top: 10px; margin-bottom: 10px; color: black; font-size: 24px; font-family: Arial; font-style: bold;"></span>
+                                        <br />
+
+                                        <span id="ctl00_ContentPlaceHolder1_endTimeLabe2" style="margin-top: 10px; margin-bottom: 10px; color: red; font-size: 24px; font-family: Arial; font-style: bold;">Do you want to proceed?</span>
+                                        <br />
+                                        <br />
+                                        <div class="row" align="center">
+
+                                            <div class="col-md-5">
+                                                <input type="submit" name="ctl00$ContentPlaceHolder1$Btn_dialog_yes" value="Yes" id="ctl00_ContentPlaceHolder1_Btn_dialog_yes" class="btn btn-block btn-success" style="width:100px;" />
+
+                                            </div>
+
+                                            <div class="col-md-2">
+                                            </div>
+
+                                            <div class="col-md-5">
+                                                <input type="submit" name="ctl00$ContentPlaceHolder1$Btn_dialog_No" value="No" id="ctl00_ContentPlaceHolder1_Btn_dialog_No" class="btn btn-block btn-success" style="width:100px;" />
+
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                        
+                      <div class="modal fade bs-example-modal-sm" id="modal_ekyc_mobile" tabindex="-1" data-backdrop="static" role="dialog" style="padding-left: 50px" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+                            <div class="modal-dialog modal-xl" role="document" style="max-width: 50%">
+                                <div id="ctl00_ContentPlaceHolder1_Div9" class="modal-content">
+                                    <div class="modal-header" style="background-color: cornflowerblue !important; color: white !important;">
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">X</span></button>
+                                        <h3 class="modal-title" style="color:#FFF; font:700">Link Mobile Number first to download e-RC.</h3>
+                                        
+
+                                    </div>
+                                    <div class="modal-body">
+                                     
+                                        <div id="ctl00_ContentPlaceHolder1_ekyc_mobile_update" class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label>Enter Mobile Number<span style="color: red;"> *</span></label>
+                                                    <input name="ctl00$ContentPlaceHolder1$ekyc_update_mobile" type="text" maxlength="10" id="ctl00_ContentPlaceHolder1_ekyc_update_mobile" class="form-control" PlaceHolder="Enter Mobile Number" />
+                                                    <br />
+                                                    <input type="submit" name="ctl00$ContentPlaceHolder1$btn_sendotp_button" value="SEND OTP" id="ctl00_ContentPlaceHolder1_btn_sendotp_button" class="btn btn-primary" />
+                                                    <br />
+                                                    
+                                                    <br />
+
+                                                    
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <!-- /.modal-content -->
+                            </div>
+                            <!-- /.modal-dialog -->
+                        </div>
+
+
+                    </div>
+                </section>
+                <center>
+                    <div>
+                            <div id="ctl00_ContentPlaceHolder1_UpdateProgress1" style="display:none;">
+			
+                                <div class="loader">
+                                    <img id="ctl00_ContentPlaceHolder1_Image11" src="../Images/load.gif" style="width:150px;border-width:0px;" />
+                                </div>
+                            
+		</div>
+                        <br />
+                    </div>
+                </center>
+            </div>
+        
+	</div>
+    <script type="text/javascript" src="/Digitalportal/assets/js/download.js"></script>
+
+    <script type="text/javascript">
+
+        function startTimer() {
+            var countDownDate = new Date().getTime() + 120000;
+            var x = setInterval(function () {
+                var now = new Date().getTime();
+                var distance = countDownDate - now;
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                if (minutes == 0) {
+                    $("#ctl00_ContentPlaceHolder1_count").html("Submit your otp  " + seconds + " seconds");
+                } else {
+                    $("#ctl00_ContentPlaceHolder1_count").html("Please Enter Valid OTP " + minutes + " minutes " + seconds + " seconds ");
+                }
+
+                if (distance < 0) {
+                    clearInterval(x);
+
+                    document.getElementById("ctl00_ContentPlaceHolder1_timeout_div").setAttribute("style", "display:none;");
+
+                    document.getElementById("ctl00_ContentPlaceHolder1_divResendBtn").style.display = "block";
+
+
+                }
+            }, 1000);
+        }
+
+        function startTimerAdhar() {
+            var countDownDate = new Date().getTime() + 120000;
+            var x = setInterval(function () {
+                var now = new Date().getTime();
+                var distance = countDownDate - now;
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                if (minutes == 0) {
+                    $("#ctl00_ContentPlaceHolder1_countAdhar").html("Submit your otp  " + seconds + " seconds");
+                } else {
+                    $("#ctl00_ContentPlaceHolder1_countAdhar").html("Please Enter Valid OTP " + minutes + " minutes " + seconds + " seconds ");
+                }
+
+                if (distance < 0) {
+                    clearInterval(x);
+
+                    document.getElementById("ctl00_ContentPlaceHolder1_timeout_divAdhar").setAttribute("style", "display:none;");
+
+                    document.getElementById("ctl00_ContentPlaceHolder1_divResendBtn").style.display = "block";
+
+
+                }
+            }, 1000);
+        };
+
+        function handleTextChange() {
+            //lenth check 4 digit
+            var enter_otp = document.getElementById('enter_otp');
+            var enter_otp1 = document.getElementById('enter_otp1');
+            var enter_otp2 = document.getElementById('enter_otp2');
+            var enter_otp3 = document.getElementById('enter_otp3');
+            var parameterValue = enter_otp.value + enter_otp1.value + enter_otp2.value + enter_otp3.value;
+            if (parameterValue.length === 4) {
+                enter_otp.focus();
+            }
+
+        };
+
+        function handleTextChangeAdhar() {
+            //lenth check 4 digit
+            var enter_otp_adhar = document.getElementById('enter_otp_adhar');
+            var enter_otp_adhar1 = document.getElementById('enter_otp_adhar1');
+            var enter_otp_adhar2 = document.getElementById('enter_otp_adhar2');
+            var enter_otp_adhar3 = document.getElementById('enter_otp_adhar3');
+            var enter_otp_adhar4 = document.getElementById('enter_otp_adhar4');
+            var enter_otp_adhar5 = document.getElementById('enter_otp_adhar5');
+            var parameterValue = enter_otp_adhar.value + enter_otp_adhar1.value + enter_otp_adhar2.value + enter_otp_adhar3.value + enter_otp_adhar4.value + enter_otp_adhar5.value;
+            if (parameterValue.length === 6) {
+                enter_otp_adhar.focus();
+            }
+
+        };
+
+        function showmodal(type) {
+            if (type == 1) {
+                $('#enter_otp1').focus();
+                document.getElementById("ctl00_ContentPlaceHolder1_timeout_div").setAttribute("style", "display:none;");
+                document.getElementById("ctl00_ContentPlaceHolder1_divResendBtn").style.display = "block";
+            }
+
+            $("#exampleModalLong").modal('show');
+
+        };
+
+        function showmodal2(type) {
+
+            if (type == 1) {
+               
+                $("#ctl00_ContentPlaceHolder1_endTimeLabel").html("The Mobile number not selected will be delinked from your family.");
+            }
+            else {
+                $("#ctl00_ContentPlaceHolder1_endTimeLabel").html("");
+            }
+           
+
+            $("#exampleModalLong2").modal('show');
+        };
+
+
+
+        function showmodalAdhar(type) {
+            if (type == 1) {
+                $('#enter_otp1').focus();
+                document.getElementById("ctl00_ContentPlaceHolder1_timeout_div").setAttribute("style", "display:none;");
+                document.getElementById("ctl00_ContentPlaceHolder1_divResendBtn").style.display = "block";
+            }
+
+            $("#exampleModalLongAdhar").modal('show');
+
+        };
+
+        function hidemodal2() {
+            $("#exampleModalLong2").modal('hide');
+            $(".modal-backdrop").remove();
+        };
+
+        function openaddmobileshow() {
+            $("#modal_ekyc_mobile").modal('show');
+            
+        }
+
+
+        function openaddmobilehide() {
+            $("#modal_ekyc_mobile").modal('hide');
+            $(".modal-backdrop").remove();
+        };
+
+        function runScript(e, Id, obj) {
+            //  alert(e.keyCode)
+            if (e.keyCode == 13) {
+
+                $("#Btn_confrm").click(); //jquery
+                document.getElementById("Btn_confrm").click(); //javascript
+            }
+            if (e.keyCode != 8 && e.keyCode != 46) {
+
+                if (Id == 'enter_otp') {
+                    $('#enter_otp1').focus();
+                }
+                if (Id == 'enter_otp1') {
+                    $('#enter_otp2').focus();
+                }
+                if (Id == 'enter_otp2') {
+                    $('#enter_otp3').focus();
+                }
+
+            }
+
+            var code = (e.which) ? e.which : e.keyCode;
+
+            if (code >= 48 && code <= 57) { return true; }
+            else {
+                // $(obj).val('');
+                return false;
+            }
+        };
+
+        function runScriptAdhar(e, Id, obj) {
+            //  alert(e.keyCode)
+            if (e.keyCode == 13) {
+
+                $("#Btn_confrm").click(); //jquery
+                document.getElementById("Btn_confrm").click(); //javascript
+            }
+            if (e.keyCode != 8 && e.keyCode != 46) {
+
+                if (Id == 'enter_otp_adhar') {
+                    $('#enter_otp_adhar1').focus();
+                }
+                if (Id == 'enter_otp_adhar1') {
+                    $('#enter_otp_adhar2').focus();
+                }
+                if (Id == 'enter_otp_adhar2') {
+                    $('#enter_otp_adhar3').focus();
+                }
+                if (Id == 'enter_otp_adhar3') {
+                    $('#enter_otp_adhar4').focus();
+                }
+                if (Id == 'enter_otp_adhar4') {
+                    $('#enter_otp_adhar5').focus();
+                }
+
+            }
+
+            var code = (e.which) ? e.which : e.keyCode;
+
+            if (code >= 48 && code <= 57) { return true; }
+            else {
+                // $(obj).val('');
+                return false;
+            }
+        };
+
+    </script>
+
+
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!--=== Footer Version 1 ===-->
+                    <div class="footer-v1">
+                        <div class="footer">
+                            <div class="container">
+                                <div class="row">
+                                    <!-- About -->
+                                    <div class="col-md-3 md-margin-bottom-40">
+                                        <img id="logo-footer" class="footer-logo" src="assets/img/nic-logo.png"
+                                            alt="wbpds-logo">
+                                        <p>
+                                            Online Ration Card Life Cycle Management is offical website of Department
+                                of Food &nbsp; Supplies, Govt, of West Bengal
+                                        </p>
+                                        <p>
+                                            This website is designed and developed by NIC, Government of India.
+                                        </p>
+                                    </div>
+                                    <!--/col-md-3-->
+                                    <!-- End About -->
+                                    <!-- Latest -->
+                                    <div class="col-md-3 md-margin-bottom-40">
+                                        <div class="posts">
+                                            <div class="headline">
+                                                <h2>Site Info.</h2>
+                                            </div>
+                                            <ul class="list-unstyled latest-list">
+                                                <li><a href="#">Last Updated On</a> <small>July 5, 2026</small> </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <!--/col-md-3-->
+                                    <!-- End Latest -->
+                                    <!-- Link List -->
+                                    <div class="col-md-3 md-margin-bottom-40">
+                                        <div class="headline">
+                                            <h2>Useful Links</h2>
+                                        </div>
+                                        <ul class="list-unstyled link-list">
+                                            
+                                            <li><a href="rptForUsers/Contact_us.aspx">Departmental Info.</a><i class="fa fa-angle-right"></i></li>
+                                            <li style="color: white;">Visitor Count : <strong>
+                                                <span id="ctl00_lblVisitorCount"></span></strong></li>
+                                        </ul>
+                                    </div>
+                                    <!--/col-md-3-->
+                                    <!-- End Link List -->
+                                    <!-- Address -->
+                                    <div class="col-md-3 map-img md-margin-bottom-40">
+                                        <div class="headline">
+                                            <h2>Contact Us</h2>
+                                        </div>
+                                        <address class="md-margin-bottom-40">
+                                            11A, Mirza Ghalib Street,
+                                <br />
+                                            Kolkata - 700087, West Bengal
+                                <br />
+                                            Phone: 1800 345 5505 / 1967 (TOLL FREE)
+                                <br />
+                                        </address>
+                                    </div>
+                                    <!--/col-md-3-->
+                                    <!-- End Address -->
+                                </div>
+                            </div>
+                        </div>
+                        <!--/footer-->
+                        <div class="copyright">
+                            <div class="container">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p>
+                                            <a href="Disclaimer.aspx" target="_blank">Disclaimer</a> | <a href="#">Terms of Service</a>
+                                        </p>
+                                    </div>
+                                    <!-- Social Links -->
+                                    <div class="col-md-6">
+                                        <ul class="footer-socials list-inline">
+                                            <li><a href="#" class="tooltips" data-toggle="tooltip" data-placement="top" title=""
+                                                data-original-title="Facebook"><i class="fa fa-facebook"></i></a></li>
+                                            <li><a href="#" class="tooltips" data-toggle="tooltip" data-placement="top" title=""
+                                                data-original-title="Google Plus"><i class="fa fa-google-plus"></i></a></li>
+                                        </ul>
+                                    </div>
+                                    <!-- End Social Links -->
+                                </div>
+                            </div>
+                        </div>
+                        <!--/copyright-->
+                    </div>
+                    <!--=== End Footer Version 1 ===-->
+                </div>
+
+            
+</div>
+        <!--/wrapper-->
+        <!-- JS Global Compulsory -->
+        <script type="text/javascript" src="../assets/plugins/jquery/jquery.min.js"></script>
+        <script type="text/javascript" src="../assets/plugins/jquery/jquery-migrate.min.js"></script>
+        <script type="text/javascript" src="../assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+        <!-- JS Implementing Plugins -->
+        <script type="text/javascript" src="../assets/plugins/back-to-top.js"></script>
+        <script type="text/javascript" src="../assets/plugins/smoothScroll.js"></script>
+        <script type="text/javascript" src="../assets/plugins/jquery.parallax.js"></script>
+        <script type="text/javascript" src="../assets/plugins/counter/waypoints.min.js"></script>
+        <script type="text/javascript" src="../assets/plugins/counter/jquery.counterup.min.js"></script>
+        <script type="text/javascript" src="../assets/plugins/parallax-slider/js/modernizr.js"></script>
+        <script type="text/javascript" src="../assets/plugins/parallax-slider/js/jquery.cslider.js"></script>
+        <script type="text/javascript" src="../assets/plugins/owl-carousel/owl.carousel.js"></script>
+        <!-- JS Customization -->
+        <script type="text/javascript" src="../assets/js/custom.js"></script>
+        <!-- JS Page Level -->
+        <script type="text/javascript" src="../assets/js/app.js"></script>
+        <script type="text/javascript" src="../assets/js/plugins/owl-carousel.js"></script>
+        <script type="text/javascript" src="../assets/js/plugins/style-switcher.js"></script>
+        <script type="text/javascript" src="../assets/js/plugins/parallax-slider.js"></script>
+        <script type="text/javascript">
+            jQuery(document).ready(function () {
+                App.init();
+                App.initCounter();
+                App.initParallaxBg();
+                OwlCarousel.initOwlCarousel();
+                StyleSwitcher.initStyleSwitcher();
+                ParallaxSlider.initParallaxSlider();
+            });
+        </script>
+        <script type="text/javascript">
+            $(document).ready(function () {
+                $("#myBtn").click(function () {
+                    $("#myModal").modal();
+                });
+            });
+        </script>
+        
+        <!--[if lt IE 9]>
+    <script src="assets/plugins/respond.js"></script>
+    <script src="assets/plugins/html5shiv.js"></script>
+    <script src="assets/plugins/placeholder-IE-fixes.js"></script>
+    <![endif]-->
+    
+
+<script type="text/javascript">
+//<![CDATA[
+Sys.Application.add_init(function() {
+    $create(Sys.UI._UpdateProgress, {"associatedUpdatePanelId":"ctl00_ContentPlaceHolder1_upForm3","displayAfter":0,"dynamicLayout":true}, null, null, $get("ctl00_ContentPlaceHolder1_UpdateProgress1"));
+});
+//]]>
+</script>
+</form>
+  </body>
+</html>

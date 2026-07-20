@@ -32,7 +32,7 @@ import {
   Package, Clock, Truck, CheckCircle, CheckCircle2, XCircle,
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
-  UserCheck, UserX, Store, AlertCircle,
+  UserCheck, UserX, Store, AlertCircle, FileText, Download,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -424,6 +424,18 @@ export default function AdminDashboard() {
                               <TableCell className="font-medium text-sm">₹{order.amount}</TableCell>
                               <TableCell>
                                 <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>{order.status}</Badge>
+                                {(() => {
+                                  const pdfs = (order as any).rationCardPdfs ?? [];
+                                  const total = order.quantity ?? 1;
+                                  const uploaded = pdfs.length;
+                                  if (total === 0) return null;
+                                  return (
+                                    <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${uploaded >= total ? "text-emerald-600" : "text-amber-600"}`}>
+                                      <FileText className="w-3 h-3" />
+                                      {uploaded}/{total} PDF{total !== 1 ? "s" : ""}
+                                    </div>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell onClick={(e) => e.stopPropagation()}>
                                 <div className="flex flex-col gap-1.5 min-w-[130px]">
@@ -733,6 +745,63 @@ export default function AdminDashboard() {
                     </div>
                   </section>
                 )}
+
+                {(() => {
+                  const allCards = [
+                    { cardIndex: 0, name: selectedOrder.customerName, rationCardNumber: selectedOrder.rationCardNumber, cardType: selectedOrder.cardType },
+                    ...((selectedOrder.familyCards ?? []) as any[]).map((fc: any, i: number) => ({
+                      cardIndex: i + 1,
+                      name: fc.customerName,
+                      rationCardNumber: fc.rationCardNumber,
+                      cardType: fc.cardType,
+                    })),
+                  ];
+                  const pdfs: { cardIndex: number; pdfUrl: string; uploadedAt: string }[] = (selectedOrder as any).rationCardPdfs ?? [];
+                  const uploadedCount = pdfs.length;
+                  const total = allCards.length;
+                  return (
+                    <section>
+                      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-2">
+                        <FileText className="w-3.5 h-3.5" /> Ration Card PDFs
+                        <span className={`ml-auto text-xs font-semibold px-2 py-0.5 rounded-full border ${uploadedCount >= total ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200"}`}>
+                          {uploadedCount}/{total} uploaded
+                        </span>
+                      </h3>
+                      <div className="rounded-lg border border-slate-200 overflow-hidden divide-y divide-slate-100">
+                        {allCards.map((card) => {
+                          const entry = pdfs.find((p) => p.cardIndex === card.cardIndex);
+                          return (
+                            <div key={card.cardIndex} className="flex items-center gap-3 px-3 py-2.5 text-xs bg-white hover:bg-slate-50 transition-colors">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-slate-800 truncate">{card.name}</p>
+                                <p className="text-slate-500 font-mono">{card.rationCardNumber} · {card.cardType}</p>
+                                {entry && (
+                                  <p className="text-slate-400 mt-0.5">
+                                    Uploaded {new Date(entry.uploadedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                  </p>
+                                )}
+                              </div>
+                              {entry ? (
+                                <a
+                                  href={entry.pdfUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="shrink-0 flex items-center gap-1 text-primary border border-primary/30 bg-primary/5 hover:bg-primary/10 rounded-md px-2.5 py-1.5 font-semibold transition-colors"
+                                >
+                                  <Download className="w-3.5 h-3.5" /> Download
+                                </a>
+                              ) : (
+                                <span className="shrink-0 text-amber-500 flex items-center gap-1 border border-amber-200 bg-amber-50 rounded-md px-2.5 py-1.5">
+                                  <AlertCircle className="w-3.5 h-3.5" /> Pending
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  );
+                })()}
 
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Delivery Address</h3>
