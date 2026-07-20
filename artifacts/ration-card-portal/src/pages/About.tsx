@@ -1,80 +1,118 @@
-import { Navbar, Footer, BRAND } from "@/components/layout";
-import { Shield, Users, Award, Clock } from "lucide-react";
+import { Navbar, Footer } from "@/components/layout";
 import { usePageTitle } from "@/hooks/use-page-title";
+import { Target, Eye, Heart, AlertTriangle } from "lucide-react";
+
+const pillars = [
+  {
+    icon: Target,
+    title: "Our mission",
+    desc: "Make ration card portability practical for every household, with a card that lasts.",
+  },
+  {
+    icon: Eye,
+    title: "Our vision",
+    desc: "A state where every beneficiary carries a durable, scannable ration card in their wallet.",
+  },
+  {
+    icon: Heart,
+    title: "Our values",
+    desc: "Transparency, affordability, and respect for the citizens we serve.",
+  },
+];
+
+const stats = [
+  { value: "2,00,000+", label: "Cards Delivered" },
+  { value: "1,500+", label: "Registered Operators" },
+  { value: "28", label: "States Covered" },
+];
 
 export default function About() {
   usePageTitle("About Us");
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
 
-      <div className="bg-primary/5 border-b border-primary/10 py-16">
-        <div className="container mx-auto px-4 max-w-3xl text-center">
-          <h1 className="text-4xl font-bold text-slate-900 mb-4">About {BRAND.name}</h1>
-          <p className="text-lg text-slate-600 leading-relaxed">
-            A modern, citizen-friendly digital platform based in {BRAND.city} to help millions of beneficiaries obtain high-quality PVC printed ration cards quickly and conveniently.
-          </p>
-        </div>
-      </div>
-
-      <main className="flex-1 py-16">
-        <div className="container mx-auto px-4 max-w-4xl space-y-16">
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-4">Our Mission</h2>
-              <p className="text-slate-600 leading-relaxed mb-4">
-                We bridge the gap between digital governance and grassroots citizens. Every household deserves a durable, wallet-size ration card that doesn't fade, tear, or become unusable within months.
+      <main className="flex-1">
+        {/* Hero section */}
+        <section className="py-16 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-amber-500 mb-3">
+              About Us
+            </p>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 leading-tight mb-6">
+              An initiative to support citizens of West Bengal
+            </h1>
+            <div className="space-y-4 text-slate-600 leading-relaxed">
+              <p>
+                In West Bengal, the Department of Food &amp; Supplies issues an{" "}
+                <span className="font-semibold text-slate-800">e-Ration Card</span> — a
+                downloadable digital version of the ration card available on the official
+                government website food.wb.gov.in. Beneficiaries can download and use it at
+                fair-price shops in printed or digital form.
               </p>
-              <p className="text-slate-600 leading-relaxed">
-                By connecting citizens with a network of certified local printing operators, we ensure fast, reliable, and affordable PVC card delivery to every corner of India.
+              <p>
+                <span className="font-semibold text-slate-800">e-Ration Card Portal</span> is a
+                private PVC card printing service managed by PVC ID Card Printing Service. We help
+                citizens print their already-approved e-Ration Cards on durable PVC cards for
+                convenience and ease of use. Customers simply upload their downloaded e-Ration Card
+                PDF, and we print and deliver it securely to their home.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { icon: Shield, label: "Secure Platform", desc: "End-to-end secure data handling" },
-                { icon: Users, label: "Pan-India Network", desc: "Operators in 28 states" },
-                { icon: Award, label: "Quality Assured", desc: "High-durability PVC material" },
-                { icon: Clock, label: "Fast Delivery", desc: "5–7 working days" },
-              ].map(({ icon: Icon, label, desc }) => (
-                <div key={label} className="bg-slate-50 rounded-xl p-5 border border-slate-200">
-                  <Icon className="w-7 h-7 text-primary mb-3" />
-                  <p className="font-semibold text-slate-900 text-sm mb-1">{label}</p>
-                  <p className="text-xs text-slate-500">{desc}</p>
+          </div>
+        </section>
+
+        {/* Mission / Vision / Values */}
+        <section className="bg-slate-100 py-12 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {pillars.map(({ icon: Icon, title, desc }) => (
+                <div key={title} className="bg-white rounded-2xl p-6 shadow-sm">
+                  <div className="w-11 h-11 rounded-xl bg-slate-800 flex items-center justify-center mb-4">
+                    <Icon className="w-5 h-5 text-amber-400" />
+                  </div>
+                  <p className="font-bold text-slate-900 mb-2">{title}</p>
+                  <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
+        </section>
 
-          <section className="bg-primary rounded-2xl p-10 text-white text-center">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div>
-                <p className="text-4xl font-bold mb-1">2,00,000+</p>
-                <p className="text-primary-foreground/80 text-sm">Cards Delivered</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold mb-1">1,500+</p>
-                <p className="text-primary-foreground/80 text-sm">Registered Operators</p>
-              </div>
-              <div>
-                <p className="text-4xl font-bold mb-1">28</p>
-                <p className="text-primary-foreground/80 text-sm">States Covered</p>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">Our Process</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {["Order Online", "Operator Assigned", "Card Printed", "Home Delivery"].map((step, i) => (
-                <div key={step} className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center mx-auto mb-4 font-bold text-lg">{i + 1}</div>
-                  <p className="font-medium text-slate-900">{step}</p>
+        {/* Stats banner */}
+        <section className="bg-primary py-12 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
+              {stats.map(({ value, label }) => (
+                <div key={label}>
+                  <p className="text-4xl font-bold mb-1">{value}</p>
+                  <p className="text-white/75 text-sm">{label}</p>
                 </div>
               ))}
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
+
+        {/* Disclaimer */}
+        <section className="py-12 px-4">
+          <div className="container mx-auto max-w-3xl">
+            <div className="rounded-2xl border border-amber-300 bg-amber-50 p-5 flex gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800 leading-relaxed">
+                <p className="font-bold mb-1">Disclaimer</p>
+                <p>
+                  This website is not affiliated with or endorsed by the Department of Food &amp;
+                  Supplies, Government of West Bengal. Official ration card services, including
+                  application and correction, are available free of cost at food.wb.gov.in. Our
+                  services are limited only to PVC printing of existing e-Ration Cards as uploaded
+                  by the customer.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
+
       <Footer />
     </div>
   );
