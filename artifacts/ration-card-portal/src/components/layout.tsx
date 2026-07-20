@@ -8,7 +8,7 @@ export const BRAND = {
   address: "26 Krishna Nibas, Kolkata, South 24 Parganas – 700001",
   city: "Kolkata, West Bengal",
   hours: "Monday – Saturday, 9:00 AM – 6:00 PM IST",
-  tagline: "A secure and efficient platform for citizens to order high-quality PVC printed ration cards.",
+  tagline: "This is a non-government website managed by PVC ID Card Portal Service. A secure and efficient platform for citizens to order high-quality and durable PVC cards. We are not affiliated by government.",
 };
 
 export function Navbar() {
