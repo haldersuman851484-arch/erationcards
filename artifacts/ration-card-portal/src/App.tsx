@@ -11,6 +11,7 @@ import DownloadCard from "./pages/DownloadCard";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
+import Privacy from "./pages/Privacy";
 
 import OrderUpload from "./pages/OrderUpload";
 import OperatorRegister from "./pages/operator/Register";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/about" component={About} />
       <Route path="/contact" component={Contact} />
       <Route path="/faq" component={FAQ} />
+      <Route path="/privacy" component={Privacy} />
 
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />
