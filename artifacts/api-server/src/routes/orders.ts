@@ -14,7 +14,8 @@ import { generateOrderNumber, parseOperatorToken } from "../lib/auth";
 const router = Router();
 
 const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"];
-const CARD_PRICE = 50;
+const SINGLE_CARD_PRICE = 70;
+const PUBLIC_CARD_PRICE = 50;
 const OPERATOR_CARD_PRICE = 40;
 
 type FamilyCardInput = { customerName: string; rationCardNumber: string; cardType: string };
@@ -90,7 +91,8 @@ router.post("/orders", async (req: Request, res: Response) => {
     const familyCards = sanitizeFamilyCards(body.familyCards);
     const quantity = 1 + familyCards.length;
     const isOperator = parseOperatorToken(req) !== null;
-    const amount = (isOperator ? OPERATOR_CARD_PRICE : CARD_PRICE) * quantity;
+    const perCard = quantity === 1 ? SINGLE_CARD_PRICE : (isOperator ? OPERATOR_CARD_PRICE : PUBLIC_CARD_PRICE);
+    const amount = perCard * quantity;
 
     const [order] = await db
       .insert(ordersTable)

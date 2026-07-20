@@ -33,7 +33,8 @@ const WB_DISTRICTS = [
 ];
 
 const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
-const CARD_PRICE = 40;
+const SINGLE_CARD_PRICE = 70;
+const MULTI_CARD_PRICE = 40;
 
 type FamilyCard = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -118,7 +119,7 @@ export default function PlaceOrder() {
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const amount = CARD_PRICE * totalCards;
+  const amount = totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE * totalCards;
 
   const upiLink = merchantUpiId
     ? `upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Ration+Card`
@@ -301,7 +302,7 @@ export default function PlaceOrder() {
                   {/* Price summary */}
                   <div className="bg-primary/5 rounded-xl p-3 border border-primary/10 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-slate-500">Total: {totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{CARD_PRICE}</p>
+                      <p className="text-xs text-slate-500">Total: {totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</p>
                       <p className="text-sm font-bold text-primary">₹{amount} total</p>
                     </div>
                     <Badge variant="outline" className="border-primary/30 text-primary text-xs">{cardType}</Badge>
@@ -406,7 +407,7 @@ export default function PlaceOrder() {
                           </a>
                           <div className="bg-primary/5 rounded-lg p-2.5 border border-primary/10">
                             <p className="text-xs text-primary font-semibold">Amount: ₹{amount}</p>
-                            <p className="text-xs text-slate-500">{totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{CARD_PRICE}</p>
+                            <p className="text-xs text-slate-500">{totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</p>
                           </div>
                         </div>
                       </div>

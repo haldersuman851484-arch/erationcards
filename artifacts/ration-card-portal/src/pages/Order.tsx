@@ -52,7 +52,8 @@ const WB_DISTRICTS = [
   "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-const CARD_PRICES: Record<string, number> = { AAY: 50, PHH: 50, SPHH: 50, "RKSY-I": 50, "RKSY-II": 50 };
+const SINGLE_CARD_PRICE = 70;
+const MULTI_CARD_PRICE = 50;
 
 export default function Order() {
   usePageTitle("Order PVC Card");
@@ -128,7 +129,7 @@ export default function Order() {
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const amount = (CARD_PRICES[cardType] || 50) * totalCards;
+  const amount = totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE * totalCards;
 
   function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -276,7 +277,7 @@ export default function Order() {
                     <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">
                       Get Your <span className="text-yellow-300">e Ration</span> Card
                     </h2>
-                    <p className="text-white/80 text-sm mt-2 max-w-xs">Order for <span className="font-bold">₹50/-</span> (inclusive of GST &amp; Normal Post charges)</p>
+                    <p className="text-white/80 text-sm mt-2 max-w-xs">1 card <span className="font-bold">₹70/-</span> · 2+ cards <span className="font-bold">₹50/-</span> each (incl. GST &amp; postage)</p>
                   </div>
                   <div className="flex flex-wrap gap-2 max-w-xs justify-end">
                     <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 gap-1"><ShieldCheck className="w-3 h-3" /> No Hologram</Badge>
@@ -507,7 +508,7 @@ export default function Order() {
                     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-slate-600">Rate per card</span>
-                        <span>₹{CARD_PRICES[cardType] || 50}</span>
+                        <span>₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</span>
                       </div>
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-slate-600">Total Cards</span>
