@@ -22,13 +22,13 @@ export function Navbar() {
           <span className="font-bold text-lg text-slate-900 tracking-tight">{BRAND.name}</span>
         </Link>
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
-          <Link href="/" className="hover:text-primary transition-colors">Home</Link>
-          <Link href="/order" className="hover:text-primary transition-colors">Order PVC</Link>
-          <Link href="/track" className="hover:text-primary transition-colors">Track Order</Link>
-          <Link href="/download" className="hover:text-primary transition-colors">Download e-Card</Link>
+          <Link href="/" className="hover:text-primary transition-colors pl-[40px] pr-[40px] pt-[8px] pb-[8px] text-background bg-primary border-t-[#ffffff] border-r-[#ffffff] border-b-[#ffffff] border-l-[#ffffff] border-t-[0.08px] border-r-[0.08px] border-b-[0.08px] border-l-[0.08px] rounded-tl-[6px] rounded-tr-[6px] rounded-br-[6px] rounded-bl-[6px]">Home</Link>
+          <Link href="/order" className="hover:text-primary transition-colors pl-[20px] pr-[20px] pt-[8px] pb-[8px] text-background bg-primary border-t-[#ffffff] border-r-[#ffffff] border-b-[#ffffff] border-l-[#ffffff] border-t-[0px] border-r-[0px] border-b-[0px] border-l-[0px] rounded-tl-[6px] rounded-tr-[6px] rounded-br-[6px] rounded-bl-[6px]">Order PVC</Link>
+          <Link href="/track" className="hover:text-primary transition-colors text-center pl-[15px] pr-[15px] pt-[8px] pb-[8px] text-background bg-primary border-t-[#ffffff] border-r-[#ffffff] border-b-[#ffffff] border-l-[#ffffff] border-t-[0.08px] border-r-[0.08px] border-b-[0.08px] border-l-[0.08px] rounded-tl-[6px] rounded-tr-[6px] rounded-br-[6px] rounded-bl-[6px]">Track Order</Link>
+          <Link href="/download" className="hover:text-primary transition-colors font-medium pl-[10px] pr-[10px] pt-[8px] pb-[8px] text-background bg-primary border-t-[0.08px] border-r-[0.08px] border-b-[0.08px] border-l-[0.08px] rounded-tl-[6px] rounded-tr-[6px] rounded-br-[6px] rounded-bl-[6px] border-t-[#ffffff] border-r-[#ffffff] border-b-[#ffffff] border-l-[#ffffff] text-center">Download e-Card</Link>
         </nav>
         <div className="flex items-center gap-4">
-          <Link href="/operator/login" className="text-sm font-medium text-slate-600 hover:text-primary hidden md:block">
+          <Link href="/operator/login" className="text-sm hover:text-primary hidden md:block font-medium pl-[10px] pr-[10px] pt-[8px] pb-[8px] text-background bg-primary border-t-[#ffffff] border-r-[#ffffff] border-b-[#ffffff] border-l-[#ffffff] border-t-[0.08px] border-r-[0.08px] border-b-[0.08px] border-l-[0.08px] rounded-tl-[6px] rounded-tr-[6px] rounded-br-[6px] rounded-bl-[6px]">
             Operator Login
           </Link>
           <Link href="/order">
