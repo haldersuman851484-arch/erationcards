@@ -1,5 +1,5 @@
 import { Navbar, Footer } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Download, ExternalLink, Shield, FileText, AlertCircle } from "lucide-react";
@@ -7,7 +7,11 @@ import { Download, ExternalLink, Shield, FileText, AlertCircle } from "lucide-re
 const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
 
 export default function DownloadCard() {
-  usePageTitle("Download e-Card");
+  useSeo({
+    title: "Download Digital e-Ration Card PDF | West Bengal",
+    description: "Download a digital PDF copy of your West Bengal e-Ration Card instantly. Enter your ration card number to get your digital copy.",
+    canonical: "https://erationcards.in/download",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

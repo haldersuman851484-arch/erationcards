@@ -1,5 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, Truck, Clock, MapPin, IndianRupee,
   Package, Navigation, AlertCircle, Camera, Mail, Phone,
@@ -28,7 +28,11 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Shipping() {
-  usePageTitle("Shipping Policy");
+  useSeo({
+    title: "Shipping Policy | PVC Card Portal — Ration Card Delivery",
+    description: "Learn how we ship your PVC ration card. 3–5 working days in West Bengal, 5–7 days pan-India. Shipping included in card price. No hidden charges.",
+    canonical: "https://erationcards.in/shipping",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

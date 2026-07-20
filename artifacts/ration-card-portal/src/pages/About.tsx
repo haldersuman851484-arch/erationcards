@@ -1,5 +1,5 @@
 import { Navbar, Footer } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { Target, Eye, Heart, AlertTriangle } from "lucide-react";
 
 const pillars = [
@@ -27,7 +27,11 @@ const stats = [
 ];
 
 export default function About() {
-  usePageTitle("About Us");
+  useSeo({
+    title: "About Us | PVC Card Portal — West Bengal Ration Card Printing",
+    description: "Learn about PVC Card Portal — a trusted private printing service that converts your West Bengal e-Ration Card into a durable, wallet-size PVC card.",
+    canonical: "https://erationcards.in/about",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

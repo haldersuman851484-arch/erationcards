@@ -16,7 +16,7 @@ import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot } from "@wo
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 
 const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
 
@@ -56,7 +56,11 @@ const SINGLE_CARD_PRICE = 70;
 const MULTI_CARD_PRICE = 50;
 
 export default function Order() {
-  usePageTitle("Order PVC Card");
+  useSeo({
+    title: "Apply for PVC Ration Card | ₹70 Only | Fast Delivery West Bengal",
+    description: "Fill out a simple form and get your PVC ration card printed and delivered to your door. Single card ₹70, family packs ₹50/card. All West Bengal districts served.",
+    canonical: "https://erationcards.in/order",
+  });
   const [step, setStep] = useState(1);
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const [familyCards, setFamilyCards] = useState<FamilyCardEntry[]>([]);

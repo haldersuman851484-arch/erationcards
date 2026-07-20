@@ -1,5 +1,5 @@
 import { Navbar, Footer } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -56,7 +56,11 @@ const FAQS = [
 ];
 
 export default function FAQ() {
-  usePageTitle("FAQ");
+  useSeo({
+    title: "FAQ — Frequently Asked Questions | PVC Ration Card Printing",
+    description: "Answers to common questions about ordering PVC ration cards, pricing, delivery timelines, payment methods, and more. West Bengal e-Ration Card printing service.",
+    canonical: "https://erationcards.in/faq",
+  });
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />

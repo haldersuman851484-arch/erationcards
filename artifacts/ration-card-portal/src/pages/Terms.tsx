@@ -1,5 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, FileCheck, ShoppingCart, Upload, RefreshCcw,
   Truck, Ban, Shield, Info, Phone, Mail, FilePen,
@@ -28,7 +28,11 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Terms() {
-  usePageTitle("Terms & Conditions");
+  useSeo({
+    title: "Terms & Conditions | PVC Card Portal",
+    description: "Read the Terms & Conditions of PVC Card Portal. Understand your rights and responsibilities when using our PVC ration card printing service.",
+    canonical: "https://erationcards.in/terms",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

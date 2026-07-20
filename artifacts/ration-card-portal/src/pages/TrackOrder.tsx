@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navbar, Footer } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,11 @@ const STATUS_BADGE: Record<string, string> = {
 };
 
 export default function TrackOrder() {
-  usePageTitle("Track Order");
+  useSeo({
+    title: "Track Your PVC Ration Card Order Status",
+    description: "Enter your order number or ration card number to check the real-time printing and delivery status of your PVC ration card.",
+    canonical: "https://erationcards.in/track",
+  });
   const [orderNumber, setOrderNumber] = useState("");
   const [rationCardNumber, setRationCardNumber] = useState("");
   const [searchParams, setSearchParams] = useState<{ orderNumber?: string; rationCardNumber?: string } | null>(null);

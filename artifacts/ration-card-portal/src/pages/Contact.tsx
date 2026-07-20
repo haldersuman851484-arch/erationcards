@@ -5,10 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Phone, Mail, MapPin, Clock } from "lucide-react";
 import { useState } from "react";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 
 export default function Contact() {
-  usePageTitle("Contact Support");
+  useSeo({
+    title: "Contact Support | PVC Card Portal",
+    description: "Get in touch with PVC Card Portal for help with your ration card order, delivery, or payment. Call +91 96359 60507 or email help@erationcards.in.",
+    canonical: "https://erationcards.in/contact",
+  });
   const [submitted, setSubmitted] = useState(false);
 
   function handleSubmit(e: React.FormEvent) {

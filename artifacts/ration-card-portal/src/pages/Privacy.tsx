@@ -1,5 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { AlertTriangle, Shield, Cookie, Database, Lock, Mail, Phone, UserCheck } from "lucide-react";
 
 const LAST_UPDATED = "20 July 2026";
@@ -25,7 +25,11 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Privacy() {
-  usePageTitle("Privacy & Cookie Policy");
+  useSeo({
+    title: "Privacy & Cookie Policy | PVC Card Portal",
+    description: "Read the Privacy and Cookie Policy of PVC Card Portal. Learn how we collect, use, and protect your personal data.",
+    canonical: "https://erationcards.in/privacy",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

@@ -1,5 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, RefreshCcw, CheckCircle2, XCircle, Clock,
   Mail, Phone, Ban, HelpCircle, IndianRupee,
@@ -44,7 +44,11 @@ const nonEligibleCases = [
 ];
 
 export default function Refund() {
-  usePageTitle("Refund Policy");
+  useSeo({
+    title: "Refund Policy | PVC Card Portal",
+    description: "Learn about our refund policy for PVC ration card orders. Find out when you're eligible for a refund and how to request one.",
+    canonical: "https://erationcards.in/refund",
+  });
 
   return (
     <div className="min-h-screen flex flex-col bg-white">

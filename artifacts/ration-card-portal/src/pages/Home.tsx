@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
 import { CreditCard, Search, Download, Users, FileText, CheckCircle, Clock, Shield, Truck, Star, Lock } from "lucide-react";
-import { usePageTitle } from "@/hooks/use-page-title";
+import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 
 function HeroPVCCard() {
@@ -178,7 +178,11 @@ function HeroPVCCard() {
 }
 
 export default function Home() {
-  usePageTitle();
+  useSeo({
+    title: "Order PVC Ration Card Online | West Bengal",
+    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all districts. ₹70 for single card, ₹50 each for 2+ cards.",
+    canonical: "https://erationcards.in/",
+  });
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
