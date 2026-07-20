@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: "Can I order multiple cards?",
-    a: "Yes, you can order up to 5 cards in a single order. The price is ₹50 per card regardless of quantity.",
+    a: "Yes, you can order many cards in a single order. The price is ₹50 per card regardless of quantity.",
   },
   {
     q: "Is the PVC card officially accepted?",
