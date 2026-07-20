@@ -43,7 +43,7 @@ const FAQS = [
   },
   {
     q: "What payment methods are accepted?",
-    a: "We accept UPI (GPay, PhonePe, Paytm), Net Banking, Debit/Credit Cards, and Cash on Delivery for most locations.",
+    a: "We accept UPI (GPay, PhonePe, Paytm), Net Banking.",
   },
   {
     q: "My order shows 'delivered' but I haven't received it. What do I do?",
