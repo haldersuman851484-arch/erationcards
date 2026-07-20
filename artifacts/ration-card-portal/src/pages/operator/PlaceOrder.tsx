@@ -177,7 +177,7 @@ export default function PlaceOrder() {
     createOrder.mutate(
       { data: { customerName: data.customerName, customerPhone: data.customerPhone, rationCardNumber: data.rationCardNumber, deliveryName: data.deliveryName, address: data.address, postOffice: data.postOffice, state: "West Bengal", district: data.district, pincode: data.pincode, cardType: data.cardType, familyCards, quantity: totalCards, amount, paymentStatus: "pending", paymentMethod: "upi", paymentScreenshotUrl: screenshotUrl } },
       {
-        onSuccess: (order) => { setIsUploading(false); setSuccess({ orderNumber: order.orderNumber }); },
+        onSuccess: (order) => { setIsUploading(false); setLocation(`/order-upload/${order.orderNumber}`); },
         onError: () => { setIsUploading(false); toast({ title: "Failed to place order", variant: "destructive" }); },
       }
     );

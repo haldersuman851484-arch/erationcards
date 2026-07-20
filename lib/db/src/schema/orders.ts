@@ -8,6 +8,12 @@ export type FamilyCard = {
   cardType: string;
 };
 
+export type CardPdfEntry = {
+  cardIndex: number;
+  pdfUrl: string;
+  uploadedAt: string;
+};
+
 export const orderStatusEnum = pgEnum("order_status", [
   "pending",
   "processing",
@@ -46,6 +52,7 @@ export const ordersTable = pgTable("orders", {
   paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
   paymentMethod: text("payment_method"),
   paymentScreenshotUrl: text("payment_screenshot_url"),
+  rationCardPdfs: jsonb("ration_card_pdfs").$type<CardPdfEntry[]>().notNull().default([]),
   status: orderStatusEnum("status").notNull().default("pending"),
   operatorId: integer("operator_id"),
   trackingNumber: text("tracking_number"),

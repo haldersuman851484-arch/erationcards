@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 
+import OrderUpload from "./pages/OrderUpload";
 import OperatorRegister from "./pages/operator/Register";
 import OperatorLogin from "./pages/operator/Login";
 import OperatorDashboard from "./pages/operator/Dashboard";
@@ -29,6 +30,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/order" component={Order} />
+      <Route path="/order-upload/:orderNumber" component={OrderUpload} />
       <Route path="/track" component={TrackOrder} />
       <Route path="/download" component={DownloadCard} />
       <Route path="/about" component={About} />

@@ -189,7 +189,7 @@ export default function Order() {
       {
         onSuccess: (order) => {
           setIsUploading(false);
-          setSuccess({ orderNumber: order.orderNumber });
+          setLocation(`/order-upload/${order.orderNumber}`);
         },
         onError: () => {
           setIsUploading(false);

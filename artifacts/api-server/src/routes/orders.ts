@@ -290,6 +290,7 @@ function formatOrder(o: any) {
     pincode: o.pincode,
     cardType: o.cardType,
     familyCards: o.familyCards ?? [],
+    rationCardPdfs: o.rationCardPdfs ?? [],
     quantity: o.quantity,
     amount: Number(o.amount),
     paymentStatus: o.paymentStatus,
