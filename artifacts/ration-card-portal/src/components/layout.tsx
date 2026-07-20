@@ -1,5 +1,7 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
+import { Menu, X } from "lucide-react";
 
 export const BRAND = {
   name: "PVC Card Portal",
@@ -11,33 +13,83 @@ export const BRAND = {
   tagline: "This is a non-government website managed by PVC ID Card Portal Service. A secure and efficient platform for citizens to order high-quality and durable PVC cards. We are not affiliated by government.",
 };
 
+const NAV_LINKS = [
+  { href: "/", label: "Home" },
+  { href: "/order", label: "Order PVC" },
+  { href: "/track", label: "Track Order" },
+  { href: "/download", label: "Download e-Card" },
+  { href: "/operator/login", label: "Operator Login" },
+];
+
 export function Navbar() {
+  const [open, setOpen] = useState(false);
+  const [location] = useLocation();
+
+  useEffect(() => { setOpen(false); }, [location]);
+
   return (
     <header className="border-b bg-white sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
             PVC
           </div>
           <span className="font-bold text-lg text-slate-900 tracking-tight">{BRAND.name}</span>
         </Link>
+
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-2 text-sm font-medium text-slate-600">
-          <Link href="/" className="px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">Home</Link>
-          <Link href="/order" className="px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">Order PVC</Link>
-          <Link href="/track" className="px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">Track Order</Link>
-          <Link href="/download" className="px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">Download e-Card</Link>
+          {NAV_LINKS.slice(0, 4).map(({ href, label }) => (
+            <Link key={href} href={href} className="px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
+              {label}
+            </Link>
+          ))}
         </nav>
+
         <div className="flex items-center gap-3">
+          {/* Operator Login — desktop only */}
           <Link href="/operator/login" className="hidden md:block text-sm font-medium px-4 py-1.5 rounded-md border border-slate-300 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all">
             Operator Login
           </Link>
-          <Link href="/order">
+
+          {/* Apply Now — always visible */}
+          <Link href="/order" className="hidden md:block">
             <Button className="bg-primary hover:bg-primary/90 text-white rounded-md px-6 shadow-sm">
               Apply Now
             </Button>
           </Link>
+
+          {/* Hamburger — mobile only */}
+          <button
+            className="md:hidden p-2 rounded-md text-slate-600 hover:bg-slate-100 transition-colors"
+            onClick={() => setOpen(!open)}
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu */}
+      {open && (
+        <div className="md:hidden border-t border-slate-200 bg-white px-4 pb-4 pt-3 space-y-2 shadow-lg">
+          {NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className="block w-full text-center py-2.5 rounded-md border border-slate-300 text-sm font-medium text-slate-700 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+            >
+              {label}
+            </Link>
+          ))}
+          <Link href="/order" className="block">
+            <Button className="w-full bg-primary hover:bg-primary/90 text-white rounded-md shadow-sm mt-1">
+              Apply Now
+            </Button>
+          </Link>
+        </div>
+      )}
     </header>
   );
 }
