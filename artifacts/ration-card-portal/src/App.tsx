@@ -13,6 +13,7 @@ import Contact from "./pages/Contact";
 import FAQ from "./pages/FAQ";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Refund from "./pages/Refund";
 
 import OrderUpload from "./pages/OrderUpload";
 import OperatorRegister from "./pages/operator/Register";
@@ -40,6 +41,7 @@ function Router() {
       <Route path="/faq" component={FAQ} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
+      <Route path="/refund" component={Refund} />
 
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />
