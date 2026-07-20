@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { LoginAdminBody } from "@workspace/api-zod";
-import { ADMIN_EMAIL, ADMIN_PASSWORD, createAdminToken, parseAdminToken } from "../lib/auth";
+import { getAdminCredentials, createAdminToken, parseAdminToken } from "../lib/auth";
 import { db } from "@workspace/db";
 import { paymentVerificationsTable, operatorsTable } from "@workspace/db";
 import { desc, sql, eq } from "drizzle-orm";
@@ -78,7 +78,8 @@ router.post("/admin/login", async (req: Request, res: Response) => {
   try {
     const body = LoginAdminBody.parse(req.body);
 
-    if (body.email !== ADMIN_EMAIL || body.password !== ADMIN_PASSWORD) {
+    const { email: adminEmail, password: adminPassword } = getAdminCredentials();
+    if (body.email !== adminEmail || body.password !== adminPassword) {
       res.status(401).json({ error: "Invalid admin credentials" });
       return;
     }

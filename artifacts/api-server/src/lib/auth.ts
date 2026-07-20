@@ -1,17 +1,28 @@
 import { Request } from "express";
+import jwt from "jsonwebtoken";
 
-export const ADMIN_EMAIL = process.env["ADMIN_EMAIL"] ?? "admin@rationcard.in";
-export const ADMIN_PASSWORD = process.env["ADMIN_PASSWORD"] ?? "Admin@1234";
+function getJwtSecret(): string {
+  const secret = process.env["SESSION_SECRET"];
+  if (!secret) throw new Error("SESSION_SECRET environment variable is not set");
+  return secret;
+}
+
+export function getAdminCredentials(): { email: string; password: string } {
+  const email = process.env["ADMIN_EMAIL"];
+  const password = process.env["ADMIN_PASSWORD"];
+  if (!email || !password) {
+    throw new Error("ADMIN_EMAIL and ADMIN_PASSWORD environment variables must be set");
+  }
+  return { email, password };
+}
 
 export function parseOperatorToken(req: Request): number | null {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
   try {
-    const decoded = Buffer.from(token, "base64").toString("utf8");
-    const data = JSON.parse(decoded) as { operatorId: number; exp: number };
-    if (data.exp < Date.now()) return null;
-    return data.operatorId;
+    const decoded = jwt.verify(token, getJwtSecret()) as { operatorId: number };
+    return decoded.operatorId;
   } catch {
     return null;
   }
@@ -22,30 +33,19 @@ export function parseAdminToken(req: Request): { email: string; role: string } |
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
   try {
-    const decoded = Buffer.from(token, "base64").toString("utf8");
-    const data = JSON.parse(decoded) as { email: string; role: string; exp: number };
-    if (data.exp < Date.now()) return null;
-    return { email: data.email, role: data.role };
+    const decoded = jwt.verify(token, getJwtSecret()) as { email: string; role: string };
+    return { email: decoded.email, role: decoded.role };
   } catch {
     return null;
   }
 }
 
 export function createOperatorToken(operatorId: number): string {
-  const payload = JSON.stringify({
-    operatorId,
-    exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  });
-  return Buffer.from(payload).toString("base64");
+  return jwt.sign({ operatorId }, getJwtSecret(), { expiresIn: "7d" });
 }
 
 export function createAdminToken(email: string, role: string): string {
-  const payload = JSON.stringify({
-    email,
-    role,
-    exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-  });
-  return Buffer.from(payload).toString("base64");
+  return jwt.sign({ email, role }, getJwtSecret(), { expiresIn: "7d" });
 }
 
 export function generateOrderNumber(): string {
