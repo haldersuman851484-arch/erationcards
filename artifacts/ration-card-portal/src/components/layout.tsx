@@ -66,14 +66,19 @@ export function Navbar() {
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            <span className="relative block w-5 h-5">
+              <Menu className={`w-5 h-5 absolute inset-0 transition-all duration-300 ${open ? "opacity-0 rotate-90 scale-75" : "opacity-100 rotate-0 scale-100"}`} />
+              <X className={`w-5 h-5 absolute inset-0 transition-all duration-300 ${open ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-75"}`} />
+            </span>
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
-      {open && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 pb-4 pt-3 space-y-2 shadow-lg">
+      {/* Mobile menu — always in DOM, animated with max-height + opacity */}
+      <div
+        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${open ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}
+      >
+        <div className="border-t border-slate-200 bg-white px-4 pb-4 pt-3 space-y-2 shadow-lg">
           {NAV_LINKS.map(({ href, label }) => (
             <Link
               key={href}
@@ -89,7 +94,7 @@ export function Navbar() {
             </Button>
           </Link>
         </div>
-      )}
+      </div>
     </header>
   );
 }
