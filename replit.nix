@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.libgbm
     pkgs.icu
     pkgs.gst_all_1.gst-plugins-base
     pkgs.gst_all_1.gstreamer

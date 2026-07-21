@@ -12,13 +12,13 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
       testIgnore: ["**/track-order-mobile.spec.ts"],
     },
     {
-      name: "mobile-webkit",
-      use: { ...devices["iPhone 12"] },
+      name: "mobile-chrome",
+      use: { ...devices["Pixel 5"] },
       testMatch: ["**/track-order-mobile.spec.ts"],
     },
   ],
