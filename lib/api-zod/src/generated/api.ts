@@ -57,6 +57,7 @@ export const ListOrdersResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -122,6 +123,7 @@ export const CreateOrderResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -164,6 +166,7 @@ export const TrackOrderResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -217,6 +220,7 @@ export const ListRecentOrdersResponseItem = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -259,6 +263,7 @@ export const GetOrderResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -275,6 +280,7 @@ export const UpdateOrderStatusParams = zod.object({
 export const UpdateOrderStatusBody = zod.object({
   "status": zod.string().optional(),
   "trackingNumber": zod.string().optional(),
+  "courierName": zod.string().optional(),
   "notes": zod.string().optional()
 })
 
@@ -306,6 +312,7 @@ export const UpdateOrderStatusResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -368,6 +375,7 @@ export const AssignOrderToOperatorResponse = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
@@ -542,6 +550,7 @@ export const GetOperatorOrdersResponseItem = zod.object({
   "operatorId": zod.number().nullish(),
   "operatorName": zod.string().nullish(),
   "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()

@@ -40,6 +40,8 @@ export interface Order {
   /** @nullable */
   trackingNumber?: string | null;
   /** @nullable */
+  courierName?: string | null;
+  /** @nullable */
   notes?: string | null;
   createdAt: string;
   updatedAt: string;

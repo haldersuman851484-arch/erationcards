@@ -56,6 +56,7 @@ export const ordersTable = pgTable("orders", {
   status: orderStatusEnum("status").notNull().default("pending"),
   operatorId: integer("operator_id"),
   trackingNumber: text("tracking_number"),
+  courierName: text("courier_name"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

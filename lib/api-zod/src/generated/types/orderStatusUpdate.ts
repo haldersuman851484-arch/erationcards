@@ -9,5 +9,6 @@
 export interface OrderStatusUpdate {
   status?: string;
   trackingNumber?: string;
+  courierName?: string;
   notes?: string;
 }

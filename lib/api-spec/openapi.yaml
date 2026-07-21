@@ -606,6 +606,8 @@ components:
           type: ["string", "null"]
         trackingNumber:
           type: ["string", "null"]
+        courierName:
+          type: ["string", "null"]
         notes:
           type: ["string", "null"]
         createdAt:
@@ -734,6 +736,8 @@ components:
         status:
           type: string
         trackingNumber:
+          type: string
+        courierName:
           type: string
         notes:
           type: string

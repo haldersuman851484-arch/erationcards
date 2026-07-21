@@ -241,6 +241,7 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
     const updates: Record<string, any> = { updatedAt: new Date() };
     if (body.status) updates.status = body.status;
     if (body.trackingNumber) updates.trackingNumber = body.trackingNumber;
+    if (body.courierName) updates.courierName = body.courierName;
     if (body.notes) updates.notes = body.notes;
 
     const [order] = await db.update(ordersTable).set(updates).where(eq(ordersTable.id, id)).returning();
@@ -300,6 +301,7 @@ function formatOrder(o: any) {
     operatorId: o.operatorId ?? null,
     operatorName: null as string | null,
     trackingNumber: o.trackingNumber ?? null,
+    courierName: o.courierName ?? null,
     notes: o.notes ?? null,
     createdAt: o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt),
     updatedAt: o.updatedAt instanceof Date ? o.updatedAt.toISOString() : String(o.updatedAt),

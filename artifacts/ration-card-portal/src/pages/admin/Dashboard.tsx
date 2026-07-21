@@ -32,7 +32,7 @@ import {
   Package, Clock, Truck, CheckCircle, CheckCircle2, XCircle,
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
-  UserCheck, UserX, Store, AlertCircle, FileText, Download,
+  UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -91,6 +91,12 @@ export default function AdminDashboard() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  const [dispatchForm, setDispatchForm] = useState<{
+    orderId: number;
+    courier: string;
+    tracking: string;
+  } | null>(null);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useGetCurrentAdmin({
     query: { queryKey: getGetCurrentAdminQueryKey() },
@@ -185,13 +191,18 @@ export default function AdminDashboard() {
     );
   }
 
-  function handleStatusUpdate(orderId: number, status: string) {
+  function handleStatusUpdate(
+    orderId: number,
+    status: string,
+    extra?: { courierName?: string; trackingNumber?: string }
+  ) {
     updateStatus.mutate(
-      { id: orderId, data: { status } },
+      { id: orderId, data: { status, ...extra } },
       {
         onSuccess: () => {
           toast({ title: "Order status updated." });
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
+          setDispatchForm(null);
         },
         onError: () => toast({ title: "Failed to update status", variant: "destructive" }),
       }
@@ -849,7 +860,18 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-3">
                     <Badge className={`${STATUS_BADGE[selectedOrder.status] || ""} border capitalize text-sm px-3 py-1`}>{selectedOrder.status}</Badge>
                     <span className="text-slate-400 text-xs">→ Update to:</span>
-                    <Select value="" onValueChange={(v) => handleStatusUpdate(selectedOrder.id, v)} disabled={updateStatus.isPending}>
+                    <Select
+                      value=""
+                      onValueChange={(v) => {
+                        if (v === "dispatched") {
+                          setDispatchForm({ orderId: selectedOrder.id, courier: "", tracking: "" });
+                        } else {
+                          setDispatchForm(null);
+                          handleStatusUpdate(selectedOrder.id, v);
+                        }
+                      }}
+                      disabled={updateStatus.isPending}
+                    >
                       <SelectTrigger className="w-40 h-8 text-xs" data-testid="select-dialog-status"><SelectValue placeholder="Change status…" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Pending</SelectItem>
@@ -860,10 +882,81 @@ export default function AdminDashboard() {
                       </SelectContent>
                     </Select>
                   </div>
-                  {selectedOrder.trackingNumber && (
-                    <div className="mt-2 bg-slate-50 rounded-lg p-2 border border-slate-200 text-xs">
-                      <span className="text-slate-500">Tracking: </span>
-                      <span className="font-mono font-medium text-primary">{selectedOrder.trackingNumber}</span>
+
+                  {/* Courier dispatch form — shown when "Dispatched" is selected */}
+                  {dispatchForm && dispatchForm.orderId === selectedOrder.id && (
+                    <div className="mt-3 bg-orange-50 rounded-xl p-4 border border-orange-200 space-y-3" data-testid="section-dispatch-form">
+                      <p className="text-xs font-semibold text-orange-800 flex items-center gap-1.5">
+                        <Send className="w-3.5 h-3.5" /> Mark as Dispatched — enter courier details
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-xs text-slate-500 mb-1 block">Courier</label>
+                          <Select
+                            value={dispatchForm.courier}
+                            onValueChange={(v) => setDispatchForm((f) => f ? { ...f, courier: v } : f)}
+                          >
+                            <SelectTrigger className="h-8 text-xs w-full" data-testid="select-dispatch-courier">
+                              <SelectValue placeholder="Select courier…" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="India Post">India Post</SelectItem>
+                              <SelectItem value="Delhivery">Delhivery</SelectItem>
+                              <SelectItem value="DTDC">DTDC</SelectItem>
+                              <SelectItem value="BlueDart">BlueDart</SelectItem>
+                              <SelectItem value="Ecom Express">Ecom Express</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-500 mb-1 block">Tracking number</label>
+                          <input
+                            data-testid="input-dispatch-tracking"
+                            type="text"
+                            placeholder="e.g. EW123456789IN"
+                            className="w-full h-8 rounded-md border border-slate-300 bg-white px-3 text-xs focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            value={dispatchForm.tracking}
+                            onChange={(e) => setDispatchForm((f) => f ? { ...f, tracking: e.target.value } : f)}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          data-testid="button-confirm-dispatch"
+                          disabled={!dispatchForm.courier || updateStatus.isPending}
+                          onClick={() => handleStatusUpdate(selectedOrder.id, "dispatched", {
+                            courierName: dispatchForm.courier,
+                            ...(dispatchForm.tracking ? { trackingNumber: dispatchForm.tracking } : {}),
+                          })}
+                          className="flex-1 h-8 rounded-md bg-orange-600 text-white text-xs font-semibold hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-1.5"
+                        >
+                          <Send className="w-3.5 h-3.5" /> Confirm Dispatch
+                        </button>
+                        <button
+                          onClick={() => setDispatchForm(null)}
+                          className="h-8 px-3 rounded-md border border-slate-300 text-xs text-slate-600 hover:bg-slate-100 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {(selectedOrder.trackingNumber || (selectedOrder as any).courierName) && (
+                    <div className="mt-2 bg-slate-50 rounded-lg p-2 border border-slate-200 text-xs flex flex-wrap gap-x-4 gap-y-1">
+                      {(selectedOrder as any).courierName && (
+                        <span>
+                          <span className="text-slate-500">Courier: </span>
+                          <span className="font-medium text-slate-800">{(selectedOrder as any).courierName}</span>
+                        </span>
+                      )}
+                      {selectedOrder.trackingNumber && (
+                        <span>
+                          <span className="text-slate-500">Tracking: </span>
+                          <span className="font-mono font-medium text-primary">{selectedOrder.trackingNumber}</span>
+                        </span>
+                      )}
                     </div>
                   )}
                 </section>
