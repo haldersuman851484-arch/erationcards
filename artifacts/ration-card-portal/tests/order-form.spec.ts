@@ -82,6 +82,25 @@ async function fillStep2(page: import("@playwright/test").Page) {
   await page.getByTestId("button-next-step2").click();
 }
 
+async function reachStep3(page: import("@playwright/test").Page) {
+  await fillStep1(page);
+  await expect(page.getByTestId("input-delivery-name")).toBeVisible({
+    timeout: 5000,
+  });
+  await fillStep2(page);
+  await expect(page.getByTestId("button-upload-screenshot")).toBeVisible({
+    timeout: 5000,
+  });
+  await page.setInputFiles('[data-testid="input-screenshot"]', {
+    name: "screenshot.jpg",
+    mimeType: "image/jpeg",
+    buffer: Buffer.from("fake-image-data"),
+  });
+  await expect(page.locator("text=Screenshot selected")).toBeVisible({
+    timeout: 3000,
+  });
+}
+
 test.describe("Order form", () => {
   test("completes all 3 steps and submits the order successfully", async ({
     page,
@@ -167,5 +186,101 @@ test.describe("Order form", () => {
     await expect(
       page.getByTestId("button-upload-screenshot")
     ).not.toBeVisible();
+  });
+
+  test("shows an error and stays on step 3 when the order API returns 500 after screenshot upload", async ({
+    page,
+  }) => {
+    await page.route("**/api/**", async (route, request) => {
+      const url = new URL(request.url());
+      const { pathname } = url;
+      const method = request.method();
+
+      if (pathname === "/api/payments/upi-config" && method === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ merchantUpiId: "test@upi" }),
+        });
+      } else if (
+        pathname === "/api/payments/upload-screenshot" &&
+        method === "POST"
+      ) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ url: "https://example.com/screenshot.jpg" }),
+        });
+      } else if (pathname === "/api/orders" && method === "POST") {
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Internal server error" }),
+        });
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto("/order");
+    await reachStep3(page);
+
+    const submitButton = page.getByTestId("button-submit-order");
+    await expect(submitButton).toBeEnabled({ timeout: 3000 });
+    await submitButton.click();
+
+    await expect(page.locator("text=Failed to place order")).toBeVisible({
+      timeout: 8000,
+    });
+    await expect(page).not.toHaveURL(/\/order-upload\//, { timeout: 3000 });
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
+  });
+
+  test("shows an upload error and does not call the order API when screenshot upload fails", async ({
+    page,
+  }) => {
+    let orderApiCalled = false;
+
+    await page.route("**/api/**", async (route, request) => {
+      const url = new URL(request.url());
+      const { pathname } = url;
+      const method = request.method();
+
+      if (pathname === "/api/payments/upi-config" && method === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ merchantUpiId: "test@upi" }),
+        });
+      } else if (
+        pathname === "/api/payments/upload-screenshot" &&
+        method === "POST"
+      ) {
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Upload service unavailable" }),
+        });
+      } else if (pathname === "/api/orders" && method === "POST") {
+        orderApiCalled = true;
+        await route.continue();
+      } else {
+        await route.continue();
+      }
+    });
+
+    await page.goto("/order");
+    await reachStep3(page);
+
+    const submitButton = page.getByTestId("button-submit-order");
+    await expect(submitButton).toBeEnabled({ timeout: 3000 });
+    await submitButton.click();
+
+    await expect(page.getByText("Upload failed", { exact: true }).first()).toBeVisible({
+      timeout: 8000,
+    });
+    await expect(page).not.toHaveURL(/\/order-upload\//, { timeout: 3000 });
+    expect(orderApiCalled).toBe(false);
+    await expect(submitButton).toBeEnabled({ timeout: 5000 });
   });
 });
