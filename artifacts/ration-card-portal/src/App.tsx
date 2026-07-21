@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import React from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -29,8 +30,18 @@ import AdminDashboard from "./pages/admin/Dashboard";
 
 const queryClient = new QueryClient();
 
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  return (
+    <div key={location} className="page-enter">
+      {children}
+    </div>
+  );
+}
+
 function Router() {
   return (
+    <PageTransition>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/order" component={Order} />
@@ -57,6 +68,7 @@ function Router() {
       
       <Route component={NotFound} />
     </Switch>
+    </PageTransition>
   );
 }
 
