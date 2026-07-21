@@ -12,22 +12,13 @@
 # Error details
 
 ```
-Error: browserType.launch: Target page, context or browser has been closed
-Browser logs:
-
-<launching> /home/runner/workspace/.cache/ms-playwright/webkit-2311/pw_run.sh --inspector-pipe --headless --no-startup-window
-<launched> pid=4229
-[pid=4229][err] /home/runner/workspace/.cache/ms-playwright/webkit-2311/minibrowser-wpe/bin/MiniBrowser: error while loading shared libraries: libicudata.so.74: cannot open shared object file: No such file or directory
-Call log:
-  - <launching> /home/runner/workspace/.cache/ms-playwright/webkit-2311/pw_run.sh --inspector-pipe --headless --no-startup-window
-  - <launched> pid=4229
-  - [pid=4229][err] /home/runner/workspace/.cache/ms-playwright/webkit-2311/minibrowser-wpe/bin/MiniBrowser: error while loading shared libraries: libicudata.so.74: cannot open shared object file: No such file or directory
-  - [pid=4229] <gracefully close start>
-  - [pid=4229] <kill>
-  - [pid=4229] <will force kill>
-  - [pid=4229] <process did exit: exitCode=127, signal=null>
-  - [pid=4229] starting temporary directories cleanup
-  - [pid=4229] finished temporary directories cleanup
-  - [pid=4229] <gracefully close end>
-
+Error: browserType.launch: Executable doesn't exist at /home/runner/workspace/.cache/ms-playwright/webkit-2311/pw_run.sh
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     pnpm exec playwright install                           ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
 ```

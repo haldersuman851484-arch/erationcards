@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock } from "lucide-react";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Order Placed", icon: Clock, color: "text-yellow-500" },
@@ -149,6 +149,26 @@ export default function TrackOrder() {
                     <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                       <p className="text-xs text-slate-500 mb-0.5">Tracking Number</p>
                       <p className="font-mono font-semibold text-primary break-all">{order.trackingNumber}</p>
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-200" data-testid="delivery-address">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <p className="text-xs text-slate-500 font-medium">Delivery Address</p>
+                    </div>
+                    <p className="text-sm text-slate-800 leading-snug">
+                      {order.address}
+                    </p>
+                    <p className="text-sm text-slate-800 leading-snug">
+                      {order.district}, {order.state} – {order.pincode}
+                    </p>
+                  </div>
+
+                  {order.status === "dispatched" && (
+                    <div className="flex items-center gap-2.5 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5" data-testid="estimated-delivery">
+                      <CalendarClock className="w-4 h-4 text-orange-500 shrink-0" />
+                      <p className="text-sm text-orange-700 font-medium">Expected in 5–7 working days</p>
                     </div>
                   )}
                 </CardContent>
