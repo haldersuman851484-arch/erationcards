@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Navbar, Footer } from "@/components/layout";
+import { Navbar, Footer, BRAND } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle } from "lucide-react";
 
 const STATUS_STEPS = [
   { key: "pending", label: "Order Placed", icon: Clock, color: "text-yellow-500" },
@@ -49,6 +49,12 @@ export default function TrackOrder() {
   }
 
   const currentStepIdx = order ? STATUS_STEPS.findIndex(s => s.key === order.status) : -1;
+
+  const whatsAppUrl = order
+    ? `https://wa.me/${BRAND.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+        `Hi, I'd like to get updates on my order #${order.orderNumber} (Ration Card: ${order.rationCardNumber}). Please let me know the current status.`
+      )}`
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -109,40 +115,40 @@ export default function TrackOrder() {
           {order && (
             <div className="space-y-6" data-testid="order-tracking-result">
               <Card className="border-slate-200 shadow-sm">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg" data-testid="text-order-number">Order #{order.orderNumber}</CardTitle>
+                <CardHeader className="pb-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <CardTitle className="text-lg leading-tight" data-testid="text-order-number">Order #{order.orderNumber}</CardTitle>
                       <p className="text-sm text-slate-500 mt-1">Placed on {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</p>
                     </div>
-                    <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize`} data-testid="status-order">
+                    <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize shrink-0`} data-testid="status-order">
                       {order.status}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-500">Customer Name</p>
+                <CardContent className="space-y-4 pt-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="bg-slate-50 rounded-lg px-3 py-2.5">
+                      <p className="text-xs text-slate-500 mb-0.5">Customer Name</p>
                       <p className="font-medium text-slate-900" data-testid="text-customer-name">{order.customerName}</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500">Card Type</p>
+                    <div className="bg-slate-50 rounded-lg px-3 py-2.5">
+                      <p className="text-xs text-slate-500 mb-0.5">Card Type</p>
                       <p className="font-medium text-slate-900">{order.cardType}</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500">Ration Card No</p>
-                      <p className="font-medium text-slate-900 font-mono text-xs">{order.rationCardNumber}</p>
+                    <div className="bg-slate-50 rounded-lg px-3 py-2.5">
+                      <p className="text-xs text-slate-500 mb-0.5">Ration Card No</p>
+                      <p className="font-medium text-slate-900 font-mono text-xs break-all">{order.rationCardNumber}</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500">Amount Paid</p>
+                    <div className="bg-slate-50 rounded-lg px-3 py-2.5">
+                      <p className="text-xs text-slate-500 mb-0.5">Amount Paid</p>
                       <p className="font-medium text-emerald-600">₹{order.amount}</p>
                     </div>
                   </div>
                   {order.trackingNumber && (
                     <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
                       <p className="text-xs text-slate-500 mb-0.5">Tracking Number</p>
-                      <p className="font-mono font-semibold text-primary">{order.trackingNumber}</p>
+                      <p className="font-mono font-semibold text-primary break-all">{order.trackingNumber}</p>
                     </div>
                   )}
                 </CardContent>
@@ -176,6 +182,29 @@ export default function TrackOrder() {
                   </div>
                 </CardContent>
               </Card>
+
+              {whatsAppUrl && order.status !== "delivered" && (
+                <Card className="border-emerald-200 bg-emerald-50 shadow-sm">
+                  <CardContent className="pt-5 pb-5">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900">Want updates on WhatsApp?</p>
+                        <p className="text-xs text-slate-600 mt-0.5">Tap below to message us your order number and we'll keep you posted.</p>
+                      </div>
+                      <Button
+                        asChild
+                        className="shrink-0 w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe5d] text-white border-0 gap-2"
+                        data-testid="button-whatsapp-notify"
+                      >
+                        <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="w-4 h-4" />
+                          Notify me on WhatsApp
+                        </a>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           )}
         </div>
