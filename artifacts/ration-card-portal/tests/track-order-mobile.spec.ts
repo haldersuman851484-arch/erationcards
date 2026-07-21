@@ -29,6 +29,16 @@ const MOCK_ORDER = { ...MOCK_ORDER_BASE, status: "processing" };
 const MOCK_DISPATCHED_ORDER = { ...MOCK_ORDER_BASE, status: "dispatched" };
 const MOCK_PENDING_ORDER = { ...MOCK_ORDER_BASE, status: "pending" };
 const MOCK_DELIVERED_ORDER = { ...MOCK_ORDER_BASE, status: "delivered" };
+const MOCK_DISPATCHED_INDIA_POST = {
+  ...MOCK_ORDER_BASE,
+  status: "dispatched",
+  trackingNumber: "EE123456789IN",
+};
+const MOCK_DISPATCHED_UNKNOWN_TRACKING = {
+  ...MOCK_ORDER_BASE,
+  status: "dispatched",
+  trackingNumber: "UNKNWN12345",
+};
 
 test.describe("Track Order page — mobile layout", () => {
   test.use({ viewport: { width: 375, height: 812 } });
@@ -174,5 +184,52 @@ test.describe("Track Order page — estimated delivery banner", () => {
     await searchAndWaitForResult(page);
 
     await expect(page.getByTestId("estimated-delivery")).not.toBeVisible();
+  });
+});
+
+test.describe("Track Order page — courier tracking link", () => {
+  test("shows 'Track with India Post' link for a recognised India Post tracking number on a dispatched order", async ({
+    page,
+  }) => {
+    await page.route("**/api/orders/track**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_DISPATCHED_INDIA_POST),
+      });
+    });
+
+    await searchAndWaitForResult(page);
+
+    await expect(page.getByTestId("text-tracking-number")).toContainText(
+      "EE123456789IN"
+    );
+
+    const courierLink = page.getByTestId("link-track-courier");
+    await expect(courierLink).toBeVisible();
+    await expect(courierLink).toContainText("Track with India Post");
+
+    const href = await courierLink.getAttribute("href");
+    expect(href).toContain("indiapost.gov.in");
+    expect(href).toContain("EE123456789IN");
+  });
+
+  test("shows tracking number but no courier link for an unrecognised tracking number", async ({
+    page,
+  }) => {
+    await page.route("**/api/orders/track**", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(MOCK_DISPATCHED_UNKNOWN_TRACKING),
+      });
+    });
+
+    await searchAndWaitForResult(page);
+
+    await expect(page.getByTestId("text-tracking-number")).toContainText(
+      "UNKNWN12345"
+    );
+    await expect(page.getByTestId("link-track-courier")).not.toBeVisible();
   });
 });
