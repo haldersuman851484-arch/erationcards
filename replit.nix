@@ -1,5 +1,8 @@
 {pkgs}: {
   deps = [
+    pkgs.icu
+    pkgs.gst_all_1.gst-plugins-base
+    pkgs.gst_all_1.gstreamer
     pkgs.gtk3
     pkgs.fontconfig
     pkgs.freetype

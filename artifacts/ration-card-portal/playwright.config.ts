@@ -12,8 +12,14 @@ export default defineConfig({
   },
   projects: [
     {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+      testIgnore: ["**/track-order-mobile.spec.ts"],
+    },
+    {
+      name: "mobile-webkit",
+      use: { ...devices["iPhone 12"] },
+      testMatch: ["**/track-order-mobile.spec.ts"],
     },
   ],
 });
