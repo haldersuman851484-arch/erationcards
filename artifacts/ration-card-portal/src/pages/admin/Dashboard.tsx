@@ -423,7 +423,7 @@ export default function AdminDashboard() {
                               </TableCell>
                               <TableCell className="font-medium text-sm">₹{order.amount}</TableCell>
                               <TableCell>
-                                <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>{order.status}</Badge>
+                                <Badge data-testid={`badge-order-status-${order.id}`} className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>{order.status}</Badge>
                                 {(() => {
                                   const pdfs = (order as any).rationCardPdfs ?? [];
                                   const total = order.quantity ?? 1;

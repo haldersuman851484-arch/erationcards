@@ -24,6 +24,10 @@ args = "navigation-animation-e2e"
 task = "workflow.run"
 args = "e2e-track-order"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "e2e-admin-order-list"
+
 [[workflows.workflow]]
 name = "navigation-animation-e2e"
 author = "agent"
@@ -42,6 +46,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pnpm --filter @workspace/ration-card-portal run test:e2e -- --grep 'Track Order page'"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "e2e-admin-order-list"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/ration-card-portal exec playwright test tests/admin-order-list.spec.ts --project=chromium"
 
 [workflows.workflow.metadata]
 isValidation = true
