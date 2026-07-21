@@ -6,7 +6,48 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink } from "lucide-react";
+
+function getCourierTrackingUrl(trackingNumber: string): { url: string; name: string } | null {
+  const tn = trackingNumber.trim().toUpperCase();
+
+  if (/^[A-Z]{2}\d{9}IN$/.test(tn)) {
+    return {
+      url: `https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx?TrackId=${tn}`,
+      name: "India Post",
+    };
+  }
+
+  if (/^\d{12,18}$/.test(tn) || /^D\d{10,14}$/.test(tn)) {
+    return {
+      url: `https://www.delhivery.com/track/package/${tn}`,
+      name: "Delhivery",
+    };
+  }
+
+  if (/^[A-Z]\d{10}$/.test(tn) || /^[A-Z]{2}\d{9}$/.test(tn)) {
+    return {
+      url: `https://www.dtdc.in/tracking.asp?Tracking_no=${tn}`,
+      name: "DTDC",
+    };
+  }
+
+  if (/^\d{9,11}$/.test(tn)) {
+    return {
+      url: `https://www.bluedart.com/tracking?trackfor=${tn}`,
+      name: "BlueDart",
+    };
+  }
+
+  if (/^[A-Z]{3}\d{10}$/.test(tn)) {
+    return {
+      url: `https://ecomexpress.in/tracking/?awb_field=${tn}`,
+      name: "Ecom Express",
+    };
+  }
+
+  return null;
+}
 
 const STATUS_STEPS = [
   { key: "pending", label: "Order Placed", icon: Clock, color: "text-yellow-500" },
@@ -145,12 +186,30 @@ export default function TrackOrder() {
                       <p className="font-medium text-emerald-600">₹{order.amount}</p>
                     </div>
                   </div>
-                  {order.trackingNumber && (
-                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                      <p className="text-xs text-slate-500 mb-0.5">Tracking Number</p>
-                      <p className="font-mono font-semibold text-primary break-all">{order.trackingNumber}</p>
-                    </div>
-                  )}
+                  {order.trackingNumber && (() => {
+                    const isShipped = order.status === "dispatched" || order.status === "delivered";
+                    const courier = isShipped ? getCourierTrackingUrl(order.trackingNumber) : null;
+                    return (
+                      <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                        <p className="text-xs text-slate-500 mb-1">Tracking Number</p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="font-mono font-semibold text-primary break-all" data-testid="text-tracking-number">{order.trackingNumber}</p>
+                          {courier && (
+                            <a
+                              href={courier.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              data-testid="link-track-courier"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 underline underline-offset-2 shrink-0"
+                            >
+                              Track with {courier.name}
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="bg-slate-50 rounded-lg p-3 border border-slate-200" data-testid="delivery-address">
                     <div className="flex items-center gap-1.5 mb-1.5">
