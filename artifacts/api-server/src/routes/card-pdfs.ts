@@ -3,7 +3,7 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 import { db } from "@workspace/db";
-import { ordersTable } from "@workspace/db";
+import { ordersTable, RationCardPdfsSchema } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { uploadsDir } from "./payments";
 
@@ -65,8 +65,13 @@ router.post(
       }
 
       const pdfUrl = `/api/uploads/${req.file.filename}`;
-      const existing: { cardIndex: number; pdfUrl: string; uploadedAt: string }[] =
-        (order.rationCardPdfs as any) ?? [];
+      const existingResult = RationCardPdfsSchema.safeParse(order.rationCardPdfs ?? []);
+      if (!existingResult.success) {
+        req.log.error({ issues: existingResult.error.issues }, "Stored rationCardPdfs is malformed");
+        res.status(500).json({ error: "Order PDF data is malformed; contact support" });
+        return;
+      }
+      const existing = existingResult.data;
 
       const updated = [
         ...existing.filter((e) => e.cardIndex !== cardIndex),

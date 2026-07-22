@@ -2,17 +2,25 @@ import { mysqlTable, text, int, timestamp, decimal, json, mysqlEnum } from "driz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export type FamilyCard = {
-  customerName: string;
-  rationCardNumber: string;
-  cardType: string;
-};
+export const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
 
-export type CardPdfEntry = {
-  cardIndex: number;
-  pdfUrl: string;
-  uploadedAt: string;
-};
+export const FamilyCardSchema = z.object({
+  customerName: z.string().min(2, "customerName must be at least 2 characters"),
+  rationCardNumber: z.string().min(5, "rationCardNumber must be at least 5 characters"),
+  cardType: z.enum(ALLOWED_CARD_TYPES, { error: `cardType must be one of ${ALLOWED_CARD_TYPES.join(", ")}` }),
+});
+
+export const CardPdfEntrySchema = z.object({
+  cardIndex: z.number().int().nonnegative(),
+  pdfUrl: z.string().min(1, "pdfUrl is required"),
+  uploadedAt: z.string().min(1, "uploadedAt is required"),
+});
+
+export const FamilyCardsSchema = z.array(FamilyCardSchema);
+export const RationCardPdfsSchema = z.array(CardPdfEntrySchema);
+
+export type FamilyCard = z.infer<typeof FamilyCardSchema>;
+export type CardPdfEntry = z.infer<typeof CardPdfEntrySchema>;
 
 export const ordersTable = mysqlTable("orders", {
   id: int("id").autoincrement().primaryKey(),

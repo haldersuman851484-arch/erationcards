@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
-import { ordersTable } from "@workspace/db";
+import { ordersTable, FamilyCardsSchema, ALLOWED_CARD_TYPES } from "@workspace/db";
 import { eq, and, desc, gte, sql, or, like } from "drizzle-orm";
 import {
   CreateOrderBody,
@@ -13,24 +13,9 @@ import { generateOrderNumber, parseOperatorToken } from "../lib/auth";
 
 const router = Router();
 
-const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"];
 const SINGLE_CARD_PRICE = 70;
 const PUBLIC_CARD_PRICE = 50;
 const OPERATOR_CARD_PRICE = 40;
-
-type FamilyCardInput = { customerName: string; rationCardNumber: string; cardType: string };
-
-function sanitizeFamilyCards(input: unknown): FamilyCardInput[] {
-  if (!Array.isArray(input)) return [];
-  return input.map((c: any) => {
-    const cardType = ALLOWED_CARD_TYPES.includes(c?.cardType) ? c.cardType : ALLOWED_CARD_TYPES[0];
-    return {
-      customerName: String(c?.customerName ?? "").trim(),
-      rationCardNumber: String(c?.rationCardNumber ?? "").trim(),
-      cardType,
-    };
-  }).filter((c) => c.customerName.length >= 2 && c.rationCardNumber.length >= 5);
-}
 
 // GET /orders - list all orders
 router.get("/orders", async (req: Request, res: Response) => {
@@ -83,12 +68,17 @@ router.post("/orders", async (req: Request, res: Response) => {
     const body = CreateOrderBody.parse(req.body);
     const orderNumber = generateOrderNumber();
 
-    if (!ALLOWED_CARD_TYPES.includes(body.cardType)) {
-      res.status(400).json({ error: "Invalid card category" });
+    if (!(ALLOWED_CARD_TYPES as readonly string[]).includes(body.cardType)) {
+      res.status(400).json({ error: `Invalid card category. Must be one of: ${ALLOWED_CARD_TYPES.join(", ")}` });
       return;
     }
 
-    const familyCards = sanitizeFamilyCards(body.familyCards);
+    const familyCardsResult = FamilyCardsSchema.safeParse(body.familyCards ?? []);
+    if (!familyCardsResult.success) {
+      res.status(400).json({ error: "Invalid familyCards", details: familyCardsResult.error.issues });
+      return;
+    }
+    const familyCards = familyCardsResult.data;
     const quantity = 1 + familyCards.length;
     const isOperator = parseOperatorToken(req) !== null;
     const perCard = quantity === 1 ? SINGLE_CARD_PRICE : (isOperator ? OPERATOR_CARD_PRICE : PUBLIC_CARD_PRICE);
