@@ -126,6 +126,125 @@ if (newSqlFiles.length > 0) {
   process.exit(1);
 }
 
+// ── 0b. Secondary rename-drift check ──────────────────────────────────────
+// drizzle-kit generate silently exits 0 for column renames in non-interactive
+// (pipe) mode — it needs user confirmation to distinguish rename from drop+add.
+// This secondary check catches that gap by comparing column names in the latest
+// committed drizzle meta snapshot against the current TypeScript schema output
+// (via `drizzle-kit export`).  Any column present in the snapshot but absent
+// from the export — for a table that still exists in both — means a column was
+// renamed or silently dropped without a migration being generated.
+
+/**
+ * Parse `drizzle-kit export` SQL output into a Map<tableName, Set<columnName>>.
+ * Only backtick-quoted column names inside CREATE TABLE blocks are collected.
+ */
+function parseExportColumns(sql) {
+  const tables = new Map();
+  for (const [, tableName, body] of sql.matchAll(
+    /CREATE TABLE `(\w+)` \(([\s\S]*?)\);/g,
+  )) {
+    const cols = new Set();
+    for (const [, col] of body.matchAll(/^\s*`(\w+)`\s+\w/gm)) {
+      cols.add(col);
+    }
+    tables.set(tableName, cols);
+  }
+  return tables;
+}
+
+/**
+ * Returns a list of { table, missingColumns[] } entries where a committed
+ * snapshot column is absent from the current TypeScript schema export.
+ * Returns null if the check cannot run (e.g. no migrations yet).
+ */
+function detectRenameDrift() {
+  // Locate the latest committed snapshot
+  const journal = JSON.parse(
+    readFileSync(path.join(MIGRATIONS_DIR, "meta", "_journal.json"), "utf8"),
+  );
+  if (!journal.entries?.length) return null;
+
+  const lastIdx = [...journal.entries].sort((a, b) => b.idx - a.idx)[0].idx;
+  const snapshotPath = path.join(
+    MIGRATIONS_DIR,
+    "meta",
+    `${String(lastIdx).padStart(4, "0")}_snapshot.json`,
+  );
+  const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
+  const snapshotTables = snapshot.tables ?? {};
+
+  // Get current schema SQL from drizzle-kit export
+  let exportSql;
+  try {
+    exportSql = execSync(
+      "pnpm --filter @workspace/db exec drizzle-kit export --config ./drizzle.config.ts",
+      {
+        stdio: "pipe",
+        cwd: repoRoot,
+        env: {
+          ...process.env,
+          MYSQL_DATABASE_URL:
+            process.env.MYSQL_DATABASE_URL ||
+            "mysql://placeholder:x@localhost:3306/placeholder",
+        },
+      },
+    ).toString();
+  } catch {
+    return null; // export unavailable — skip secondary check
+  }
+
+  const exportTables = parseExportColumns(exportSql);
+  const drifted = [];
+
+  for (const [tableName, snapshotTable] of Object.entries(snapshotTables)) {
+    // Skip tables that no longer exist in the export (handled by primary check)
+    if (!exportTables.has(tableName)) continue;
+
+    const snapshotCols = new Set(Object.keys(snapshotTable.columns ?? {}));
+    const exportCols = exportTables.get(tableName);
+
+    const missing = [...snapshotCols].filter((c) => !exportCols.has(c));
+    if (missing.length > 0) {
+      drifted.push({ table: tableName, missingColumns: missing });
+    }
+  }
+
+  return drifted.length > 0 ? drifted : null;
+}
+
+console.log("▶ Checking for column rename drift…");
+const renameDrift = detectRenameDrift();
+if (renameDrift) {
+  const lines = renameDrift
+    .map(
+      ({ table, missingColumns }) =>
+        `  • ${table}: column(s) in migrations but absent from schema: ${missingColumns.join(", ")}`,
+    )
+    .join("\n");
+  console.error(`
+╔══════════════════════════════════════════════════════════════════════╗
+║  ERROR: Column rename drift detected — build aborted.               ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  The following columns exist in the last committed migration         ║
+║  snapshot but are absent from the current TypeScript schema.        ║
+║  This usually means a column was renamed without generating a       ║
+║  migration, which will cause a runtime failure in production.       ║
+║                                                                      ║
+${lines
+  .split("\n")
+  .map((l) => `║  ${l.padEnd(68)}║`)
+  .join("\n")}
+║                                                                      ║
+║  Fix before deploying:                                              ║
+║    1.  pnpm --filter @workspace/db run generate  (interactive)      ║
+║    2.  git add lib/db/migrations/ && git commit                     ║
+║    3.  Re-run the build.                                            ║
+╚══════════════════════════════════════════════════════════════════════╝
+`);
+  process.exit(1);
+}
+
 console.log("  ✅  Migrations are up to date — no uncommitted schema changes.\n");
 
 // ── 1. Clean previous deploy dir ──────────────────────────────────────────

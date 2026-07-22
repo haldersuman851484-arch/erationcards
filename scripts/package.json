@@ -12,6 +12,7 @@
     "check-migrations": "tsx ./src/check-migrations.ts",
     "check-enum-conflicts": "tsx ./src/check-enum-conflicts.ts",
     "migrate-test-local": "bash ../scripts/migrate-test-local.sh",
+    "test-migration-freshness": "node ./src/test-migration-freshness.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
