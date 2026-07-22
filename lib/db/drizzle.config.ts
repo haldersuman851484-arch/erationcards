@@ -9,8 +9,10 @@ if (!dbUrl) {
 
 export default defineConfig({
   schema: path.join(__dirname, "./src/schema/index.ts"),
+  out: path.join(__dirname, "./migrations"),
   dialect: "mysql",
   dbCredentials: {
     url: dbUrl,
+    ssl: { rejectUnauthorized: false },
   },
 });

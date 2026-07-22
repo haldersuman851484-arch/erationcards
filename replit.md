@@ -8,7 +8,9 @@ A web application for ordering PVC ration cards online — customers fill in det
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes to dev MySQL
+- `pnpm --filter @workspace/db run push` — push DB schema changes to dev MySQL (may hang against Hostinger; use the generate+migrate workflow below instead)
+- `pnpm --filter @workspace/db run generate` — generate SQL migration files from schema (into `lib/db/migrations/`)
+- `pnpm --filter @workspace/scripts run migrate` — apply generated migrations via mysql2 (works with Hostinger)
 - Required env: `MYSQL_DATABASE_URL` — MySQL connection string (also accepted as `DATABASE_URL`)
 
 ## Stack
@@ -63,10 +65,15 @@ This creates `hostinger/` at the repo root with the bundled server and React bui
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — admin dashboard credentials
    - `MERCHANT_UPI_ID` — UPI ID for the payment QR code
    - `UPLOADS_DIR` — absolute path for payment screenshot storage (e.g. `/home/<user>/uploads`)
-3. **Push schema to production** (run from this Replit repo, once DB URL is set as env var):
+3. **Apply schema to production** (run from this Replit repo, once DB URL is set as env var):
    ```bash
-   MYSQL_DATABASE_URL="mysql://..." pnpm --filter @workspace/db run push
+   # Step 1 — generate SQL migration files from the schema:
+   pnpm --filter @workspace/db run generate
+
+   # Step 2 — apply them via mysql2 (works with Hostinger, bypasses drizzle-kit's client):
+   MYSQL_DATABASE_URL="mysql://..." pnpm --filter @workspace/scripts run migrate
    ```
+   > **Note:** `drizzle-kit push` may hang due to Hostinger's firewall blocking drizzle-kit's internal MySQL client. The generate+migrate workflow above uses the same `mysql2` driver that the app server uses and is the reliable alternative.
 4. **Upload `hostinger/` folder** to your Hostinger Node.js app root (via Git or File Manager).
 5. **Install dependencies** via hPanel SSH terminal:
    ```bash

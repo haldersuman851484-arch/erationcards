@@ -48,6 +48,9 @@ catalogs:
     lucide-react:
       specifier: ^0.545.0
       version: 0.545.0
+    mysql2:
+      specifier: ^3.23.1
+      version: 3.23.1
     react:
       specifier: 19.1.0
       version: 19.1.0
@@ -642,7 +645,7 @@ importers:
         specifier: ^0.8.3
         version: 0.8.3(drizzle-orm@0.45.2(mysql2@3.23.1(@types/node@25.9.4)))(zod@3.25.76)
       mysql2:
-        specifier: ^3.23.1
+        specifier: 'catalog:'
         version: 3.23.1(@types/node@25.9.4)
       zod:
         specifier: 'catalog:'
@@ -663,6 +666,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(mysql2@3.23.1(@types/node@25.9.4))
+      mysql2:
+        specifier: 'catalog:'
+        version: 3.23.1(@types/node@25.9.4)
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
