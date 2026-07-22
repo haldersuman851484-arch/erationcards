@@ -2,7 +2,10 @@ import { Navbar, Footer, BRAND } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "wouter";
-import { CreditCard, Search, Download, Users, FileText, CheckCircle, Clock, Shield, Truck, Star, Lock } from "lucide-react";
+import {
+  CreditCard, Search, Download, Users, FileText, CheckCircle, Clock,
+  Shield, Truck, Star, Lock, AlertTriangle, MapPin, Award,
+} from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 
@@ -27,11 +30,9 @@ function HeroPVCCard() {
 
   return (
     <div className="relative w-full flex items-center justify-center select-none">
-      {/* Ambient glow rings */}
       <div className="absolute w-80 h-80 rounded-full bg-[#41b8f0]/20 blur-3xl animate-pulse" />
       <div className="absolute w-56 h-56 rounded-full bg-primary/15 blur-2xl animate-pulse" style={{ animationDelay: "1s" }} />
 
-      {/* Floating badge — top right */}
       <div
         className="absolute top-4 right-2 md:right-8 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-lg rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700"
         style={{ animation: "floatA 3s ease-in-out infinite" }}
@@ -40,7 +41,6 @@ function HeroPVCCard() {
         Fast Delivery
       </div>
 
-      {/* Floating badge — bottom left */}
       <div
         className="absolute bottom-8 left-2 md:left-4 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-lg rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700"
         style={{ animation: "floatB 3.5s ease-in-out infinite" }}
@@ -49,7 +49,6 @@ function HeroPVCCard() {
         100% Secure
       </div>
 
-      {/* Floating badge — top left */}
       <div
         className="absolute top-10 left-2 md:left-0 z-20 flex items-center gap-1.5 bg-white border border-slate-200 shadow-lg rounded-full px-3 py-1.5 text-xs font-semibold text-slate-700"
         style={{ animation: "floatC 4s ease-in-out infinite" }}
@@ -58,7 +57,6 @@ function HeroPVCCard() {
         4.9 Rated
       </div>
 
-      {/* The card itself */}
       <div
         ref={cardRef}
         onMouseMove={handleMouseMove}
@@ -70,10 +68,8 @@ function HeroPVCCard() {
           animation: tilt.x === 0 && tilt.y === 0 ? "floatCard 4s ease-in-out infinite" : undefined,
         }}
       >
-        {/* Card shadow */}
         <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-[85%] h-8 bg-black/20 blur-xl rounded-full" />
 
-        {/* PVC Card body */}
         <div
           className="relative w-[340px] md:w-[400px] rounded-2xl overflow-hidden"
           style={{
@@ -81,19 +77,15 @@ function HeroPVCCard() {
             boxShadow: "0 25px 60px rgba(15,76,129,0.45), 0 0 0 1px rgba(255,255,255,0.1) inset",
           }}
         >
-          {/* Holographic shimmer overlay */}
           <div
             className="absolute inset-0 opacity-30 pointer-events-none"
             style={{
-              background:
-                "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
+              background: "linear-gradient(115deg, transparent 30%, rgba(255,255,255,0.55) 50%, transparent 70%)",
               backgroundSize: "200% 200%",
               animation: "shimmer 3s ease-in-out infinite",
             }}
           />
-          {/* Chip + logo row */}
           <div className="relative px-6 pt-6 pb-3 flex items-start justify-between">
-            {/* EMV Chip */}
             <div
               className="w-10 h-8 rounded-md"
               style={{
@@ -108,7 +100,6 @@ function HeroPVCCard() {
                 <div className="bg-yellow-700/50 rounded-sm" />
               </div>
             </div>
-            {/* Govt emblem placeholder */}
             <div className="flex flex-col items-end">
               <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white/90" />
@@ -117,7 +108,6 @@ function HeroPVCCard() {
             </div>
           </div>
 
-          {/* Card number */}
           <div className="px-6 pb-2">
             <p className="text-white/50 text-[10px] tracking-widest uppercase font-medium mb-1">Ration Card No.</p>
             <p className="text-white font-mono text-lg tracking-[0.2em] font-bold drop-shadow">
@@ -125,7 +115,6 @@ function HeroPVCCard() {
             </p>
           </div>
 
-          {/* Holder info */}
           <div className="px-6 pb-4 pt-1 flex items-end justify-between">
             <div>
               <p className="text-white/50 text-[10px] tracking-widest uppercase font-medium mb-0.5">Card Holder</p>
@@ -138,7 +127,6 @@ function HeroPVCCard() {
             </div>
           </div>
 
-          {/* Bottom strip */}
           <div className="bg-white/10 backdrop-blur-sm px-6 py-2 flex items-center justify-between border-t border-white/10">
             <span className="text-white/70 text-[10px] tracking-widest uppercase font-semibold">West Bengal</span>
             <span className="text-white/70 text-[10px] tracking-widest uppercase font-semibold flex items-center gap-1">
@@ -149,7 +137,6 @@ function HeroPVCCard() {
         </div>
       </div>
 
-      {/* Keyframe styles */}
       <style>{`
         @keyframes floatCard {
           0%, 100% { transform: perspective(800px) translateY(0px) rotateX(2deg) rotateY(-4deg); }
@@ -177,34 +164,102 @@ function HeroPVCCard() {
   );
 }
 
+const WB_DISTRICTS = [
+  "Kolkata", "Howrah", "North 24 Parganas", "South 24 Parganas",
+  "Murshidabad", "Purba Bardhaman", "Paschim Bardhaman", "Nadia",
+  "Hooghly", "Paschim Medinipur", "Purba Medinipur", "Bankura",
+  "Purulia", "Birbhum", "Malda", "Uttar Dinajpur",
+  "Dakshin Dinajpur", "Jalpaiguri", "Darjeeling", "Cooch Behar",
+  "Alipurduar", "Jhargram", "Kalimpong",
+];
+
+const CARD_TYPES = [
+  {
+    code: "AAY",
+    name: "Antyodaya Anna Yojana",
+    desc: "For the poorest of poor families — highest food grain entitlement.",
+    color: "bg-red-50 border-red-200 text-red-700",
+    badge: "bg-red-100 text-red-700",
+  },
+  {
+    code: "PHH",
+    name: "Priority Household",
+    desc: "Below poverty line households identified by the state government.",
+    color: "bg-blue-50 border-blue-200 text-blue-700",
+    badge: "bg-blue-100 text-blue-700",
+  },
+  {
+    code: "SPHH",
+    name: "Special Priority Household",
+    desc: "Specially categorized households under West Bengal's priority scheme.",
+    color: "bg-purple-50 border-purple-200 text-purple-700",
+    badge: "bg-purple-100 text-purple-700",
+  },
+  {
+    code: "RKSY-I",
+    name: "Rajya Khadya Suraksha Yojana — I",
+    desc: "State food security scheme category I — above poverty line families.",
+    color: "bg-emerald-50 border-emerald-200 text-emerald-700",
+    badge: "bg-emerald-100 text-emerald-700",
+  },
+  {
+    code: "RKSY-II",
+    name: "Rajya Khadya Suraksha Yojana — II",
+    desc: "State food security scheme category II — general beneficiary households.",
+    color: "bg-amber-50 border-amber-200 text-amber-700",
+    badge: "bg-amber-100 text-amber-700",
+  },
+];
+
+const STATS = [
+  { value: "10,000+", label: "Cards Delivered", icon: Award },
+  { value: "8,500+", label: "Happy Customers", icon: Star },
+  { value: "23", label: "Districts Covered", icon: MapPin },
+  { value: "5", label: "Card Types Supported", icon: CreditCard },
+];
+
 export default function Home() {
   useSeo({
     title: "Order PVC Ration Card Online | West Bengal",
-    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all districts. ₹70 for single card, ₹50 each for 2+ cards.",
+    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. ₹70 for single card, ₹50 each for 2+ cards.",
     canonical: "https://erationcards.in/",
   });
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
+
+      {/* Disclaimer bar */}
+      <div className="bg-amber-50 border-b border-amber-200 py-2 px-4">
+        <div className="container mx-auto flex items-center justify-center gap-2 text-amber-800 text-xs sm:text-sm">
+          <AlertTriangle className="w-4 h-4 flex-shrink-0 text-amber-600" />
+          <span>
+            <strong>Important:</strong> This is a <strong>private non-government</strong> PVC printing service. Not affiliated with the Govt. of West Bengal.{" "}
+            <a href="https://food.wb.gov.in" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+              Official ration card services are free at food.wb.gov.in
+            </a>
+          </span>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <section className="bg-slate-50 border-b border-slate-200">
         <div className="container mx-auto px-4 py-20 md:py-32 flex flex-col md:flex-row items-center gap-12">
           <div className="flex-1 space-y-6">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
               <Shield className="w-4 h-4" />
-              Official Service Portal
+              Private Printing Service · West Bengal
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold text-slate-900 tracking-tight leading-tight">
               Get Your PVC <br className="hidden md:block" />
-              <span className="text-primary font-extrabold"> Card</span> Today
+              <span className="text-primary font-extrabold"> Ration Card</span> Today
             </h1>
             <p className="text-lg text-slate-600 max-w-xl leading-relaxed">
-              Order a durable, high-quality PVC printed ration card delivered straight to your doorstep. Fast, secure, and officially recognized.
+              Order a durable, high-quality PVC printed ration card — wallet-size, waterproof — delivered straight to your doorstep across all 23 districts of West Bengal.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link href="/order">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white shadow-md text-base px-8 h-12">
-                  Apply for PVC Card
+                  Order PVC Card — ₹70
                 </Button>
               </Link>
               <Link href="/track">
@@ -219,6 +274,22 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Stats Bar */}
+      <section className="bg-primary py-10">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+            {STATS.map(({ value, label, icon: Icon }) => (
+              <div key={label} className="flex flex-col items-center text-center gap-1">
+                <Icon className="w-6 h-6 text-white/70 mb-1" />
+                <span className="text-3xl font-extrabold text-white">{value}</span>
+                <span className="text-white/75 text-sm font-medium">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Quick Actions */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -226,7 +297,6 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Our Services</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">Access all ration card services through our centralized portal. Everything you need in one place.</p>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/order">
@@ -239,7 +309,6 @@ export default function Home() {
                 </CardHeader>
               </Link>
             </Card>
-            
             <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/track">
                 <CardHeader>
@@ -251,7 +320,6 @@ export default function Home() {
                 </CardHeader>
               </Link>
             </Card>
-
             <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/download">
                 <CardHeader>
@@ -263,7 +331,6 @@ export default function Home() {
                 </CardHeader>
               </Link>
             </Card>
-
             <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
               <Link href="/operator/register">
                 <CardHeader>
@@ -278,6 +345,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+
       {/* 3 Easy Steps */}
       <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto px-4">
@@ -285,7 +353,6 @@ export default function Home() {
             <h2 className="text-3xl font-bold text-slate-900 mb-4">Get PVC Card in 3 Easy Steps</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">A streamlined process designed for efficiency and convenience.</p>
           </div>
-          
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6 relative z-10">
@@ -294,27 +361,51 @@ export default function Home() {
               <h3 className="text-xl font-semibold mb-3">Submit Details</h3>
               <p className="text-slate-600">Enter your ration card number and basic delivery details in our secure form.</p>
             </div>
-            
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6 relative z-10">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-3">Make Payment</h3>
-              <p className="text-slate-600">Pay the nominal processing fee of ₹50 securely via multiple payment options.</p>
+              <h3 className="text-xl font-semibold mb-3">Pay ₹70 via UPI</h3>
+              <p className="text-slate-600">Pay the nominal processing fee securely via UPI (GPay, PhonePe, Paytm).</p>
             </div>
-            
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6 relative z-10">
                 3
               </div>
               <h3 className="text-xl font-semibold mb-3">Card Delivered</h3>
-              <p className="text-slate-600">Your high-quality PVC card will be printed and delivered to your address within days.</p>
+              <p className="text-slate-600">Your high-quality PVC card (85.6mm × 54mm) will be printed and delivered within 5–7 working days.</p>
             </div>
           </div>
         </div>
       </section>
-      {/* Features */}
+
+      {/* Ration Card Types */}
       <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">All Ration Card Types — AAY, PHH, SPHH, RKSY-I, RKSY-II</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              We support PVC printing for all West Bengal ration card categories. Your card type is already determined by the government — just order and we'll print it.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-6xl mx-auto">
+            {CARD_TYPES.map((ct) => (
+              <div key={ct.code} className={`border rounded-xl p-5 flex flex-col gap-2 ${ct.color}`}>
+                <span className={`self-start text-xs font-bold px-2 py-0.5 rounded-full ${ct.badge}`}>{ct.code}</span>
+                <h3 className="font-semibold text-sm leading-snug">{ct.name}</h3>
+                <p className="text-xs leading-relaxed opacity-80">{ct.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-slate-500 text-sm mt-8">
+            Not sure which category you have? It's printed on your existing ration card or visible in your e-Ration Card PDF from{" "}
+            <a href="https://food.wb.gov.in" target="_blank" rel="noopener noreferrer" className="text-primary underline">food.wb.gov.in</a>.
+          </p>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div>
             <h2 className="text-3xl font-bold text-slate-900 mb-6">Why Choose a PVC Ration Card?</h2>
@@ -333,8 +424,8 @@ export default function Home() {
                   <FileText className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-lg mb-1">Convenient Size</h4>
-                  <p className="text-slate-600 text-sm">Fits perfectly in your wallet alongside your Aadhar, PAN, and credit cards for easy access anywhere.</p>
+                  <h4 className="font-semibold text-lg mb-1">Standard Wallet Size (85.6mm × 54mm)</h4>
+                  <p className="text-slate-600 text-sm">Same size as a credit card — fits perfectly in your wallet alongside your Aadhaar, PAN, and driving licence.</p>
                 </div>
               </div>
               <div className="flex gap-4">
@@ -343,20 +434,75 @@ export default function Home() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-lg mb-1">Quick Processing</h4>
-                  <p className="text-slate-600 text-sm">Our decentralized network of printing operators ensures your card is processed and dispatched rapidly.</p>
+                  <p className="text-slate-600 text-sm">Our network of printing operators ensures your card is processed and dispatched within 24–48 hours of payment confirmation.</p>
                 </div>
               </div>
             </div>
           </div>
           <div>
-            <img 
-              src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000&auto=format&fit=crop" 
-              alt="Quality Assurance" 
+            <img
+              src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000&auto=format&fit=crop"
+              alt="Quality PVC card printing service West Bengal"
               className="rounded-2xl shadow-xl w-full"
             />
           </div>
         </div>
       </section>
+
+      {/* District Coverage */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-sm font-medium mb-4">
+              <MapPin className="w-4 h-4" />
+              Doorstep Delivery Across West Bengal
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">We Deliver to All 23 Districts of West Bengal</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              Whether you're in Kolkata or Kalimpong, Howrah or Jalpaiguri — we deliver your PVC ration card to your doorstep via Speed Post.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-4xl mx-auto">
+            {WB_DISTRICTS.map((district) => (
+              <div
+                key={district}
+                className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 font-medium hover:bg-primary/5 hover:border-primary/30 transition-colors"
+              >
+                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                {district}
+              </div>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link href="/order">
+              <Button className="bg-primary hover:bg-primary/90 px-8">Order Your PVC Card Now</Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Bengali Section */}
+      <section className="py-16 bg-primary" lang="bn">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+            বাংলায় PVC রেশন কার্ড অর্ডার করুন
+          </h2>
+          <p className="text-white/85 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
+            আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — মাত্র <strong className="text-white">₹৭০</strong> খরচে।
+            পশ্চিমবঙ্গের ২৩টি জেলায় দ্রুত ডেলিভারি। জলরোধী, টেকসই এবং ওয়ালেট সাইজের কার্ড।
+            AAY, PHH, SPHH, RKSY-I এবং RKSY-II — সমস্ত ধরনের রেশন কার্ড সমর্থিত।
+          </p>
+          <p className="text-white/70 text-sm mb-8">
+            এটি একটি বেসরকারি মুদ্রণ পরিষেবা। পশ্চিমবঙ্গ সরকারের সাথে সম্পর্কিত নয়।
+          </p>
+          <Link href="/order">
+            <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-primary px-8 h-12 text-base font-semibold">
+              এখনই অর্ডার করুন
+            </Button>
+          </Link>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );
