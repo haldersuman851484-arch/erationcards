@@ -166,10 +166,10 @@ function HeroPVCCard() {
 
 const WB_DISTRICTS = [
   "Kolkata", "Howrah", "North 24 Parganas", "South 24 Parganas",
-  "Murshidabad", "Purba Bardhaman", "Paschim Bardhaman", "Nadia",
-  "Hooghly", "Paschim Medinipur", "Purba Medinipur", "Bankura",
-  "Purulia", "Birbhum", "Malda", "Uttar Dinajpur",
-  "Dakshin Dinajpur", "Jalpaiguri", "Darjeeling", "Cooch Behar",
+  "Murshidabad", "Purba Bardhaman (Burdwan)", "Paschim Bardhaman (Burdwan)", "Nadia",
+  "Hooghly", "Paschim Medinipur (Midnapore)", "Purba Medinipur (Midnapore)", "Bankura",
+  "Purulia", "Birbhum", "Malda", "Uttar Dinajpur (North Dinajpur)",
+  "Dakshin Dinajpur (South Dinajpur)", "Jalpaiguri", "Darjeeling", "Cooch Behar",
   "Alipurduar", "Jhargram", "Kalimpong",
 ];
 
@@ -215,7 +215,7 @@ const STATS = [
   { value: "10,000+", label: "Cards Delivered", icon: Award },
   { value: "8,500+", label: "Happy Customers", icon: Star },
   { value: "23", label: "Districts Covered", icon: MapPin },
-  { value: "5", label: "Card Types Supported", icon: CreditCard },
+  { value: "24hr", label: "Order Processing", icon: Clock },
 ];
 
 export default function Home() {
@@ -286,6 +286,139 @@ export default function Home() {
                 <span className="text-white/75 text-sm font-medium">{label}</span>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Sample Card Gallery */}
+      <section className="py-20 bg-white border-b border-slate-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">What Your PVC Ration Card Looks Like</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              High-quality, credit-card-size PVC prints for every West Bengal ration card category. Waterproof, scratch-resistant, and built to last.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* AAY Sample */}
+            <div className="flex flex-col items-center gap-4">
+              <div
+                className="w-full rounded-2xl overflow-hidden shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #7f1d1d 0%, #b91c1c 40%, #ef4444 70%, #7f1d1d 100%)", aspectRatio: "85.6/54" }}
+              >
+                <div className="relative h-full px-5 pt-4 pb-3 flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <div className="w-8 h-6 rounded bg-yellow-400/80 grid grid-cols-2 gap-px p-1 opacity-70">
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                    </div>
+                    <span className="text-white/70 text-[8px] font-bold tracking-widest uppercase">Govt. of WB</span>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-[8px] tracking-widest uppercase">Ration Card No.</p>
+                    <p className="text-white font-mono text-sm tracking-wider font-bold">WB •••• •••• 1047</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase mb-0.5">Card Holder</p>
+                      <p className="text-white font-bold text-xs">SUNITA DEVI</p>
+                      <p className="text-white/60 text-[9px]">Family of 6 · AAY</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase">Valid</p>
+                      <p className="text-white font-bold text-xs">09/27</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="inline-block bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full mb-1">AAY Card</span>
+                <p className="text-slate-600 text-sm">Antyodaya Anna Yojana</p>
+              </div>
+            </div>
+
+            {/* PHH Sample */}
+            <div className="flex flex-col items-center gap-4">
+              <div
+                className="w-full rounded-2xl overflow-hidden shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #0f4c81 0%, #1a7fc4 40%, #41b8f0 70%, #0f4c81 100%)", aspectRatio: "85.6/54" }}
+              >
+                <div className="relative h-full px-5 pt-4 pb-3 flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <div className="w-8 h-6 rounded bg-yellow-400/80 grid grid-cols-2 gap-px p-1 opacity-70">
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                    </div>
+                    <span className="text-white/70 text-[8px] font-bold tracking-widest uppercase">Govt. of WB</span>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-[8px] tracking-widest uppercase">Ration Card No.</p>
+                    <p className="text-white font-mono text-sm tracking-wider font-bold">WB •••• •••• 7291</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase mb-0.5">Card Holder</p>
+                      <p className="text-white font-bold text-xs">RAHUL SHARMA</p>
+                      <p className="text-white/60 text-[9px]">Family of 4 · PHH</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase">Valid</p>
+                      <p className="text-white font-bold text-xs">12/28</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="inline-block bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full mb-1">PHH Card</span>
+                <p className="text-slate-600 text-sm">Priority Household</p>
+              </div>
+            </div>
+
+            {/* RKSY Sample */}
+            <div className="flex flex-col items-center gap-4">
+              <div
+                className="w-full rounded-2xl overflow-hidden shadow-2xl"
+                style={{ background: "linear-gradient(135deg, #064e3b 0%, #059669 40%, #34d399 70%, #064e3b 100%)", aspectRatio: "85.6/54" }}
+              >
+                <div className="relative h-full px-5 pt-4 pb-3 flex flex-col justify-between">
+                  <div className="flex items-start justify-between">
+                    <div className="w-8 h-6 rounded bg-yellow-400/80 grid grid-cols-2 gap-px p-1 opacity-70">
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                      <div className="bg-yellow-700/60 rounded-sm" /><div className="bg-yellow-700/60 rounded-sm" />
+                    </div>
+                    <span className="text-white/70 text-[8px] font-bold tracking-widest uppercase">Govt. of WB</span>
+                  </div>
+                  <div>
+                    <p className="text-white/50 text-[8px] tracking-widest uppercase">Ration Card No.</p>
+                    <p className="text-white font-mono text-sm tracking-wider font-bold">WB •••• •••• 3584</p>
+                  </div>
+                  <div className="flex items-end justify-between">
+                    <div>
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase mb-0.5">Card Holder</p>
+                      <p className="text-white font-bold text-xs">PRIYA MONDAL</p>
+                      <p className="text-white/60 text-[9px]">Family of 3 · RKSY-I</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/50 text-[8px] tracking-widest uppercase">Valid</p>
+                      <p className="text-white font-bold text-xs">03/28</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center">
+                <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-bold px-2 py-0.5 rounded-full mb-1">RKSY-I Card</span>
+                <p className="text-slate-600 text-sm">Rajya Khadya Suraksha Yojana</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 text-center">
+            <p className="text-slate-500 text-sm mb-4">
+              All cards printed at <strong>85.6mm × 54mm</strong> (standard credit card size) on high-quality PVC with UV-resistant ink.
+            </p>
+            <Link href="/order">
+              <Button className="bg-primary hover:bg-primary/90 px-8">Order Your Card — ₹70</Button>
+            </Link>
           </div>
         </div>
       </section>
