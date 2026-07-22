@@ -165,9 +165,22 @@ pnpm --filter @workspace/scripts run check-migrations \
   || fail "Dangerous migration operations detected — review before deploying"
 
 # --------------------------------------------------------------------------
-# Step 4 (full mode only): Apply migrations and verify schema
+# Step 4 (full mode only): Check for enum value conflicts in the target DB
+#
+# Parses every MODIFY COLUMN enum(...) change in the generated migration files
+# and queries the target database for rows whose current value is NOT in the
+# new enum list.  MySQL will reject (or silently corrupt) such a migration, so
+# we surface the problem here before touching the database.
 # --------------------------------------------------------------------------
 if [[ "$MODE" == "full" ]]; then
+  step "Checking for enum value conflicts (check-enum-conflicts)"
+  MYSQL_DATABASE_URL="$ACTIVE_DB_URL" \
+    pnpm --filter @workspace/scripts run check-enum-conflicts \
+    || fail "Enum conflicts detected — update conflicting rows before migrating"
+
+# --------------------------------------------------------------------------
+# Step 5 (full mode only): Apply migrations and verify schema
+# --------------------------------------------------------------------------
   step "Applying migrations to staging database"
   MYSQL_DATABASE_URL="$ACTIVE_DB_URL" \
     pnpm --filter @workspace/scripts run migrate \
