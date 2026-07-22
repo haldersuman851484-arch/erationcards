@@ -194,12 +194,16 @@ export default function AdminDashboard() {
     setDetailOpen(true);
   }, []);
 
-  function handlePaymentStatus(orderId: number, paymentStatus: "confirmed" | "rejected") {
+  function handlePaymentStatus(orderId: number, paymentStatus: "confirmed" | "rejected" | "pending") {
+    const successMsg =
+      paymentStatus === "confirmed" ? "Payment confirmed!" :
+      paymentStatus === "rejected" ? "Payment rejected." :
+      "Payment reset to pending.";
     updatePaymentStatus.mutate(
       { id: orderId, data: { paymentStatus } },
       {
         onSuccess: () => {
-          toast({ title: paymentStatus === "confirmed" ? "Payment confirmed!" : "Payment rejected." });
+          toast({ title: successMsg });
           queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
           queryClient.invalidateQueries({ queryKey: getListPaymentVerificationsQueryKey({}) });
         },
@@ -500,6 +504,13 @@ export default function AdminDashboard() {
                                       </Button>
                                       <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-red-700 border-red-300 hover:bg-red-50" data-testid={`button-reject-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "rejected")} disabled={updatePaymentStatus.isPending}>
                                         <XCircle className="w-3 h-3 mr-0.5" /> Reject
+                                      </Button>
+                                    </div>
+                                  ) : order.paymentStatus === "rejected" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <Badge className="text-xs border w-fit capitalize bg-red-100 text-red-700 border-red-200">Rejected</Badge>
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-reapprove-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
+                                        <CheckCircle2 className="w-3 h-3 mr-0.5" /> Re-approve
                                       </Button>
                                     </div>
                                   ) : (
