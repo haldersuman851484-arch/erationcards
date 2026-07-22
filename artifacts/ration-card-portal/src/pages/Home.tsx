@@ -9,6 +9,7 @@ import {
 import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 import { useListApprovedReviews } from "@workspace/api-client-react";
+import { DISTRICTS } from "@/pages/DistrictPage";
 
 function HeroPVCCard() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -164,15 +165,6 @@ function HeroPVCCard() {
     </div>
   );
 }
-
-const WB_DISTRICTS = [
-  "Kolkata", "Howrah", "North 24 Parganas", "South 24 Parganas",
-  "Murshidabad", "Purba Bardhaman (Burdwan)", "Paschim Bardhaman (Burdwan)", "Nadia",
-  "Hooghly", "Paschim Medinipur (Midnapore)", "Purba Medinipur (Midnapore)", "Bankura",
-  "Purulia", "Birbhum", "Malda", "Uttar Dinajpur (North Dinajpur)",
-  "Dakshin Dinajpur (South Dinajpur)", "Jalpaiguri", "Darjeeling", "Cooch Behar",
-  "Alipurduar", "Jhargram", "Kalimpong",
-];
 
 const CARD_TYPES = [
   {
@@ -780,14 +772,13 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 max-w-4xl mx-auto">
-            {WB_DISTRICTS.map((district) => (
-              <div
-                key={district}
-                className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-700 font-medium hover:bg-primary/5 hover:border-primary/30 transition-colors"
-              >
-                <MapPin className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                {district}
-              </div>
+            {Object.values(DISTRICTS).map((d) => (
+              <Link key={d.slug} href={`/pvc-ration-card/${d.slug}`}>
+                <div className="flex flex-col gap-0.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 hover:bg-primary/5 hover:border-primary/30 transition-colors group">
+                  <span className="text-sm text-slate-700 font-medium group-hover:text-primary leading-snug">{d.name}</span>
+                  <span className="text-xs text-slate-500 leading-snug">{d.bengali}</span>
+                </div>
+              </Link>
             ))}
           </div>
           <div className="text-center mt-10">

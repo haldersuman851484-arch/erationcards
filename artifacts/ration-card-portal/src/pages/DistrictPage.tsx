@@ -16,7 +16,7 @@ interface DistrictInfo {
   deliveryNote: string;
 }
 
-const DISTRICTS: Record<string, DistrictInfo> = {
+export const DISTRICTS: Record<string, DistrictInfo> = {
   kolkata: {
     slug: "kolkata",
     name: "Kolkata",
