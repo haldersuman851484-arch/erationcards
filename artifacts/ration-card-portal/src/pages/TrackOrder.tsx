@@ -8,6 +8,45 @@ import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
 import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink } from "lucide-react";
 
+function addWorkingDays(from: Date, days: number): Date {
+  const result = new Date(from);
+  let added = 0;
+  while (added < days) {
+    result.setDate(result.getDate() + 1);
+    if (result.getDay() !== 0) added++;
+  }
+  return result;
+}
+
+function formatDate(d: Date): string {
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function getDeliveryTimeline(status: string, createdAt: string, updatedAt: string): { label: string; date: string } | null {
+  if (status === "delivered" || status === "pending") return null;
+  if (status === "dispatched") {
+    const dispatchDate = new Date(updatedAt);
+    const earliest = addWorkingDays(dispatchDate, 5);
+    const latest = addWorkingDays(dispatchDate, 7);
+    return {
+      label: "Expected delivery",
+      date: `${formatDate(earliest)} – ${formatDate(latest)}`,
+    };
+  }
+  const orderDate = new Date(createdAt);
+  const daysFromOrder: Record<string, [number, number]> = {
+    processing: [8, 12],
+    printed: [6, 9],
+  };
+  const [min, max] = daysFromOrder[status] ?? [8, 12];
+  const earliest = addWorkingDays(orderDate, min);
+  const latest = addWorkingDays(orderDate, max);
+  return {
+    label: "Estimated delivery",
+    date: `${formatDate(earliest)} – ${formatDate(latest)}`,
+  };
+}
+
 function getCourierTrackingUrl(trackingNumber: string): { url: string; name: string } | null {
   const tn = trackingNumber.trim().toUpperCase();
 
@@ -224,12 +263,26 @@ export default function TrackOrder() {
                     </p>
                   </div>
 
-                  {order.status === "dispatched" && (
-                    <div className="flex items-center gap-2.5 bg-orange-50 border border-orange-200 rounded-lg px-3 py-2.5" data-testid="estimated-delivery">
-                      <CalendarClock className="w-4 h-4 text-orange-500 shrink-0" />
-                      <p className="text-sm text-orange-700 font-medium">Expected in 5–7 working days</p>
-                    </div>
-                  )}
+                  {(() => {
+                    const timeline = getDeliveryTimeline(order.status, order.createdAt, order.updatedAt);
+                    if (!timeline) return null;
+                    const isDispatched = order.status === "dispatched";
+                    return (
+                      <div
+                        className={`flex items-start gap-2.5 rounded-lg px-3 py-2.5 border ${isDispatched ? "bg-orange-50 border-orange-200" : "bg-blue-50 border-blue-200"}`}
+                        data-testid="estimated-delivery"
+                      >
+                        <CalendarClock className={`w-4 h-4 shrink-0 mt-0.5 ${isDispatched ? "text-orange-500" : "text-blue-500"}`} />
+                        <div>
+                          <p className={`text-sm font-semibold ${isDispatched ? "text-orange-800" : "text-blue-800"}`}>{timeline.label}</p>
+                          <p className={`text-sm font-medium ${isDispatched ? "text-orange-700" : "text-blue-700"}`}>{timeline.date}</p>
+                          {!isDispatched && (
+                            <p className="text-xs text-slate-500 mt-0.5">Actual date may vary once dispatched</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
 
@@ -241,6 +294,14 @@ export default function TrackOrder() {
                       const isDone = idx <= currentStepIdx;
                       const isCurrent = idx === currentStepIdx;
                       const Icon = step.icon;
+                      const stepDate =
+                        idx === 0
+                          ? formatDate(new Date(order.createdAt))
+                          : isCurrent && idx > 0
+                          ? formatDate(new Date(order.updatedAt))
+                          : isDone && idx > 0
+                          ? formatDate(new Date(order.updatedAt))
+                          : null;
                       return (
                         <div key={step.key} className="flex items-start gap-4">
                           <div className="flex flex-col items-center">
@@ -254,6 +315,12 @@ export default function TrackOrder() {
                           <div className="pt-1.5 pb-8">
                             <p className={`text-sm font-medium ${isDone ? "text-slate-900" : "text-slate-400"}`}>{step.label}</p>
                             {isCurrent && <p className="text-xs text-primary mt-0.5">Current status</p>}
+                            {isDone && stepDate && idx === 0 && (
+                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
+                            )}
+                            {isDone && stepDate && isCurrent && idx > 0 && (
+                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
+                            )}
                           </div>
                         </div>
                       );

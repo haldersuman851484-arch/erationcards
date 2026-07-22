@@ -155,7 +155,7 @@ test.describe("Track Order page — estimated delivery banner", () => {
 
     const banner = page.getByTestId("estimated-delivery");
     await expect(banner).toBeVisible();
-    await expect(banner).toContainText("Expected in 5–7 working days");
+    await expect(banner).toContainText("Expected delivery");
   });
 
   test("banner is absent for pending orders", async ({ page }) => {
