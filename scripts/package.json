@@ -9,6 +9,8 @@
     "build-for-hostinger": "node ./src/build-for-hostinger.mjs",
     "deploy-for-hostinger": "node ./src/deploy-for-hostinger.mjs",
     "migrate": "tsx ./src/migrate.ts",
+    "check-migrations": "tsx ./src/check-migrations.ts",
+    "migrate-test-local": "bash ../scripts/migrate-test-local.sh",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

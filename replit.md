@@ -11,6 +11,8 @@ A web application for ordering PVC ration cards online — customers fill in det
 - `pnpm --filter @workspace/db run push` — push DB schema changes to dev MySQL (may hang against Hostinger; use the generate+migrate workflow below instead)
 - `pnpm --filter @workspace/db run generate` — generate SQL migration files from schema (into `lib/db/migrations/`)
 - `pnpm --filter @workspace/scripts run migrate` — apply generated migrations via mysql2 (works with Hostinger)
+- `pnpm --filter @workspace/scripts run check-migrations` — scan generated SQL files for destructive operations (DROP COLUMN, enum changes, etc.); exit 1 = blocked, exit 0 = safe
+- `pnpm --filter @workspace/scripts run migrate-test-local` — static safety check (generate + check); add `MIGRATION_TEST_DB_URL=mysql://...` for a full apply+verify run against a staging DB
 - Required env: `MYSQL_DATABASE_URL` — MySQL connection string (also accepted as `DATABASE_URL`)
 
 ## Stack
@@ -101,6 +103,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 - **`mysql2` must be installed** at the Hostinger deployment root — it is externalized from the esbuild bundle.
 - **`drizzle-kit push` runs from the repo, not `hostinger/`** — the schema lives in `lib/db/src/schema/`, not in the deploy bundle.
 - **BASE_PATH not needed in production** — Vite defaults to `/` when `BASE_PATH` env var is absent during build.
+- **`drizzle.config.ts` must use relative paths for `schema` and `out`** — drizzle-kit v0.31.10 prepends `./` to absolute paths internally, producing a double-slash (`'.//abs/path'`) that breaks re-runs. Keep them as `"./src/schema/index.ts"` and `"./migrations"` (relative to the config file's own directory).
+- **Never run `migrate-test-local` with `MYSQL_DATABASE_URL` set to production** — use `MIGRATION_TEST_DB_URL` pointing at a throwaway staging DB. The script deliberately ignores `MYSQL_DATABASE_URL` to prevent accidental runs against live data.
 
 ## Pointers
 

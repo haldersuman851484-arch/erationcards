@@ -1,5 +1,4 @@
 import { defineConfig } from "drizzle-kit";
-import path from "path";
 
 const dbUrl = process.env.MYSQL_DATABASE_URL || process.env.DATABASE_URL;
 
@@ -8,8 +7,8 @@ if (!dbUrl) {
 }
 
 export default defineConfig({
-  schema: path.join(__dirname, "./src/schema/index.ts"),
-  out: path.join(__dirname, "./migrations"),
+  schema: "./src/schema/index.ts",
+  out: "./migrations",
   dialect: "mysql",
   dbCredentials: {
     url: dbUrl,

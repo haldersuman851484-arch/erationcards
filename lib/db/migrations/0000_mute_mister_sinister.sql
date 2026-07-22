@@ -1,0 +1,63 @@
+CREATE TABLE `operators` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`name` text NOT NULL,
+	`email` text NOT NULL,
+	`phone` text NOT NULL,
+	`password_hash` text NOT NULL,
+	`shop_name` text NOT NULL,
+	`address` text NOT NULL,
+	`state` text NOT NULL,
+	`district` text NOT NULL,
+	`pincode` text NOT NULL,
+	`status` enum('pending','active','suspended') NOT NULL DEFAULT 'active',
+	`wallet_balance` decimal(10,2) NOT NULL DEFAULT '0',
+	`total_orders_handled` int NOT NULL DEFAULT 0,
+	`created_at` timestamp NOT NULL DEFAULT (now()),
+	`updated_at` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `operators_id` PRIMARY KEY(`id`),
+	CONSTRAINT `operators_email_unique` UNIQUE(`email`)
+);
+--> statement-breakpoint
+CREATE TABLE `orders` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`order_number` text NOT NULL,
+	`customer_name` text NOT NULL,
+	`customer_phone` text NOT NULL,
+	`customer_email` text,
+	`ration_card_number` text NOT NULL,
+	`delivery_name` text,
+	`address` text NOT NULL,
+	`post_office` text,
+	`state` text NOT NULL,
+	`district` text NOT NULL,
+	`pincode` text NOT NULL,
+	`card_type` text NOT NULL,
+	`family_cards` json NOT NULL DEFAULT ('[]'),
+	`quantity` int NOT NULL DEFAULT 1,
+	`amount` decimal(10,2) NOT NULL,
+	`payment_status` enum('pending','paid','failed','refunded','confirmed','rejected') NOT NULL DEFAULT 'pending',
+	`payment_method` text,
+	`payment_screenshot_url` text,
+	`ration_card_pdfs` json NOT NULL DEFAULT ('[]'),
+	`status` enum('pending','processing','printed','dispatched','delivered','cancelled') NOT NULL DEFAULT 'pending',
+	`operator_id` int,
+	`tracking_number` text,
+	`courier_name` text,
+	`notes` text,
+	`created_at` timestamp NOT NULL DEFAULT (now()),
+	`updated_at` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `orders_id` PRIMARY KEY(`id`),
+	CONSTRAINT `orders_order_number_unique` UNIQUE(`order_number`)
+);
+--> statement-breakpoint
+CREATE TABLE `payment_verifications` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`order_id` int NOT NULL,
+	`order_number` text NOT NULL,
+	`action` enum('confirmed','rejected') NOT NULL,
+	`admin_email` text NOT NULL,
+	`screenshot_url` text,
+	`notes` text,
+	`verified_at` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `payment_verifications_id` PRIMARY KEY(`id`)
+);
