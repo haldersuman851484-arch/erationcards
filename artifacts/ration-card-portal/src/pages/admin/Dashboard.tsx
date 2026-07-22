@@ -25,6 +25,7 @@ import {
   useLogoutAdmin,
   useListPaymentVerifications,
   getListPaymentVerificationsQueryKey,
+  useUpdateReviewStatus,
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +34,7 @@ import {
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
+  Star, MessageSquare,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -161,6 +163,21 @@ export default function AdminDashboard() {
     } as any
   );
 
+  const { data: reviewsData, isLoading: reviewsLoading, refetch: refetchReviews } = useQuery<any[]>({
+    queryKey: ["admin", "reviews"],
+    enabled: !!admin && activeTab === "reviews",
+    refetchInterval: activeTab === "reviews" ? 15000 : false,
+    queryFn: async () => {
+      const r = await fetch("/api/admin/reviews", { headers: getAuthHeader() as Record<string, string> });
+      if (!r.ok) throw new Error("Failed to fetch reviews");
+      return r.json();
+    },
+  });
+
+  const updateReviewStatus = useUpdateReviewStatus({
+    request: { headers: getAuthHeader() },
+  } as any);
+
   const assignOrder = useAssignOrderToOperator();
   const updateStatus = useUpdateOrderStatus();
   const updatePaymentStatus = useUpdateOrderPaymentStatus({
@@ -232,6 +249,19 @@ export default function AdminDashboard() {
           queryClient.invalidateQueries({ queryKey: getListOperatorsQueryKey() });
         },
         onError: () => toast({ title: "Failed to update operator status", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleReviewAction(reviewId: number, status: "approved" | "rejected") {
+    updateReviewStatus.mutate(
+      { id: reviewId, data: { status } },
+      {
+        onSuccess: () => {
+          toast({ title: status === "approved" ? "Review approved and published!" : "Review rejected." });
+          refetchReviews();
+        },
+        onError: () => toast({ title: "Failed to update review", variant: "destructive" }),
       }
     );
   }
@@ -338,12 +368,12 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-slate-200 shadow-sm h-11 p-1">
+            <TabsList className="bg-white border border-slate-200 shadow-sm h-11 p-1 flex-wrap">
               <TabsTrigger value="orders" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <Package className="w-4 h-4" /> Orders
                 {ordersData && <span className="bg-primary/20 text-primary data-[state=active]:bg-white/20 data-[state=active]:text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>}
               </TabsTrigger>
-                <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+              <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <UserCheck className="w-4 h-4" /> Applications
                 {applicationsData && (applicationsData as any[]).length > 0 && (
                   <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">{(applicationsData as any[]).length}</span>
@@ -352,6 +382,14 @@ export default function AdminDashboard() {
               <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <ShieldCheck className="w-4 h-4" /> Verification Log
                 {verificationsData && <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">{verificationsData.total}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="reviews" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <Star className="w-4 h-4" /> Reviews
+                {reviewsData && (reviewsData as any[]).filter((r: any) => r.status === "pending").length > 0 && (
+                  <span className="bg-amber-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">
+                    {(reviewsData as any[]).filter((r: any) => r.status === "pending").length}
+                  </span>
+                )}
               </TabsTrigger>
             </TabsList>
 
@@ -579,6 +617,117 @@ export default function AdminDashboard() {
                               <UserX className="w-4 h-4" /> Reject
                             </Button>
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Reviews Tab ── */}
+            <TabsContent value="reviews" className="tab-panel mt-4">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <MessageSquare className="w-5 h-5 text-primary" />
+                      Customer Reviews
+                      {reviewsData && (
+                        <span className="text-slate-400 font-normal text-sm ml-1">({(reviewsData as any[]).length} total)</span>
+                      )}
+                    </CardTitle>
+                    <span className="text-xs text-slate-400">Auto-refreshes every 15s</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {reviewsLoading ? (
+                    <div className="py-14 flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                      <p className="text-slate-400 text-sm">Loading reviews…</p>
+                    </div>
+                  ) : !reviewsData || (reviewsData as any[]).length === 0 ? (
+                    <div className="py-16 text-center">
+                      <div className="w-16 h-16 rounded-full bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                        <Star className="w-8 h-8 text-amber-200" />
+                      </div>
+                      <p className="text-slate-500 font-medium">No reviews yet</p>
+                      <p className="text-slate-400 text-sm mt-1">Customer reviews appear here after they submit them from the tracking page.</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-100">
+                      {(reviewsData as any[]).map((review: any, i: number) => (
+                        <div
+                          key={review.id}
+                          className="p-5 flex flex-col sm:flex-row gap-4"
+                          style={{ animation: "fadeSlideIn 0.35s ease both", animationDelay: `${i * 60}ms` }}
+                        >
+                          <div className="flex-1 space-y-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-semibold text-slate-900">{review.customerName}</span>
+                              <span className="text-xs text-slate-400">·</span>
+                              <span className="text-xs text-slate-500 flex items-center gap-1">
+                                <MapPin className="w-3 h-3" /> {review.district}
+                              </span>
+                              <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">{review.cardType}</span>
+                              {review.status === "pending" && (
+                                <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-xs">Pending</Badge>
+                              )}
+                              {review.status === "approved" && (
+                                <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs gap-1">
+                                  <CheckCircle2 className="w-3 h-3" /> Approved
+                                </Badge>
+                              )}
+                              {review.status === "rejected" && (
+                                <Badge className="bg-red-100 text-red-700 border border-red-200 text-xs gap-1">
+                                  <XCircle className="w-3 h-3" /> Rejected
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-0.5">
+                              {Array.from({ length: 5 }).map((_, si) => (
+                                <Star
+                                  key={si}
+                                  className={`w-3.5 h-3.5 ${si < review.rating ? "fill-amber-400 text-amber-400" : "text-slate-200 fill-slate-200"}`}
+                                />
+                              ))}
+                              <span className="text-xs text-slate-500 ml-1">{review.rating}/5</span>
+                            </div>
+                            <p className="text-sm text-slate-600 leading-relaxed">"{review.quote}"</p>
+                            {review.photoUrl && (
+                              <a href={review.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
+                                <ImageIcon className="w-3.5 h-3.5" /> View photo
+                              </a>
+                            )}
+                            <p className="text-xs text-slate-400">
+                              Order: <span className="font-mono text-primary">{review.orderNumber}</span>
+                              {" · "}
+                              {new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            </p>
+                          </div>
+                          {review.status === "pending" && (
+                            <div className="flex sm:flex-col gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-8 px-3"
+                                data-testid={`button-approve-review-${review.id}`}
+                                onClick={() => handleReviewAction(review.id, "approved")}
+                                disabled={updateReviewStatus.isPending}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 h-8 px-3"
+                                data-testid={`button-reject-review-${review.id}`}
+                                onClick={() => handleReviewAction(review.id, "rejected")}
+                                disabled={updateReviewStatus.isPending}
+                              >
+                                <XCircle className="w-3.5 h-3.5" /> Reject
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>

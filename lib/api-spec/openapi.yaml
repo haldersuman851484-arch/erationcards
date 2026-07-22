@@ -463,6 +463,103 @@ paths:
               schema:
                 $ref: "#/components/schemas/PaymentVerificationListResponse"
 
+  # ── Reviews ──────────────────────────────────────────────────────────────────
+  /reviews:
+    get:
+      operationId: listApprovedReviews
+      tags: [orders]
+      summary: List approved customer reviews (public)
+      responses:
+        "200":
+          description: Approved reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+    post:
+      operationId: submitReview
+      tags: [orders]
+      summary: Submit a customer review after receiving a card
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewInput"
+      responses:
+        "201":
+          description: Review submitted, pending admin approval
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Order not found or not eligible
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/reviews:
+    get:
+      operationId: listAdminReviews
+      tags: [dashboard]
+      summary: List all reviews for moderation (admin)
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        "200":
+          description: All reviews
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Review"
+
+  /admin/reviews/{id}:
+    patch:
+      operationId: updateReviewStatus
+      tags: [dashboard]
+      summary: Approve or reject a review (admin)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewStatusUpdate"
+      responses:
+        "200":
+          description: Review status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+        "404":
+          description: Review not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Admin Auth ───────────────────────────────────────────────────────────────
   /admin/login:
     post:
@@ -989,6 +1086,75 @@ components:
         - action
         - adminEmail
         - verifiedAt
+
+    # ── Review Schemas ─────────────────────────────────────────────────────────
+    Review:
+      type: object
+      properties:
+        id:
+          type: integer
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        district:
+          type: string
+        cardType:
+          type: string
+        rating:
+          type: integer
+        quote:
+          type: string
+        photoUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+      required:
+        - id
+        - orderNumber
+        - customerName
+        - district
+        - cardType
+        - rating
+        - quote
+        - status
+        - createdAt
+        - updatedAt
+
+    ReviewInput:
+      type: object
+      properties:
+        orderNumber:
+          type: string
+        customerName:
+          type: string
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        quote:
+          type: string
+        photoUrl:
+          type: string
+      required:
+        - orderNumber
+        - customerName
+        - rating
+        - quote
+
+    ReviewStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [approved, rejected]
+      required:
+        - status
 
     PaymentVerificationListResponse:
       type: object

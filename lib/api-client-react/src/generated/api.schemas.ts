@@ -232,6 +232,54 @@ export interface PaymentVerification {
   verifiedAt: string;
 }
 
+export type ReviewStatus = typeof ReviewStatus[keyof typeof ReviewStatus];
+
+
+export const ReviewStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface Review {
+  id: number;
+  orderNumber: string;
+  customerName: string;
+  district: string;
+  cardType: string;
+  rating: number;
+  quote: string;
+  /** @nullable */
+  photoUrl?: string | null;
+  status: ReviewStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ReviewInput {
+  orderNumber: string;
+  customerName: string;
+  /**
+     * @minimum 1
+     * @maximum 5
+     */
+  rating: number;
+  quote: string;
+  photoUrl?: string;
+}
+
+export type ReviewStatusUpdateStatus = typeof ReviewStatusUpdateStatus[keyof typeof ReviewStatusUpdateStatus];
+
+
+export const ReviewStatusUpdateStatus = {
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
+
+export interface ReviewStatusUpdate {
+  status: ReviewStatusUpdateStatus;
+}
+
 export interface PaymentVerificationListResponse {
   verifications: PaymentVerification[];
   total: number;
@@ -270,4 +318,17 @@ export type ListPaymentVerificationsParams = {
 page?: number;
 limit?: number;
 };
+
+export type ListAdminReviewsParams = {
+status?: ListAdminReviewsStatus;
+};
+
+export type ListAdminReviewsStatus = typeof ListAdminReviewsStatus[keyof typeof ListAdminReviewsStatus];
+
+
+export const ListAdminReviewsStatus = {
+  pending: 'pending',
+  approved: 'approved',
+  rejected: 'rejected',
+} as const;
 

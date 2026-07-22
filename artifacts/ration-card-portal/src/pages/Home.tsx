@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
+import { useListApprovedReviews } from "@workspace/api-client-react";
 
 function HeroPVCCard() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -218,7 +219,7 @@ const STATS = [
   { value: "24hr", label: "Order Processing", icon: Clock },
 ];
 
-const TESTIMONIALS = [
+const STATIC_TESTIMONIALS = [
   {
     name: "Sunita Devi",
     initials: "SD",
@@ -281,12 +282,59 @@ const TESTIMONIALS = [
   },
 ];
 
+const CARD_TYPE_BADGE: Record<string, string> = {
+  AAY: "bg-red-100 text-red-700",
+  PHH: "bg-blue-100 text-blue-700",
+  SPHH: "bg-purple-100 text-purple-700",
+  "RKSY-I": "bg-emerald-100 text-emerald-700",
+  "RKSY-II": "bg-amber-100 text-amber-700",
+};
+
+const AVATAR_COLORS = [
+  "linear-gradient(135deg, #7f1d1d, #b91c1c)",
+  "linear-gradient(135deg, #0f4c81, #1a7fc4)",
+  "linear-gradient(135deg, #064e3b, #059669)",
+  "linear-gradient(135deg, #4c1d95, #7c3aed)",
+  "linear-gradient(135deg, #78350f, #d97706)",
+  "linear-gradient(135deg, #134e4a, #0d9488)",
+  "linear-gradient(135deg, #1e1b4b, #4338ca)",
+];
+
+function getInitials(name: string): string {
+  return name.split(" ").map((w) => w[0] ?? "").join("").toUpperCase().slice(0, 2);
+}
+
+function formatReviewDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("en-IN", { month: "long", year: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
 export default function Home() {
   useSeo({
     title: "Order PVC Ration Card Online | West Bengal",
     description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. ₹70 for single card, ₹50 each for 2+ cards.",
     canonical: "https://erationcards.in/",
   });
+
+  const { data: liveReviews } = useListApprovedReviews();
+  const testimonials = liveReviews && liveReviews.length > 0
+    ? liveReviews.map((r, idx) => ({
+        name: r.customerName,
+        initials: getInitials(r.customerName),
+        avatarColor: AVATAR_COLORS[idx % AVATAR_COLORS.length],
+        district: r.district,
+        cardType: r.cardType,
+        badgeClass: CARD_TYPE_BADGE[r.cardType] ?? "bg-slate-100 text-slate-700",
+        rating: r.rating,
+        quote: r.quote,
+        photoUrl: r.photoUrl ?? null,
+        date: formatReviewDate(r.createdAt),
+      }))
+    : STATIC_TESTIMONIALS;
+
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
@@ -614,9 +662,9 @@ export default function Home() {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
-            {TESTIMONIALS.map((t) => (
+            {testimonials.map((t, i) => (
               <div
-                key={t.name}
+                key={`${t.name}-${i}`}
                 className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col gap-4 hover:shadow-md transition-shadow"
               >
                 <div className="flex items-start justify-between gap-3">

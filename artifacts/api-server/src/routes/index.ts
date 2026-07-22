@@ -5,6 +5,7 @@ import operatorsRouter from "./operators";
 import adminRouter from "./admin";
 import paymentsRouter from "./payments";
 import cardPdfsRouter from "./card-pdfs";
+import reviewsRouter from "./reviews";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(operatorsRouter);
 router.use(adminRouter);
 router.use(paymentsRouter);
 router.use(cardPdfsRouter);
+router.use(reviewsRouter);
 
 export default router;

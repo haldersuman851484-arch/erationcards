@@ -8,6 +8,13 @@
       "when": 1784696374484,
       "tag": "0000_big_pride",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1784721159806,
+      "tag": "0001_soft_prima",
+      "breakpoints": true
     }
   ]
 }

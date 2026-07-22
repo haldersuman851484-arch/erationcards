@@ -617,6 +617,104 @@ export const ListPaymentVerificationsResponse = zod.object({
 
 
 /**
+ * @summary List approved customer reviews (public)
+ */
+export const ListApprovedReviewsResponseItem = zod.object({
+  "id": zod.number(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "district": zod.string(),
+  "cardType": zod.string(),
+  "rating": zod.number(),
+  "quote": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListApprovedReviewsResponse = zod.array(ListApprovedReviewsResponseItem)
+
+
+/**
+ * @summary Submit a customer review after receiving a card
+ */
+export const submitReviewBodyRatingMax = 5;
+
+
+
+export const SubmitReviewBody = zod.object({
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "rating": zod.number().min(1).max(submitReviewBodyRatingMax),
+  "quote": zod.string(),
+  "photoUrl": zod.string().optional()
+})
+
+export const SubmitReviewResponse = zod.object({
+  "id": zod.number(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "district": zod.string(),
+  "cardType": zod.string(),
+  "rating": zod.number(),
+  "quote": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary List all reviews for moderation (admin)
+ */
+export const ListAdminReviewsQueryParams = zod.object({
+  "status": zod.enum(['pending', 'approved', 'rejected']).optional()
+})
+
+export const ListAdminReviewsResponseItem = zod.object({
+  "id": zod.number(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "district": zod.string(),
+  "cardType": zod.string(),
+  "rating": zod.number(),
+  "quote": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListAdminReviewsResponse = zod.array(ListAdminReviewsResponseItem)
+
+
+/**
+ * @summary Approve or reject a review (admin)
+ */
+export const UpdateReviewStatusParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateReviewStatusBody = zod.object({
+  "status": zod.enum(['approved', 'rejected'])
+})
+
+export const UpdateReviewStatusResponse = zod.object({
+  "id": zod.number(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "district": zod.string(),
+  "cardType": zod.string(),
+  "rating": zod.number(),
+  "quote": zod.string(),
+  "photoUrl": zod.string().nullish(),
+  "status": zod.enum(['pending', 'approved', 'rejected']),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
  * @summary Admin login
  */
 export const LoginAdminBody = zod.object({

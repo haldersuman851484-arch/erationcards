@@ -3,10 +3,11 @@ import { Navbar, Footer, BRAND } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink } from "lucide-react";
+import { useTrackOrder, getTrackOrderQueryKey, useSubmitReview } from "@workspace/api-client-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2 } from "lucide-react";
 
 function addWorkingDays(from: Date, days: number): Date {
   const result = new Date(from);
@@ -104,6 +105,36 @@ const STATUS_BADGE: Record<string, string> = {
   delivered: "bg-emerald-100 text-emerald-700 border-emerald-200",
 };
 
+function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => onChange(star)}
+          onMouseEnter={() => setHovered(star)}
+          onMouseLeave={() => setHovered(0)}
+          className="focus:outline-none"
+          data-testid={`star-rating-${star}`}
+        >
+          <Star
+            className={`w-7 h-7 transition-colors ${
+              star <= (hovered || value)
+                ? "fill-amber-400 text-amber-400"
+                : "text-slate-300 fill-slate-100"
+            }`}
+          />
+        </button>
+      ))}
+      {value > 0 && (
+        <span className="text-sm text-slate-500 ml-1.5">{value} star{value !== 1 ? "s" : ""}</span>
+      )}
+    </div>
+  );
+}
+
 export default function TrackOrder() {
   useSeo({
     title: "Track Your PVC Ration Card Order Status",
@@ -114,6 +145,14 @@ export default function TrackOrder() {
   const [rationCardNumber, setRationCardNumber] = useState("");
   const [searchParams, setSearchParams] = useState<{ orderNumber?: string; rationCardNumber?: string } | null>(null);
 
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewQuote, setReviewQuote] = useState("");
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const submitReview = useSubmitReview();
+
   const { data: order, isLoading, error } = useTrackOrder(
     searchParams ?? {},
     { query: { enabled: !!searchParams, queryKey: getTrackOrderQueryKey(searchParams ?? {}) } }
@@ -122,10 +161,37 @@ export default function TrackOrder() {
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
     if (!orderNumber && !rationCardNumber) return;
+    setReviewSubmitted(false);
+    setReviewError(null);
+    setReviewRating(0);
+    setReviewQuote("");
     setSearchParams({
       orderNumber: orderNumber || undefined,
       rationCardNumber: rationCardNumber || undefined,
     });
+  }
+
+  function handleReviewSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!order) return;
+    if (reviewRating === 0) { setReviewError("Please select a star rating."); return; }
+    if (!reviewName.trim()) { setReviewError("Please enter your name."); return; }
+    if (reviewQuote.trim().length < 5) { setReviewError("Please write at least a short review."); return; }
+    setReviewError(null);
+    submitReview.mutate(
+      {
+        data: {
+          orderNumber: order.orderNumber,
+          customerName: reviewName.trim(),
+          rating: reviewRating,
+          quote: reviewQuote.trim(),
+        },
+      },
+      {
+        onSuccess: () => setReviewSubmitted(true),
+        onError: () => setReviewError("Failed to submit review. Please try again."),
+      }
+    );
   }
 
   const currentStepIdx = order ? STATUS_STEPS.findIndex(s => s.key === order.status) : -1;
@@ -348,6 +414,66 @@ export default function TrackOrder() {
                         </a>
                       </Button>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {(order.status === "dispatched" || order.status === "delivered") && (
+                <Card className="border-amber-200 shadow-sm" data-testid="review-section">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Star className="w-4 h-4 text-amber-400 fill-amber-400" />
+                      Leave a Review
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {reviewSubmitted ? (
+                      <div className="flex flex-col items-center gap-3 py-4 text-center" data-testid="review-submitted">
+                        <CheckCircle2 className="w-10 h-10 text-emerald-500" />
+                        <p className="font-semibold text-slate-900">Thank you for your review!</p>
+                        <p className="text-sm text-slate-500">Your review will appear on the homepage once approved by our team.</p>
+                      </div>
+                    ) : (
+                      <form onSubmit={handleReviewSubmit} className="space-y-4" data-testid="review-form">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Name</label>
+                          <Input
+                            data-testid="input-review-name"
+                            placeholder="Enter your name"
+                            value={reviewName}
+                            onChange={(e) => setReviewName(e.target.value)}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-2">Rating</label>
+                          <StarRatingInput value={reviewRating} onChange={setReviewRating} />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-700 mb-1.5">Your Review</label>
+                          <Textarea
+                            data-testid="input-review-quote"
+                            placeholder="Share your experience with your PVC ration card…"
+                            rows={3}
+                            value={reviewQuote}
+                            onChange={(e) => setReviewQuote(e.target.value)}
+                            className="resize-none"
+                          />
+                        </div>
+                        {reviewError && (
+                          <p className="text-sm text-red-600" data-testid="review-error">{reviewError}</p>
+                        )}
+                        <Button
+                          type="submit"
+                          data-testid="button-submit-review"
+                          className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+                          disabled={submitReview.isPending}
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          {submitReview.isPending ? "Submitting…" : "Submit Review"}
+                        </Button>
+                        <p className="text-xs text-slate-400 text-center">Reviews are shown on the homepage after approval.</p>
+                      </form>
+                    )}
                   </CardContent>
                 </Card>
               )}
