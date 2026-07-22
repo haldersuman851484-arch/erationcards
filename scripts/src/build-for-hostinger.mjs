@@ -14,6 +14,8 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  readdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -29,8 +31,102 @@ const run = (cmd, cwd = repoRoot) => {
 };
 
 const DEPLOY_DIR = path.join(repoRoot, "hostinger");
+const MIGRATIONS_DIR = path.join(repoRoot, "lib", "db", "migrations");
 
 console.log("=== Hostinger deployment build ===\n");
+
+// ── 0. Migration freshness check ──────────────────────────────────────────
+// Detect schema drift: run drizzle-kit generate (no real DB needed — it only
+// reads TypeScript schema files) and check whether it produces new SQL.
+// If it does, the developer has uncommitted schema changes and the build is
+// aborted before any artifact is produced.
+//
+// We snapshot the ENTIRE migrations/ directory (both .sql files and meta/)
+// before running generate, then fully restore it afterwards — so neither a
+// pass nor a fail leaves stray or modified files in git.
+console.log("▶ Checking for uncommitted schema changes…");
+
+/** Recursively collect every file under a directory as {relPath, content} */
+function snapshotDir(dir, base = dir) {
+  const snapshot = new Map();
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    const rel = path.relative(base, full);
+    if (entry.isDirectory()) {
+      for (const [k, v] of snapshotDir(full, base)) snapshot.set(k, v);
+    } else {
+      snapshot.set(rel, readFileSync(full));
+    }
+  }
+  return snapshot;
+}
+
+/** Restore migrations/ to exactly the state captured in `before`. */
+function restoreMigrationsDir(before) {
+  // Remove any files that didn't exist before
+  const after = snapshotDir(MIGRATIONS_DIR);
+  for (const rel of after.keys()) {
+    if (!before.has(rel)) {
+      rmSync(path.join(MIGRATIONS_DIR, rel));
+    }
+  }
+  // Restore any files that were modified
+  for (const [rel, content] of before) {
+    const current = after.get(rel);
+    if (!current || !current.equals(content)) {
+      writeFileSync(path.join(MIGRATIONS_DIR, rel), content);
+    }
+  }
+}
+
+const migrationsBefore = snapshotDir(MIGRATIONS_DIR);
+
+try {
+  execSync("pnpm --filter @workspace/db run generate", {
+    stdio: "pipe",
+    cwd: repoRoot,
+    env: {
+      ...process.env,
+      MYSQL_DATABASE_URL:
+        process.env.MYSQL_DATABASE_URL ||
+        "mysql://placeholder:x@localhost:3306/placeholder",
+    },
+  });
+} catch (err) {
+  restoreMigrationsDir(migrationsBefore);
+  console.error("\n❌  drizzle-kit generate failed during migration freshness check.");
+  console.error(err.stderr?.toString() ?? err.message);
+  process.exit(1);
+}
+
+// Detect new .sql files (the canonical signal that schema is ahead of migrations)
+const migrationsAfter = snapshotDir(MIGRATIONS_DIR);
+const newSqlFiles = [...migrationsAfter.keys()].filter(
+  (rel) => rel.endsWith(".sql") && !migrationsBefore.has(rel)
+);
+
+// Always restore migrations/ to the pre-generate state so git stays clean
+restoreMigrationsDir(migrationsBefore);
+
+if (newSqlFiles.length > 0) {
+  console.error(`
+╔══════════════════════════════════════════════════════════════════════╗
+║  ERROR: Schema has uncommitted migrations — build aborted.          ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  drizzle-kit generate produced ${newSqlFiles.length} new SQL file(s).              ║
+║  lib/db/src/schema/ is ahead of lib/db/migrations/, so the          ║
+║  production database will be missing columns and fail at runtime.   ║
+║                                                                      ║
+║  Fix before deploying:                                              ║
+║    1.  pnpm --filter @workspace/db run generate                     ║
+║    2.  git add lib/db/migrations/ && git commit                     ║
+║    3.  Re-run the build.                                            ║
+╚══════════════════════════════════════════════════════════════════════╝
+`);
+  process.exit(1);
+}
+
+console.log("  ✅  Migrations are up to date — no uncommitted schema changes.\n");
 
 // ── 1. Clean previous deploy dir ──────────────────────────────────────────
 if (existsSync(DEPLOY_DIR)) {
