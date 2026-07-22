@@ -402,44 +402,15 @@ export default function Home() {
             <div className="flex flex-col items-center gap-3">
               <div className="w-full rounded-xl overflow-hidden shadow-2xl border border-sky-200" style={{ background: "#29b5e8", aspectRatio: "85.6/54" }}>
                 <div className="h-full flex flex-col px-3 py-2 gap-0.5">
-                  <div className="flex items-start gap-2">
-                    <div className="w-9 h-9 rounded-full border border-white/60 bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 32 32" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.08)" stroke="white" strokeWidth="0.8" strokeOpacity="0.6"/>
-                        <circle cx="16" cy="8" r="2.2" fill="white" fillOpacity="0.9"/>
-                        <rect x="14.5" y="10" width="3" height="7" fill="white" fillOpacity="0.9"/>
-                        <rect x="10" y="9.5" width="12" height="1.8" rx="0.6" fill="white" fillOpacity="0.85"/>
-                        <circle cx="11" cy="8.5" r="1.6" fill="white" fillOpacity="0.8"/>
-                        <circle cx="21" cy="8.5" r="1.6" fill="white" fillOpacity="0.8"/>
-                        <rect x="11" y="17" width="10" height="1.2" rx="0.4" fill="white" fillOpacity="0.9"/>
-                        <circle cx="16" cy="21.5" r="2.8" fill="none" stroke="white" strokeWidth="0.7" strokeOpacity="0.85"/>
-                        <circle cx="16" cy="21.5" r="0.6" fill="white" fillOpacity="0.9"/>
-                        <line x1="16" y1="18.7" x2="16" y2="24.3" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="13.2" y1="21.5" x2="18.8" y2="21.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="14.1" y1="19.5" x2="17.9" y2="23.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="17.9" y1="19.5" x2="14.1" y2="23.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                      </svg>
-                    </div>
-                    <div className="leading-tight">
-                      <p className="text-white font-bold" style={{ fontSize: "10px" }}>পশ্চিমবঙ্গ সরকার</p>
-                      <p className="text-white/90" style={{ fontSize: "8.5px" }}>খাদ্য ও সরবরাহ দপ্তর</p>
-                      <p className="text-white font-bold mt-0.5" style={{ fontSize: "8px" }}>Ration Card No: AAY</p>
-                      <p className="text-white/80" style={{ fontSize: "6.5px" }}>For NFSA - AAY Beneficiaries</p>
-                    </div>
-                  </div>
+                  <p className="text-white font-bold" style={{ fontSize: "9px" }}>Ration Card No: AAY</p>
                   <div className="border-t border-white/40 my-0.5" />
                   <div className="space-y-0.5 flex-1">
                     {["Name of the Card Holder", "Name of the Father/Husband", "Head of the Family", "Date of Birth", "Dealer Name"].map(f => (
-                      <p key={f} className="text-white/90 border-b border-white/25 pb-px" style={{ fontSize: "6px" }}>{f} :</p>
+                      <p key={f} className="text-white/90" style={{ fontSize: "6px" }}>{f} :</p>
                     ))}
                   </div>
-                  <p className="text-white/90 border-b border-white/25 pb-px" style={{ fontSize: "6px" }}>Dealer Address :</p>
-                  <div className="flex items-center justify-between pt-0.5">
-                    <p className="text-white/65" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
-                    <div className="w-5 h-5 rounded-full border border-white/40 bg-white/15 flex items-center justify-center">
-                      <p className="text-white/60 text-center leading-none" style={{ fontSize: "3.5px" }}>পশ্চিমবঙ্গ সরকার</p>
-                    </div>
-                  </div>
+                  <p className="text-white/90" style={{ fontSize: "6px" }}>Dealer Address :</p>
+                  <p className="text-white/65 pt-0.5" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
                 </div>
               </div>
               <div className="text-center">
@@ -452,44 +423,15 @@ export default function Home() {
             <div className="flex flex-col items-center gap-3">
               <div className="w-full rounded-xl overflow-hidden shadow-2xl border border-slate-200" style={{ background: "#f5f5f5", aspectRatio: "85.6/54" }}>
                 <div className="h-full flex flex-col px-3 py-2 gap-0.5">
-                  <div className="flex items-start gap-2">
-                    <div className="w-9 h-9 rounded-full border border-slate-400 bg-white flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 32 32" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="16" cy="16" r="15" fill="transparent" stroke="#334155" strokeWidth="0.8" strokeOpacity="0.6"/>
-                        <circle cx="16" cy="8" r="2.2" fill="#1e293b" fillOpacity="0.9"/>
-                        <rect x="14.5" y="10" width="3" height="7" fill="#1e293b" fillOpacity="0.9"/>
-                        <rect x="10" y="9.5" width="12" height="1.8" rx="0.6" fill="#1e293b" fillOpacity="0.85"/>
-                        <circle cx="11" cy="8.5" r="1.6" fill="#1e293b" fillOpacity="0.8"/>
-                        <circle cx="21" cy="8.5" r="1.6" fill="#1e293b" fillOpacity="0.8"/>
-                        <rect x="11" y="17" width="10" height="1.2" rx="0.4" fill="#1e293b" fillOpacity="0.9"/>
-                        <circle cx="16" cy="21.5" r="2.8" fill="none" stroke="#1e293b" strokeWidth="0.7" strokeOpacity="0.85"/>
-                        <circle cx="16" cy="21.5" r="0.6" fill="#1e293b" fillOpacity="0.9"/>
-                        <line x1="16" y1="18.7" x2="16" y2="24.3" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="13.2" y1="21.5" x2="18.8" y2="21.5" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="14.1" y1="19.5" x2="17.9" y2="23.5" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="17.9" y1="19.5" x2="14.1" y2="23.5" stroke="#1e293b" strokeWidth="0.5" strokeOpacity="0.85"/>
-                      </svg>
-                    </div>
-                    <div className="leading-tight">
-                      <p className="text-slate-900 font-bold" style={{ fontSize: "10px" }}>পশ্চিমবঙ্গ সরকার</p>
-                      <p className="text-slate-700" style={{ fontSize: "8.5px" }}>খাদ্য ও সরবরাহ দপ্তর</p>
-                      <p className="text-slate-900 font-bold mt-0.5" style={{ fontSize: "8px" }}>Ration Card No : PHH</p>
-                      <p className="text-slate-500" style={{ fontSize: "6.5px" }}>For NFSA - Priority Household</p>
-                    </div>
-                  </div>
+                  <p className="text-slate-900 font-bold" style={{ fontSize: "9px" }}>Ration Card No : PHH</p>
                   <div className="border-t border-slate-300 my-0.5" />
                   <div className="space-y-0.5 flex-1">
                     {["Name of the Card Holder", "Name of the Father/Husband", "Head of the Family", "Date of Birth", "Dealer Name"].map(f => (
-                      <p key={f} className="text-slate-700 border-b border-slate-200 pb-px" style={{ fontSize: "6px" }}>{f} :</p>
+                      <p key={f} className="text-slate-700" style={{ fontSize: "6px" }}>{f} :</p>
                     ))}
                   </div>
-                  <p className="text-slate-700 border-b border-slate-200 pb-px" style={{ fontSize: "6px" }}>Dealer Address :</p>
-                  <div className="flex items-center justify-between pt-0.5">
-                    <p className="text-slate-400" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
-                    <div className="w-5 h-5 rounded-full border border-slate-300 bg-slate-100 flex items-center justify-center">
-                      <p className="text-slate-400 text-center leading-none" style={{ fontSize: "3.5px" }}>পশ্চিমবঙ্গ সরকার</p>
-                    </div>
-                  </div>
+                  <p className="text-slate-700" style={{ fontSize: "6px" }}>Dealer Address :</p>
+                  <p className="text-slate-400 pt-0.5" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
                 </div>
               </div>
               <div className="text-center">
@@ -502,44 +444,15 @@ export default function Home() {
             <div className="flex flex-col items-center gap-3">
               <div className="w-full rounded-xl overflow-hidden shadow-2xl border border-cyan-200" style={{ background: "#5ecde0", aspectRatio: "85.6/54" }}>
                 <div className="h-full flex flex-col px-3 py-2 gap-0.5">
-                  <div className="flex items-start gap-2">
-                    <div className="w-9 h-9 rounded-full border border-white/60 bg-white/20 flex items-center justify-center flex-shrink-0">
-                      <svg viewBox="0 0 32 32" className="w-7 h-7" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.08)" stroke="white" strokeWidth="0.8" strokeOpacity="0.6"/>
-                        <circle cx="16" cy="8" r="2.2" fill="white" fillOpacity="0.9"/>
-                        <rect x="14.5" y="10" width="3" height="7" fill="white" fillOpacity="0.9"/>
-                        <rect x="10" y="9.5" width="12" height="1.8" rx="0.6" fill="white" fillOpacity="0.85"/>
-                        <circle cx="11" cy="8.5" r="1.6" fill="white" fillOpacity="0.8"/>
-                        <circle cx="21" cy="8.5" r="1.6" fill="white" fillOpacity="0.8"/>
-                        <rect x="11" y="17" width="10" height="1.2" rx="0.4" fill="white" fillOpacity="0.9"/>
-                        <circle cx="16" cy="21.5" r="2.8" fill="none" stroke="white" strokeWidth="0.7" strokeOpacity="0.85"/>
-                        <circle cx="16" cy="21.5" r="0.6" fill="white" fillOpacity="0.9"/>
-                        <line x1="16" y1="18.7" x2="16" y2="24.3" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="13.2" y1="21.5" x2="18.8" y2="21.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="14.1" y1="19.5" x2="17.9" y2="23.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                        <line x1="17.9" y1="19.5" x2="14.1" y2="23.5" stroke="white" strokeWidth="0.5" strokeOpacity="0.85"/>
-                      </svg>
-                    </div>
-                    <div className="leading-tight">
-                      <p className="text-white font-bold" style={{ fontSize: "10px" }}>পশ্চিমবঙ্গ সরকার</p>
-                      <p className="text-white/90" style={{ fontSize: "8.5px" }}>খাদ্য ও সরবরাহ দপ্তর</p>
-                      <p className="text-white font-bold mt-0.5" style={{ fontSize: "8px" }}>Ration Card No : SPHH</p>
-                      <p className="text-white/80" style={{ fontSize: "6.5px" }}>For NFSA - Special Priority Household</p>
-                    </div>
-                  </div>
+                  <p className="text-white font-bold" style={{ fontSize: "9px" }}>Ration Card No : SPHH</p>
                   <div className="border-t border-white/40 my-0.5" />
                   <div className="space-y-0.5 flex-1">
                     {["Name of the Card Holder", "Name of the Father/Husband", "Head of the Family", "Date of Birth", "Dealer Name"].map(f => (
-                      <p key={f} className="text-white/90 border-b border-white/25 pb-px" style={{ fontSize: "6px" }}>{f} :</p>
+                      <p key={f} className="text-white/90" style={{ fontSize: "6px" }}>{f} :</p>
                     ))}
                   </div>
-                  <p className="text-white/90 border-b border-white/25 pb-px" style={{ fontSize: "6px" }}>Dealer Address :</p>
-                  <div className="flex items-center justify-between pt-0.5">
-                    <p className="text-white/65" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
-                    <div className="w-5 h-5 rounded-full border border-white/40 bg-white/15 flex items-center justify-center">
-                      <p className="text-white/60 text-center leading-none" style={{ fontSize: "3.5px" }}>পশ্চিমবঙ্গ সরকার</p>
-                    </div>
-                  </div>
+                  <p className="text-white/90" style={{ fontSize: "6px" }}>Dealer Address :</p>
+                  <p className="text-white/65 pt-0.5" style={{ fontSize: "5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
                 </div>
               </div>
               <div className="text-center">
@@ -553,52 +466,23 @@ export default function Home() {
               <div className="w-full rounded-xl overflow-hidden shadow-2xl border border-green-300" style={{ background: "white", aspectRatio: "85.6/54" }}>
                 <div className="h-full flex" style={{ minHeight: 0 }}>
                   {/* Left green stripe */}
-                  <div className="flex flex-col items-center justify-between py-2 px-1.5 flex-shrink-0" style={{ background: "#1a5c2a", width: "22%" }}>
-                    <div className="w-7 h-7 rounded-full border border-white/50 bg-white/15 flex items-center justify-center">
-                      <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="12" cy="12" r="11" fill="rgba(255,255,255,0.08)" stroke="white" strokeWidth="0.6" strokeOpacity="0.6"/>
-                        <circle cx="12" cy="5.5" r="1.7" fill="white" fillOpacity="0.9"/>
-                        <rect x="10.5" y="7" width="3" height="5.5" fill="white" fillOpacity="0.9"/>
-                        <rect x="7" y="6.5" width="10" height="1.5" rx="0.5" fill="white" fillOpacity="0.85"/>
-                        <circle cx="8" cy="6" r="1.3" fill="white" fillOpacity="0.8"/>
-                        <circle cx="16" cy="6" r="1.3" fill="white" fillOpacity="0.8"/>
-                        <rect x="8" y="12.5" width="8" height="1" rx="0.3" fill="white" fillOpacity="0.9"/>
-                        <circle cx="12" cy="16" r="2.2" fill="none" stroke="white" strokeWidth="0.6" strokeOpacity="0.85"/>
-                        <circle cx="12" cy="16" r="0.5" fill="white" fillOpacity="0.9"/>
-                        <line x1="12" y1="13.8" x2="12" y2="18.2" stroke="white" strokeWidth="0.4" strokeOpacity="0.85"/>
-                        <line x1="9.8" y1="16" x2="14.2" y2="16" stroke="white" strokeWidth="0.4" strokeOpacity="0.85"/>
-                        <line x1="10.5" y1="14.4" x2="13.5" y2="17.6" stroke="white" strokeWidth="0.4" strokeOpacity="0.85"/>
-                        <line x1="13.5" y1="14.4" x2="10.5" y2="17.6" stroke="white" strokeWidth="0.4" strokeOpacity="0.85"/>
-                      </svg>
-                    </div>
-                    <div className="w-5 h-5 rounded-full border border-red-300 flex items-center justify-center" style={{ background: "#c0392b" }}>
-                      <p className="text-white text-center leading-none font-bold" style={{ fontSize: "3px" }}>WB</p>
-                    </div>
-                  </div>
+                  <div className="flex-shrink-0" style={{ background: "#1a5c2a", width: "20%" }} />
 
                   {/* Centre white area */}
                   <div className="flex flex-col flex-1 px-2 py-2 gap-0.5" style={{ minWidth: 0 }}>
-                    <div className="leading-tight">
-                      <p className="text-slate-900 font-bold" style={{ fontSize: "9px" }}>পশ্চিমবঙ্গ সরকার</p>
-                      <p className="text-slate-700" style={{ fontSize: "7.5px" }}>খাদ্য ও সরবরাহ দপ্তর</p>
-                      <p className="text-slate-900 font-bold mt-0.5" style={{ fontSize: "7px" }}>Ration Card No : RKSY-I</p>
-                    </div>
+                    <p className="text-slate-900 font-bold" style={{ fontSize: "8px" }}>Ration Card No : RKSY-I</p>
                     <div className="border-t border-slate-200 my-0.5" />
                     <div className="space-y-0.5 flex-1">
                       {["Name of the Card Holder", "Name of the Father/Husband", "Head of the Family", "Date of Birth", "Dealer Name"].map(f => (
-                        <p key={f} className="text-slate-700 border-b border-slate-100 pb-px truncate" style={{ fontSize: "5.5px" }}>{f} :</p>
+                        <p key={f} className="text-slate-700 truncate" style={{ fontSize: "5.5px" }}>{f} :</p>
                       ))}
                     </div>
-                    <p className="text-slate-700 border-b border-slate-100 pb-px" style={{ fontSize: "5.5px" }}>Dealer Address :</p>
+                    <p className="text-slate-700" style={{ fontSize: "5.5px" }}>Dealer Address :</p>
                     <p className="text-slate-400 pt-0.5" style={{ fontSize: "4.5px" }}>Not Transferable (হস্তান্তরযোগ্য নয়)</p>
                   </div>
 
                   {/* Right green stripe */}
-                  <div className="flex flex-col items-center justify-end py-2 px-1.5 flex-shrink-0" style={{ background: "#1a5c2a", width: "18%" }}>
-                    <div className="w-5 h-5 rounded-full border border-red-300 flex items-center justify-center" style={{ background: "#c0392b" }}>
-                      <p className="text-white text-center leading-none font-bold" style={{ fontSize: "3px" }}>WB</p>
-                    </div>
-                  </div>
+                  <div className="flex-shrink-0" style={{ background: "#1a5c2a", width: "20%" }} />
                 </div>
               </div>
               <div className="text-center">
