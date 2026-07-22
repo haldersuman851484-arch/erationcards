@@ -658,6 +658,10 @@ export default function Home() {
                       src={t.photoUrl}
                       alt={`PVC ration card received by ${t.name}`}
                       className="w-full h-36 object-cover"
+                      onError={(e) => {
+                        const container = e.currentTarget.parentElement;
+                        if (container) container.style.display = "none";
+                      }}
                     />
                   </div>
                 )}
