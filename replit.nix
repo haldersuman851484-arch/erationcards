@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.mariadb
     pkgs.libgbm
     pkgs.icu
     pkgs.gst_all_1.gst-plugins-base

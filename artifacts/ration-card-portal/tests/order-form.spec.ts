@@ -229,7 +229,9 @@ test.describe("Order form", () => {
     await expect(submitButton).toBeEnabled({ timeout: 3000 });
     await submitButton.click();
 
-    await expect(page.locator("text=Failed to place order")).toBeVisible({
+    await expect(
+      page.getByText("Failed to place order", { exact: true }).first()
+    ).toBeVisible({
       timeout: 8000,
     });
     await expect(page).not.toHaveURL(/\/order-upload\//, { timeout: 3000 });

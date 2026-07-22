@@ -28,6 +28,10 @@ args = "e2e-track-order"
 task = "workflow.run"
 args = "e2e-admin-order-list"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "mysql-smoke-test"
+
 [[workflows.workflow]]
 name = "navigation-animation-e2e"
 author = "agent"
@@ -57,6 +61,17 @@ author = "agent"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pnpm --filter @workspace/ration-card-portal exec playwright test tests/admin-order-list.spec.ts --project=chromium"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "mysql-smoke-test"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/scripts run smoke-test"
 
 [workflows.workflow.metadata]
 isValidation = true
