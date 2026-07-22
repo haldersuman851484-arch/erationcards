@@ -392,72 +392,6 @@ export default function TrackOrder() {
                 </CardContent>
               </Card>
 
-              <Card className="border-slate-200 shadow-sm">
-                <CardHeader><CardTitle className="text-base">Order Progress</CardTitle></CardHeader>
-                <CardContent>
-                  <div className="space-y-0">
-                    {STATUS_STEPS.map((step, idx) => {
-                      const isDone = idx <= currentStepIdx;
-                      const isCurrent = idx === currentStepIdx;
-                      const Icon = step.icon;
-                      const stepDate =
-                        idx === 0
-                          ? formatDate(new Date(order.createdAt))
-                          : isCurrent && idx > 0
-                          ? formatDate(new Date(order.updatedAt))
-                          : isDone && idx > 0
-                          ? formatDate(new Date(order.updatedAt))
-                          : null;
-                      return (
-                        <div key={step.key} className="flex items-start gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${isDone ? "bg-primary border-primary text-white" : "bg-white border-slate-200 text-slate-400"}`}>
-                              <Icon className="w-4 h-4" />
-                            </div>
-                            {idx < STATUS_STEPS.length - 1 && (
-                              <div className={`w-0.5 h-8 mt-1 ${isDone && idx < currentStepIdx ? "bg-primary" : "bg-slate-200"}`} />
-                            )}
-                          </div>
-                          <div className="pt-1.5 pb-8">
-                            <p className={`text-sm font-medium ${isDone ? "text-slate-900" : "text-slate-400"}`}>{step.label}</p>
-                            {isCurrent && <p className="text-xs text-primary mt-0.5">Current status</p>}
-                            {isDone && stepDate && idx === 0 && (
-                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
-                            )}
-                            {isDone && stepDate && isCurrent && idx > 0 && (
-                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {whatsAppUrl && order.status !== "delivered" && (
-                <Card className="border-emerald-200 bg-emerald-50 shadow-sm">
-                  <CardContent className="pt-5 pb-5">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-900">Want updates on WhatsApp?</p>
-                        <p className="text-xs text-slate-600 mt-0.5">Tap below to message us your order number and we'll keep you posted.</p>
-                      </div>
-                      <Button
-                        asChild
-                        className="shrink-0 w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe5d] text-white border-0 gap-2"
-                        data-testid="button-whatsapp-notify"
-                      >
-                        <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
-                          <MessageCircle className="w-4 h-4" />
-                          Notify me on WhatsApp
-                        </a>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               {(() => {
                 const allCards = [
                   { cardIndex: 0, name: order.customerName, cardType: order.cardType },
@@ -532,6 +466,72 @@ export default function TrackOrder() {
                   </Card>
                 );
               })()}
+
+              <Card className="border-slate-200 shadow-sm">
+                <CardHeader><CardTitle className="text-base">Order Progress</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-0">
+                    {STATUS_STEPS.map((step, idx) => {
+                      const isDone = idx <= currentStepIdx;
+                      const isCurrent = idx === currentStepIdx;
+                      const Icon = step.icon;
+                      const stepDate =
+                        idx === 0
+                          ? formatDate(new Date(order.createdAt))
+                          : isCurrent && idx > 0
+                          ? formatDate(new Date(order.updatedAt))
+                          : isDone && idx > 0
+                          ? formatDate(new Date(order.updatedAt))
+                          : null;
+                      return (
+                        <div key={step.key} className="flex items-start gap-4">
+                          <div className="flex flex-col items-center">
+                            <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${isDone ? "bg-primary border-primary text-white" : "bg-white border-slate-200 text-slate-400"}`}>
+                              <Icon className="w-4 h-4" />
+                            </div>
+                            {idx < STATUS_STEPS.length - 1 && (
+                              <div className={`w-0.5 h-8 mt-1 ${isDone && idx < currentStepIdx ? "bg-primary" : "bg-slate-200"}`} />
+                            )}
+                          </div>
+                          <div className="pt-1.5 pb-8">
+                            <p className={`text-sm font-medium ${isDone ? "text-slate-900" : "text-slate-400"}`}>{step.label}</p>
+                            {isCurrent && <p className="text-xs text-primary mt-0.5">Current status</p>}
+                            {isDone && stepDate && idx === 0 && (
+                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
+                            )}
+                            {isDone && stepDate && isCurrent && idx > 0 && (
+                              <p className="text-xs text-slate-400 mt-0.5">{stepDate}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {whatsAppUrl && order.status !== "delivered" && (
+                <Card className="border-emerald-200 bg-emerald-50 shadow-sm">
+                  <CardContent className="pt-5 pb-5">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-900">Want updates on WhatsApp?</p>
+                        <p className="text-xs text-slate-600 mt-0.5">Tap below to message us your order number and we'll keep you posted.</p>
+                      </div>
+                      <Button
+                        asChild
+                        className="shrink-0 w-full sm:w-auto bg-[#25D366] hover:bg-[#1ebe5d] text-white border-0 gap-2"
+                        data-testid="button-whatsapp-notify"
+                      >
+                        <a href={whatsAppUrl} target="_blank" rel="noopener noreferrer">
+                          <MessageCircle className="w-4 h-4" />
+                          Notify me on WhatsApp
+                        </a>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
 
               {(order.status === "dispatched" || order.status === "delivered") && (
                 <Card className="border-amber-200 shadow-sm" data-testid="review-section">
