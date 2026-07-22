@@ -1,0 +1,1 @@
+- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning()

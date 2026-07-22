@@ -78,11 +78,11 @@ router.patch("/orders/:id/payment-status", async (req: Request, res: Response) =
       return;
     }
     const body = PaymentStatusUpdateBody.parse(req.body);
-    const [order] = await db
+    await db
       .update(ordersTable)
       .set({ paymentStatus: body.paymentStatus as any, updatedAt: new Date() })
-      .where(eq(ordersTable.id, id))
-      .returning();
+      .where(eq(ordersTable.id, id));
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     if (!order) {
       res.status(404).json({ error: "Order not found" });
       return;

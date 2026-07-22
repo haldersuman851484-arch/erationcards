@@ -53,12 +53,14 @@ router.patch("/admin/operators/:id/status", async (req: Request, res: Response) 
       res.status(400).json({ error: "Invalid status value" }); return;
     }
 
-    const [operator] = await db
+    const result = await db
       .update(operatorsTable)
       .set({ status, updatedAt: new Date() })
-      .where(eq(operatorsTable.id, id))
-      .returning();
+      .where(eq(operatorsTable.id, id));
 
+    if (!result[0] || result[0].affectedRows === 0) { res.status(404).json({ error: "Operator not found" }); return; }
+
+    const [operator] = await db.select().from(operatorsTable).where(eq(operatorsTable.id, id)).limit(1);
     if (!operator) { res.status(404).json({ error: "Operator not found" }); return; }
 
     res.json({

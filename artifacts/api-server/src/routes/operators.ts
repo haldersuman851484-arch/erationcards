@@ -33,7 +33,7 @@ router.post("/operators", async (req: Request, res: Response) => {
     if (existing.length > 0) { res.status(409).json({ error: "Email already registered" }); return; }
 
     const passwordHash = hashPassword(body.password);
-    const [operator] = await db
+    await db
       .insert(operatorsTable)
       .values({
         name: body.name,
@@ -46,8 +46,10 @@ router.post("/operators", async (req: Request, res: Response) => {
         district: body.district,
         pincode: body.pincode,
         status: "pending",
-      })
-      .returning();
+      });
+
+    const [operator] = await db.select().from(operatorsTable).where(eq(operatorsTable.email, body.email)).limit(1);
+    if (!operator) { res.status(500).json({ error: "Failed to create operator" }); return; }
 
     const token = createOperatorToken(operator.id);
     res.status(201).json({ operator: formatOperator(operator), token });
@@ -112,11 +114,11 @@ router.get("/operators/me/stats", async (req: Request, res: Response) => {
     const [stats] = await db
       .select({
         totalAssigned: sql<number>`count(*)`,
-        pending: sql<number>`count(*) filter (where status = 'pending')`,
-        processing: sql<number>`count(*) filter (where status = 'processing')`,
-        printed: sql<number>`count(*) filter (where status = 'printed')`,
-        dispatched: sql<number>`count(*) filter (where status = 'dispatched')`,
-        delivered: sql<number>`count(*) filter (where status = 'delivered')`,
+        pending: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
+        processing: sql<number>`sum(case when status = 'processing' then 1 else 0 end)`,
+        printed: sql<number>`sum(case when status = 'printed' then 1 else 0 end)`,
+        dispatched: sql<number>`sum(case when status = 'dispatched' then 1 else 0 end)`,
+        delivered: sql<number>`sum(case when status = 'delivered' then 1 else 0 end)`,
       })
       .from(ordersTable)
       .where(eq(ordersTable.operatorId, operatorId));

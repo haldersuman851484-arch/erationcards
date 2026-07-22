@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, numeric, integer, pgEnum, jsonb } from "drizzle-orm/pg-core";
+import { mysqlTable, text, int, timestamp, decimal, json, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -14,26 +14,8 @@ export type CardPdfEntry = {
   uploadedAt: string;
 };
 
-export const orderStatusEnum = pgEnum("order_status", [
-  "pending",
-  "processing",
-  "printed",
-  "dispatched",
-  "delivered",
-  "cancelled",
-]);
-
-export const paymentStatusEnum = pgEnum("payment_status", [
-  "pending",
-  "paid",
-  "failed",
-  "refunded",
-  "confirmed",
-  "rejected",
-]);
-
-export const ordersTable = pgTable("orders", {
-  id: serial("id").primaryKey(),
+export const ordersTable = mysqlTable("orders", {
+  id: int("id").autoincrement().primaryKey(),
   orderNumber: text("order_number").notNull().unique(),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),
@@ -46,15 +28,15 @@ export const ordersTable = pgTable("orders", {
   district: text("district").notNull(),
   pincode: text("pincode").notNull(),
   cardType: text("card_type").notNull(),
-  familyCards: jsonb("family_cards").$type<FamilyCard[]>().notNull().default([]),
-  quantity: integer("quantity").notNull().default(1),
-  amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
-  paymentStatus: paymentStatusEnum("payment_status").notNull().default("pending"),
+  familyCards: json("family_cards").$type<FamilyCard[]>().notNull().default([]),
+  quantity: int("quantity").notNull().default(1),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  paymentStatus: mysqlEnum("payment_status", ["pending", "paid", "failed", "refunded", "confirmed", "rejected"]).notNull().default("pending"),
   paymentMethod: text("payment_method"),
   paymentScreenshotUrl: text("payment_screenshot_url"),
-  rationCardPdfs: jsonb("ration_card_pdfs").$type<CardPdfEntry[]>().notNull().default([]),
-  status: orderStatusEnum("status").notNull().default("pending"),
-  operatorId: integer("operator_id"),
+  rationCardPdfs: json("ration_card_pdfs").$type<CardPdfEntry[]>().notNull().default([]),
+  status: mysqlEnum("status", ["pending", "processing", "printed", "dispatched", "delivered", "cancelled"]).notNull().default("pending"),
+  operatorId: int("operator_id"),
   trackingNumber: text("tracking_number"),
   courierName: text("courier_name"),
   notes: text("notes"),
@@ -69,6 +51,7 @@ export const insertOrderSchema = createInsertSchema(ordersTable).omit({
   updatedAt: true,
   operatorId: true,
   trackingNumber: true,
+  courierName: true,
   notes: true,
 });
 

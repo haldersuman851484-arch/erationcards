@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { ordersTable } from "@workspace/db";
-import { eq, and, desc, gte, sql, or, ilike } from "drizzle-orm";
+import { eq, and, desc, gte, sql, or, like } from "drizzle-orm";
 import {
   CreateOrderBody,
   UpdateOrderStatusBody,
@@ -48,9 +48,9 @@ router.get("/orders", async (req: Request, res: Response) => {
       const term = `%${search}%`;
       conditions.push(
         or(
-          ilike(ordersTable.customerName, term),
-          ilike(ordersTable.customerPhone, term),
-          ilike(ordersTable.orderNumber, term)
+          like(ordersTable.customerName, term),
+          like(ordersTable.customerPhone, term),
+          like(ordersTable.orderNumber, term)
         )!
       );
     }
@@ -94,7 +94,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     const perCard = quantity === 1 ? SINGLE_CARD_PRICE : (isOperator ? OPERATOR_CARD_PRICE : PUBLIC_CARD_PRICE);
     const amount = perCard * quantity;
 
-    const [order] = await db
+    await db
       .insert(ordersTable)
       .values({
         orderNumber,
@@ -115,8 +115,10 @@ router.post("/orders", async (req: Request, res: Response) => {
         paymentStatus: (body.paymentStatus ?? "pending") as any,
         paymentMethod: body.paymentMethod ?? "upi",
         paymentScreenshotUrl: body.paymentScreenshotUrl ?? null,
-      })
-      .returning();
+      });
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.orderNumber, orderNumber)).limit(1);
+    if (!order) { res.status(500).json({ error: "Failed to create order" }); return; }
 
     res.status(201).json(formatOrder(order));
   } catch (err) {
@@ -166,19 +168,19 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
     const [allStats] = await db
       .select({
         totalOrders: sql<number>`count(*)`,
-        pendingOrders: sql<number>`count(*) filter (where status = 'pending')`,
-        processingOrders: sql<number>`count(*) filter (where status = 'processing')`,
-        printedOrders: sql<number>`count(*) filter (where status = 'printed')`,
-        dispatchedOrders: sql<number>`count(*) filter (where status = 'dispatched')`,
-        deliveredOrders: sql<number>`count(*) filter (where status = 'delivered')`,
-        totalRevenue: sql<number>`coalesce(sum(amount::numeric), 0)`,
+        pendingOrders: sql<number>`sum(case when status = 'pending' then 1 else 0 end)`,
+        processingOrders: sql<number>`sum(case when status = 'processing' then 1 else 0 end)`,
+        printedOrders: sql<number>`sum(case when status = 'printed' then 1 else 0 end)`,
+        dispatchedOrders: sql<number>`sum(case when status = 'dispatched' then 1 else 0 end)`,
+        deliveredOrders: sql<number>`sum(case when status = 'delivered' then 1 else 0 end)`,
+        totalRevenue: sql<number>`coalesce(sum(amount), 0)`,
       })
       .from(ordersTable);
 
     const [todayStats] = await db
       .select({
         todayOrders: sql<number>`count(*)`,
-        todayRevenue: sql<number>`coalesce(sum(amount::numeric), 0)`,
+        todayRevenue: sql<number>`coalesce(sum(amount), 0)`,
       })
       .from(ordersTable)
       .where(gte(ordersTable.createdAt, today));
@@ -244,7 +246,8 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
     if (body.courierName) updates.courierName = body.courierName;
     if (body.notes) updates.notes = body.notes;
 
-    const [order] = await db.update(ordersTable).set(updates).where(eq(ordersTable.id, id)).returning();
+    await db.update(ordersTable).set(updates).where(eq(ordersTable.id, id));
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
 
     res.json(formatOrder(order));
@@ -261,12 +264,12 @@ router.patch("/orders/:id/assign", async (req: Request, res: Response) => {
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
     const body = AssignOrderToOperatorBody.parse(req.body);
-    const [order] = await db
+    await db
       .update(ordersTable)
       .set({ operatorId: body.operatorId, updatedAt: new Date() })
-      .where(eq(ordersTable.id, id))
-      .returning();
+      .where(eq(ordersTable.id, id));
 
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
     res.json(formatOrder(order));
   } catch (err) {

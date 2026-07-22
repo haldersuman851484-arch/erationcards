@@ -1,11 +1,9 @@
-import { pgTable, text, serial, timestamp, numeric, integer, pgEnum } from "drizzle-orm/pg-core";
+import { mysqlTable, text, int, timestamp, decimal, mysqlEnum } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const operatorStatusEnum = pgEnum("operator_status", ["pending", "active", "suspended"]);
-
-export const operatorsTable = pgTable("operators", {
-  id: serial("id").primaryKey(),
+export const operatorsTable = mysqlTable("operators", {
+  id: int("id").autoincrement().primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
@@ -15,9 +13,9 @@ export const operatorsTable = pgTable("operators", {
   state: text("state").notNull(),
   district: text("district").notNull(),
   pincode: text("pincode").notNull(),
-  status: operatorStatusEnum("status").notNull().default("active"),
-  walletBalance: numeric("wallet_balance", { precision: 10, scale: 2 }).notNull().default("0"),
-  totalOrdersHandled: integer("total_orders_handled").notNull().default(0),
+  status: mysqlEnum("status", ["pending", "active", "suspended"]).notNull().default("active"),
+  walletBalance: decimal("wallet_balance", { precision: 10, scale: 2 }).notNull().default("0"),
+  totalOrdersHandled: int("total_orders_handled").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
