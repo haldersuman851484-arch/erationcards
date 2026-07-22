@@ -242,7 +242,7 @@ const STATIC_TESTIMONIALS = [
     cardType: "RKSY-I",
     badgeClass: "bg-emerald-100 text-emerald-700",
     rating: 5,
-    quote: "দারুণ সার্ভিস! UPI দিয়ে পেমেন্ট করার পর ট্র্যাকিং লিংক পেয়েছিলাম। কার্ডটি দেখতে একদম ব্যাংক কার্ডের মতো মজবুত। ৭০ টাকায় এত ভালো কার্ড পাওয়া সত্যিই অবাক করা।",
+    quote: "দারুণ সার্ভিস! UPI দিয়ে পেমেন্ট করার পর ট্র্যাকিং লিংক পেয়েছিলাম। কার্ডটি দেখতে একদম ব্যাংক কার্ডের মতো মজবুত। ৫০ টাকায় এত ভালো কার্ড পাওয়া সত্যিই অবাক করা।",
     date: "June 2025",
   },
   {
@@ -747,7 +747,7 @@ export default function Home() {
             বাংলায় PVC রেশন কার্ড অর্ডার করুন
           </h2>
           <p className="text-white/85 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
-            আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — মাত্র <strong className="text-white">₹৭০</strong> খরচে।
+            আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — মাত্র <strong className="text-white">₹৫০</strong> খরচে।
             পশ্চিমবঙ্গের ২৩টি জেলায় দ্রুত ডেলিভারি। জলরোধী, টেকসই এবং ওয়ালেট সাইজের কার্ড।
             AAY, PHH, SPHH, RKSY-I এবং RKSY-II — সমস্ত ধরনের রেশন কার্ড সমর্থিত।
           </p>
