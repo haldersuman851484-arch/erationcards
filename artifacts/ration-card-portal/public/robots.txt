@@ -17,5 +17,6 @@ Allow: /privacy
 Allow: /terms
 Allow: /refund
 Allow: /shipping
+Allow: /pvc-ration-card/
 
 Sitemap: https://erationcards.in/sitemap.xml
