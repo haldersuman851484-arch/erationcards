@@ -76,9 +76,12 @@ async function fillStep2(page: import("@playwright/test").Page) {
   await page.getByTestId("input-address").fill("12 Park Street, Kolkata");
   await page.getByTestId("input-post-office").fill("Park Street");
   await page.getByTestId("select-district").click();
-  await page.getByRole("option", { name: "Kolkata" }).click();
+  const kolkataOption = page.getByRole("option", { name: "Kolkata" });
+  await expect(kolkataOption).toBeVisible({ timeout: 5000 });
+  await kolkataOption.click();
   await page.getByTestId("input-pincode").fill("700001");
   await page.getByTestId("input-phone").fill("9876543210");
+  await expect(page.getByTestId("button-next-step2")).toBeEnabled({ timeout: 3000 });
   await page.getByTestId("button-next-step2").click();
 }
 
