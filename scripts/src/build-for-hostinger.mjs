@@ -128,10 +128,16 @@ console.log(`
 ║                                                                  ║
 ║  1. Create MySQL database in Hostinger hPanel                   ║
 ║  2. Set environment variables in hPanel (see .env.example)      ║
-║  3. Upload the hostinger/ folder to your Hostinger Node.js app  ║
-║  4. In hPanel SSH terminal: cd <app-root> && npm install        ║
-║  5. Push DB schema (from this repo):                            ║
-║     MYSQL_DATABASE_URL=... pnpm --filter @workspace/db run push ║
+║  3. Apply schema migrations (from this repo):                   ║
+║     pnpm --filter @workspace/db run generate                    ║
+║     MYSQL_DATABASE_URL=... pnpm --filter @workspace/scripts \   ║
+║       run migrate                                               ║
+║  4. Upload the hostinger/ folder to your Hostinger Node.js app  ║
+║  5. In hPanel SSH terminal: cd <app-root> && npm install        ║
 ║  6. Start / restart the Node.js app in hPanel                   ║
+║                                                                  ║
+║  Or run all of the above in one command:                        ║
+║     MYSQL_DATABASE_URL=... pnpm --filter @workspace/scripts \   ║
+║       run deploy-for-hostinger                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 `);

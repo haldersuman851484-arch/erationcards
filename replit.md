@@ -48,15 +48,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 
 ## Hostinger Deployment
 
-Build a self-contained deploy package:
-
-```bash
-pnpm --filter @workspace/scripts run build-for-hostinger
-```
-
-This creates `hostinger/` at the repo root with the bundled server and React build.
-
-**Steps (one-time Hostinger setup):**
+### One-time Hostinger setup
 
 1. **Create MySQL DB** in hPanel → Databases → MySQL Databases. Note the host, username, password, and DB name.
 2. **Set env vars** in hPanel → Node.js → Your App → Environment Variables (see `.env.example`):
@@ -65,28 +57,38 @@ This creates `hostinger/` at the repo root with the bundled server and React bui
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — admin dashboard credentials
    - `MERCHANT_UPI_ID` — UPI ID for the payment QR code
    - `UPLOADS_DIR` — absolute path for payment screenshot storage (e.g. `/home/<user>/uploads`)
-3. **Apply schema to production** (run from this Replit repo, once DB URL is set as env var):
-   ```bash
-   # Step 1 — generate SQL migration files from the schema:
-   pnpm --filter @workspace/db run generate
+3. **Set Node.js startup file** in hPanel to `dist/index.mjs`.
 
-   # Step 2 — apply them via mysql2 (works with Hostinger, bypasses drizzle-kit's client):
-   MYSQL_DATABASE_URL="mysql://..." pnpm --filter @workspace/scripts run migrate
-   ```
-   > **Note:** `drizzle-kit push` may hang due to Hostinger's firewall blocking drizzle-kit's internal MySQL client. The generate+migrate workflow above uses the same `mysql2` driver that the app server uses and is the reliable alternative.
-4. **Upload `hostinger/` folder** to your Hostinger Node.js app root (via Git or File Manager).
-5. **Install dependencies** via hPanel SSH terminal:
-   ```bash
-   cd <app-root> && npm install
-   ```
-6. **Set Node.js startup file** in hPanel to `dist/index.mjs`.
-7. **Restart** the Node.js app in hPanel.
+### Deploying (first time & every update)
 
-**Subsequent deploys:**
+Run this single command from the repo root (with your production DB URL):
+
+```bash
+MYSQL_DATABASE_URL="mysql://user:pass@host:3306/db" \
+  pnpm --filter @workspace/scripts run deploy-for-hostinger
+```
+
+This does everything automatically:
+- Generates SQL migration files from the current schema
+- Builds the React frontend + API server bundle → `hostinger/`
+- Applies migrations to the production MySQL database
+
+Then finish the deploy manually on Hostinger:
+
+```bash
+# 1. Upload the hostinger/ folder (File Manager or Git pull on the server)
+# 2. In hPanel SSH terminal:
+cd <app-root> && npm install
+# 3. Restart the Node.js app in hPanel
+```
+
+> **Note:** `drizzle-kit push` may hang due to Hostinger's firewall. The deploy script
+> uses `mysql2` directly (same driver as the app) so migrations apply reliably.
+
+### If you only want the build (no migration)
 
 ```bash
 pnpm --filter @workspace/scripts run build-for-hostinger
-# then re-upload hostinger/ and restart in hPanel
 ```
 
 ## User preferences

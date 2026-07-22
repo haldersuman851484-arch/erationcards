@@ -7,6 +7,7 @@
     "hello": "tsx ./src/hello.ts",
     "smoke-test": "tsx ./src/smoke-test.ts",
     "build-for-hostinger": "node ./src/build-for-hostinger.mjs",
+    "deploy-for-hostinger": "node ./src/deploy-for-hostinger.mjs",
     "migrate": "tsx ./src/migrate.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
