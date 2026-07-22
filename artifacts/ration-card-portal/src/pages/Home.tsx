@@ -302,7 +302,7 @@ function formatReviewDate(iso: string): string {
 export default function Home() {
   useSeo({
     title: "Order PVC Ration Card Online | West Bengal",
-    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. ₹70 for single card, ₹50 each for 2+ cards.",
+    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. ₹50 only.",
     canonical: "https://erationcards.in/",
   });
 
@@ -343,7 +343,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link href="/order">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white shadow-md text-base px-8 h-12">
-                  Order PVC Card — ₹70
+                  Order PVC Card — ₹50
                 </Button>
               </Link>
               <Link href="/track">
@@ -485,7 +485,7 @@ export default function Home() {
               All cards printed at <strong>85.6mm × 54mm</strong> (standard credit card size) on high-quality PVC with UV-resistant ink.
             </p>
             <Link href="/order">
-              <Button className="bg-primary hover:bg-primary/90 px-8">Order Your Card — ₹70</Button>
+              <Button className="bg-primary hover:bg-primary/90 px-8">Order PVC Card — ₹50</Button>
             </Link>
           </div>
         </div>
@@ -566,7 +566,7 @@ export default function Home() {
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6 relative z-10">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-3">Pay ₹70 via UPI</h3>
+              <h3 className="text-xl font-semibold mb-3">Pay ₹50 via UPI</h3>
               <p className="text-slate-600">Pay the nominal processing fee securely via UPI (GPay, PhonePe, Paytm).</p>
             </div>
             <div className="flex flex-col items-center text-center">
