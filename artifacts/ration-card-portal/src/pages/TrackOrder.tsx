@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Navbar, Footer, BRAND } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey, useSubmitReview } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2 } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck } from "lucide-react";
+
+type PdfEntry = { cardIndex: number; pdfUrl: string; uploadedAt: string };
 
 function addWorkingDays(from: Date, days: number): Date {
   const result = new Date(from);
@@ -151,12 +153,50 @@ export default function TrackOrder() {
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
+  const [localPdfs, setLocalPdfs] = useState<PdfEntry[]>([]);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
+
   const submitReview = useSubmitReview();
 
   const { data: order, isLoading, error } = useTrackOrder(
     searchParams ?? {},
     { query: { enabled: !!searchParams, queryKey: getTrackOrderQueryKey(searchParams ?? {}) } }
   );
+
+  useEffect(() => {
+    if (order) {
+      setLocalPdfs((order as any).rationCardPdfs ?? []);
+      setUploadError(null);
+    }
+  }, [order]);
+
+  async function handlePdfUpload(cardIndex: number, file: File) {
+    if (!order) return;
+    setUploadingIdx(cardIndex);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("pdf", file);
+    fd.append("cardIndex", String(cardIndex));
+    try {
+      const res = await fetch(`/api/orders/${order.orderNumber}/upload-card-pdf`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setUploadError((body as any).error ?? "Upload failed. Please try again.");
+      } else {
+        const data: PdfEntry = await res.json();
+        setLocalPdfs((prev) => [
+          ...prev.filter((p) => p.cardIndex !== cardIndex),
+          data,
+        ].sort((a, b) => a.cardIndex - b.cardIndex));
+      }
+    } catch {
+      setUploadError("Upload failed. Please check your connection and try again.");
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -417,6 +457,81 @@ export default function TrackOrder() {
                   </CardContent>
                 </Card>
               )}
+
+              {(() => {
+                const allCards = [
+                  { cardIndex: 0, name: order.customerName, cardType: order.cardType },
+                  ...((order.familyCards ?? []) as { customerName: string; cardType: string }[]).map((fc, i) => ({
+                    cardIndex: i + 1,
+                    name: fc.customerName,
+                    cardType: fc.cardType,
+                  })),
+                ];
+                const missing = allCards.filter(c => !localPdfs.some(p => p.cardIndex === c.cardIndex));
+                if (missing.length === 0) return null;
+                return (
+                  <Card className="border-amber-200 bg-amber-50 shadow-sm" data-testid="pdf-upload-section">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Upload className="w-4 h-4 text-amber-600" />
+                        Upload Your e-Ration Card PDF
+                      </CardTitle>
+                      <p className="text-xs text-slate-600 mt-0.5">
+                        We need your original e-Ration Card PDF (downloaded from food.wb.gov.in) to print your PVC card.
+                        {allCards.length > 1 && " Upload a PDF for each card holder below."}
+                      </p>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {allCards.map((card) => {
+                        const uploaded = localPdfs.some(p => p.cardIndex === card.cardIndex);
+                        const isUploading = uploadingIdx === card.cardIndex;
+                        return (
+                          <div key={card.cardIndex} className="flex items-center justify-between gap-3 bg-white rounded-lg px-3 py-2.5 border border-amber-100">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-medium text-slate-900 truncate">{card.name}</p>
+                              <p className="text-xs text-slate-500">{card.cardType}</p>
+                            </div>
+                            {uploaded ? (
+                              <div className="flex items-center gap-1.5 text-emerald-600 shrink-0">
+                                <FileCheck className="w-4 h-4" />
+                                <span className="text-xs font-medium">Uploaded</span>
+                              </div>
+                            ) : (
+                              <>
+                                <input
+                                  type="file"
+                                  accept=".pdf,image/jpeg,image/png,image/webp"
+                                  className="hidden"
+                                  ref={(el) => { fileRefs.current[card.cardIndex] = el; }}
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handlePdfUpload(card.cardIndex, file);
+                                    e.target.value = "";
+                                  }}
+                                />
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100"
+                                  disabled={isUploading}
+                                  onClick={() => fileRefs.current[card.cardIndex]?.click()}
+                                  data-testid={`button-upload-pdf-${card.cardIndex}`}
+                                >
+                                  <Upload className="w-3.5 h-3.5 mr-1.5" />
+                                  {isUploading ? "Uploading…" : "Upload PDF"}
+                                </Button>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {uploadError && (
+                        <p className="text-sm text-red-600 pt-1" data-testid="pdf-upload-error">{uploadError}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })()}
 
               {(order.status === "dispatched" || order.status === "delivered") && (
                 <Card className="border-amber-200 shadow-sm" data-testid="review-section">
