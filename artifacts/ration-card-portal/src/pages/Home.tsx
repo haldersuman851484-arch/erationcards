@@ -221,7 +221,6 @@ const STATIC_TESTIMONIALS = [
     badgeClass: "bg-red-100 text-red-700",
     rating: 5,
     quote: "কার্ডটি মাত্র ৬ দিনে পৌঁছে গেছে। খুব সুন্দর প্রিন্ট, একদম আসল কার্ডের মতো দেখতে। পরিবারের সবাই খুশি। The quality is excellent — waterproof and wallet-fit.",
-    photoUrl: "https://images.unsplash.com/photo-1591154669695-5f2a8d20c089?q=80&w=600&auto=format&fit=crop",
     date: "June 2025",
   },
   {
@@ -233,7 +232,6 @@ const STATIC_TESTIMONIALS = [
     badgeClass: "bg-blue-100 text-blue-700",
     rating: 5,
     quote: "Ordered online on Monday, card arrived by Saturday. The PVC print is sharp and the card fits perfectly in my wallet alongside Aadhaar. Highly recommend to anyone who is tired of laminated paper cards.",
-    photoUrl: null,
     date: "May 2025",
   },
   {
@@ -245,7 +243,6 @@ const STATIC_TESTIMONIALS = [
     badgeClass: "bg-emerald-100 text-emerald-700",
     rating: 5,
     quote: "দারুণ সার্ভিস! UPI দিয়ে পেমেন্ট করার পর ট্র্যাকিং লিংক পেয়েছিলাম। কার্ডটি দেখতে একদম ব্যাংক কার্ডের মতো মজবুত। ৭০ টাকায় এত ভালো কার্ড পাওয়া সত্যিই অবাক করা।",
-    photoUrl: "https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?q=80&w=600&auto=format&fit=crop",
     date: "June 2025",
   },
   {
@@ -257,7 +254,6 @@ const STATIC_TESTIMONIALS = [
     badgeClass: "bg-purple-100 text-purple-700",
     rating: 4,
     quote: "Process was smooth. Uploaded my screenshot and got confirmation the same day. Card quality is good — text is clear and lamination is solid. Slight delay in dispatch but overall satisfied.",
-    photoUrl: null,
     date: "April 2025",
   },
   {
@@ -269,7 +265,6 @@ const STATIC_TESTIMONIALS = [
     badgeClass: "bg-amber-100 text-amber-700",
     rating: 5,
     quote: "আমার পুরনো কাগজের কার্ড অনেক আগেই নষ্ট হয়ে গিয়েছিল। এই PVC কার্ড পেয়ে অনেক উপকার হয়েছে। দোকানে দেখালে সবাই বুঝতে পারছে। সত্যিই দারুণ উদ্যোগ।",
-    photoUrl: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=600&auto=format&fit=crop",
     date: "July 2025",
   },
 ];
@@ -322,7 +317,6 @@ export default function Home() {
         badgeClass: CARD_TYPE_BADGE[r.cardType] ?? "bg-slate-100 text-slate-700",
         rating: r.rating,
         quote: r.quote,
-        photoUrl: r.photoUrl ?? null,
         date: formatReviewDate(r.createdAt),
       }))
     : STATIC_TESTIMONIALS;
@@ -691,20 +685,6 @@ export default function Home() {
                 </div>
 
                 <p className="text-slate-600 text-sm leading-relaxed flex-1">"{t.quote}"</p>
-
-                {t.photoUrl && (
-                  <div className="rounded-xl overflow-hidden border border-slate-100 mt-1">
-                    <img
-                      src={t.photoUrl}
-                      alt={`PVC ration card received by ${t.name}`}
-                      className="w-full h-36 object-cover"
-                      onError={(e) => {
-                        const container = e.currentTarget.parentElement;
-                        if (container) container.style.display = "none";
-                      }}
-                    />
-                  </div>
-                )}
 
                 <p className="text-xs text-slate-400">{t.date}</p>
               </div>
