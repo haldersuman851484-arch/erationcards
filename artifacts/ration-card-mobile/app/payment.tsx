@@ -27,11 +27,13 @@ async function uploadScreenshotWithRetry(uri: string): Promise<string> {
   const attempt = async (): Promise<string> => {
     const formData = new FormData();
     // React Native FormData accepts { uri, name, type } as a file part
-    formData.append('screenshot', {
-      uri,
-      name: 'screenshot.jpg',
-      type: 'image/jpeg',
-    } as any);
+    // React Native's FormData accepts { uri, name, type } as a file entry.
+    // The web FormData typing only knows Blob/string, so we cast through unknown
+    // to Blob — narrower than `as any` and documents the RN-specific pattern.
+    formData.append(
+      'screenshot',
+      { uri, name: 'screenshot.jpg', type: 'image/jpeg' } as unknown as Blob,
+    );
 
     const res = await fetch(`${BASE_URL}/api/payments/upload-screenshot`, {
       method: 'POST',
