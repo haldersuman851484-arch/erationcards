@@ -19,6 +19,34 @@ import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import * as Haptics from 'expo-haptics';
+import { clearInProgressOrder } from '@/utils/inProgressOrder';
+
+const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+
+/** Upload with one automatic retry on failure. Returns the uploaded URL. */
+async function uploadScreenshotWithRetry(uri: string): Promise<string> {
+  const attempt = async (): Promise<string> => {
+    const file = new File(uri);
+    const formData = new FormData();
+    formData.append('screenshot', file as any);
+
+    const res = await fetch(`${BASE_URL}/api/payments/upload-screenshot`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error('Upload failed');
+    const { url } = (await res.json()) as { url: string };
+    return url;
+  };
+
+  try {
+    return await attempt();
+  } catch {
+    // One automatic retry
+    return await attempt();
+  }
+}
 
 export default function PaymentScreen() {
   const colors = useColors();
@@ -36,11 +64,11 @@ export default function PaymentScreen() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  // Shown when upload succeeded but patch failed so the customer can still track
+  const [patchFailed, setPatchFailed] = useState(false);
+
   const upiId = upiConfig?.merchantUpiId ?? '';
   const amountNum = Number(amount ?? 70);
-  const upiLink = upiId
-    ? `upi://pay?pa=${upiId}&pn=PVC+Ration+Card&am=${amountNum}&cu=INR`
-    : null;
 
   const pickScreenshot = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -61,6 +89,15 @@ export default function PaymentScreen() {
     }
   };
 
+  const navigateToSuccess = async () => {
+    await clearInProgressOrder();
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    router.replace({
+      pathname: '/success',
+      params: { orderNumber: orderNumber ?? '' },
+    });
+  };
+
   const handleSubmit = async () => {
     if (!screenshotUri) {
       Alert.alert('Screenshot required', 'Please upload your UPI payment screenshot before submitting.');
@@ -69,48 +106,44 @@ export default function PaymentScreen() {
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setUploading(true);
+    setPatchFailed(false);
+
+    let screenshotUrl: string;
+    try {
+      // Upload with one automatic retry
+      screenshotUrl = await uploadScreenshotWithRetry(screenshotUri);
+    } catch {
+      setUploading(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert(
+        'Upload Failed',
+        'Could not upload your screenshot after two attempts. Please check your connection and try again.'
+      );
+      return;
+    }
+
+    setUploading(false);
+    setSubmitting(true);
 
     try {
-      // Upload screenshot
-      const file = new File(screenshotUri);
-      const formData = new FormData();
-      formData.append('screenshot', file as any);
-
-      const baseUrl = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-      const uploadRes = await fetch(`${baseUrl}/api/payments/upload-screenshot`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error('Upload failed');
-      }
-
-      const { url: screenshotUrl } = (await uploadRes.json()) as { url: string };
-      setUploading(false);
-      setSubmitting(true);
-
       // Patch order with screenshot URL
-      const patchRes = await fetch(`${baseUrl}/api/orders/${orderId}`, {
+      const patchRes = await fetch(`${BASE_URL}/api/orders/${orderId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentScreenshotUrl: screenshotUrl }),
       });
 
       if (!patchRes.ok) {
-        throw new Error('Could not save payment info');
+        throw new Error('Patch failed');
       }
 
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace({
-        pathname: '/success',
-        params: { orderNumber: orderNumber ?? '' },
-      });
-    } catch (err) {
-      setUploading(false);
       setSubmitting(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Submission Failed', 'Could not submit your payment. Please try again.');
+      await navigateToSuccess();
+    } catch {
+      // Upload succeeded but patch failed — order still exists; show order number
+      setSubmitting(false);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      setPatchFailed(true);
     }
   };
 
@@ -122,18 +155,60 @@ export default function PaymentScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Skip',
-          onPress: () => {
-            router.replace({
-              pathname: '/success',
-              params: { orderNumber: orderNumber ?? '' },
-            });
-          },
+          onPress: navigateToSuccess,
         },
       ]
     );
   };
 
   const isLoading = uploading || submitting;
+
+  // ── Patch-failed recovery banner ─────────────────────────────────────────
+  if (patchFailed) {
+    return (
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: isWeb ? 34 : insets.bottom + 24 },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        <View
+          style={[
+            styles.recoveryCard,
+            { backgroundColor: '#fffbeb', borderColor: '#fcd34d' },
+          ]}
+          testID="patch-failed-banner"
+        >
+          <Ionicons name="warning-outline" size={36} color="#d97706" style={{ marginBottom: 8 }} />
+          <Text style={[styles.recoveryTitle, { color: '#92400e' }]}>
+            Screenshot uploaded — save your order number
+          </Text>
+          <Text style={[styles.recoveryBody, { color: '#78350f' }]}>
+            Your payment screenshot was uploaded successfully, but we could not
+            update your order record right now. Use the order number below to
+            track your order or contact support.
+          </Text>
+          <View style={[styles.recoveryOrderBox, { backgroundColor: '#fef3c7', borderColor: '#fcd34d' }]}>
+            <Text style={[styles.recoveryOrderLabel, { color: '#92400e' }]}>
+              Your Order Number
+            </Text>
+            <Text style={[styles.recoveryOrderNumber, { color: '#d97706' }]} selectable>
+              {orderNumber}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={[styles.recoveryBtn, { backgroundColor: '#d97706' }]}
+            onPress={navigateToSuccess}
+            testID="recovery-continue-btn"
+          >
+            <Text style={styles.recoveryBtnText}>Continue</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView
@@ -241,6 +316,18 @@ export default function PaymentScreen() {
         )}
       </TouchableOpacity>
 
+      {/* Upload progress label */}
+      {uploading && (
+        <Text style={[styles.uploadingHint, { color: colors.mutedForeground }]}>
+          Uploading screenshot…
+        </Text>
+      )}
+      {submitting && (
+        <Text style={[styles.uploadingHint, { color: colors.mutedForeground }]}>
+          Saving payment info…
+        </Text>
+      )}
+
       {/* Submit */}
       <TouchableOpacity
         style={[
@@ -333,7 +420,7 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     borderWidth: 2,
     overflow: 'hidden',
-    marginBottom: 20,
+    marginBottom: 8,
     minHeight: 160,
     justifyContent: 'center',
     alignItems: 'center',
@@ -361,6 +448,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   previewChangeText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  uploadingHint: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -369,6 +462,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     marginBottom: 12,
+    marginTop: 12,
   },
   submitBtnText: {
     fontSize: 16,
@@ -377,4 +471,54 @@ const styles = StyleSheet.create({
   },
   skipBtn: { alignItems: 'center', paddingVertical: 10, marginBottom: 4 },
   skipBtnText: { fontSize: 14, fontFamily: 'Inter_400Regular' },
+  // Recovery (patch-failed) styles
+  recoveryCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 24,
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 20,
+  },
+  recoveryTitle: {
+    fontSize: 17,
+    fontFamily: 'Inter_700Bold',
+    textAlign: 'center',
+  },
+  recoveryBody: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 21,
+    textAlign: 'center',
+  },
+  recoveryOrderBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    alignItems: 'center',
+    width: '100%',
+    gap: 4,
+    marginTop: 4,
+  },
+  recoveryOrderLabel: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    letterSpacing: 0.5,
+  },
+  recoveryOrderNumber: {
+    fontSize: 22,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 1,
+  },
+  recoveryBtn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    marginTop: 4,
+  },
+  recoveryBtnText: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
+  },
 });

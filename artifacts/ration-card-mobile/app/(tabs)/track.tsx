@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTrackOrder } from '@workspace/api-client-react';
 import type { Order } from '@workspace/api-client-react';
 import * as Haptics from 'expo-haptics';
+import {
+  loadInProgressOrder,
+  clearInProgressOrder,
+  type InProgressOrder,
+} from '@/utils/inProgressOrder';
+import { router } from 'expo-router';
 
 const STATUS_CONFIG: Record<string, { label: string; icon: string; color: string }> = {
   pending:    { label: 'Pending',    icon: 'time-outline',         color: '#f59e0b' },
@@ -38,6 +44,11 @@ export default function TrackScreen() {
 
   const [searchText, setSearchText] = useState('');
   const [submitted, setSubmitted] = useState('');
+  const [inProgress, setInProgress] = useState<InProgressOrder | null>(null);
+
+  useEffect(() => {
+    loadInProgressOrder().then(setInProgress);
+  }, []);
 
   // Only query when user has submitted
   const { data: order, isLoading, error, refetch } = useTrackOrder(
@@ -135,6 +146,50 @@ export default function TrackScreen() {
           </Text>
         )}
       </TouchableOpacity>
+
+      {/* In-progress order banner (shown after app restart mid-flow) */}
+      {inProgress && (
+        <View
+          style={[styles.inProgressBanner, { backgroundColor: '#eff6ff', borderColor: '#93c5fd' }]}
+          testID="in-progress-banner"
+        >
+          <Ionicons name="time-outline" size={20} color="#2563eb" />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.inProgressTitle}>Unfinished order found</Text>
+            <Text style={styles.inProgressSub}>
+              Order <Text style={{ fontFamily: 'Inter_600SemiBold' }}>{inProgress.orderNumber}</Text> is waiting for payment.
+            </Text>
+          </View>
+          <View style={styles.inProgressActions}>
+            <TouchableOpacity
+              style={[styles.inProgressResumeBtn, { backgroundColor: '#2563eb' }]}
+              onPress={() => {
+                router.push({
+                  pathname: '/payment',
+                  params: {
+                    orderId: inProgress.orderId,
+                    orderNumber: inProgress.orderNumber,
+                    amount: '70',
+                  },
+                });
+              }}
+              testID="resume-payment-btn"
+            >
+              <Text style={styles.inProgressResumeBtnText}>Resume</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                clearInProgressOrder();
+                setInProgress(null);
+              }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              testID="dismiss-in-progress-btn"
+            >
+              <Ionicons name="close-circle" size={18} color="#93c5fd" />
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       {/* Error state */}
       {error && submitted && (
@@ -392,5 +447,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
     lineHeight: 19,
+  },
+  inProgressBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+  },
+  inProgressTitle: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#1d4ed8',
+    marginBottom: 2,
+  },
+  inProgressSub: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: '#3b82f6',
+    lineHeight: 17,
+  },
+  inProgressActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  inProgressResumeBtn: {
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  inProgressResumeBtnText: {
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#fff',
   },
 });

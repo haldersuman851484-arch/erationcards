@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCreateOrder } from '@workspace/api-client-react';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { saveInProgressOrder } from '@/utils/inProgressOrder';
 
 const CARD_TYPES = [
   { value: 'PHH',  label: 'PHH',  desc: 'Priority Household' },
@@ -72,6 +73,7 @@ export default function OrderFormScreen() {
 
   const [form, setForm] = useState<FormState>(INITIAL);
   const [errors, setErrors] = useState<Partial<Record<Field, string>>>({});
+  const [orderError, setOrderError] = useState<string | null>(null);
 
   const { mutate: createOrder, isPending } = useCreateOrder();
 
@@ -101,6 +103,7 @@ export default function OrderFormScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       return;
     }
+    setOrderError(null);
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     createOrder(
@@ -121,8 +124,13 @@ export default function OrderFormScreen() {
         paymentMethod: 'upi',
       },
       {
-        onSuccess: (order) => {
+        onSuccess: async (order) => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          // Persist so the customer can recover their order number after a restart
+          await saveInProgressOrder({
+            orderId: String(order.id),
+            orderNumber: order.orderNumber,
+          });
           router.push({
             pathname: '/payment',
             params: {
@@ -132,11 +140,10 @@ export default function OrderFormScreen() {
             },
           });
         },
-        onError: (err) => {
+        onError: () => {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-          Alert.alert(
-            'Order Failed',
-            'Could not place your order. Please check your details and try again.'
+          setOrderError(
+            'Could not place your order. Check your connection and try again.'
           );
         },
       }
@@ -321,6 +328,27 @@ export default function OrderFormScreen() {
         </Text>
       </View>
 
+      {/* Inline error banner with retry */}
+      {orderError && (
+        <View
+          style={[
+            styles.errorBanner,
+            { backgroundColor: '#fff5f5', borderColor: '#fecaca' },
+          ]}
+          testID="order-error-banner"
+        >
+          <Ionicons name="alert-circle-outline" size={20} color="#ef4444" />
+          <Text style={styles.errorBannerText}>{orderError}</Text>
+          <TouchableOpacity
+            style={[styles.retryBtn, { borderColor: '#ef4444' }]}
+            onPress={handleSubmit}
+            testID="retry-order-btn"
+          >
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Submit */}
       <TouchableOpacity
         style={[
@@ -464,9 +492,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1,
     marginTop: 8,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   priceNoteText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 18 },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: '#ef4444',
+    lineHeight: 19,
+  },
+  retryBtn: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  retryBtnText: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#ef4444',
+  },
   submitBtn: {
     flexDirection: 'row',
     alignItems: 'center',

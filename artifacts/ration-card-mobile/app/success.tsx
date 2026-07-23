@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import { clearInProgressOrder } from '@/utils/inProgressOrder';
 
 export default function SuccessScreen() {
   const colors = useColors();
@@ -23,6 +24,9 @@ export default function SuccessScreen() {
   const opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Clear the in-progress order since the flow completed successfully
+    clearInProgressOrder();
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Animated.parallel([
       Animated.spring(scale, {
