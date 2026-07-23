@@ -108,20 +108,22 @@ export default function OrderFormScreen() {
 
     createOrder(
       {
-        customerName: form.customerName.trim(),
-        customerPhone: form.customerPhone.trim(),
-        customerEmail: form.customerEmail.trim() || undefined,
-        rationCardNumber: form.rationCardNumber.trim(),
-        deliveryName: form.deliveryName.trim() || undefined,
-        address: form.address.trim(),
-        postOffice: form.postOffice.trim() || undefined,
-        state: form.state.trim(),
-        district: form.district.trim(),
-        pincode: form.pincode.trim(),
-        cardType: form.cardType,
-        quantity: 1,
-        amount: 70,
-        paymentMethod: 'upi',
+        data: {
+          customerName: form.customerName.trim(),
+          customerPhone: form.customerPhone.trim(),
+          customerEmail: form.customerEmail.trim() || undefined,
+          rationCardNumber: form.rationCardNumber.trim(),
+          deliveryName: form.deliveryName.trim() || undefined,
+          address: form.address.trim(),
+          postOffice: form.postOffice.trim() || undefined,
+          state: form.state.trim(),
+          district: form.district.trim(),
+          pincode: form.pincode.trim(),
+          cardType: form.cardType,
+          quantity: 1,
+          amount: 70,
+          paymentMethod: 'upi',
+        },
       },
       {
         onSuccess: async (order) => {

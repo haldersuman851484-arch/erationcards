@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useGetUpiConfig } from '@workspace/api-client-react';
 import * as ImagePicker from 'expo-image-picker';
-import { File } from 'expo-file-system';
 import { fetch } from 'expo/fetch';
 import * as Haptics from 'expo-haptics';
 import { clearInProgressOrder } from '@/utils/inProgressOrder';
@@ -26,9 +25,13 @@ const BASE_URL = `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
 /** Upload with one automatic retry on failure. Returns the uploaded URL. */
 async function uploadScreenshotWithRetry(uri: string): Promise<string> {
   const attempt = async (): Promise<string> => {
-    const file = new File(uri);
     const formData = new FormData();
-    formData.append('screenshot', file as any);
+    // React Native FormData accepts { uri, name, type } as a file part
+    formData.append('screenshot', {
+      uri,
+      name: 'screenshot.jpg',
+      type: 'image/jpeg',
+    } as any);
 
     const res = await fetch(`${BASE_URL}/api/payments/upload-screenshot`, {
       method: 'POST',

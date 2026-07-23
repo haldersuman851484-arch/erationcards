@@ -48,7 +48,7 @@ export default function SuccessScreen() {
   };
 
   const handleNewOrder = () => {
-    router.replace('/(tabs)/');
+    router.replace('/' as any);
   };
 
   return (

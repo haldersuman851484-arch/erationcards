@@ -12,7 +12,7 @@ import {
 import { useColors } from '@/hooks/useColors';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useTrackOrder } from '@workspace/api-client-react';
+import { useTrackOrder, getTrackOrderQueryKey } from '@workspace/api-client-react';
 import type { Order } from '@workspace/api-client-react';
 import * as Haptics from 'expo-haptics';
 import {
@@ -51,10 +51,12 @@ export default function TrackScreen() {
   }, []);
 
   // Only query when user has submitted
+  const trackParams = { orderNumber: submitted || undefined };
   const { data: order, isLoading, error, refetch } = useTrackOrder(
-    { orderNumber: submitted || undefined },
+    trackParams,
     {
       query: {
+        queryKey: getTrackOrderQueryKey(trackParams),
         enabled: !!submitted,
         retry: false,
       },
