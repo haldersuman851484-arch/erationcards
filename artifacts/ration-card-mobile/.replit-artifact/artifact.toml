@@ -1,0 +1,23 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "PVC Ration Card Mobile App"
+version = "1.0.0"
+id = "artifacts/ration-card-mobile"
+router = "expo-domain"
+
+[[services]]
+name = "expo"
+ensurePreviewReachable = "/status"
+paths = [ "/mobile/" ]
+localPort = 24117
+
+[services.development]
+run = "pnpm --filter @workspace/ration-card-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ration-card-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/ration-card-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "24117"
+BASE_PATH = "/mobile/"
