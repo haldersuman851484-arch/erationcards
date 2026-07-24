@@ -479,7 +479,6 @@ export default function AdminDashboard() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Delivery</TableHead>
                             <TableHead>Payment</TableHead>
-                            <TableHead>Operator</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead></TableHead>
                           </TableRow>
@@ -539,14 +538,6 @@ export default function AdminDashboard() {
                                     <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
                                   )}
                                 </div>
-                              </TableCell>
-                              <TableCell onClick={(e) => e.stopPropagation()}>
-                                {operators && operators.length > 0 ? (
-                                  <Select value={order.operatorId ? String(order.operatorId) : ""} onValueChange={(v) => handleAssign(order.id, v)}>
-                                    <SelectTrigger className="w-32 h-7 text-xs" data-testid={`select-operator-${order.id}`}><SelectValue placeholder="Assign…" /></SelectTrigger>
-                                    <SelectContent>{operators.map((op) => <SelectItem key={op.id} value={String(op.id)}>{op.name}</SelectItem>)}</SelectContent>
-                                  </Select>
-                                ) : <span className="text-xs text-slate-400">—</span>}
                               </TableCell>
                               <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
                               <TableCell>
@@ -623,7 +614,6 @@ export default function AdminDashboard() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Delivery</TableHead>
                             <TableHead>Payment</TableHead>
-                            <TableHead>Operator</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead></TableHead>
                           </TableRow>
@@ -683,14 +673,6 @@ export default function AdminDashboard() {
                                     <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
                                   )}
                                 </div>
-                              </TableCell>
-                              <TableCell onClick={(e) => e.stopPropagation()}>
-                                {operators && operators.length > 0 ? (
-                                  <Select value={order.operatorId ? String(order.operatorId) : ""} onValueChange={(v) => handleAssign(order.id, v)}>
-                                    <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="Assign…" /></SelectTrigger>
-                                    <SelectContent>{operators.map((op) => <SelectItem key={op.id} value={String(op.id)}>{op.name}</SelectItem>)}</SelectContent>
-                                  </Select>
-                                ) : <span className="text-xs text-slate-400">—</span>}
                               </TableCell>
                               <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
                               <TableCell>
