@@ -479,6 +479,7 @@ export default function AdminDashboard() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Delivery</TableHead>
                             <TableHead>Payment</TableHead>
+                            <TableHead>PDF</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead></TableHead>
                           </TableRow>
@@ -538,6 +539,23 @@ export default function AdminDashboard() {
                                     <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
                                   )}
                                 </div>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                {(() => {
+                                  const pdfs: { cardIndex: number; pdfUrl: string }[] = (order as any).rationCardPdfs ?? [];
+                                  if (pdfs.length === 0) return <span className="text-xs text-amber-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Pending</span>;
+                                  return (
+                                    <div className="flex flex-col gap-1">
+                                      {pdfs.map((p, idx) => (
+                                        <a key={p.cardIndex} href={p.pdfUrl} target="_blank" rel="noopener noreferrer"
+                                          className="flex items-center gap-1 text-xs text-primary font-medium hover:underline whitespace-nowrap">
+                                          <Download className="w-3 h-3" />
+                                          {pdfs.length === 1 ? "PDF" : `PDF ${idx + 1}`}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
                               <TableCell>
@@ -614,6 +632,7 @@ export default function AdminDashboard() {
                             <TableHead>Amount</TableHead>
                             <TableHead>Delivery</TableHead>
                             <TableHead>Payment</TableHead>
+                            <TableHead>PDF</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead></TableHead>
                           </TableRow>
@@ -673,6 +692,23 @@ export default function AdminDashboard() {
                                     <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
                                   )}
                                 </div>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                {(() => {
+                                  const pdfs: { cardIndex: number; pdfUrl: string }[] = (order as any).rationCardPdfs ?? [];
+                                  if (pdfs.length === 0) return <span className="text-xs text-amber-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> Pending</span>;
+                                  return (
+                                    <div className="flex flex-col gap-1">
+                                      {pdfs.map((p, idx) => (
+                                        <a key={p.cardIndex} href={p.pdfUrl} target="_blank" rel="noopener noreferrer"
+                                          className="flex items-center gap-1 text-xs text-primary font-medium hover:underline whitespace-nowrap">
+                                          <Download className="w-3 h-3" />
+                                          {pdfs.length === 1 ? "PDF" : `PDF ${idx + 1}`}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                               </TableCell>
                               <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
                               <TableCell>
