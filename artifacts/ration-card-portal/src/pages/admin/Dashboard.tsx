@@ -295,6 +295,20 @@ export default function AdminDashboard() {
     });
   }
 
+  function downloadAllPdfs(pdfs: { cardIndex: number; pdfUrl: string }[]) {
+    // Synchronous anchor clicks keep the user-gesture context alive so
+    // browsers don't treat subsequent tabs as popup-blocked.
+    pdfs.forEach((p) => {
+      const a = document.createElement("a");
+      a.href = p.pdfUrl;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    });
+  }
+
   if (adminLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -553,6 +567,16 @@ export default function AdminDashboard() {
                                           {pdfs.length === 1 ? "PDF" : `PDF ${idx + 1}`}
                                         </a>
                                       ))}
+                                      {pdfs.length >= 2 && (
+                                        <button
+                                          onClick={() => downloadAllPdfs(pdfs)}
+                                          className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap mt-0.5"
+                                          data-testid={`button-download-all-${order.id}`}
+                                        >
+                                          <Download className="w-3 h-3" />
+                                          Download All
+                                        </button>
+                                      )}
                                     </div>
                                   );
                                 })()}
@@ -706,6 +730,15 @@ export default function AdminDashboard() {
                                           {pdfs.length === 1 ? "PDF" : `PDF ${idx + 1}`}
                                         </a>
                                       ))}
+                                      {pdfs.length >= 2 && (
+                                        <button
+                                          onClick={() => downloadAllPdfs(pdfs)}
+                                          className="flex items-center gap-1 text-xs text-indigo-600 font-medium hover:underline whitespace-nowrap mt-0.5"
+                                        >
+                                          <Download className="w-3 h-3" />
+                                          Download All
+                                        </button>
+                                      )}
                                     </div>
                                   );
                                 })()}
