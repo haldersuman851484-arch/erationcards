@@ -76,7 +76,7 @@ export default function Order() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
   const uploadScreenshot = useUploadPaymentScreenshot();
-  const { data: upiConfig, isLoading: upiLoading } = useGetUpiConfig();
+  const { data: upiConfig, isLoading: upiLoading, isError: upiError, refetch: refetchUpi } = useGetUpiConfig();
   const merchantUpiId = upiConfig?.merchantUpiId || "";
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -527,6 +527,18 @@ export default function Order() {
                     {upiLoading ? (
                       <div className="text-center py-6 text-slate-500 text-sm">
                         Loading payment details…
+                      </div>
+                    ) : upiError ? (
+                      <div className="text-center py-6 space-y-3">
+                        <p className="text-sm font-medium text-slate-700">Could not load payment details</p>
+                        <p className="text-xs text-slate-500">Please check your connection and try again.</p>
+                        <button
+                          type="button"
+                          onClick={() => refetchUpi()}
+                          className="text-xs text-primary underline underline-offset-2 hover:text-primary/80"
+                        >
+                          Retry
+                        </button>
                       </div>
                     ) : merchantUpiId ? (
                       <>
