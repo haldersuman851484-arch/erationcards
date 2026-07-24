@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { ordersTable, FamilyCardsSchema, ALLOWED_CARD_TYPES } from "@workspace/db";
-import { eq, and, desc, gte, sql, or, like } from "drizzle-orm";
+import { eq, and, desc, gte, sql, or, like, isNull, isNotNull } from "drizzle-orm";
 import {
   CreateOrderBody,
   UpdateOrderStatusBody,
@@ -26,9 +26,13 @@ router.get("/orders", async (req: Request, res: Response) => {
     const limit = params.limit ?? 20;
     const offset = (page - 1) * limit;
 
+    const source = typeof req.query.source === "string" ? req.query.source : undefined;
+
     const conditions = [];
     if (params.status) conditions.push(eq(ordersTable.status, params.status as any));
     if (params.operatorId) conditions.push(eq(ordersTable.operatorId, params.operatorId));
+    if (source === "public") conditions.push(isNull(ordersTable.operatorId));
+    if (source === "operator") conditions.push(isNotNull(ordersTable.operatorId));
     if (search) {
       const term = `%${search}%`;
       conditions.push(
@@ -80,7 +84,8 @@ router.post("/orders", async (req: Request, res: Response) => {
     }
     const familyCards = familyCardsResult.data;
     const quantity = 1 + familyCards.length;
-    const isOperator = parseOperatorToken(req) !== null;
+    const operatorId = parseOperatorToken(req);
+    const isOperator = operatorId !== null;
     const perCard = quantity === 1 ? SINGLE_CARD_PRICE : (isOperator ? OPERATOR_CARD_PRICE : PUBLIC_CARD_PRICE);
     const amount = perCard * quantity;
 
@@ -105,6 +110,7 @@ router.post("/orders", async (req: Request, res: Response) => {
         paymentStatus: (body.paymentStatus ?? "pending") as any,
         paymentMethod: body.paymentMethod ?? "upi",
         paymentScreenshotUrl: body.paymentScreenshotUrl ?? null,
+        operatorId: operatorId ?? null,
       });
 
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.orderNumber, orderNumber)).limit(1);

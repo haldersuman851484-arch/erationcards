@@ -87,6 +87,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState("orders");
+  const [orderSource, setOrderSource] = useState<"public" | "operator">("public");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchInput, setSearchInput] = useState("");
   const debouncedSearch = useDebounce(searchInput, 350);
@@ -113,6 +114,7 @@ export default function AdminDashboard() {
   const listParams = {
     ...(statusFilter ? { status: statusFilter } : {}),
     ...(debouncedSearch ? { search: debouncedSearch } : {}),
+    source: orderSource,
   };
 
   const { data: ordersData, isLoading: ordersLoading } = useListOrders(
@@ -399,10 +401,48 @@ export default function AdminDashboard() {
 
             {/* ── Orders Tab ── */}
             <TabsContent value="orders" className="tab-panel mt-4">
+              {/* Inner source tabs */}
+              <div className="flex gap-1 mb-4 bg-white border border-slate-200 rounded-lg p-1 shadow-sm w-fit">
+                <button
+                  onClick={() => { setOrderSource("public"); setStatusFilter(""); setSearchInput(""); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    orderSource === "public"
+                      ? "bg-primary text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <Users className="w-4 h-4" />
+                  Public Orders
+                  {orderSource === "public" && ordersData && (
+                    <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>
+                  )}
+                </button>
+                <button
+                  onClick={() => { setOrderSource("operator"); setStatusFilter(""); setSearchInput(""); }}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+                    orderSource === "operator"
+                      ? "bg-indigo-600 text-white shadow-sm"
+                      : "text-slate-600 hover:bg-slate-100"
+                  }`}
+                >
+                  <Store className="w-4 h-4" />
+                  Operator Orders
+                  {orderSource === "operator" && ordersData && (
+                    <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>
+                  )}
+                </button>
+              </div>
+
               <Card className="border-0 shadow-sm bg-white">
                 <CardHeader className="pb-4">
                   <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-                    <CardTitle className="text-base">All Orders</CardTitle>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      {orderSource === "public" ? (
+                        <><Users className="w-4 h-4 text-primary" /> Public Orders</>
+                      ) : (
+                        <><Store className="w-4 h-4 text-indigo-600" /> Operator Orders</>
+                      )}
+                    </CardTitle>
                     <div className="flex gap-2 w-full sm:w-auto">
                       <div className="relative flex-1 sm:w-56">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
