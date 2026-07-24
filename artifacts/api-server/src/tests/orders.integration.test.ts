@@ -307,4 +307,79 @@ describe("GET /api/orders", () => {
     expect(res.body.total).toBeGreaterThanOrEqual(15);
     expect(res.body.orders).toHaveLength(1);
   });
+
+  // ── Adversarial / malformed search inputs ───────────────────────────────────
+
+  it("search with boolean-mode + operator returns 200", async () => {
+    const res = await get("/api/orders?search=%2Bramesh");  // %2B = +
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with boolean-mode - operator returns 200", async () => {
+    const res = await get("/api/orders?search=-ramesh");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with > operator returns 200", async () => {
+    const res = await get("/api/orders?search=%3Eramesh");  // %3E = >
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with ~ operator returns 200", async () => {
+    const res = await get("/api/orders?search=~ramesh");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with * wildcard operator returns 200", async () => {
+    const res = await get("/api/orders?search=ramesh*");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it('search with " double-quote returns 200', async () => {
+    const res = await get('/api/orders?search=%22ramesh%22');  // "ramesh"
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with @ operator returns 200", async () => {
+    const res = await get("/api/orders?search=%40ramesh");  // @ramesh
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with ( parenthesis operator returns 200", async () => {
+    const res = await get("/api/orders?search=%28ramesh%29");  // (ramesh)
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with multiple combined boolean-mode special chars returns 200", async () => {
+    const res = await get("/api/orders?search=%2B-%3E~*%22%40%28");  // +-><~*"@(
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search string of 2500+ characters does not crash the server", async () => {
+    const longSearch = "a".repeat(2500);
+    const res = await get(`/api/orders?search=${encodeURIComponent(longSearch)}&limit=5`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with null byte does not crash the server", async () => {
+    const res = await get("/api/orders?search=ram%00esh&limit=5");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
+
+  it("search with only special chars (no word content) returns 200 with empty or any results", async () => {
+    const res = await get("/api/orders?search=%2B-%3E~*%22%40%28%29&limit=5");
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orders: expect.any(Array), total: expect.any(Number) });
+  });
 });
