@@ -76,7 +76,7 @@ export default function Order() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
   const uploadScreenshot = useUploadPaymentScreenshot();
-  const { data: upiConfig } = useGetUpiConfig();
+  const { data: upiConfig, isLoading: upiLoading } = useGetUpiConfig();
   const merchantUpiId = upiConfig?.merchantUpiId || "";
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -524,7 +524,11 @@ export default function Order() {
                       </div>
                     </div>
 
-                    {merchantUpiId ? (
+                    {upiLoading ? (
+                      <div className="text-center py-6 text-slate-500 text-sm">
+                        Loading payment details…
+                      </div>
+                    ) : merchantUpiId ? (
                       <>
                         <div className="flex flex-col sm:flex-row gap-6 items-center">
                           <div className="flex flex-col items-center gap-2">
@@ -614,8 +618,9 @@ export default function Order() {
                         </div>
                       </>
                     ) : (
-                      <div className="text-center py-6 text-slate-500 text-sm">
-                        Loading payment details…
+                      <div className="text-center py-6 space-y-1">
+                        <p className="text-sm font-medium text-slate-700">Payment setup in progress</p>
+                        <p className="text-xs text-slate-500">Our payment details are being configured. Please contact us to complete your order.</p>
                       </div>
                     )}
 
