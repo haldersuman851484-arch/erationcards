@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLoginAdmin } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { useLocation } from "wouter";
-import { Shield } from "lucide-react";
+import { Link, useLocation } from "wouter";
+import { Shield, Home } from "lucide-react";
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
@@ -44,7 +44,10 @@ export default function AdminLogin() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4 relative">
+      <Link href="/" className="absolute top-4 left-4 flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors">
+        <Home className="w-4 h-4" /> Home
+      </Link>
       <Card className="w-full max-w-sm border-slate-700 bg-slate-800 text-white shadow-2xl">
         <CardHeader className="text-center pb-2">
           <div className="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto mb-4">
