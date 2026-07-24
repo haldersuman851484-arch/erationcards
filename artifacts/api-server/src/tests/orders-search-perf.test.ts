@@ -14,8 +14,8 @@
 import { db, ordersTable } from "@workspace/db";
 import { inArray } from "drizzle-orm";
 
-const BASE_URL = process.env.BASE_URL ?? "http://localhost:3001";
-const SEED_COUNT = 500;
+const BASE_URL = process.env.BASE_URL ?? "http://localhost:8080/api";
+const SEED_COUNT = 10_000;
 const LATENCY_THRESHOLD_MS = 500;
 
 function uniqueOrderNumber(i: number) {
