@@ -73,6 +73,7 @@ export default function Order() {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
   const uploadScreenshot = useUploadPaymentScreenshot();
@@ -524,6 +525,25 @@ export default function Order() {
                       </div>
                     </div>
 
+                    {/* Numbered steps guide */}
+                    <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
+                      <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Follow these steps in order</p>
+                      <ol className="space-y-1.5">
+                        <li className="flex items-start gap-2 text-sm text-slate-700">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">1</span>
+                          <span>Scan the QR code or copy the UPI ID below</span>
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-slate-700">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">2</span>
+                          <span>Complete the payment of <strong>₹{amount}</strong> in your UPI app</span>
+                        </li>
+                        <li className="flex items-start gap-2 text-sm text-slate-700">
+                          <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">3</span>
+                          <span>Take a screenshot of the payment success screen, then upload it below</span>
+                        </li>
+                      </ol>
+                    </div>
+
                     {upiLoading ? (
                       <div className="text-center py-6 text-slate-500 text-sm">
                         Loading payment details…
@@ -581,6 +601,20 @@ export default function Order() {
                         </div>
 
                         <div className="border-t border-slate-200 pt-5 space-y-4">
+                          {/* Payment confirmation checkbox */}
+                          <label className="flex items-start gap-3 cursor-pointer group" data-testid="label-payment-confirmed">
+                            <input
+                              type="checkbox"
+                              checked={paymentConfirmed}
+                              onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                              data-testid="checkbox-payment-confirmed"
+                              className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
+                            />
+                            <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
+                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below.
+                            </span>
+                          </label>
+
                           <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
                             <span className="text-red-500 text-lg leading-none mt-0.5">⚠️</span>
                             <div>
@@ -616,16 +650,25 @@ export default function Order() {
                               </Button>
                             </div>
                           ) : (
-                            <button
-                              type="button"
-                              data-testid="button-upload-screenshot"
-                              onClick={() => fileInputRef.current?.click()}
-                              className="w-full border-2 border-dashed border-slate-300 hover:border-primary/50 rounded-xl p-6 text-center transition-colors cursor-pointer bg-slate-50/50 hover:bg-primary/5"
-                            >
-                              <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                              <p className="text-sm font-medium text-slate-700">Click to upload UPI payment screenshot</p>
-                              <p className="text-xs text-slate-400 mt-1">Must be your UPI payment success screen · JPG or PNG</p>
-                            </button>
+                            <div className="relative">
+                              <button
+                                type="button"
+                                data-testid="button-upload-screenshot"
+                                onClick={() => paymentConfirmed && fileInputRef.current?.click()}
+                                disabled={!paymentConfirmed}
+                                className={`w-full border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
+                                  paymentConfirmed
+                                    ? "border-slate-300 hover:border-primary/50 cursor-pointer bg-slate-50/50 hover:bg-primary/5"
+                                    : "border-slate-200 cursor-not-allowed bg-slate-100/70 opacity-60"
+                                }`}
+                              >
+                                <Upload className={`w-8 h-8 mx-auto mb-2 ${paymentConfirmed ? "text-slate-400" : "text-slate-300"}`} />
+                                <p className={`text-sm font-medium ${paymentConfirmed ? "text-slate-700" : "text-slate-400"}`}>
+                                  {paymentConfirmed ? "Click to upload UPI payment screenshot" : "Confirm payment above to unlock upload"}
+                                </p>
+                                <p className="text-xs text-slate-400 mt-1">Must be your UPI payment success screen · JPG or PNG</p>
+                              </button>
+                            </div>
                           )}
                         </div>
                       </>
@@ -636,16 +679,33 @@ export default function Order() {
                       </div>
                     )}
 
-                    <div className="flex gap-3 pt-2">
-                      <Button type="button" variant="outline" onClick={() => setStep(2)}>Back</Button>
-                      <Button
-                        type="submit"
-                        data-testid="button-submit-order"
-                        className="bg-primary hover:bg-primary/90 px-8"
-                        disabled={isUploading || createOrder.isPending || !screenshotFile || !merchantUpiId}
-                      >
-                        {isUploading || createOrder.isPending ? "Submitting…" : "Submit Order"}
-                      </Button>
+                    <div className="space-y-2 pt-2">
+                      {(!paymentConfirmed || !screenshotFile) && !isUploading && !createOrder.isPending && merchantUpiId && (
+                        <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="submit-disabled-hint">
+                          <span>⚠️</span>
+                          {!paymentConfirmed
+                            ? "Please confirm you have completed payment before submitting."
+                            : "Please upload your UPI payment screenshot before submitting."}
+                        </p>
+                      )}
+                      <div className="flex gap-3">
+                        <Button type="button" variant="outline" onClick={() => setStep(2)}>Back</Button>
+                        <Button
+                          type="submit"
+                          data-testid="button-submit-order"
+                          className="bg-primary hover:bg-primary/90 px-8"
+                          disabled={isUploading || createOrder.isPending || !screenshotFile || !merchantUpiId || !paymentConfirmed}
+                          title={
+                            !paymentConfirmed
+                              ? "Confirm you have completed payment first"
+                              : !screenshotFile
+                              ? "Upload your payment screenshot first"
+                              : undefined
+                          }
+                        >
+                          {isUploading || createOrder.isPending ? "Submitting…" : "Submit Order"}
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
