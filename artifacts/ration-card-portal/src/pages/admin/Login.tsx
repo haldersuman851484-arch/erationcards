@@ -45,8 +45,9 @@ export default function AdminLogin() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4 relative">
-      <Link href="/" className="absolute top-4 left-4 flex items-center gap-1.5 text-slate-400 hover:text-white text-sm transition-colors">
-        <Home className="w-4 h-4" /> Home
+      <Link href="/" className="absolute top-4 left-4 flex items-center gap-2 hover:opacity-80 transition-opacity">
+        <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">PVC</div>
+        <span className="font-bold text-lg text-white tracking-tight">PVC Card Portal</span>
       </Link>
       <Card className="w-full max-w-sm border-slate-700 bg-slate-800 text-white shadow-2xl">
         <CardHeader className="text-center pb-2">
