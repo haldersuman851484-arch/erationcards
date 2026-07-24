@@ -52,13 +52,13 @@ const WB_DISTRICTS = [
   "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-const SINGLE_CARD_PRICE = 70;
+const SINGLE_CARD_PRICE = 50;
 const MULTI_CARD_PRICE = 50;
 
 export default function Order() {
   useSeo({
-    title: "Apply for PVC Ration Card | ₹70 Only | Fast Delivery West Bengal",
-    description: "Fill out a simple form and get your PVC ration card printed and delivered to your door. Single card ₹70, family packs ₹50/card. All West Bengal districts served.",
+    title: "Apply for PVC Ration Card | ₹50 Only | Fast Delivery West Bengal",
+    description: "Fill out a simple form and get your PVC ration card printed and delivered to your door. ₹50 per card. All West Bengal districts served.",
     canonical: "https://erationcards.in/order",
   });
   const [step, setStep] = useState(1);
@@ -282,7 +282,7 @@ export default function Order() {
                     <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">
                       Get Your <span className="text-yellow-300">e Ration</span> Card
                     </h2>
-                    <p className="text-white/80 text-sm mt-2 max-w-xs">1 card <span className="font-bold">₹70/-</span> · 2+ cards <span className="font-bold">₹50/-</span> each (incl. GST &amp; postage)</p>
+                    <p className="text-white/80 text-sm mt-2 max-w-xs"><span className="font-bold">₹50/-</span> per card (incl. GST &amp; postage)</p>
                   </div>
                   <div className="flex flex-wrap gap-2 max-w-xs justify-end">
                     <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 gap-1"><ShieldCheck className="w-3 h-3" /> No Hologram</Badge>

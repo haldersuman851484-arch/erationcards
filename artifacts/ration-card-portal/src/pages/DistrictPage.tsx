@@ -224,11 +224,11 @@ export default function DistrictPage() {
   const info = DISTRICTS[district];
 
   const title = info
-    ? `PVC Ration Card ${info.name} | Order Online ₹70 Only`
+    ? `PVC Ration Card ${info.name} | Order Online ₹50 Only`
     : "PVC Ration Card West Bengal | Order Online";
   const description = info
-    ? `Order a durable PVC printed ration card in ${info.name} (${info.bengali}), ${info.landmark}. Wallet-size, waterproof, doorstep delivery in 3–7 days. ₹70 only. AAY, PHH, SPHH, RKSY supported.`
-    : "Order a PVC printed ration card online for West Bengal. Delivered to your doorstep. ₹70 only.";
+    ? `Order a durable PVC printed ration card in ${info.name} (${info.bengali}), ${info.landmark}. Wallet-size, waterproof, doorstep delivery in 3–7 days. ₹50 only. AAY, PHH, SPHH, RKSY supported.`
+    : "Order a PVC printed ration card online for West Bengal. Delivered to your doorstep. ₹50 only.";
   const canonical = info ? `${SITE_URL}/pvc-ration-card/${district}` : undefined;
 
   useSeo({ title, description, canonical });
@@ -245,7 +245,7 @@ export default function DistrictPage() {
           name: `How do I order a PVC ration card in ${info.name}?`,
           acceptedAnswer: {
             "@type": "Answer",
-            text: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay \u20b970 via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24\u201348 hours of confirmation.`,
+            text: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay \u20b950 via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24\u201348 hours of confirmation.`,
           },
         },
         {
@@ -261,7 +261,7 @@ export default function DistrictPage() {
           name: `What is the price of a PVC ration card in ${info.name}?`,
           acceptedAnswer: {
             "@type": "Answer",
-            text: `The price is ₹70 for a single PVC ration card delivered to any address in ${info.name} (pin codes ${info.pinRange}). For 2 or more cards in the same family order, the price is ₹50 per card. Delivery charges are included.`,
+            text: `The price is ₹50 per card delivered to any address in ${info.name} (pin codes ${info.pinRange}). Delivery charges are included.`,
           },
         },
         {
@@ -324,7 +324,7 @@ export default function DistrictPage() {
   const faqs = [
     {
       q: `How do I order a PVC ration card in ${info.name}?`,
-      a: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay ₹70 via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24–48 hours of confirmation.`,
+      a: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay ₹50 via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24–48 hours of confirmation.`,
     },
     {
       q: `How long does delivery take in ${info.name}?`,
@@ -332,7 +332,7 @@ export default function DistrictPage() {
     },
     {
       q: `What is the price for ${info.name}?`,
-      a: `₹70 for a single PVC ration card delivered to any address in ${info.name} (pin codes ${info.pinRange}). For 2 or more cards in the same family order, the price is ₹50 per card. Delivery included.`,
+      a: `₹50 per card delivered to any address in ${info.name} (pin codes ${info.pinRange}). Delivery included.`,
     },
     {
       q: `Which ration card types are supported for ${info.name} residents?`,
@@ -361,13 +361,13 @@ export default function DistrictPage() {
             </h1>
             <p className="text-slate-300 text-lg mb-8 max-w-xl mx-auto">
               Order a durable, wallet-size PVC printed ration card delivered to your doorstep in {info.name},{" "}
-              {info.landmark}. ₹70 only — all card types supported.
+              {info.landmark}. ₹50 only — all card types supported.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/order">
                 <Button size="lg" className="bg-blue-500 hover:bg-blue-400 text-white font-semibold w-full sm:w-auto">
                   <CreditCard className="w-4 h-4 mr-2" />
-                  Order Now — ₹70
+                  Order Now — ₹50
                 </Button>
               </Link>
               <Link href="/track">
@@ -400,7 +400,7 @@ export default function DistrictPage() {
                 {
                   icon: <CheckCircle className="w-6 h-6 text-emerald-500" />,
                   step: "2",
-                  title: "Pay ₹70 via UPI",
+                  title: "Pay ₹50 via UPI",
                   desc: "Scan the QR code or use our UPI ID. Upload your payment screenshot.",
                 },
                 {
@@ -502,12 +502,12 @@ export default function DistrictPage() {
               Order your PVC Ration Card in {info.name} today
             </h2>
             <p className="text-blue-100 mb-8 text-sm">
-              Fast, secure, and delivered to your door. ₹70 for a single card — ₹50 per card for 2+.
+              Fast, secure, and delivered to your door. ₹50 per card, all quantities.
             </p>
             <Link href="/order">
               <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold">
                 <CreditCard className="w-4 h-4 mr-2" />
-                Order Now — ₹70
+                Order Now — ₹50
               </Button>
             </Link>
           </div>
