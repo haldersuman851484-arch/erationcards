@@ -1,4 +1,4 @@
-import { mysqlTable, text, int, timestamp, decimal, json, mysqlEnum } from "drizzle-orm/mysql-core";
+import { mysqlTable, text, int, timestamp, decimal, json, mysqlEnum, index } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -50,7 +50,13 @@ export const ordersTable = mysqlTable("orders", {
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => [
+  // B-tree index on created_at speeds up the ORDER BY desc(created_at) on every listing query.
+  // The search columns (customer_name, customer_phone, order_number) are covered by a FULLTEXT
+  // index defined in 0002_orders_search_indexes.sql; drizzle-orm does not yet expose a
+  // fulltext() builder for MySQL, so those indexes are managed via raw SQL migrations only.
+  index("orders_created_at_idx").on(table.createdAt),
+]);
 
 export const insertOrderSchema = createInsertSchema(ordersTable).omit({
   id: true,

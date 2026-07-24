@@ -34,14 +34,28 @@ router.get("/orders", async (req: Request, res: Response) => {
     if (source === "public") conditions.push(isNull(ordersTable.operatorId));
     if (source === "operator") conditions.push(isNotNull(ordersTable.operatorId));
     if (search) {
-      const term = `%${search}%`;
-      conditions.push(
-        or(
-          like(ordersTable.customerName, term),
-          like(ordersTable.customerPhone, term),
-          like(ordersTable.orderNumber, term)
-        )!
-      );
+      // Sanitize the term for FULLTEXT boolean mode: strip special operators
+      // so user input cannot accidentally trigger boolean syntax errors.
+      const sanitized = search.replace(/[+\-><()~*"@.]/g, " ").trim();
+
+      if (sanitized.length >= 3) {
+        // Use the FULLTEXT index (orders_search_ft) for searches long enough
+        // to exceed MySQL's default minimum word length (ft_min_word_len = 3).
+        // The trailing * enables prefix matching (e.g. "Ram" matches "Ramesh").
+        conditions.push(
+          sql`MATCH(customer_name, customer_phone, order_number) AGAINST (${sanitized + "*"} IN BOOLEAN MODE)`
+        );
+      } else {
+        // Short terms (<3 chars) are below the FULLTEXT minimum word length;
+        // fall back to LIKE for exact phone-digit prefix or order-number prefix.
+        const term = `${search}%`;
+        conditions.push(
+          or(
+            like(ordersTable.customerPhone, term),
+            like(ordersTable.orderNumber, term)
+          )!
+        );
+      }
     }
 
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;

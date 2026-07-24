@@ -15,6 +15,13 @@
       "when": 1784721159806,
       "tag": "0001_soft_prima",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1753401600000,
+      "tag": "0002_orders_search_indexes",
+      "breakpoints": true
     }
   ]
 }

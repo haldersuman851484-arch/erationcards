@@ -8,7 +8,8 @@
     "build": "node ./build.mjs",
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:smoke": "tsx src/tests/orders-search-perf.test.ts"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",
