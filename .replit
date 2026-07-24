@@ -1,4 +1,4 @@
-modules = ["nodejs-24", "python-3.11", "postgresql-16"]
+modules = ["nodejs-24"]
 
 [deployment]
 router = "application"
@@ -11,86 +11,6 @@ env = { "CI" = "true" }
 [workflows]
 runButton = "Project"
 
-[[workflows.workflow]]
-name = "Project"
-mode = "parallel"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "navigation-animation-e2e"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "e2e-track-order"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "e2e-admin-order-list"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "mysql-smoke-test"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "mobile-typecheck"
-
-[[workflows.workflow]]
-name = "navigation-animation-e2e"
-author = "agent"
-
-[workflows.workflow.metadata]
-isValidation = true
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/ration-card-portal run test:e2e"
-
-[[workflows.workflow]]
-name = "e2e-track-order"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/ration-card-portal run test:e2e -- --grep 'Track Order page'"
-
-[workflows.workflow.metadata]
-isValidation = true
-
-[[workflows.workflow]]
-name = "e2e-admin-order-list"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/ration-card-portal exec playwright test tests/admin-order-list.spec.ts --project=chromium"
-
-[workflows.workflow.metadata]
-isValidation = true
-
-[[workflows.workflow]]
-name = "mysql-smoke-test"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/scripts run smoke-test"
-
-[workflows.workflow.metadata]
-isValidation = true
-
-[[workflows.workflow]]
-name = "mobile-typecheck"
-author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "pnpm --filter @workspace/ration-card-mobile exec tsc --noEmit"
-
-[workflows.workflow.metadata]
-isValidation = true
-
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -98,11 +18,3 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
-
-[nix]
-channel = "stable-25_05"
-
-[userenv]
-
-[userenv.shared]
-MERCHANT_UPI_ID = "haldets901@ibl"
