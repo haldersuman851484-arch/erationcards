@@ -77,6 +77,11 @@ router.post("/orders", async (req: Request, res: Response) => {
       return;
     }
 
+    if (!body.paymentScreenshotUrl || body.paymentScreenshotUrl.trim() === "") {
+      res.status(400).json({ error: "Payment screenshot is required. Please upload your UPI payment screenshot before submitting." });
+      return;
+    }
+
     const familyCardsResult = FamilyCardsSchema.safeParse(body.familyCards ?? []);
     if (!familyCardsResult.success) {
       res.status(400).json({ error: "Invalid familyCards", details: familyCardsResult.error.issues });
