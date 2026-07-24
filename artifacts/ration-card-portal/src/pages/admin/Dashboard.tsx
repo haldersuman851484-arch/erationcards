@@ -107,6 +107,7 @@ export default function AdminDashboard() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
 
   const [dispatchForm, setDispatchForm] = useState<{
     orderId: number;
@@ -514,9 +515,9 @@ export default function AdminDashboard() {
                               <TableCell onClick={(e) => e.stopPropagation()}>
                                 <div className="flex flex-col gap-1.5 min-w-[130px]">
                                   {order.paymentScreenshotUrl && (
-                                    <a href={order.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                    <button onClick={() => setPreviewImg(order.paymentScreenshotUrl!)} className="flex items-center gap-1 text-xs text-primary hover:underline">
                                       <ImageIcon className="w-3.5 h-3.5" /> Screenshot
-                                    </a>
+                                    </button>
                                   )}
                                   {order.paymentStatus === "pending" ? (
                                     <div className="flex gap-1">
@@ -658,9 +659,9 @@ export default function AdminDashboard() {
                               <TableCell onClick={(e) => e.stopPropagation()}>
                                 <div className="flex flex-col gap-1.5 min-w-[130px]">
                                   {order.paymentScreenshotUrl && (
-                                    <a href={order.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                    <button onClick={() => setPreviewImg(order.paymentScreenshotUrl!)} className="flex items-center gap-1 text-xs text-primary hover:underline">
                                       <ImageIcon className="w-3.5 h-3.5" /> Screenshot
-                                    </a>
+                                    </button>
                                   )}
                                   {order.paymentStatus === "pending" ? (
                                     <div className="flex gap-1">
@@ -1297,6 +1298,28 @@ export default function AdminDashboard() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Screenshot Lightbox */}
+        {previewImg && (
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            onClick={() => setPreviewImg(null)}
+          >
+            <div className="relative max-w-3xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
+              <button
+                className="absolute -top-10 right-0 text-white/80 hover:text-white text-sm flex items-center gap-1"
+                onClick={() => setPreviewImg(null)}
+              >
+                <X className="w-5 h-5" /> Close
+              </button>
+              <img
+                src={previewImg}
+                alt="Payment screenshot"
+                className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+          </div>
+        )}
       </div>
     </>
   );
