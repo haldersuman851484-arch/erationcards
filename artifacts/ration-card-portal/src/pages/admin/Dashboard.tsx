@@ -86,10 +86,23 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("orders");
-  const [orderSource, setOrderSource] = useState<"public" | "operator">("public");
+  const [activeTab, setActiveTab] = useState("public-orders");
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [searchInput, setSearchInput] = useState("");
+
+  const orderSource: "public" | "operator" = activeTab === "operator-orders" ? "operator" : "public";
+
+  function handleTabChange(tab: string) {
+    if (
+      (tab === "public-orders" || tab === "operator-orders") &&
+      (activeTab === "public-orders" || activeTab === "operator-orders") &&
+      tab !== activeTab
+    ) {
+      setStatusFilter("");
+      setSearchInput("");
+    }
+    setActiveTab(tab);
+  }
   const debouncedSearch = useDebounce(searchInput, 350);
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
@@ -373,11 +386,15 @@ export default function AdminDashboard() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="bg-white border border-slate-200 shadow-sm h-11 p-1 flex-wrap">
-              <TabsTrigger value="orders" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
-                <Package className="w-4 h-4" /> Orders
-                {ordersData && <span className="bg-primary/20 text-primary data-[state=active]:bg-white/20 data-[state=active]:text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>}
+              <TabsTrigger value="public-orders" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <Users className="w-4 h-4" /> Public Orders
+                {activeTab === "public-orders" && ordersData && <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>}
+              </TabsTrigger>
+              <TabsTrigger value="operator-orders" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <Store className="w-4 h-4" /> Operator Orders
+                {activeTab === "operator-orders" && ordersData && <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>}
               </TabsTrigger>
               <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <UserCheck className="w-4 h-4" /> Applications
@@ -399,49 +416,13 @@ export default function AdminDashboard() {
               </TabsTrigger>
             </TabsList>
 
-            {/* ── Orders Tab ── */}
-            <TabsContent value="orders" className="tab-panel mt-4">
-              {/* Inner source tabs */}
-              <div className="flex gap-1 mb-4 bg-white border border-slate-200 rounded-lg p-1 shadow-sm w-fit">
-                <button
-                  onClick={() => { setOrderSource("public"); setStatusFilter(""); setSearchInput(""); }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    orderSource === "public"
-                      ? "bg-primary text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  <Users className="w-4 h-4" />
-                  Public Orders
-                  {orderSource === "public" && ordersData && (
-                    <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>
-                  )}
-                </button>
-                <button
-                  onClick={() => { setOrderSource("operator"); setStatusFilter(""); setSearchInput(""); }}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                    orderSource === "operator"
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  <Store className="w-4 h-4" />
-                  Operator Orders
-                  {orderSource === "operator" && ordersData && (
-                    <span className="bg-white/20 text-white text-xs px-1.5 py-0.5 rounded-full">{ordersData.total}</span>
-                  )}
-                </button>
-              </div>
-
+            {/* ── Public Orders Tab ── */}
+            <TabsContent value="public-orders" className="tab-panel mt-4">
               <Card className="border-0 shadow-sm bg-white">
                 <CardHeader className="pb-4">
                   <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
                     <CardTitle className="text-base flex items-center gap-2">
-                      {orderSource === "public" ? (
-                        <><Users className="w-4 h-4 text-primary" /> Public Orders</>
-                      ) : (
-                        <><Store className="w-4 h-4 text-indigo-600" /> Operator Orders</>
-                      )}
+                      <Users className="w-4 h-4 text-primary" /> Public Orders
                     </CardTitle>
                     <div className="flex gap-2 w-full sm:w-auto">
                       <div className="relative flex-1 sm:w-56">
@@ -569,6 +550,150 @@ export default function AdminDashboard() {
                               <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
                               <TableCell>
                                 <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:bg-primary/10" data-testid={`button-view-order-${order.id}`} onClick={() => openDetail(order.id)}>View</Button>
+                              </TableCell>
+                            </AnimatedRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Operator Orders Tab ── */}
+            <TabsContent value="operator-orders" className="tab-panel mt-4">
+              <Card className="border-0 shadow-sm bg-white">
+                <CardHeader className="pb-4">
+                  <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Store className="w-4 h-4 text-indigo-600" /> Operator Orders
+                    </CardTitle>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <div className="relative flex-1 sm:w-56">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input
+                          placeholder="Search name, phone, order #"
+                          className="pl-8 h-8 text-xs"
+                          value={searchInput}
+                          onChange={(e) => setSearchInput(e.target.value)}
+                        />
+                        {searchInput && (
+                          <button className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600" onClick={() => setSearchInput("")}>
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-36 h-8 text-xs shrink-0">
+                          <SelectValue placeholder="All statuses" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">All statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                          <SelectItem value="printed">Printed</SelectItem>
+                          <SelectItem value="dispatched">Dispatched</SelectItem>
+                          <SelectItem value="delivered">Delivered</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {ordersLoading ? (
+                    <div className="py-14 flex flex-col items-center gap-3">
+                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                      <p className="text-slate-400 text-sm">Loading orders…</p>
+                    </div>
+                  ) : orders.length === 0 ? (
+                    <div className="py-14 text-center text-slate-400">
+                      <Store className="w-10 h-10 mx-auto mb-3 opacity-40" />
+                      <p>{debouncedSearch || statusFilter ? "No orders match your search" : "No operator orders yet"}</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-slate-50">
+                            <TableHead>Order #</TableHead>
+                            <TableHead>Customer</TableHead>
+                            <TableHead>Type / Qty</TableHead>
+                            <TableHead>Amount</TableHead>
+                            <TableHead>Delivery</TableHead>
+                            <TableHead>Payment</TableHead>
+                            <TableHead>Operator</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {orders.map((order, i) => (
+                            <AnimatedRow key={order.id} index={i}>
+                              <TableCell className="font-mono text-xs font-medium text-primary cursor-pointer" onClick={() => openDetail(order.id)}>{order.orderNumber}</TableCell>
+                              <TableCell>
+                                <p className="font-medium text-sm">{order.customerName}</p>
+                                <p className="text-xs text-slate-500">{order.customerPhone}</p>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="text-xs">{order.cardType}</Badge>
+                                <span className="text-xs text-slate-500 ml-1">x{order.quantity}</span>
+                              </TableCell>
+                              <TableCell className="font-medium text-sm">₹{order.amount}</TableCell>
+                              <TableCell>
+                                <Badge className={`${STATUS_BADGE[order.status] || ""} border capitalize text-xs`}>{order.status}</Badge>
+                                {(() => {
+                                  const pdfs = (order as any).rationCardPdfs ?? [];
+                                  const total = order.quantity ?? 1;
+                                  const uploaded = pdfs.length;
+                                  if (total === 0) return null;
+                                  return (
+                                    <div className={`flex items-center gap-1 mt-1 text-xs font-medium ${uploaded >= total ? "text-emerald-600" : "text-amber-600"}`}>
+                                      <FileText className="w-3 h-3" />
+                                      {uploaded}/{total} PDF{total !== 1 ? "s" : ""}
+                                    </div>
+                                  );
+                                })()}
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                <div className="flex flex-col gap-1.5 min-w-[130px]">
+                                  {order.paymentScreenshotUrl && (
+                                    <a href={order.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                                      <ImageIcon className="w-3.5 h-3.5" /> Screenshot
+                                    </a>
+                                  )}
+                                  {order.paymentStatus === "pending" ? (
+                                    <div className="flex gap-1">
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
+                                        <CheckCircle2 className="w-3 h-3 mr-0.5" /> Confirm
+                                      </Button>
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-red-700 border-red-300 hover:bg-red-50" onClick={() => handlePaymentStatus(order.id, "rejected")} disabled={updatePaymentStatus.isPending}>
+                                        <XCircle className="w-3 h-3 mr-0.5" /> Reject
+                                      </Button>
+                                    </div>
+                                  ) : order.paymentStatus === "rejected" ? (
+                                    <div className="flex flex-col gap-1">
+                                      <Badge className="text-xs border w-fit capitalize bg-red-100 text-red-700 border-red-200">Rejected</Badge>
+                                      <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
+                                        <CheckCircle2 className="w-3 h-3 mr-0.5" /> Re-approve
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell onClick={(e) => e.stopPropagation()}>
+                                {operators && operators.length > 0 ? (
+                                  <Select value={order.operatorId ? String(order.operatorId) : ""} onValueChange={(v) => handleAssign(order.id, v)}>
+                                    <SelectTrigger className="w-32 h-7 text-xs"><SelectValue placeholder="Assign…" /></SelectTrigger>
+                                    <SelectContent>{operators.map((op) => <SelectItem key={op.id} value={String(op.id)}>{op.name}</SelectItem>)}</SelectContent>
+                                  </Select>
+                                ) : <span className="text-xs text-slate-400">—</span>}
+                              </TableCell>
+                              <TableCell className="text-xs text-slate-500 whitespace-nowrap">{new Date(order.createdAt).toLocaleDateString("en-IN")}</TableCell>
+                              <TableCell>
+                                <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-primary hover:bg-primary/10" onClick={() => openDetail(order.id)}>View</Button>
                               </TableCell>
                             </AnimatedRow>
                           ))}
