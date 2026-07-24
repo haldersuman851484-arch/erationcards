@@ -282,7 +282,20 @@ export default function Order() {
                     <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">
                       Get Your <span className="text-yellow-300">e Ration</span> Card
                     </h2>
-                    <p className="text-white/80 text-sm mt-2 max-w-xs">1 card <span className="font-bold">₹70/-</span> · 2+ cards <span className="font-bold">₹50/-</span> each (incl. GST &amp; postage)</p>
+                    <div className="flex flex-wrap items-center gap-2 mt-3">
+                      {/* Single card pill */}
+                      <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1.5">
+                        <span className="text-white/80 text-xs font-medium">1 card</span>
+                        <span className="text-white text-base font-extrabold">₹70</span>
+                      </div>
+                      {/* Multi-card pill — highlighted */}
+                      <div className="relative flex items-center gap-1.5 bg-yellow-400 rounded-full px-3 py-1.5 shadow-md">
+                        <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
+                        <span className="text-yellow-900 text-xs font-medium">2+ cards</span>
+                        <span className="text-yellow-900 text-base font-extrabold">₹50 each</span>
+                      </div>
+                    </div>
+                    <p className="text-white/60 text-xs mt-1.5">incl. GST &amp; postage</p>
                   </div>
                   <div className="flex flex-wrap gap-2 max-w-xs justify-end">
                     <Badge className="bg-white/20 hover:bg-white/20 text-white border-0 gap-1"><ShieldCheck className="w-3 h-3" /> No Hologram</Badge>
