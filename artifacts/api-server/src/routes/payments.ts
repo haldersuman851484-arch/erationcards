@@ -1,21 +1,11 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
-import { mkdirSync } from "fs";
 import { db } from "@workspace/db";
 import { ordersTable, paymentVerificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { parseAdminToken } from "../lib/auth";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-export const uploadsDir =
-  process.env.UPLOADS_DIR ||
-  path.resolve(__dirname, "../../uploads");
-
-mkdirSync(uploadsDir, { recursive: true });
+import { uploadToStorage } from "../lib/storage";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MIME_TO_EXT: Record<string, string> = {
@@ -24,16 +14,9 @@ const MIME_TO_EXT: Record<string, string> = {
   "image/webp": ".webp",
 };
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = MIME_TO_EXT[file.mimetype] ?? ".jpg";
-    cb(null, `screenshot-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
-
+// Use memory storage — file is uploaded to GCS after validation
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_MIME_TYPES.has(file.mimetype)) cb(null, true);
@@ -55,12 +38,21 @@ router.get("/payments/upi-config", (_req: Request, res: Response) => {
 router.post(
   "/payments/upload-screenshot",
   upload.single("screenshot"),
-  (req: Request, res: Response) => {
+  async (req: Request, res: Response) => {
     if (!req.file) {
       res.status(400).json({ error: "No screenshot uploaded" });
       return;
     }
-    const url = `/api/uploads/${req.file.filename}`;
+    const ext = MIME_TO_EXT[req.file.mimetype] ?? ".jpg";
+    const filename = `screenshot-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+    try {
+      await uploadToStorage(filename, req.file.buffer, req.file.mimetype);
+    } catch (err) {
+      req.log.error({ err }, "Failed to upload screenshot to storage");
+      res.status(500).json({ error: "Upload failed" });
+      return;
+    }
+    const url = `/api/uploads/${filename}`;
     res.json({ url });
   }
 );

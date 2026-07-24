@@ -1,11 +1,11 @@
-import express, { type Express } from "express";
+import express, { type Express, type Request, type Response } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
 import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
-import { uploadsDir } from "./routes/payments";
+import { serveFromStorage } from "./lib/storage";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -34,11 +34,21 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/uploads", (req, res, next) => {
-  res.setHeader("Content-Type", "application/octet-stream");
+// Serve uploaded files (screenshots & PDFs) from cloud object storage
+app.get("/api/uploads/:filename", async (req: Request, res: Response) => {
+  const filename = req.params.filename;
+  // Basic safety check — no path traversal
+  if (!filename || filename.includes("/") || filename.includes("..")) {
+    res.status(400).end();
+    return;
+  }
   res.setHeader("X-Content-Type-Options", "nosniff");
-  next();
-}, express.static(uploadsDir, { dotfiles: "deny" }));
+  const served = await serveFromStorage(filename, res);
+  if (!served) {
+    res.status(404).json({ error: "File not found" });
+  }
+});
+
 app.use("/api", router);
 
 // Serve React frontend static files in production

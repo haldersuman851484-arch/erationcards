@@ -1,13 +1,9 @@
 import { Router, Request, Response } from "express";
 import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
 import { db } from "@workspace/db";
 import { ordersTable, RationCardPdfsSchema } from "@workspace/db";
 import { eq } from "drizzle-orm";
-import { uploadsDir } from "./payments";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+import { uploadToStorage } from "../lib/storage";
 
 const ALLOWED_PDF_TYPES = new Set([
   "application/pdf",
@@ -16,16 +12,9 @@ const ALLOWED_PDF_TYPES = new Set([
   "image/webp",
 ]);
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = file.originalname.match(/\.[^.]+$/)?.[0] ?? ".pdf";
-    cb(null, `card-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
-
+// Use memory storage — file is uploaded to GCS after validation
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
     if (ALLOWED_PDF_TYPES.has(file.mimetype)) cb(null, true);
@@ -64,7 +53,13 @@ router.post(
         return;
       }
 
-      const pdfUrl = `/api/uploads/${req.file.filename}`;
+      const ext = req.file.originalname.match(/\.[^.]+$/)?.[0] ?? ".pdf";
+      const filename = `card-pdf-${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`;
+
+      await uploadToStorage(filename, req.file.buffer, req.file.mimetype);
+
+      const pdfUrl = `/api/uploads/${filename}`;
+
       const existingResult = RationCardPdfsSchema.safeParse(order.rationCardPdfs ?? []);
       if (!existingResult.success) {
         req.log.error({ issues: existingResult.error.issues }, "Stored rationCardPdfs is malformed");
