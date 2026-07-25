@@ -105,6 +105,15 @@ _Populate as you build — explicit user instructions worth remembering across s
 - **BASE_PATH not needed in production** — Vite defaults to `/` when `BASE_PATH` env var is absent during build.
 - **`drizzle.config.ts` must use relative paths for `schema` and `out`** — drizzle-kit v0.31.10 prepends `./` to absolute paths internally, producing a double-slash (`'.//abs/path'`) that breaks re-runs. Keep them as `"./src/schema/index.ts"` and `"./migrations"` (relative to the config file's own directory).
 - **Never run `migrate-test-local` with `MYSQL_DATABASE_URL` set to production** — use `MIGRATION_TEST_DB_URL` pointing at a throwaway staging DB. The script deliberately ignores `MYSQL_DATABASE_URL` to prevent accidental runs against live data.
+- **`drizzle-kit push` hangs on Hostinger** — Hostinger's firewall blocks the drizzle-kit introspection connection. When a schema column is added to `lib/db/src/schema/orders.ts`, apply it manually with a Node.js script that uses `mysql2` directly (the same driver as the app). Example one-liner from the workspace root:
+  ```bash
+  cd artifacts/api-server && node --input-type=module << 'EOF'
+  import mysql from "/home/runner/workspace/node_modules/.pnpm/mysql2@3.23.1_@types+node@25.9.4/node_modules/mysql2/promise.js";
+  const conn = await mysql.createConnection({ uri: process.env.MYSQL_DATABASE_URL, ssl: { rejectUnauthorized: false } });
+  await conn.query("ALTER TABLE orders ADD COLUMN my_new_column TEXT");
+  console.log("Done"); await conn.end();
+  EOF
+  ```
 
 ## Pointers
 
