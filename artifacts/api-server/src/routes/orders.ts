@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { ordersTable, FamilyCardsSchema, ALLOWED_CARD_TYPES } from "@workspace/db";
-import { eq, and, desc, gte, sql, or, like, isNull, isNotNull } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql, or, like, isNull, isNotNull } from "drizzle-orm";
 import {
   CreateOrderBody,
   UpdateOrderStatusBody,
@@ -28,6 +28,10 @@ router.get("/orders", async (req: Request, res: Response) => {
 
     const source = typeof req.query.source === "string" ? req.query.source : undefined;
     const paymentStatusFilter = typeof req.query.paymentStatus === "string" ? req.query.paymentStatus : undefined;
+    const cardTypeFilter = typeof req.query.cardType === "string" ? req.query.cardType : undefined;
+    const fromDate = typeof req.query.fromDate === "string" ? req.query.fromDate : undefined;
+    const toDate = typeof req.query.toDate === "string" ? req.query.toDate : undefined;
+    const rationCardSearch = typeof req.query.rationCardSearch === "string" ? req.query.rationCardSearch.trim() : undefined;
 
     const conditions = [];
     if (params.status) conditions.push(eq(ordersTable.status, params.status as any));
@@ -35,6 +39,18 @@ router.get("/orders", async (req: Request, res: Response) => {
     if (source === "public") conditions.push(isNull(ordersTable.operatorId));
     if (source === "operator") conditions.push(isNotNull(ordersTable.operatorId));
     if (paymentStatusFilter) conditions.push(eq(ordersTable.paymentStatus, paymentStatusFilter as any));
+    if (cardTypeFilter) conditions.push(eq(ordersTable.cardType, cardTypeFilter));
+    if (fromDate) {
+      const from = new Date(fromDate + "T00:00:00");
+      if (!isNaN(from.getTime())) conditions.push(gte(ordersTable.createdAt, from));
+    }
+    if (toDate) {
+      const to = new Date(toDate + "T23:59:59");
+      if (!isNaN(to.getTime())) conditions.push(lte(ordersTable.createdAt, to));
+    }
+    if (rationCardSearch && rationCardSearch.length > 0) {
+      conditions.push(like(ordersTable.rationCardNumber, `${rationCardSearch}%`));
+    }
     if (search) {
       // Sanitize the term for FULLTEXT boolean mode: strip special operators
       // so user input cannot accidentally trigger boolean syntax errors.
