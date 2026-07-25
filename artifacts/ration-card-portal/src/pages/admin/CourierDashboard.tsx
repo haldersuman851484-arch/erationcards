@@ -812,7 +812,6 @@ function PrintStatusView({
       if (!debouncedSearch) return { orders: [], total: 0 };
       const params = new URLSearchParams({
         source,
-        status: "processing",
         quickSearch: debouncedSearch,
         limit: "5",
       });
