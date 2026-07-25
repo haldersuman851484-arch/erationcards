@@ -317,6 +317,45 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
   }
 });
 
+// PATCH /orders/:id/pdfs/:cardIndex/downloaded — marks a specific card PDF as downloaded
+// Requires a valid admin token (couriers log in as admin via the same auth flow).
+router.patch("/orders/:id/pdfs/:cardIndex/downloaded", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const id        = parseInt(String(req.params.id));
+    const cardIndex = parseInt(String(req.params.cardIndex));
+    if (isNaN(id) || isNaN(cardIndex)) {
+      res.status(400).json({ error: "Invalid order ID or card index" }); return;
+    }
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    const pdfs: any[] = order.rationCardPdfs ?? [];
+    const entryExists = pdfs.some(p => p.cardIndex === cardIndex);
+    if (!entryExists) {
+      res.status(404).json({ error: `No PDF found for cardIndex ${cardIndex}` }); return;
+    }
+
+    const updatedPdfs = pdfs.map(p =>
+      p.cardIndex === cardIndex
+        ? { ...p, downloaded: true, downloadedAt: new Date().toISOString() }
+        : p
+    );
+
+    await db.update(ordersTable)
+      .set({ rationCardPdfs: updatedPdfs as any, updatedAt: new Date() })
+      .where(eq(ordersTable.id, id));
+
+    res.json({ ok: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to mark PDF as downloaded");
+    res.status(500).json({ error: "Failed to mark PDF as downloaded" });
+  }
+});
+
 // POST /orders/:id/dispatch  — admin only, creates Delhivery shipment
 router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
   try {

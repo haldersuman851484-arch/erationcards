@@ -14,6 +14,8 @@ export const CardPdfEntrySchema = z.object({
   cardIndex: z.number().int().nonnegative(),
   pdfUrl: z.string().min(1, "pdfUrl is required"),
   uploadedAt: z.string().min(1, "uploadedAt is required"),
+  downloaded: z.boolean().optional().default(false),
+  downloadedAt: z.string().nullable().optional(),
 });
 
 export const FamilyCardsSchema = z.array(FamilyCardSchema);

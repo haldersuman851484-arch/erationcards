@@ -396,8 +396,15 @@ function DownloadView({
       document.body.removeChild(a);
       URL.revokeObjectURL(objectUrl);
 
-      // Mark this individual PDF as downloaded
+      // Mark this individual PDF as downloaded (session state for instant UI feedback)
       setDownloadedPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
+
+      // Persist the download record to the DB — non-blocking, silent on failure
+      // (the file is already on disk; this just updates the badge on next scan)
+      fetch(`/api/orders/${orderId}/pdfs/${cardIndex}/downloaded`, {
+        method: "PATCH",
+        headers: getAuthHeader(),
+      }).catch(() => {});
 
       // PATCH order to processing on first PDF download — non-blocking, fires once per order
       if (!patchedOrders.has(orderId)) {
@@ -486,9 +493,12 @@ function DownloadView({
               </TableHeader>
               <TableBody>
                 {orders.map((order, i) => {
-                  const pdfs: { cardIndex: number; pdfUrl: string }[] = order.rationCardPdfs ?? [];
+                  const pdfs: { cardIndex: number; pdfUrl: string; downloaded?: boolean; downloadedAt?: string | null }[] = order.rationCardPdfs ?? [];
                   // All PDFs downloaded → show single green badge instead of buttons
-                  const allDownloaded = pdfs.length > 0 && pdfs.every(p => downloadedPdfs.has(`${order.id}_${p.cardIndex}`));
+                  // allDownloaded: true if every PDF is marked done — either in-session or persisted in DB
+                  const allDownloaded = pdfs.length > 0 && pdfs.every(p =>
+                    downloadedPdfs.has(`${order.id}_${p.cardIndex}`) || p.downloaded === true
+                  );
                   const syncFailed    = syncFailedOrders.has(order.id);
 
                   return (
@@ -539,7 +549,7 @@ function DownloadView({
                             {/* Per-PDF download buttons — each independent */}
                             {pdfs.map((p, idx) => {
                               const pdfKey     = `${order.id}_${p.cardIndex}`;
-                              const isDone     = downloadedPdfs.has(pdfKey);
+                              const isDone     = downloadedPdfs.has(pdfKey) || p.downloaded === true;
                               const isInFlight = downloadingPdfs.has(pdfKey);
                               return isDone ? (
                                 <span key={p.cardIndex} className="flex items-center gap-1 text-xs text-emerald-600">
@@ -821,7 +831,7 @@ function PrintStatusView({
   }
 
   const allCards  = order ? buildAllCards(order) : [];
-  const pdfs: { cardIndex: number; pdfUrl: string }[] = order?.rationCardPdfs ?? [];
+  const pdfs: { cardIndex: number; pdfUrl: string; downloaded?: boolean; downloadedAt?: string | null }[] = order?.rationCardPdfs ?? [];
   // isPrinted is true when the server confirms it OR when we've optimistically auto-marked it
   const isPrinted = order
     ? (["printed", "dispatched", "delivered"].includes(order.status) || optimisticPrintedIds.has(order.id))
@@ -910,7 +920,8 @@ function PrintStatusView({
             <div className="flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {allCards.map((card) => {
-                  const hasPdf      = pdfs.some(p => p.cardIndex === card.cardIndex);
+                  // hasPdf: true only when the courier has actually downloaded this card (DB-persisted)
+                  const hasPdf      = pdfs.some(p => p.cardIndex === card.cardIndex && p.downloaded === true);
                   const highlighted = hasPdf && isPrinted;
                   return (
                     <div
