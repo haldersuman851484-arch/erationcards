@@ -777,11 +777,13 @@ function PrintStatusView({
   const [undoOrderId, setUndoOrderId] = useState<number | null>(null);
   const [recentScans, setRecentScans] = useState<any[]>([]); // session-local scan history for sidebar
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null); // null = show picker when multiple
+  const [optimisticPrintedIds, setOptimisticPrintedIds] = useState<Set<number>>(new Set()); // instant green badge before PATCH resolves
 
   // Refs never go stale inside closures — used for undo gate + toast teardown
   const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeUndoTokenRef = useRef<string | null>(null);   // unique per mark-printed; null = window closed
   const activeToastDismissRef = useRef<(() => void) | null>(null); // dismiss handle for the undo toast
+  const autoMarkedIds      = useRef<Set<number>>(new Set()); // tracks which order IDs were auto-marked this session
 
   /** Fully close the undo window: cancel timer, invalidate token, dismiss toast */
   function closeUndoWindow() {
@@ -836,6 +838,8 @@ function PrintStatusView({
         body: JSON.stringify({ status: "processing" }),
       });
       if (!r.ok) throw new Error("Failed");
+      // Revert optimistic badge so the UI shows "No" immediately
+      setOptimisticPrintedIds(prev => { const s = new Set(prev); s.delete(orderId); return s; });
       queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
       toast({ title: "Undone — order is back to processing" });
     } catch {
@@ -843,7 +847,7 @@ function PrintStatusView({
     }
   }
 
-  async function markAsPrinted(orderId: number) {
+  async function markAsPrinted(orderId: number, opts?: { auto?: boolean }) {
     setMarkingId(orderId);
     try {
       const r = await fetch(`/api/orders/${orderId}`, {
@@ -853,8 +857,9 @@ function PrintStatusView({
       });
       if (!r.ok) throw new Error("Failed");
 
-      // Clear search immediately so next card can be scanned
-      onSearchClear();
+      // Manual clicks clear the search so the next card can be scanned.
+      // Auto-mark keeps the result visible so the courier sees the green badges.
+      if (!opts?.auto) onSearchClear();
 
       // Cancel any previously open undo window before opening a new one
       closeUndoWindow();
@@ -909,6 +914,20 @@ function PrintStatusView({
     ? (orders.find((o: any) => o.id === selectedOrderId) ?? null)
     : null;
 
+  // ── Auto-mark on successful match ────────────────────────────────────────────
+  // Fires once per unique order ID when the result panel first appears.
+  // Skipped for orders already in a printed/dispatched/delivered state.
+  useEffect(() => {
+    if (!order) return;
+    if (autoMarkedIds.current.has(order.id)) return;
+    if (["printed", "dispatched", "delivered"].includes(order.status)) return;
+    autoMarkedIds.current.add(order.id);
+    // Optimistically flip badges green before the PATCH resolves
+    setOptimisticPrintedIds(prev => new Set([...prev, order.id]));
+    markAsPrinted(order.id, { auto: true });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
+
   // Push each displayed order into session scan history for the sidebar
   useEffect(() => {
     if (order) {
@@ -948,7 +967,10 @@ function PrintStatusView({
 
   const allCards  = order ? buildAllCards(order) : [];
   const pdfs: { cardIndex: number; pdfUrl: string }[] = order?.rationCardPdfs ?? [];
-  const isPrinted = order ? ["printed", "dispatched", "delivered"].includes(order.status) : false;
+  // isPrinted is true when the server confirms it OR when we've optimistically auto-marked it
+  const isPrinted = order
+    ? (["printed", "dispatched", "delivered"].includes(order.status) || optimisticPrintedIds.has(order.id))
+    : false;
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -989,7 +1011,7 @@ function PrintStatusView({
           <AlertCircle className="w-10 h-10 mb-3 text-slate-300" />
           <p className="text-slate-600 font-semibold">No order found</p>
           <p className="text-xs text-slate-400 mt-1 font-mono">"{debouncedSearch}"</p>
-          <p className="text-xs text-slate-400 mt-1">No processing order matched this ration card number or order ID</p>
+          <p className="text-xs text-slate-400 mt-1">No order matched this ration card number or order ID</p>
         </div>
       )}
 
