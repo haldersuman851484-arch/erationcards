@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -59,6 +59,11 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
   const [filterCardSearch, setFilterCardSearch] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
 
+  // Print scan-first view — search state lives in parent (header owns the input)
+  const [printSearchOpen, setPrintSearchOpen] = useState(false);
+  const [printSearchValue, setPrintSearchValue] = useState("");
+  const printInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!localStorage.getItem("adminToken")) setLocation("/admin/login");
   }, [setLocation]);
@@ -76,7 +81,24 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
     setFilterCardType("all");
     setFilterCardSearch("");
     setSearchOpen(false);
+    // reset print scan state
+    setPrintSearchOpen(false);
+    setPrintSearchValue("");
   }
+
+  // Open print search on any printable keypress (barcode scanner or keyboard)
+  useEffect(() => {
+    if (activeService !== "print") return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (printSearchOpen) return;
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setPrintSearchOpen(true);
+        setPrintSearchValue(e.key);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [activeService, printSearchOpen]);
 
   const label = source === "public" ? "Public Order" : "Operator Order";
   const courierLabel = COURIER_OPTIONS.find((c) => c.value === selectedCourier)?.label ?? "Delivery";
@@ -100,18 +122,59 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
         {/* ── Header ── */}
         <header className="border-b bg-white sticky top-0 z-50">
           <div className="px-4 h-12 flex items-center justify-between gap-3">
-            {/* Brand */}
-            <Link
-              href="/admin/dashboard"
-              className="flex items-center gap-1.5 hover:opacity-70 transition-opacity shrink-0"
-            >
-              <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">C</div>
-              <span className="font-semibold text-sm text-slate-800">Ration Card</span>
-              <span className="text-slate-400 text-sm font-normal">mPanel</span>
-            </Link>
+            {/* Brand — print view shows source label instead of link */}
+            {activeService === "print" ? (
+              <div className="flex items-center gap-1.5 shrink-0">
+                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">■</div>
+                <span className="font-semibold text-sm text-slate-800">Ration Card</span>
+                <span className="text-slate-400 text-sm font-normal">mPanel</span>
+                <span className="text-slate-300 text-sm select-none">•</span>
+                <span className="text-sm font-medium text-primary">{label}</span>
+              </div>
+            ) : (
+              <Link
+                href="/admin/dashboard"
+                className="flex items-center gap-1.5 hover:opacity-70 transition-opacity shrink-0"
+              >
+                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">C</div>
+                <span className="font-semibold text-sm text-slate-800">Ration Card</span>
+                <span className="text-slate-400 text-sm font-normal">mPanel</span>
+              </Link>
+            )}
 
             {/* Right side — changes by active service */}
-            {activeService === "download" ? (
+            {activeService === "print" ? (
+              /* Print scan view: 🔍 icon toggle with autofocused input */
+              printSearchOpen ? (
+                <div className="flex items-center gap-1">
+                  <Input
+                    ref={printInputRef}
+                    autoFocus
+                    placeholder="Scan or type ration card no. / order ID…"
+                    value={printSearchValue}
+                    onChange={(e) => setPrintSearchValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { setPrintSearchOpen(false); setPrintSearchValue(""); }
+                    }}
+                    className="h-8 text-xs w-56 border-slate-300 font-mono"
+                  />
+                  <button
+                    onClick={() => { setPrintSearchOpen(false); setPrintSearchValue(""); }}
+                    className="text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setPrintSearchOpen(true)}
+                  className="h-8 w-8 flex items-center justify-center border border-slate-300 rounded-md hover:border-primary hover:text-primary transition-colors text-slate-500"
+                  title="Search (or press any key)"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )
+            ) : activeService === "download" ? (
               /* Filter controls matching the screenshot */
               <div className="flex items-center gap-2 flex-wrap justify-end">
                 <input
@@ -203,6 +266,8 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
               onBack={handleBack}
               toast={toast}
               queryClient={queryClient}
+              searchValue={printSearchValue}
+              onSearchClear={() => { setPrintSearchOpen(false); setPrintSearchValue(""); }}
             />
           ) : (
             <DispatchView
@@ -693,29 +758,38 @@ function DispatchView({
 }
 
 /* ─────────────────────────────────────────── */
-/* Print Status Update sub-view                */
+/* Print Status Update — scan-first UI         */
 /* ─────────────────────────────────────────── */
 function PrintStatusView({
-  source, label, onBack, toast, queryClient,
+  source, onBack, toast, queryClient, searchValue, onSearchClear,
 }: {
   source: "public" | "operator";
   label: string;
   onBack: () => void;
   toast: ReturnType<typeof useToast>["toast"];
   queryClient: ReturnType<typeof useQueryClient>;
+  searchValue: string;
+  onSearchClear: () => void;
 }) {
-  const { data, isLoading, error } = useQuery<{ orders: any[]; total: number }>({
-    queryKey: ["courier-print", source],
+  const debouncedSearch = useDebounce(searchValue, 300);
+  const [markingId, setMarkingId] = useState<number | null>(null);
+
+  const { data, isLoading } = useQuery<{ orders: any[]; total: number }>({
+    queryKey: ["courier-print-search", source, debouncedSearch],
     queryFn: async () => {
-      const params = new URLSearchParams({ source, status: "processing", limit: "100" });
+      if (!debouncedSearch) return { orders: [], total: 0 };
+      const params = new URLSearchParams({
+        source,
+        status: "processing",
+        quickSearch: debouncedSearch,
+        limit: "5",
+      });
       const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
-      if (!r.ok) throw new Error("Failed to fetch orders");
+      if (!r.ok) throw new Error("Failed to fetch");
       return r.json();
     },
-    refetchInterval: 30000,
+    enabled: debouncedSearch.length > 0,
   });
-
-  const [markingId, setMarkingId] = useState<number | null>(null);
 
   async function markAsPrinted(orderId: number) {
     setMarkingId(orderId);
@@ -726,8 +800,9 @@ function PrintStatusView({
         body: JSON.stringify({ status: "printed" }),
       });
       if (!r.ok) throw new Error("Failed");
-      toast({ title: "Order marked as printed!" });
-      queryClient.invalidateQueries({ queryKey: ["courier-print", source] });
+      toast({ title: "Marked as printed ✓" });
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+      onSearchClear(); // ready for next scan
     } catch {
       toast({ title: "Failed to update status", variant: "destructive" });
     } finally {
@@ -736,106 +811,91 @@ function PrintStatusView({
   }
 
   const orders = data?.orders ?? [];
+  const hasSearched = debouncedSearch.length > 0;
 
   return (
-    <div className="fade-in">
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary mb-5 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back
-      </button>
+    <div className="fade-in flex flex-col items-center pt-16 min-h-[70vh]">
+      {/* Back button */}
+      <div className="w-full max-w-lg px-4 mb-12">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-4 h-4" /> Back
+        </button>
+      </div>
 
-      <h2 className="text-lg font-semibold text-slate-800 mb-1">Print Status Update</h2>
-      <p className="text-sm text-slate-500 mb-6">
-        Orders in <span className="font-medium text-blue-700">processing</span> from{" "}
-        <span className="font-medium text-slate-700">{label}</span> — mark them as printed once done.
+      {/* Primary prompt — matches screenshot typography */}
+      <p className="text-2xl sm:text-3xl font-extrabold tracking-widest text-slate-800 text-center px-6 select-none uppercase">
+        Scan Ration Card or PRN Number
+      </p>
+      <p className="mt-3 text-sm text-slate-400 text-center">
+        Use a barcode scanner or tap 🔍 in the header to type
       </p>
 
-      {isLoading ? (
-        <div className="py-16 flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-          <p className="text-slate-400 text-sm">Loading orders…</p>
-        </div>
-      ) : error ? (
-        <div className="py-16 text-center text-red-500 text-sm">Failed to load orders. Please try again.</div>
-      ) : orders.length === 0 ? (
-        <div className="py-16 text-center text-slate-400">
-          <CheckCircle2 className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p>No orders in processing — all caught up!</p>
-        </div>
-      ) : (
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-slate-50">
-                  <TableHead className="text-xs">Date</TableHead>
-                  <TableHead className="text-xs">Name</TableHead>
-                  <TableHead className="text-xs">Card Number</TableHead>
-                  <TableHead className="text-xs">Card Type</TableHead>
-                  <TableHead className="text-xs">PDF(s)</TableHead>
-                  <TableHead className="text-xs">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {orders.map((order, i) => {
-                  const pdfs: { cardIndex: number; pdfUrl: string }[] = order.rationCardPdfs ?? [];
-                  return (
-                    <TableRow
-                      key={order.id}
-                      className="hover:bg-slate-50/60 transition-colors"
-                      style={{ animation: `fadeSlideIn 0.3s ease both`, animationDelay: `${Math.min(i * 30, 400)}ms` }}
-                    >
-                      <TableCell className="text-sm text-slate-600 whitespace-nowrap">
-                        {new Date(order.createdAt).toLocaleDateString("en-IN", {
-                          day: "2-digit", month: "short", year: "numeric",
-                        })}
-                      </TableCell>
-                      <TableCell className="text-sm font-medium text-slate-800 uppercase">
-                        {order.customerName}
-                      </TableCell>
-                      <TableCell className="text-sm font-mono text-slate-700">
-                        {order.rationCardNumber}
-                      </TableCell>
-                      <TableCell className="text-sm text-slate-700">
-                        {order.cardType}
-                      </TableCell>
-                      <TableCell>
-                        {pdfs.length === 0 ? (
-                          <span className="flex items-center gap-1 text-xs text-amber-500">
-                            <AlertCircle className="w-3 h-3" /> Pending
-                          </span>
-                        ) : (
-                          <div className="flex items-center gap-1 text-xs text-emerald-600 font-medium">
-                            <FileText className="w-3 h-3" />
-                            {pdfs.length}/{order.quantity} ready
-                          </div>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 px-2.5 text-xs text-purple-700 border-purple-300 hover:bg-purple-50"
-                          disabled={markingId === order.id}
-                          onClick={() => markAsPrinted(order.id)}
-                        >
-                          <Printer className="w-3 h-3 mr-1" />
-                          {markingId === order.id ? "Saving…" : "Mark Printed"}
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+      {/* Result area */}
+      <div className="mt-12 w-full max-w-lg px-4">
+        {hasSearched && isLoading && (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <div className="w-7 h-7 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+            <p className="text-sm text-slate-400">Searching…</p>
           </div>
-          <div className="px-4 py-2 border-t bg-slate-50 text-xs text-slate-500">
-            {orders.length} order{orders.length !== 1 ? "s" : ""} in processing
+        )}
+
+        {hasSearched && !isLoading && orders.length === 0 && (
+          <div className="text-center py-10 fade-in">
+            <AlertCircle className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+            <p className="text-slate-600 font-semibold">No order found</p>
+            <p className="text-xs text-slate-400 mt-1 font-mono">"{debouncedSearch}"</p>
+            <p className="text-xs text-slate-400 mt-1">No processing order matched this ration card number or order ID</p>
           </div>
-        </div>
-      )}
+        )}
+
+        {hasSearched && !isLoading && orders.map((order) => {
+          const pdfs: { cardIndex: number; pdfUrl: string }[] = order.rationCardPdfs ?? [];
+          return (
+            <div key={order.id} className="bg-white border border-slate-200 rounded-2xl shadow-md p-6 fade-in mb-4">
+              <div className="space-y-3">
+                <p className="text-xl font-extrabold text-slate-900 uppercase tracking-wide leading-tight">
+                  {order.customerName}
+                </p>
+
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Card Number</p>
+                    <p className="font-mono font-semibold text-slate-800">{order.rationCardNumber}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Card Type</p>
+                    <p className="font-semibold text-slate-800">{order.cardType}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">PDFs</p>
+                    <p className={`font-semibold ${pdfs.length > 0 ? "text-emerald-600" : "text-amber-500"}`}>
+                      {pdfs.length > 0 ? `${pdfs.length} ready` : "Pending"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Status</p>
+                    <p className="font-semibold text-blue-700 capitalize">{order.status}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 pt-4 border-t border-slate-100">
+                <Button
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-12 text-base tracking-wide"
+                  disabled={markingId === order.id}
+                  onClick={() => markAsPrinted(order.id)}
+                >
+                  <Printer className="w-4 h-4 mr-2" />
+                  {markingId === order.id ? "Saving…" : "Mark Printed"}
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

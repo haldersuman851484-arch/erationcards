@@ -39,7 +39,9 @@ router.get("/orders", async (req: Request, res: Response) => {
     const params = ListOrdersQueryParams.parse(req.query);
     const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
     const page = params.page ?? 1;
-    const limit = params.limit ?? 20;
+    // quickSearch: searches rationCardNumber (prefix) OR order id (exact) — capped at 5 results
+    const quickSearch = typeof req.query.quickSearch === "string" ? req.query.quickSearch.trim() : undefined;
+    const limit = quickSearch ? 5 : (params.limit ?? 20);
     const offset = (page - 1) * limit;
 
     const source = typeof req.query.source === "string" ? req.query.source : undefined;
@@ -66,6 +68,11 @@ router.get("/orders", async (req: Request, res: Response) => {
     }
     if (rationCardSearch && rationCardSearch.length > 0) {
       conditions.push(like(ordersTable.rationCardNumber, `${rationCardSearch}%`));
+    }
+    if (quickSearch && quickSearch.length > 0) {
+      const numericId = parseInt(quickSearch);
+      const rcMatch = like(ordersTable.rationCardNumber, `${quickSearch}%`);
+      conditions.push(!isNaN(numericId) ? or(rcMatch, eq(ordersTable.id, numericId))! : rcMatch);
     }
     if (search) {
       // Sanitize the term for FULLTEXT boolean mode: strip special operators
