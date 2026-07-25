@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { ToastAction } from "@/components/ui/toast";
 import {
   Download, FileText, ArrowLeft, Printer,
   Package, CheckCircle2, AlertCircle, ChevronRight, Search, X, Truck,
@@ -773,6 +774,35 @@ function PrintStatusView({
 }) {
   const debouncedSearch = useDebounce(searchValue, 300);
   const [markingId, setMarkingId] = useState<number | null>(null);
+  const [undoOrderId, setUndoOrderId] = useState<number | null>(null);
+
+  // Refs never go stale inside closures — used for undo gate + toast teardown
+  const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeUndoTokenRef = useRef<string | null>(null);   // unique per mark-printed; null = window closed
+  const activeToastDismissRef = useRef<(() => void) | null>(null); // dismiss handle for the undo toast
+
+  /** Fully close the undo window: cancel timer, invalidate token, dismiss toast */
+  function closeUndoWindow() {
+    if (undoTimerRef.current) { clearTimeout(undoTimerRef.current); undoTimerRef.current = null; }
+    activeUndoTokenRef.current = null;
+    if (activeToastDismissRef.current) { activeToastDismissRef.current(); activeToastDismissRef.current = null; }
+    setUndoOrderId(null);
+  }
+
+  // When a new scan starts while undo is pending, the new scan is intentional
+  // confirmation — close the window (and dismiss the stale toast).
+  useEffect(() => {
+    if (searchValue.length > 0 && undoOrderId !== null) {
+      closeUndoWindow();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchValue, undoOrderId]);
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => closeUndoWindow();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { data, isLoading } = useQuery<{ orders: any[]; total: number }>({
     queryKey: ["courier-print-search", source, debouncedSearch],
@@ -791,6 +821,27 @@ function PrintStatusView({
     enabled: debouncedSearch.length > 0,
   });
 
+  async function undoMarkPrinted(orderId: number, token: string) {
+    // Gate: only execute if the undo window is still open for this exact action
+    if (activeUndoTokenRef.current !== token) {
+      // Window already expired or a newer scan confirmed it — silently no-op
+      return;
+    }
+    closeUndoWindow();
+    try {
+      const r = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "processing" }),
+      });
+      if (!r.ok) throw new Error("Failed");
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+      toast({ title: "Undone — order is back to processing" });
+    } catch {
+      toast({ title: "Undo failed. Please correct it from the admin dashboard.", variant: "destructive" });
+    }
+  }
+
   async function markAsPrinted(orderId: number) {
     setMarkingId(orderId);
     try {
@@ -800,9 +851,36 @@ function PrintStatusView({
         body: JSON.stringify({ status: "printed" }),
       });
       if (!r.ok) throw new Error("Failed");
-      toast({ title: "Marked as printed ✓" });
+
+      // Clear search immediately so next card can be scanned
+      onSearchClear();
+
+      // Cancel any previously open undo window before opening a new one
+      closeUndoWindow();
+
+      // Unique token for this action — prevents a stale toast from undoing a later mark
+      const token = `${orderId}_${Date.now()}`;
+      activeUndoTokenRef.current = token;
+      setUndoOrderId(orderId);
+
+      // Expire the window after 5 seconds and dismiss the toast
+      undoTimerRef.current = setTimeout(() => {
+        closeUndoWindow();
+      }, 5000);
+
       queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
-      onSearchClear(); // ready for next scan
+
+      // Show the undo toast and store its dismiss handle
+      const { dismiss } = toast({
+        title: "Marked as printed ✓",
+        duration: 5500, // slightly longer than undo window so button is visible for full 5 s
+        action: (
+          <ToastAction altText="Undo mark printed" onClick={() => undoMarkPrinted(orderId, token)}>
+            Undo
+          </ToastAction>
+        ),
+      });
+      activeToastDismissRef.current = dismiss;
     } catch {
       toast({ title: "Failed to update status", variant: "destructive" });
     } finally {
