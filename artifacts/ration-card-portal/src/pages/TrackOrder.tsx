@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey, useSubmitReview } from "@workspace/api-client-react";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck, ChevronDown, ChevronUp } from "lucide-react";
 
 type PdfEntry = { cardIndex: number; pdfUrl: string; uploadedAt: string };
 
@@ -89,6 +90,83 @@ function getCourierTrackingUrl(trackingNumber: string): { url: string; name: str
   }
 
   return null;
+}
+
+/* ── Delhivery live scan timeline ─────────────────────────────────────── */
+function DelhiveryScanTimeline({ orderId, trackingNumber }: { orderId: number; trackingNumber: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const COLLAPSED_COUNT = 5;
+
+  const { data, isLoading, error } = useQuery<{ scans: { date: string; location: string; status: string; activity: string }[]; awb: string }>({
+    queryKey: ["delhivery-tracking", orderId],
+    queryFn: async () => {
+      const r = await fetch(`/api/orders/${orderId}/tracking`);
+      if (!r.ok) throw new Error("Tracking unavailable");
+      return r.json();
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  });
+
+  if (isLoading) {
+    return (
+      <Card className="border-slate-200 shadow-sm">
+        <CardHeader className="pb-2"><CardTitle className="text-base flex items-center gap-2"><Truck className="w-4 h-4 text-orange-500" />Shipment Tracking</CardTitle></CardHeader>
+        <CardContent><p className="text-sm text-slate-400 animate-pulse">Fetching live tracking…</p></CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data || data.scans.length === 0) {
+    // Silent fallback — the tracking number link is already shown above
+    return null;
+  }
+
+  const scans = data.scans;
+  const visible = expanded ? scans : scans.slice(0, COLLAPSED_COUNT);
+
+  return (
+    <Card className="border-orange-100 shadow-sm">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <Truck className="w-4 h-4 text-orange-500" />
+            Delhivery Tracking
+          </div>
+          <span className="text-xs font-mono font-normal text-slate-500">{trackingNumber}</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {visible.map((scan, idx) => (
+            <div key={idx} className="flex items-start gap-3">
+              <div className="flex flex-col items-center mt-1">
+                <div className={`w-2.5 h-2.5 rounded-full border-2 ${idx === 0 ? "bg-orange-500 border-orange-500" : "bg-white border-slate-300"}`} />
+                {idx < visible.length - 1 && <div className="w-px h-6 bg-slate-200 mt-1" />}
+              </div>
+              <div className="flex-1 min-w-0 pb-1">
+                <p className={`text-sm font-medium ${idx === 0 ? "text-slate-900" : "text-slate-600"}`}>
+                  {scan.status}{scan.activity && scan.activity !== scan.status ? ` — ${scan.activity}` : ""}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
+                  {scan.location && <span className="text-xs text-slate-500"><MapPin className="w-2.5 h-2.5 inline mr-0.5" />{scan.location}</span>}
+                  {scan.date && <span className="text-xs text-slate-400">{new Date(scan.date).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        {scans.length > COLLAPSED_COUNT && (
+          <button
+            onClick={() => setExpanded(!expanded)}
+            className="mt-3 flex items-center gap-1 text-xs text-primary hover:underline"
+          >
+            {expanded ? <><ChevronUp className="w-3 h-3" /> Show less</> : <><ChevronDown className="w-3 h-3" /> Show all {scans.length} events</>}
+          </button>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
 
 const STATUS_STEPS = [
@@ -509,6 +587,11 @@ export default function TrackOrder() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Delhivery live scan timeline — shown when dispatched/delivered with a tracking number */}
+              {(order.status === "dispatched" || order.status === "delivered") && order.trackingNumber && (
+                <DelhiveryScanTimeline orderId={(order as any).id} trackingNumber={order.trackingNumber} />
+              )}
 
               {whatsAppUrl && order.status !== "delivered" && (
                 <Card className="border-emerald-200 bg-emerald-50 shadow-sm">

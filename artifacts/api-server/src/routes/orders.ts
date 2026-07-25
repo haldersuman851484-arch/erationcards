@@ -9,7 +9,23 @@ import {
   ListOrdersQueryParams,
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
-import { generateOrderNumber, parseOperatorToken } from "../lib/auth";
+import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
+
+// ── Delhivery tracking in-memory cache ──────────────────────────────────────
+interface DelhiveryScan {
+  date: string;
+  location: string;
+  status: string;
+  activity: string;
+}
+const trackingCache = new Map<string, { scans: DelhiveryScan[]; expiresAt: number }>();
+const TRACKING_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getDelhiveryBaseUrl(): string {
+  return (process.env["DELHIVERY_ENV"] ?? "staging") === "production"
+    ? "https://track.delhivery.com"
+    : "https://staging-express.delhivery.com";
+}
 
 const router = Router();
 
@@ -287,6 +303,191 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update order");
     res.status(400).json({ error: "Failed to update order" });
+  }
+});
+
+// POST /orders/:id/dispatch  — admin only, creates Delhivery shipment
+router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    if (order.status !== "printed") {
+      res.status(400).json({ error: "Order must be in 'printed' status to dispatch" }); return;
+    }
+    if (order.trackingNumber) {
+      res.status(400).json({ error: "Order already dispatched", trackingNumber: order.trackingNumber }); return;
+    }
+
+    // Check required env vars
+    const apiToken       = process.env["DELHIVERY_API_TOKEN"];
+    const pickupLocation = process.env["DELHIVERY_PICKUP_LOCATION"];
+    const returnName     = process.env["DELHIVERY_RETURN_NAME"];
+    const returnPhone    = process.env["DELHIVERY_RETURN_PHONE"];
+    const returnAdd      = process.env["DELHIVERY_RETURN_ADD"];
+    const returnPin      = process.env["DELHIVERY_RETURN_PIN"];
+    const returnCity     = process.env["DELHIVERY_RETURN_CITY"];
+    const returnState    = process.env["DELHIVERY_RETURN_STATE"];
+
+    const missing = [
+      !apiToken       && "DELHIVERY_API_TOKEN",
+      !pickupLocation && "DELHIVERY_PICKUP_LOCATION",
+      !returnName     && "DELHIVERY_RETURN_NAME",
+      !returnPhone    && "DELHIVERY_RETURN_PHONE",
+      !returnAdd      && "DELHIVERY_RETURN_ADD",
+      !returnPin      && "DELHIVERY_RETURN_PIN",
+      !returnCity     && "DELHIVERY_RETURN_CITY",
+      !returnState    && "DELHIVERY_RETURN_STATE",
+    ].filter(Boolean);
+    if (missing.length > 0) {
+      res.status(503).json({ error: `Delhivery not configured. Missing secrets: ${missing.join(", ")}` });
+      return;
+    }
+
+    const weightG = parseInt(process.env["DELHIVERY_WEIGHT_G"] ?? "200");
+    const orderDate = new Date().toISOString().slice(0, 10);
+
+    const shipmentPayload = {
+      shipments: [{
+        name:         order.customerName,
+        add:          order.address,
+        pin:          order.pincode,
+        city:         order.district,
+        state:        order.state,
+        country:      "India",
+        phone:        order.customerPhone,
+        order:        order.orderNumber,
+        payment_mode: "Pre-paid",
+        return_pin:   returnPin,
+        return_city:  returnCity,
+        return_phone: returnPhone,
+        return_name:  returnName,
+        return_add:   returnAdd,
+        return_state: returnState,
+        return_email: "",
+        products_desc:     "PVC Ration Card",
+        hsn_code:          "",
+        cod_amount:        "0",
+        order_date:        orderDate,
+        total_amount:      String(order.amount),
+        seller_add:        returnAdd,
+        seller_name:       returnName,
+        seller_inv:        order.orderNumber,
+        quantity:          String(order.quantity),
+        waybill:           "",
+        shipment_width:    15,
+        shipment_height:   1,
+        weight:            weightG,
+        shipment_length:   10,
+        pickup_location:   { name: pickupLocation },
+      }],
+    };
+
+    const baseUrl = getDelhiveryBaseUrl();
+    const dResponse = await fetch(`${baseUrl}/api/cmu/create.json`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Token ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(shipmentPayload),
+    });
+
+    const rawText = await dResponse.text();
+    let dData: any;
+    try { dData = JSON.parse(rawText); } catch {
+      req.log.error({ status: dResponse.status, body: rawText }, "Delhivery non-JSON response");
+      res.status(502).json({ error: "Delhivery API returned an invalid response" }); return;
+    }
+
+    if (!dResponse.ok || !Array.isArray(dData?.packages) || dData.packages.length === 0) {
+      req.log.error({ status: dResponse.status, body: dData }, "Delhivery API error");
+      res.status(502).json({ error: dData?.rmk ?? "Delhivery API error" }); return;
+    }
+
+    const pkg = dData.packages[0];
+    if (pkg.status !== "Success") {
+      const errMsg = pkg["error_message"] ?? pkg.rmk ?? "Shipment creation failed";
+      res.status(502).json({ error: errMsg }); return;
+    }
+
+    const awb = pkg.waybill as string;
+    if (!awb) {
+      res.status(502).json({ error: "Delhivery did not return a waybill number" }); return;
+    }
+
+    await db.update(ordersTable).set({
+      trackingNumber: awb,
+      courierName:    "Delhivery",
+      status:         "dispatched" as any,
+      updatedAt:      new Date(),
+    }).where(eq(ordersTable.id, id));
+
+    const [updated] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    res.json({ awb, trackingNumber: awb, order: formatOrder(updated) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to dispatch order via Delhivery");
+    res.status(500).json({ error: "Failed to dispatch order" });
+  }
+});
+
+// GET /orders/:id/tracking  — public, proxies Delhivery tracking with 5-min cache
+router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+    if (!order.trackingNumber) {
+      res.status(404).json({ error: "No tracking number for this order" }); return;
+    }
+
+    const awb = order.trackingNumber;
+    const now = Date.now();
+    const cached = trackingCache.get(awb);
+    if (cached && cached.expiresAt > now) {
+      res.json({ scans: cached.scans, awb }); return;
+    }
+
+    const apiToken = process.env["DELHIVERY_API_TOKEN"];
+    if (!apiToken) {
+      res.status(503).json({ error: "Delhivery not configured" }); return;
+    }
+
+    const baseUrl = getDelhiveryBaseUrl();
+    const tResponse = await fetch(
+      `${baseUrl}/api/v1/packages/json/?waybill=${encodeURIComponent(awb)}&token=${encodeURIComponent(apiToken)}`
+    );
+
+    if (!tResponse.ok) {
+      res.status(502).json({ error: "Delhivery tracking API error" }); return;
+    }
+
+    const tData = await tResponse.json() as any;
+    const shipmentScans = tData?.ShipmentData?.[0]?.Shipment?.Scans ?? [];
+
+    const scans: DelhiveryScan[] = shipmentScans
+      .map((s: any) => ({
+        date:     s.ScanDetail?.ScanDateTime ?? s.ScanDetail?.StatusDateTime ?? "",
+        location: s.ScanDetail?.ScannedLocation ?? "",
+        status:   s.ScanDetail?.Scan ?? "",
+        activity: s.ScanDetail?.Instructions ?? s.ScanDetail?.StatusCode ?? "",
+      }))
+      .filter((s: DelhiveryScan) => s.date)
+      .reverse(); // most recent first
+
+    trackingCache.set(awb, { scans, expiresAt: now + TRACKING_TTL_MS });
+    res.json({ scans, awb });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch Delhivery tracking");
+    res.status(500).json({ error: "Failed to fetch tracking data" });
   }
 });
 

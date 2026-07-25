@@ -11,6 +11,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app: Express = express();
 
+// Warn at startup if Delhivery secrets are missing (non-fatal)
+const DELHIVERY_REQUIRED = [
+  "DELHIVERY_API_TOKEN", "DELHIVERY_PICKUP_LOCATION",
+  "DELHIVERY_RETURN_NAME", "DELHIVERY_RETURN_PHONE", "DELHIVERY_RETURN_ADD",
+  "DELHIVERY_RETURN_PIN", "DELHIVERY_RETURN_CITY", "DELHIVERY_RETURN_STATE",
+];
+const missingDelhivery = DELHIVERY_REQUIRED.filter(k => !process.env[k]);
+if (missingDelhivery.length > 0) {
+  console.warn(`[Delhivery] Missing secrets: ${missingDelhivery.join(", ")}. Dispatch endpoint will return 503 until configured. See DELHIVERY_SETUP.md.`);
+}
+
 app.use(
   pinoHttp({
     logger,

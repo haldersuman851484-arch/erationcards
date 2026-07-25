@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import {
   Download, FileText, ArrowLeft, Printer,
-  Package, CheckCircle2, AlertCircle, ChevronRight, Search, X,
+  Package, CheckCircle2, AlertCircle, ChevronRight, Search, X, Truck,
 } from "lucide-react";
 
 const COURIER_OPTIONS = [
@@ -36,7 +36,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-type Service = "download" | "print" | null;
+type Service = "download" | "print" | "dispatch" | null;
 
 interface CourierDashboardProps {
   source: "public" | "operator";
@@ -195,8 +195,16 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
               cardType={filterCardType}
               cardSearch={filterCardSearch}
             />
-          ) : (
+          ) : activeService === "print" ? (
             <PrintStatusView
+              source={source}
+              label={label}
+              onBack={handleBack}
+              toast={toast}
+              queryClient={queryClient}
+            />
+          ) : (
+            <DispatchView
               source={source}
               label={label}
               onBack={handleBack}
@@ -226,6 +234,12 @@ function LandingView({ label, onSelect }: { label: string; onSelect: (s: Service
       icon: Printer,
       title: "Print Status Update",
       description: "Update print status of ration card by scanning it.",
+    },
+    {
+      key: "dispatch" as const,
+      icon: Truck,
+      title: "Dispatch Orders",
+      description: "Dispatch printed cards via Delhivery and get AWB numbers automatically.",
     },
   ];
 
@@ -401,6 +415,155 @@ function DownloadView({
           <div className="px-4 py-2 border-t bg-slate-50 text-xs text-slate-500">
             {orders.length} order{orders.length !== 1 ? "s" : ""}
             {(fromDate || toDate || (cardType && cardType !== "all") || debouncedSearch) && " (filtered)"}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────── */
+/* Dispatch Orders sub-view (Delhivery)        */
+/* ─────────────────────────────────────────── */
+function DispatchView({
+  source, label, onBack, toast, queryClient,
+}: {
+  source: "public" | "operator";
+  label: string;
+  onBack: () => void;
+  toast: ReturnType<typeof useToast>["toast"];
+  queryClient: ReturnType<typeof useQueryClient>;
+}) {
+  const { data, isLoading, error } = useQuery<{ orders: any[]; total: number }>({
+    queryKey: ["courier-dispatch", source],
+    queryFn: async () => {
+      const params = new URLSearchParams({ source, status: "printed", limit: "100" });
+      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      if (!r.ok) throw new Error("Failed to fetch orders");
+      return r.json();
+    },
+    refetchInterval: 30000,
+  });
+
+  // Track dispatched orders in this session: id -> awb
+  const [dispatchedMap, setDispatchedMap] = useState<Record<number, string>>({});
+  const [dispatchingId, setDispatchingId] = useState<number | null>(null);
+
+  async function dispatchOrder(orderId: number) {
+    setDispatchingId(orderId);
+    try {
+      const r = await fetch(`/api/orders/${orderId}/dispatch`, {
+        method: "POST",
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+      });
+      const body = await r.json().catch(() => ({}));
+      if (!r.ok) {
+        toast({ title: (body as any).error ?? "Dispatch failed", variant: "destructive" });
+        return;
+      }
+      const awb = (body as any).awb ?? (body as any).trackingNumber ?? "—";
+      setDispatchedMap((prev) => ({ ...prev, [orderId]: awb }));
+      toast({ title: `Dispatched! AWB: ${awb}` });
+      queryClient.invalidateQueries({ queryKey: ["courier-dispatch", source] });
+    } catch {
+      toast({ title: "Network error — dispatch failed", variant: "destructive" });
+    } finally {
+      setDispatchingId(null);
+    }
+  }
+
+  const orders = data?.orders ?? [];
+
+  return (
+    <div className="fade-in">
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary mb-5 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
+
+      <h2 className="text-lg font-semibold text-slate-800 mb-1">Dispatch Orders</h2>
+      <p className="text-sm text-slate-500 mb-6">
+        Orders in <span className="font-medium text-purple-700">printed</span> status from{" "}
+        <span className="font-medium text-slate-700">{label}</span> — dispatch via Delhivery to get AWB numbers.
+      </p>
+
+      {isLoading ? (
+        <div className="py-16 flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-slate-400 text-sm">Loading orders…</p>
+        </div>
+      ) : error ? (
+        <div className="py-16 text-center text-red-500 text-sm">Failed to load orders. Please try again.</div>
+      ) : orders.length === 0 ? (
+        <div className="py-16 text-center text-slate-400">
+          <Truck className="w-10 h-10 mx-auto mb-3 opacity-40" />
+          <p>No printed orders to dispatch — all caught up!</p>
+        </div>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-slate-50">
+                  <TableHead className="text-xs">Date</TableHead>
+                  <TableHead className="text-xs">Name</TableHead>
+                  <TableHead className="text-xs">Card Number</TableHead>
+                  <TableHead className="text-xs">Card Type</TableHead>
+                  <TableHead className="text-xs">Address</TableHead>
+                  <TableHead className="text-xs">Action / AWB</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orders.map((order, i) => {
+                  const awb = dispatchedMap[order.id];
+                  const alreadyDispatched = !!awb || order.status === "dispatched";
+                  const existingAwb = awb ?? order.trackingNumber;
+                  return (
+                    <TableRow
+                      key={order.id}
+                      className="hover:bg-slate-50/60 transition-colors"
+                      style={{ animation: `fadeSlideIn 0.3s ease both`, animationDelay: `${Math.min(i * 30, 400)}ms` }}
+                    >
+                      <TableCell className="text-sm text-slate-600 whitespace-nowrap">
+                        {new Date(order.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                      </TableCell>
+                      <TableCell className="text-sm font-medium text-slate-800 uppercase">{order.customerName}</TableCell>
+                      <TableCell className="text-sm font-mono text-slate-700">{order.rationCardNumber}</TableCell>
+                      <TableCell className="text-sm text-slate-700">{order.cardType}</TableCell>
+                      <TableCell className="text-xs text-slate-600 max-w-[160px] truncate">
+                        {order.address}, {order.district} – {order.pincode}
+                      </TableCell>
+                      <TableCell>
+                        {alreadyDispatched && existingAwb ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                              <CheckCircle2 className="w-3 h-3" /> Dispatched ✓
+                            </span>
+                            <span className="text-xs font-mono text-slate-500">{existingAwb}</span>
+                          </div>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2.5 text-xs text-orange-700 border-orange-300 hover:bg-orange-50"
+                            disabled={dispatchingId === order.id}
+                            onClick={() => dispatchOrder(order.id)}
+                          >
+                            <Truck className="w-3 h-3 mr-1" />
+                            {dispatchingId === order.id ? "Dispatching…" : "Dispatch via Delhivery"}
+                          </Button>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <div className="px-4 py-2 border-t bg-slate-50 text-xs text-slate-500">
+            {orders.length} order{orders.length !== 1 ? "s" : ""} ready to dispatch
           </div>
         </div>
       )}

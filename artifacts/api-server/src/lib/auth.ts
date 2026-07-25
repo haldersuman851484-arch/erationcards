@@ -33,7 +33,9 @@ export function parseAdminToken(req: Request): { email: string; role: string } |
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { email: string; role: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { email?: string; role?: string };
+    // Reject tokens that are missing required admin claims (e.g. operator tokens)
+    if (!decoded.email || decoded.role !== "admin") return null;
     return { email: decoded.email, role: decoded.role };
   } catch {
     return null;
