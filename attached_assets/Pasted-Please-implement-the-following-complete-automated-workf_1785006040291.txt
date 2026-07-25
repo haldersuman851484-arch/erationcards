@@ -1,0 +1,30 @@
+Please implement the following complete automated workflow for Public and Operator card ordering, routing, and status updates across the entire application.
+
+Here is the exact specifications to build/refine:
+
+1. Order Submission & Admin Dashboard Routing
+   - Public Orders: When an order is placed by the public, route it to the "Public Order" section in the Admin Dashboard for confirmation.
+   - Operator Orders: When an order is placed by an operator, route it to the "Operator Order" section in the Admin Dashboard for confirmation.
+
+2. Manual Confirmation & File Routing
+   - Once the Admin manually confirms an order:
+     * Public Order PDFs must move automatically to the "Download Ration Card" section inside the Public Panel.
+     * Operator Order PDFs must move automatically to the "Download Ration Card" section inside the Operator Panel.
+
+3. Download Status Automation
+   - Trigger: When a user clicks and downloads a PDF file from either the Public Panel or Operator Panel "Download Ration Card" section.
+   - Action: The backend must instantly fire an API request to automatically update that card's `Download Status` to "Yes" in the database.
+
+4. Backend Data Archiving (Print Status System)
+   - After the Admin manually confirms the order, archive the order details in the backend for future lookups.
+   - Public details must be linked/accessible to the Public Panel "Print Status Update".
+   - Operator details must be linked/accessible to the Operator Panel "Print Status Update".
+
+5. Card Scanning / Search Functionality & Status Logic
+   - When searching by Card Number or scanning a barcode in either the Public or Operator Panel "Print Status Update" sections, display the complete user details exactly like our existing screenshot layout.
+   - Apply this strict automated fallback logic upon a successful match:
+     * Logic A: If Download Status = "Yes" -> change Print Status automatically to "Yes".
+     * Logic B: If Download Status = "No" -> change Print Status automatically to "Yes" as well.
+   - (In short, performing the scan/search action forces the Print Status to update to "Yes" regardless of the current download state, saves it to the database via API, and reveals the complete card details).
+
+Please write the required backend API endpoints, update the database schemas where necessary (to track order origin/type), and wire up the frontend components to handle these seamless state transitions.
