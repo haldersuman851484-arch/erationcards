@@ -50,6 +50,8 @@ export const ordersTable = mysqlTable("orders", {
   trackingNumber: text("tracking_number"),
   courierName: text("courier_name"),
   notes: text("notes"),
+  welcomeLetterUrl: text("welcome_letter_url"),
+  dealerSignatureCardUrl: text("dealer_signature_card_url"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [

@@ -590,6 +590,8 @@ function formatOrder(o: any) {
     trackingNumber: o.trackingNumber ?? null,
     courierName: o.courierName ?? null,
     notes: o.notes ?? null,
+    welcomeLetterUrl: o.welcomeLetterUrl ?? null,
+    dealerSignatureCardUrl: o.dealerSignatureCardUrl ?? null,
     createdAt: o.createdAt instanceof Date ? o.createdAt.toISOString() : String(o.createdAt),
     updatedAt: o.updatedAt instanceof Date ? o.updatedAt.toISOString() : String(o.updatedAt),
   };
