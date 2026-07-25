@@ -939,6 +939,22 @@ function PrintStatusView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id]);
 
+  // Fetch all orders by the same customer phone — runs once per unique phone number
+  const activePhone = order?.customerPhone ?? null;
+  const { data: phoneHistoryData } = useQuery<{ orders: any[] }>({
+    queryKey: ["phone-history", activePhone],
+    queryFn: async () => {
+      if (!activePhone) return { orders: [] };
+      const params = new URLSearchParams({ phoneSearch: activePhone, limit: "10" });
+      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      if (!r.ok) throw new Error("Failed");
+      return r.json();
+    },
+    enabled: !!activePhone,
+  });
+  // Exclude the currently displayed order so it doesn't appear in its own history
+  const phoneHistory = (phoneHistoryData?.orders ?? []).filter((o: any) => o.id !== order?.id);
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function buildAllCards(o: any) {
@@ -1137,21 +1153,11 @@ function PrintStatusView({
                 Download Welcome Letter
               </button>
 
-              {/* Mark Printed */}
-              <Button
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-11 text-sm"
-                disabled={markingId === order.id || isPrinted}
-                onClick={() => markAsPrinted(order.id)}
-              >
-                <Printer className="w-4 h-4 mr-2" />
-                {markingId === order.id ? "Saving…" : isPrinted ? "Already Printed ✓" : "Mark Printed"}
-              </Button>
-
-              {/* Recently scanned */}
-              {recentForSidebar.length > 0 && (
+              {/* Previous orders by same phone number */}
+              {phoneHistory.length > 0 && (
                 <div className="space-y-2 pt-1">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Recently Scanned</p>
-                  {recentForSidebar.map((r: any) => (
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Previous Orders</p>
+                  {phoneHistory.map((r: any) => (
                     <div key={r.id} className="border border-slate-200 rounded-lg px-3 py-2 text-xs bg-slate-50">
                       <div className="flex flex-wrap gap-x-2 items-baseline">
                         <span className="font-mono font-medium text-slate-800">{r.rationCardNumber}</span>
@@ -1161,6 +1167,11 @@ function PrintStatusView({
                         <span>{fmtDate(r.createdAt)}</span>
                         <span>·</span>
                         <span>{r.quantity} Cards</span>
+                        <span>·</span>
+                        <span className={`font-semibold ${
+                          ["printed","dispatched","delivered"].includes(r.status)
+                            ? "text-emerald-600" : "text-amber-500"
+                        }`}>{r.status}</span>
                       </div>
                     </div>
                   ))}

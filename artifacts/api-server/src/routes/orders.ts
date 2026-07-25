@@ -50,6 +50,7 @@ router.get("/orders", async (req: Request, res: Response) => {
     const fromDate = typeof req.query.fromDate === "string" ? req.query.fromDate : undefined;
     const toDate = typeof req.query.toDate === "string" ? req.query.toDate : undefined;
     const rationCardSearch = typeof req.query.rationCardSearch === "string" ? req.query.rationCardSearch.trim() : undefined;
+    const phoneSearch = typeof req.query.phoneSearch === "string" ? req.query.phoneSearch.trim() : undefined;
 
     const conditions = [];
     if (params.status) conditions.push(eq(ordersTable.status, params.status as any));
@@ -68,6 +69,9 @@ router.get("/orders", async (req: Request, res: Response) => {
     }
     if (rationCardSearch && rationCardSearch.length > 0) {
       conditions.push(like(ordersTable.rationCardNumber, `${rationCardSearch}%`));
+    }
+    if (phoneSearch && phoneSearch.length > 0) {
+      conditions.push(eq(ordersTable.customerPhone, phoneSearch));
     }
     if (quickSearch && quickSearch.length > 0) {
       const numericId = parseInt(quickSearch);
