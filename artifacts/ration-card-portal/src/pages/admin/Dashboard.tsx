@@ -29,6 +29,7 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import {
   Package, Clock, Truck, CheckCircle, CheckCircle2, XCircle,
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
@@ -333,8 +334,16 @@ export default function AdminDashboard() {
               <span className="font-semibold">Admin Dashboard</span>
               <Badge className="bg-primary/20 text-primary border-primary/30 text-xs ml-1">Manager</Badge>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-slate-300 text-sm hidden sm:block">{admin?.email}</span>
+            <div className="flex items-center gap-3">
+              <div className="hidden sm:flex items-center gap-2">
+                <Link href="/admin/courier/public" className="text-xs px-2.5 py-1 rounded border border-slate-700 text-slate-300 hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5" /> Public mPanel
+                </Link>
+                <Link href="/admin/courier/operator" className="text-xs px-2.5 py-1 rounded border border-slate-700 text-slate-300 hover:border-primary hover:text-primary transition-colors flex items-center gap-1.5">
+                  <Truck className="w-3.5 h-3.5" /> Operator mPanel
+                </Link>
+              </div>
+              <span className="text-slate-300 text-sm hidden lg:block">{admin?.email}</span>
               <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" data-testid="button-admin-logout" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>

@@ -27,12 +27,14 @@ router.get("/orders", async (req: Request, res: Response) => {
     const offset = (page - 1) * limit;
 
     const source = typeof req.query.source === "string" ? req.query.source : undefined;
+    const paymentStatusFilter = typeof req.query.paymentStatus === "string" ? req.query.paymentStatus : undefined;
 
     const conditions = [];
     if (params.status) conditions.push(eq(ordersTable.status, params.status as any));
     if (params.operatorId) conditions.push(eq(ordersTable.operatorId, params.operatorId));
     if (source === "public") conditions.push(isNull(ordersTable.operatorId));
     if (source === "operator") conditions.push(isNotNull(ordersTable.operatorId));
+    if (paymentStatusFilter) conditions.push(eq(ordersTable.paymentStatus, paymentStatusFilter as any));
     if (search) {
       // Sanitize the term for FULLTEXT boolean mode: strip special operators
       // so user input cannot accidentally trigger boolean syntax errors.

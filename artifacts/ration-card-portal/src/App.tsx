@@ -28,6 +28,8 @@ import OperatorDownloadCard from "./pages/operator/OperatorDownloadCard";
 
 import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
+import PublicCourierDashboard from "./pages/admin/PublicCourierDashboard";
+import OperatorCourierDashboard from "./pages/admin/OperatorCourierDashboard";
 
 const queryClient = new QueryClient();
 
@@ -77,6 +79,8 @@ function Router() {
 
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/courier/public" component={PublicCourierDashboard} />
+      <Route path="/admin/courier/operator" component={OperatorCourierDashboard} />
       
       <Route component={NotFound} />
     </Switch>
