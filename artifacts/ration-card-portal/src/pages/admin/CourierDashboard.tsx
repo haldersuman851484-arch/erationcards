@@ -190,6 +190,7 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
               label={label}
               onBack={handleBack}
               toast={toast}
+              queryClient={queryClient}
               fromDate={filterFromDate}
               toDate={filterToDate}
               cardType={filterCardType}
@@ -276,19 +277,28 @@ function LandingView({ label, onSelect }: { label: string; onSelect: (s: Service
 /* Download Ration Card sub-view               */
 /* ─────────────────────────────────────────── */
 function DownloadView({
-  source, label, onBack, toast,
+  source, label, onBack, toast, queryClient,
   fromDate, toDate, cardType, cardSearch,
 }: {
   source: "public" | "operator";
   label: string;
   onBack: () => void;
   toast: ReturnType<typeof useToast>["toast"];
+  queryClient: ReturnType<typeof useQueryClient>;
   fromDate: string;
   toDate: string;
   cardType: string;
   cardSearch: string;
 }) {
   const debouncedSearch = useDebounce(cardSearch, 400);
+
+  // Track in-session download state at PDF level: key = `${orderId}_${cardIndex}`
+  // Downloaded badge for a row shows only when ALL PDFs in that row are done.
+  const [downloadedPdfs, setDownloadedPdfs]   = useState<Set<string>>(new Set());
+  const [downloadingPdfs, setDownloadingPdfs] = useState<Set<string>>(new Set());
+  // PATCH state tracked per order (one PATCH per order, on first PDF download)
+  const [patchedOrders, setPatchedOrders]   = useState<Set<number>>(new Set());
+  const [syncFailedOrders, setSyncFailedOrders] = useState<Set<number>>(new Set());
 
   const { data, isLoading, error } = useQuery<{ orders: any[]; total: number }>({
     queryKey: ["courier-download", source, fromDate, toDate, cardType, debouncedSearch],
@@ -309,6 +319,81 @@ function DownloadView({
     },
     refetchInterval: 30000,
   });
+
+  async function handleDownload(orderId: number, cardIndex: number, pdfUrl: string, totalPdfs: number) {
+    const pdfKey = `${orderId}_${cardIndex}`;
+    if (downloadingPdfs.has(pdfKey)) return;
+
+    setDownloadingPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
+
+    try {
+      // Fetch PDF as blob to force a real file download (preserves server filename)
+      const r = await fetch(pdfUrl);
+      if (!r.ok) throw new Error("Download failed");
+      const blob = await r.blob();
+
+      // Extract filename from the URL's last path segment — never override it
+      const filename = decodeURIComponent(pdfUrl.split("/").pop()?.split("?")[0] ?? "ration-card.pdf");
+
+      const objectUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = objectUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(objectUrl);
+
+      // Mark this individual PDF as downloaded
+      setDownloadedPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
+
+      // PATCH order to processing on first PDF download — non-blocking, fires once per order
+      if (!patchedOrders.has(orderId)) {
+        setPatchedOrders(prev => { const s = new Set(prev); s.add(orderId); return s; });
+        try {
+          const pr = await fetch(`/api/orders/${orderId}`, {
+            method: "PATCH",
+            headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "processing" }),
+          });
+          if (pr.ok) {
+            setSyncFailedOrders(prev => { const s = new Set(prev); s.delete(orderId); return s; });
+            queryClient.invalidateQueries({ queryKey: ["courier-download", source] });
+            queryClient.invalidateQueries({ queryKey: ["courier-print"] });
+          } else {
+            setSyncFailedOrders(prev => { const s = new Set(prev); s.add(orderId); return s; });
+            toast({ title: "PDF saved locally — status sync failed", variant: "destructive" });
+          }
+        } catch {
+          setSyncFailedOrders(prev => { const s = new Set(prev); s.add(orderId); return s; });
+          toast({ title: "PDF saved locally — status sync failed", variant: "destructive" });
+        }
+      }
+    } catch {
+      toast({ title: "Download failed. Please try again.", variant: "destructive" });
+    } finally {
+      setDownloadingPdfs(prev => { const s = new Set(prev); s.delete(pdfKey); return s; });
+    }
+  }
+
+  async function retrySyncPatch(orderId: number) {
+    try {
+      const pr = await fetch(`/api/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "processing" }),
+      });
+      if (pr.ok) {
+        setSyncFailedOrders(prev => { const s = new Set(prev); s.delete(orderId); return s; });
+        queryClient.invalidateQueries({ queryKey: ["courier-download", source] });
+        queryClient.invalidateQueries({ queryKey: ["courier-print"] });
+      } else {
+        toast({ title: "Sync retry failed", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Sync retry failed", variant: "destructive" });
+    }
+  }
 
   const orders = data?.orders ?? [];
 
@@ -350,6 +435,10 @@ function DownloadView({
               <TableBody>
                 {orders.map((order, i) => {
                   const pdfs: { cardIndex: number; pdfUrl: string }[] = order.rationCardPdfs ?? [];
+                  // All PDFs downloaded → show single green badge instead of buttons
+                  const allDownloaded = pdfs.length > 0 && pdfs.every(p => downloadedPdfs.has(`${order.id}_${p.cardIndex}`));
+                  const syncFailed    = syncFailedOrders.has(order.id);
+
                   return (
                     <TableRow
                       key={order.id}
@@ -368,7 +457,7 @@ function DownloadView({
                         {order.customerName}
                       </TableCell>
 
-                      {/* Card Number (rationCardNumber) */}
+                      {/* Card Number */}
                       <TableCell className="text-sm font-mono text-slate-700">
                         {order.rationCardNumber}
                       </TableCell>
@@ -389,20 +478,52 @@ function DownloadView({
                           <span className="flex items-center gap-1 text-xs text-amber-500">
                             <AlertCircle className="w-3 h-3" /> Pending
                           </span>
+                        ) : allDownloaded ? (
+                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Downloaded ✓
+                          </span>
                         ) : (
                           <div className="flex flex-col gap-1">
-                            {pdfs.map((p, idx) => (
-                              <a
-                                key={p.cardIndex}
-                                href={p.pdfUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs border border-slate-300 rounded px-2 py-0.5 hover:border-primary hover:text-primary transition-colors text-slate-600"
-                              >
-                                <Download className="w-3 h-3" />
-                                {pdfs.length === 1 ? "Download" : `PDF ${idx + 1}`}
-                              </a>
-                            ))}
+                            {/* Per-PDF download buttons — each independent */}
+                            {pdfs.map((p, idx) => {
+                              const pdfKey     = `${order.id}_${p.cardIndex}`;
+                              const isDone     = downloadedPdfs.has(pdfKey);
+                              const isInFlight = downloadingPdfs.has(pdfKey);
+                              return isDone ? (
+                                <span key={p.cardIndex} className="flex items-center gap-1 text-xs text-emerald-600">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  {pdfs.length === 1 ? "Downloaded ✓" : `PDF ${idx + 1} ✓`}
+                                </span>
+                              ) : (
+                                <button
+                                  key={p.cardIndex}
+                                  disabled={isInFlight}
+                                  onClick={() => handleDownload(order.id, p.cardIndex, p.pdfUrl, pdfs.length)}
+                                  className="inline-flex items-center gap-1 text-xs border border-slate-300 rounded px-2 py-0.5 hover:border-primary hover:text-primary transition-colors text-slate-600 disabled:opacity-50 disabled:cursor-wait"
+                                >
+                                  {isInFlight ? (
+                                    <div className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                  ) : (
+                                    <Download className="w-3 h-3" />
+                                  )}
+                                  {pdfs.length === 1 ? (isInFlight ? "Downloading…" : "Download") : (isInFlight ? `PDF ${idx + 1}…` : `PDF ${idx + 1}`)}
+                                </button>
+                              );
+                            })}
+                            {/* Sync failure note — shown below buttons, doesn't hide them */}
+                            {syncFailed && (
+                              <div className="flex items-center gap-1 mt-0.5">
+                                <span className="text-xs text-amber-600 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" /> Sync failed
+                                </span>
+                                <button
+                                  onClick={() => retrySyncPatch(order.id)}
+                                  className="text-xs text-amber-700 underline hover:text-amber-900"
+                                >
+                                  Retry
+                                </button>
+                              </div>
+                            )}
                           </div>
                         )}
                       </TableCell>
