@@ -775,6 +775,8 @@ function PrintStatusView({
   const debouncedSearch = useDebounce(searchValue, 300);
   const [markingId, setMarkingId] = useState<number | null>(null);
   const [undoOrderId, setUndoOrderId] = useState<number | null>(null);
+  const [recentScans, setRecentScans] = useState<any[]>([]); // session-local scan history for sidebar
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null); // null = show picker when multiple
 
   // Refs never go stale inside closures — used for undo gate + toast teardown
   const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -891,89 +893,263 @@ function PrintStatusView({
   const orders = data?.orders ?? [];
   const hasSearched = debouncedSearch.length > 0;
 
+  // Reset selection whenever the search string changes
+  useEffect(() => {
+    setSelectedOrderId(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  // Auto-select when there is exactly one result — no picker needed
+  useEffect(() => {
+    if (orders.length === 1) setSelectedOrderId(orders[0].id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders.length, orders[0]?.id]);
+
+  // Derive the active order from the explicit selection (safe for multi-match)
+  const order: any = selectedOrderId != null
+    ? (orders.find((o: any) => o.id === selectedOrderId) ?? null)
+    : null;
+
+  // Push each displayed order into session scan history for the sidebar
+  useEffect(() => {
+    if (order) {
+      setRecentScans(prev => {
+        const filtered = prev.filter((r: any) => r.id !== order.id);
+        return [order, ...filtered].slice(0, 4);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
+  function buildAllCards(o: any) {
+    const family: { customerName: string; rationCardNumber: string; cardType: string }[] = o.familyCards ?? [];
+    return [
+      { name: o.customerName, cardNumber: o.rationCardNumber, cardType: o.cardType, cardIndex: 0 },
+      ...family.map((fc, i) => ({
+        name: fc.customerName, cardNumber: fc.rationCardNumber, cardType: fc.cardType, cardIndex: i + 1,
+      })),
+    ];
+  }
+
+  function fmtDate(iso: string) {
+    return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  }
+
+  function fmtAddress(o: any) {
+    return [
+      o.address    && `Street: ${o.address}`,
+      o.postOffice && `Post: ${o.postOffice}`,
+      o.district   && `Town: ${o.district}`,
+      o.pincode    && `Pin: ${o.pincode}`,
+      o.state      && `State: ${o.state}`,
+    ].filter(Boolean).join("  ");
+  }
+
+  const allCards  = order ? buildAllCards(order) : [];
+  const pdfs: { cardIndex: number; pdfUrl: string }[] = order?.rationCardPdfs ?? [];
+  const isPrinted = order ? ["printed", "dispatched", "delivered"].includes(order.status) : false;
+  const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
+
+  // ── Render ───────────────────────────────────────────────────────────────────
+
   return (
-    <div className="fade-in flex flex-col items-center pt-16 min-h-[70vh]">
-      {/* Back button */}
-      <div className="w-full max-w-lg px-4 mb-12">
-        <button
-          onClick={onBack}
-          className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-primary transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back
-        </button>
-      </div>
+    <div className="fade-in">
+      {/* Back */}
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1.5 text-sm text-slate-400 hover:text-primary transition-colors mb-8"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back
+      </button>
 
-      {/* Primary prompt — matches screenshot typography */}
-      <p className="text-2xl sm:text-3xl font-extrabold tracking-widest text-slate-800 text-center px-6 select-none uppercase">
-        Scan Ration Card or PRN Number
-      </p>
-      <p className="mt-3 text-sm text-slate-400 text-center">
-        Use a barcode scanner or tap 🔍 in the header to type
-      </p>
+      {/* Centered scan prompt — visible when no search is active */}
+      {!hasSearched && (
+        <div className="flex flex-col items-center pt-12 min-h-[50vh]">
+          <p className="text-2xl sm:text-3xl font-extrabold tracking-widest text-slate-800 text-center px-6 select-none uppercase">
+            Scan Ration Card or PRN Number
+          </p>
+          <p className="mt-3 text-sm text-slate-400 text-center">
+            Use a barcode scanner or tap 🔍 in the header to type
+          </p>
+        </div>
+      )}
 
-      {/* Result area */}
-      <div className="mt-12 w-full max-w-lg px-4">
-        {hasSearched && isLoading && (
-          <div className="flex flex-col items-center gap-3 py-10">
-            <div className="w-7 h-7 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-            <p className="text-sm text-slate-400">Searching…</p>
-          </div>
-        )}
+      {/* Spinner */}
+      {hasSearched && isLoading && (
+        <div className="flex flex-col items-center gap-3 py-20">
+          <div className="w-7 h-7 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+          <p className="text-sm text-slate-400">Searching…</p>
+        </div>
+      )}
 
-        {hasSearched && !isLoading && orders.length === 0 && (
-          <div className="text-center py-10 fade-in">
-            <AlertCircle className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-            <p className="text-slate-600 font-semibold">No order found</p>
-            <p className="text-xs text-slate-400 mt-1 font-mono">"{debouncedSearch}"</p>
-            <p className="text-xs text-slate-400 mt-1">No processing order matched this ration card number or order ID</p>
-          </div>
-        )}
+      {/* No results */}
+      {hasSearched && !isLoading && orders.length === 0 && (
+        <div className="flex flex-col items-center py-16 fade-in">
+          <AlertCircle className="w-10 h-10 mb-3 text-slate-300" />
+          <p className="text-slate-600 font-semibold">No order found</p>
+          <p className="text-xs text-slate-400 mt-1 font-mono">"{debouncedSearch}"</p>
+          <p className="text-xs text-slate-400 mt-1">No processing order matched this ration card number or order ID</p>
+        </div>
+      )}
 
-        {hasSearched && !isLoading && orders.map((order) => {
-          const pdfs: { cardIndex: number; pdfUrl: string }[] = order.rationCardPdfs ?? [];
-          return (
-            <div key={order.id} className="bg-white border border-slate-200 rounded-2xl shadow-md p-6 fade-in mb-4">
-              <div className="space-y-3">
-                <p className="text-xl font-extrabold text-slate-900 uppercase tracking-wide leading-tight">
-                  {order.customerName}
-                </p>
+      {/* Multiple matches — require explicit selection before showing the detail panel */}
+      {hasSearched && !isLoading && orders.length > 1 && selectedOrderId == null && (
+        <div className="fade-in max-w-lg space-y-2">
+          <p className="text-sm font-semibold text-slate-700 mb-3">
+            {orders.length} orders match — select the correct one:
+          </p>
+          {orders.map((o: any) => (
+            <button
+              key={o.id}
+              onClick={() => setSelectedOrderId(o.id)}
+              className="w-full text-left border border-slate-200 rounded-lg px-4 py-3 bg-white hover:border-primary hover:bg-slate-50 transition-colors"
+            >
+              <p className="font-bold text-slate-900 uppercase text-sm leading-tight">{o.customerName}</p>
+              <p className="text-xs text-slate-500 mt-0.5 font-mono">
+                {o.rationCardNumber} · {o.cardType} · {o.quantity} Cards
+              </p>
+            </button>
+          ))}
+        </div>
+      )}
 
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Card Number</p>
-                    <p className="font-mono font-semibold text-slate-800">{order.rationCardNumber}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Card Type</p>
-                    <p className="font-semibold text-slate-800">{order.cardType}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">PDFs</p>
-                    <p className={`font-semibold ${pdfs.length > 0 ? "text-emerald-600" : "text-amber-500"}`}>
-                      {pdfs.length > 0 ? `${pdfs.length} ready` : "Pending"}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-400 uppercase tracking-wide mb-0.5">Status</p>
-                    <p className="font-semibold text-blue-700 capitalize">{order.status}</p>
-                  </div>
+      {/* ── Two-panel result ── */}
+      {hasSearched && !isLoading && order && (
+        <div className="fade-in">
+
+          {/* PRN heading */}
+          <p className="text-xl font-bold text-slate-900 mb-5">
+            PRN{order.rationCardNumber}
+            <span className="text-slate-400 font-normal mx-2">•</span>
+            {order.quantity} Cards
+            <span className="text-slate-400 font-normal mx-2">•</span>
+            {fmtDate(order.createdAt)}
+          </p>
+
+          <div className="flex flex-col lg:flex-row gap-6">
+
+            {/* ── Left: 2-column per-card grid ── */}
+            <div className="flex-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {allCards.map((card) => {
+                  const hasPdf      = pdfs.some(p => p.cardIndex === card.cardIndex);
+                  const highlighted = hasPdf && isPrinted;
+                  return (
+                    <div
+                      key={card.cardIndex}
+                      className={`border rounded-lg p-4 text-sm space-y-1.5 transition-colors ${
+                        highlighted ? "bg-sky-50 border-sky-200" : "bg-white border-slate-200"
+                      }`}
+                    >
+                      <p className="font-bold text-slate-900 uppercase leading-tight">{card.name}</p>
+                      <p className="text-slate-600">
+                        Card Number: <span className="font-medium text-slate-800">{card.cardNumber}</span>
+                      </p>
+                      <p className="text-slate-600">
+                        Card Type: <span className="font-medium text-slate-800">{card.cardType}</span>
+                      </p>
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        Download Status:{" "}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${
+                          hasPdf
+                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-500 border-slate-200"
+                        }`}>{hasPdf ? "Yes" : "No"}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 text-slate-600">
+                        Print Status:{" "}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold border ${
+                          isPrinted
+                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-500 border-slate-200"
+                        }`}>{isPrinted ? "Yes" : "No"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* ── Right sidebar ── */}
+            <div className="lg:w-64 shrink-0 space-y-3">
+
+              {/* Customer Info */}
+              <div>
+                <p className="font-bold text-slate-900 mb-2">Customer Info</p>
+                <div className="space-y-1 text-sm text-slate-700">
+                  <p>Name: <span className="font-medium">{order.customerName}</span></p>
+                  <p>Mobile Number: <span className="font-medium">{order.customerPhone}</span></p>
+                  <p className="mt-2 font-medium text-slate-900">Address</p>
+                  <p className="text-xs text-slate-600 leading-relaxed">{fmtAddress(order)}</p>
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 border-t border-slate-100">
-                <Button
-                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-12 text-base tracking-wide"
-                  disabled={markingId === order.id}
-                  onClick={() => markAsPrinted(order.id)}
-                >
-                  <Printer className="w-4 h-4 mr-2" />
-                  {markingId === order.id ? "Saving…" : "Mark Printed"}
-                </Button>
-              </div>
+              {/* Dealer Signature Card — orange, disabled until URL is uploaded */}
+              <button
+                disabled={!order.dealerSignatureCardUrl}
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = order.dealerSignatureCardUrl;
+                  a.download = `dealer-signature-${order.rationCardNumber}.pdf`;
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }}
+                className="w-full py-3 px-4 rounded-lg font-extrabold text-sm tracking-wider uppercase bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title={!order.dealerSignatureCardUrl ? "Not uploaded yet" : undefined}
+              >
+                Dealer Signature Card
+              </button>
+
+              {/* Welcome Letter — sky blue, disabled until URL is uploaded */}
+              <button
+                disabled={!order.welcomeLetterUrl}
+                onClick={() => {
+                  const a = document.createElement("a");
+                  a.href = order.welcomeLetterUrl;
+                  a.download = `welcome-letter-${order.rationCardNumber}.pdf`;
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                }}
+                className="w-full py-2.5 px-4 rounded-lg font-semibold text-sm bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title={!order.welcomeLetterUrl ? "Not uploaded yet" : undefined}
+              >
+                Download Welcome Letter
+              </button>
+
+              {/* Mark Printed */}
+              <Button
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-11 text-sm"
+                disabled={markingId === order.id || isPrinted}
+                onClick={() => markAsPrinted(order.id)}
+              >
+                <Printer className="w-4 h-4 mr-2" />
+                {markingId === order.id ? "Saving…" : isPrinted ? "Already Printed ✓" : "Mark Printed"}
+              </Button>
+
+              {/* Recently scanned */}
+              {recentForSidebar.length > 0 && (
+                <div className="space-y-2 pt-1">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Recently Scanned</p>
+                  {recentForSidebar.map((r: any) => (
+                    <div key={r.id} className="border border-slate-200 rounded-lg px-3 py-2 text-xs bg-slate-50">
+                      <div className="flex flex-wrap gap-x-2 items-baseline">
+                        <span className="font-mono font-medium text-slate-800">{r.rationCardNumber}</span>
+                        <span className="uppercase font-medium text-slate-700">{r.customerName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-slate-400">
+                        <span>{fmtDate(r.createdAt)}</span>
+                        <span>·</span>
+                        <span>{r.quantity} Cards</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
