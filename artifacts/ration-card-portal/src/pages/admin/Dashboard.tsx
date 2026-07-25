@@ -1120,7 +1120,7 @@ export default function AdminDashboard() {
                       cardType: fc.cardType,
                     })),
                   ];
-                  const pdfs: { cardIndex: number; pdfUrl: string; uploadedAt: string }[] = (selectedOrder as any).rationCardPdfs ?? [];
+                  const pdfs: { cardIndex: number; pdfUrl: string; uploadedAt: string; downloaded?: boolean; downloadedAt?: string | null }[] = (selectedOrder as any).rationCardPdfs ?? [];
                   const uploadedCount = pdfs.length;
                   const total = allCards.length;
                   return (
@@ -1143,6 +1143,19 @@ export default function AdminDashboard() {
                                   <p className="text-slate-400 mt-0.5">
                                     Uploaded {new Date(entry.uploadedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                                   </p>
+                                )}
+                                {entry && (
+                                  entry.downloaded && entry.downloadedAt ? (
+                                    <p className="flex items-center gap-1 mt-0.5 text-emerald-600 font-medium">
+                                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                                      Downloaded · {new Date(entry.downloadedAt).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                    </p>
+                                  ) : (
+                                    <p className="flex items-center gap-1 mt-0.5 text-slate-400">
+                                      <Clock className="w-3 h-3 shrink-0" />
+                                      Not yet downloaded
+                                    </p>
+                                  )
                                 )}
                               </div>
                               {entry ? (
