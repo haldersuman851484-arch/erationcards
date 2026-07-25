@@ -836,6 +836,55 @@ function PrintStatusView({
   const isPrinted = order
     ? (["printed", "dispatched", "delivered"].includes(order.status) || optimisticPrintedIds.has(order.id))
     : false;
+
+  /** Generate a formatted shipping label and trigger download */
+  function downloadShippingLabel(o: any) {
+    const recipientName = (o.deliveryName || o.customerName || "").toUpperCase();
+    const addrLine1 = [o.address, o.postOffice].filter(Boolean).join(", ");
+    const addrLine2 = [o.district, o.state].filter(Boolean).join(", ");
+    const labelHtml = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Shipping Label — PRN${o.rationCardNumber}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{display:flex;justify-content:center;align-items:flex-start;padding:24px;background:#f5f5f5}
+  .card{border:2px solid #111;border-radius:6px;padding:20px 22px;width:340px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  .brand{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
+  .prn{font-family:monospace;font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:14px;border-bottom:1px dashed #ccc;padding-bottom:10px}
+  .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-bottom:3px}
+  .name{font-size:20px;font-weight:800;text-transform:uppercase;color:#111;line-height:1.1;margin-bottom:6px}
+  .addr{font-size:13px;color:#333;line-height:1.6;margin-bottom:2px}
+  .pin{font-size:22px;font-weight:900;color:#111;letter-spacing:.05em;margin-top:10px}
+  .phone{font-size:13px;color:#444;margin-top:4px}
+  .footer{margin-top:14px;padding-top:10px;border-top:1px dashed #ccc;font-size:11px;color:#666}
+  @media print{body{padding:0;background:#fff}.card{box-shadow:none;border-color:#000}}
+</style>
+</head>
+<body>
+<div class="card">
+  <p class="brand">PVC Ration Card Portal</p>
+  <p class="prn">PRN${o.rationCardNumber}</p>
+  <p class="label">Ship To</p>
+  <p class="name">${recipientName}</p>
+  <p class="addr">${addrLine1}</p>
+  <p class="addr">${addrLine2}</p>
+  <p class="pin">PIN ${o.pincode}</p>
+  <p class="phone">&#128222; ${o.customerPhone}</p>
+  <div class="footer">${o.quantity} PVC Ration Card${o.quantity > 1 ? "s" : ""} &middot; ${o.cardType}</div>
+</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`;
+    const blob = new Blob([labelHtml], { type: "text/html" });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement("a");
+    a.href     = url;
+    a.download = `shipping-label-PRN${o.rationCardNumber}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1026,6 +1075,16 @@ function PrintStatusView({
                     </div>
                   ))}
                 </div>
+              )}
+
+              {/* Download Shipping Label — appears automatically once all cards are printed */}
+              {isPrinted && (
+                <button
+                  onClick={() => downloadShippingLabel(order)}
+                  className="w-full py-3 px-4 rounded-lg font-bold text-sm bg-slate-800 hover:bg-slate-900 text-white transition-colors shadow-md"
+                >
+                  Download Shipping Label
+                </button>
               )}
 
             </div>
