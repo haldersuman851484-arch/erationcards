@@ -50,6 +50,28 @@ function getDelhiveryBaseUrl(): string {
     : "https://staging-express.delhivery.com";
 }
 
+// Maps a raw Delhivery scan entry to our normalized shape.
+function mapShipmentScans(shipment: any): DelhiveryScan[] {
+  const shipmentScans: any[] = shipment?.Scans ?? [];
+  return shipmentScans
+    .map((s: any) => ({
+      date:     s.ScanDetail?.ScanDateTime ?? s.ScanDetail?.StatusDateTime ?? "",
+      location: s.ScanDetail?.ScannedLocation ?? "",
+      status:   s.ScanDetail?.Scan ?? "",
+      activity: s.ScanDetail?.Instructions ?? s.ScanDetail?.StatusCode ?? "",
+    }))
+    .filter((s: DelhiveryScan) => s.date)
+    .reverse(); // most recent first
+}
+
+// Minimal logger contract shared by pino (req.log) and the app logger, so
+// helpers can be used from both request handlers and the background job.
+type Log = {
+  info: (obj: unknown, msg?: string) => void;
+  warn: (obj: unknown, msg?: string) => void;
+  error: (obj: unknown, msg?: string) => void;
+};
+
 const router = Router();
 
 const SINGLE_CARD_PRICE = 70;
@@ -608,18 +630,110 @@ router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
 
 // Flips a dispatched order to "delivered" when the Delhivery scan feed shows a
 // Delivered scan. Never throws — a status-sync failure must not break tracking.
-async function autoMarkDelivered(order: { id: number; status: string }, scans: DelhiveryScan[], req: Request): Promise<void> {
+async function autoMarkDelivered(order: { id: number; status: string }, scans: DelhiveryScan[], log: Log): Promise<boolean> {
   try {
-    if (order.status !== "dispatched") return;
-    if (!hasDeliveredScan(scans)) return;
+    if (order.status !== "dispatched") return false;
+    if (!hasDeliveredScan(scans)) return false;
     const [result]: any = await db.update(ordersTable)
       .set({ status: "delivered" as any, updatedAt: new Date() })
       .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "dispatched" as any)));
     if ((result?.affectedRows ?? 0) > 0) {
-      req.log.info({ orderId: order.id }, "Order auto-marked as delivered from Delhivery scan");
+      log.info({ orderId: order.id }, "Order auto-marked as delivered from Delhivery scan");
+      return true;
     }
+    return false;
   } catch (err) {
-    req.log.error({ err, orderId: order.id }, "Failed to auto-mark order as delivered");
+    log.error({ err, orderId: order.id }, "Failed to auto-mark order as delivered");
+    return false;
+  }
+}
+
+// ── Background delivered-status sync ────────────────────────────────────────
+// Delhivery's tracking API accepts multiple comma-separated waybills per call;
+// batching keeps us rate-limit friendly.
+const SYNC_BATCH_SIZE = 25;
+const SYNC_FETCH_TIMEOUT_MS = 20_000;
+
+// Fetches scans for a batch of waybills in one API call. Returns a map of
+// awb → scans for the shipments Delhivery returned. Throws on network/API
+// failure — the caller logs and moves on.
+async function fetchScansBatch(awbs: string[], apiToken: string): Promise<Map<string, DelhiveryScan[]>> {
+  const baseUrl = getDelhiveryBaseUrl();
+  const tResponse = await fetch(
+    `${baseUrl}/api/v1/packages/json/?waybill=${encodeURIComponent(awbs.join(","))}&token=${encodeURIComponent(apiToken)}`,
+    { signal: AbortSignal.timeout(SYNC_FETCH_TIMEOUT_MS) }
+  );
+  if (!tResponse.ok) {
+    throw new Error(`Delhivery tracking API returned HTTP ${tResponse.status}`);
+  }
+  const tData = await tResponse.json() as any;
+  const result = new Map<string, DelhiveryScan[]>();
+  for (const entry of tData?.ShipmentData ?? []) {
+    const shipment = entry?.Shipment;
+    const awb = String(shipment?.AWB ?? "");
+    if (!awb) continue;
+    result.set(awb, mapShipmentScans(shipment));
+  }
+  return result;
+}
+
+// Periodic job: checks every dispatched Delhivery order and flips it to
+// "delivered" when the scan feed shows a Delivered scan. Reuses the 5-min
+// tracking cache (fresh cache entries skip the API entirely, and fetched
+// scans are cached for the tracking page). Never throws.
+export async function syncDeliveredOrders(log: Log): Promise<void> {
+  try {
+    const apiToken = process.env["DELHIVERY_API_TOKEN"];
+    if (!apiToken) {
+      log.warn({}, "Delivered-status sync skipped: DELHIVERY_API_TOKEN not configured");
+      return;
+    }
+
+    const dispatched = await db
+      .select()
+      .from(ordersTable)
+      .where(and(
+        eq(ordersTable.status, "dispatched" as any),
+        isNotNull(ordersTable.trackingNumber),
+        or(isNull(ordersTable.courierName), eq(ordersTable.courierName, "Delhivery"))!,
+      ));
+
+    if (dispatched.length === 0) return;
+
+    const now = Date.now();
+    let marked = 0;
+
+    // Serve from cache where fresh; collect the rest for batched fetches.
+    const uncached: typeof dispatched = [];
+    for (const order of dispatched) {
+      const cached = trackingCache.get(order.trackingNumber!);
+      if (cached && cached.expiresAt > now) {
+        if (await autoMarkDelivered(order, cached.scans, log)) marked++;
+      } else {
+        uncached.push(order);
+      }
+    }
+
+    for (let i = 0; i < uncached.length; i += SYNC_BATCH_SIZE) {
+      const batch = uncached.slice(i, i + SYNC_BATCH_SIZE);
+      let scansByAwb: Map<string, DelhiveryScan[]>;
+      try {
+        scansByAwb = await fetchScansBatch(batch.map(o => o.trackingNumber!), apiToken);
+      } catch (err) {
+        log.error({ err, waybills: batch.length }, "Delivered-status sync: batch fetch failed, skipping batch");
+        continue;
+      }
+      for (const order of batch) {
+        const scans = scansByAwb.get(order.trackingNumber!);
+        if (!scans) continue;
+        trackingCache.set(order.trackingNumber!, { scans, expiresAt: Date.now() + TRACKING_TTL_MS });
+        if (await autoMarkDelivered(order, scans, log)) marked++;
+      }
+    }
+
+    log.info({ dispatched: dispatched.length, marked }, "Delivered-status sync completed");
+  } catch (err) {
+    log.error({ err }, "Delivered-status sync failed");
   }
 }
 
@@ -639,7 +753,7 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
     const now = Date.now();
     const cached = trackingCache.get(awb);
     if (cached && cached.expiresAt > now) {
-      await autoMarkDelivered(order, cached.scans, req);
+      await autoMarkDelivered(order, cached.scans, req.log);
       res.json({ scans: cached.scans, awb }); return;
     }
 
@@ -658,20 +772,10 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
     }
 
     const tData = await tResponse.json() as any;
-    const shipmentScans = tData?.ShipmentData?.[0]?.Shipment?.Scans ?? [];
-
-    const scans: DelhiveryScan[] = shipmentScans
-      .map((s: any) => ({
-        date:     s.ScanDetail?.ScanDateTime ?? s.ScanDetail?.StatusDateTime ?? "",
-        location: s.ScanDetail?.ScannedLocation ?? "",
-        status:   s.ScanDetail?.Scan ?? "",
-        activity: s.ScanDetail?.Instructions ?? s.ScanDetail?.StatusCode ?? "",
-      }))
-      .filter((s: DelhiveryScan) => s.date)
-      .reverse(); // most recent first
+    const scans = mapShipmentScans(tData?.ShipmentData?.[0]?.Shipment);
 
     trackingCache.set(awb, { scans, expiresAt: now + TRACKING_TTL_MS });
-    await autoMarkDelivered(order, scans, req);
+    await autoMarkDelivered(order, scans, req.log);
     res.json({ scans, awb });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch Delhivery tracking");
