@@ -804,6 +804,12 @@ function PrintStatusView({
   // Exclude the currently displayed order so it doesn't appear in its own history
   const phoneHistory = (phoneHistoryData?.orders ?? []).filter((o: any) => o.id !== order?.id);
 
+  // Count cards across ALL orders for this phone that are printed but not yet dispatched
+  // (includes the current order itself so the courier sees the full pending queue)
+  const pendingShipmentCards = (phoneHistoryData?.orders ?? [])
+    .filter((o: any) => o.status === "printed")
+    .reduce((sum: number, o: any) => sum + (o.quantity ?? 1), 0);
+
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function buildAllCards(o: any) {
@@ -836,6 +842,10 @@ function PrintStatusView({
   const isPrinted = order
     ? (["printed", "dispatched", "delivered"].includes(order.status) || optimisticPrintedIds.has(order.id))
     : false;
+  // allCardsDownloaded: every card in the order has been downloaded by the team (DB-persisted)
+  const allCardsDownloaded = allCards.length > 0 && allCards.every(
+    (card) => pdfs.some(p => p.cardIndex === card.cardIndex && p.downloaded === true)
+  );
 
   /** Generate a formatted shipping label and trigger download */
   function downloadShippingLabel(o: any) {
@@ -955,13 +965,23 @@ function PrintStatusView({
         <div className="fade-in">
 
           {/* PRN heading */}
-          <p className="text-xl font-bold text-slate-900 mb-5">
+          <p className="text-xl font-bold text-slate-900 mb-3">
             PRN{order.rationCardNumber}
             <span className="text-slate-400 font-normal mx-2">•</span>
             {order.quantity} Cards
             <span className="text-slate-400 font-normal mx-2">•</span>
             {fmtDate(order.createdAt)}
           </p>
+
+          {/* Pending shipment count for this mobile number */}
+          {pendingShipmentCards > 0 && (
+            <div className="mb-5 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-2.5 text-sm text-amber-800">
+              <span className="text-base">⏳</span>
+              <span>
+                <strong>{pendingShipmentCards} card{pendingShipmentCards !== 1 ? "s" : ""}</strong> ordered against this mobile number {pendingShipmentCards === 1 ? "is" : "are"} still pending shipment creation
+              </span>
+            </div>
+          )}
 
           <div className="flex flex-col lg:flex-row gap-6">
 
@@ -1077,15 +1097,19 @@ function PrintStatusView({
                 </div>
               )}
 
-              {/* Download Shipping Label — appears automatically once all cards are printed */}
-              {isPrinted && (
+              {/* Download Shipping Label — only when every card is downloaded AND printed */}
+              {isPrinted && allCardsDownloaded ? (
                 <button
                   onClick={() => downloadShippingLabel(order)}
                   className="w-full py-3 px-4 rounded-lg font-bold text-sm bg-slate-800 hover:bg-slate-900 text-white transition-colors shadow-md"
                 >
-                  Download Shipping Label
+                  Create Shipment
                 </button>
-              )}
+              ) : isPrinted && !allCardsDownloaded ? (
+                <div className="w-full py-2.5 px-4 rounded-lg text-sm bg-slate-100 border border-slate-200 text-slate-500 text-center">
+                  Download all cards first to create shipment
+                </div>
+              ) : null}
 
             </div>
           </div>

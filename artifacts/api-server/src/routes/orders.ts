@@ -76,7 +76,9 @@ router.get("/orders", async (req: Request, res: Response) => {
     if (quickSearch && quickSearch.length > 0) {
       const numericId = parseInt(quickSearch);
       const rcMatch = like(ordersTable.rationCardNumber, `${quickSearch}%`);
-      conditions.push(!isNaN(numericId) ? or(rcMatch, eq(ordersTable.id, numericId))! : rcMatch);
+      const onMatch = like(ordersTable.orderNumber, `${quickSearch}%`);
+      const idMatch = !isNaN(numericId) ? eq(ordersTable.id, numericId) : undefined;
+      conditions.push(idMatch ? or(rcMatch, onMatch, idMatch)! : or(rcMatch, onMatch)!);
     }
     if (search) {
       // Sanitize the term for FULLTEXT boolean mode: strip special operators
