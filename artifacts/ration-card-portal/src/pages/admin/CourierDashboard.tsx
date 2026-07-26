@@ -1055,20 +1055,6 @@ function PrintStatusView({
                 </div>
               </div>
 
-              {/* Dealer Signature Card — orange, disabled until URL is uploaded */}
-              <button
-                disabled={!order.dealerSignatureCardUrl}
-                onClick={() => {
-                  const a = document.createElement("a");
-                  a.href = order.dealerSignatureCardUrl;
-                  a.download = `dealer-signature-${order.rationCardNumber}.pdf`;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                }}
-                className="w-full py-3 px-4 rounded-lg font-extrabold text-sm tracking-wider uppercase bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={!order.dealerSignatureCardUrl ? "Not uploaded yet" : undefined}
-              >
-                Dealer Signature Card
-              </button>
 
               {/* Welcome Letter — sky blue, disabled until URL is uploaded */}
               <button
