@@ -109,8 +109,6 @@ export default function AdminDashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState<"welcomeLetter" | null>(null);
-
   const [dispatchForm, setDispatchForm] = useState<{
     orderId: number;
     courier: string;
@@ -286,36 +284,6 @@ export default function AdminDashboard() {
         onError: () => toast({ title: "Failed to update review", variant: "destructive" }),
       }
     );
-  }
-
-  async function handleDocumentUpload(
-    docType: "welcomeLetter",
-    file: File
-  ) {
-    if (!selectedOrder) return;
-    setUploadingDoc(docType);
-    try {
-      const endpoint = `/api/orders/${(selectedOrder as any).orderNumber}/upload-welcome-letter`;
-      const formData = new FormData();
-      formData.append("pdf", file);
-      const r = await fetch(endpoint, {
-        method: "POST",
-        headers: getAuthHeader() as Record<string, string>,
-        body: formData,
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        toast({ title: "Upload failed", description: data.error ?? "Please try again", variant: "destructive" });
-        return;
-      }
-      queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
-      queryClient.invalidateQueries({ queryKey: ["getOrder"] }); // prefix invalidates the detail panel
-      toast({ title: "Uploaded", description: "Welcome Letter uploaded successfully" });
-    } catch {
-      toast({ title: "Upload failed", description: "Network error — please try again", variant: "destructive" });
-    } finally {
-      setUploadingDoc(null);
-    }
   }
 
   function handleLogout() {
@@ -1210,48 +1178,6 @@ export default function AdminDashboard() {
                     </section>
                   );
                 })()}
-
-                {/* Welcome Letter upload */}
-                <section>
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5" /> Order Documents
-                  </h3>
-                  <div className="rounded-lg border border-slate-200 overflow-hidden divide-y divide-slate-100">
-                    <div className="flex items-center gap-3 px-3 py-2.5 text-xs bg-white hover:bg-slate-50 transition-colors">
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-slate-800">Welcome Letter</p>
-                        {(selectedOrder as any).welcomeLetterUrl ? (
-                          <a href={(selectedOrder as any).welcomeLetterUrl} target="_blank" rel="noopener noreferrer"
-                            className="text-primary hover:underline flex items-center gap-1 mt-0.5">
-                            <Download className="w-3 h-3" /> View file
-                          </a>
-                        ) : (
-                          <p className="text-slate-400 mt-0.5">Not uploaded yet</p>
-                        )}
-                      </div>
-                      <label className={`shrink-0 flex items-center gap-1 rounded-md px-2.5 py-1.5 font-semibold cursor-pointer transition-colors border ${
-                        uploadingDoc === "welcomeLetter"
-                          ? "opacity-50 cursor-not-allowed text-slate-400 border-slate-200 bg-slate-50"
-                          : (selectedOrder as any).welcomeLetterUrl
-                          ? "text-slate-600 border-slate-200 bg-slate-50 hover:bg-slate-100"
-                          : "text-primary border-primary/30 bg-primary/5 hover:bg-primary/10"
-                      }`}>
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept="application/pdf,image/jpeg,image/png,image/webp"
-                          disabled={uploadingDoc === "welcomeLetter"}
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) handleDocumentUpload("welcomeLetter", file);
-                            e.target.value = "";
-                          }}
-                        />
-                        {uploadingDoc === "welcomeLetter" ? "Uploading…" : (selectedOrder as any).welcomeLetterUrl ? "Replace" : "Upload"}
-                      </label>
-                    </div>
-                  </div>
-                </section>
 
                 <section>
                   <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Delivery Address</h3>
