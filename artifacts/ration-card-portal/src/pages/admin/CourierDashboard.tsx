@@ -856,7 +856,7 @@ function PrintStatusView({
 <html>
 <head>
 <meta charset="utf-8">
-<title>Shipping Label — PRN${o.rationCardNumber}</title>
+<title>Shipping Label — Order #${o.orderNumber}</title>
 <style>
   *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
   body{display:flex;justify-content:center;align-items:flex-start;padding:24px;background:#f5f5f5}
@@ -875,7 +875,7 @@ function PrintStatusView({
 <body>
 <div class="card">
   <p class="brand">PVC Ration Card Portal</p>
-  <p class="prn">PRN${o.rationCardNumber}</p>
+  <p class="prn">Order #${o.orderNumber}</p>
   <p class="label">Ship To</p>
   <p class="name">${recipientName}</p>
   <p class="addr">${addrLine1}</p>
@@ -891,7 +891,7 @@ function PrintStatusView({
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement("a");
     a.href     = url;
-    a.download = `shipping-label-PRN${o.rationCardNumber}.html`;
+    a.download = `shipping-label-${o.orderNumber}.html`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
@@ -913,7 +913,7 @@ function PrintStatusView({
       {!hasSearched && (
         <div className="flex flex-col items-center pt-12 min-h-[50vh]">
           <p className="text-2xl sm:text-3xl font-extrabold tracking-widest text-slate-800 text-center px-6 select-none uppercase">
-            Scan Ration Card or PRN Number
+            Scan Order Number or Ration Card Number
           </p>
           <p className="mt-3 text-sm text-slate-400 text-center">
             Use a barcode scanner or tap 🔍 in the header to type
@@ -964,13 +964,16 @@ function PrintStatusView({
       {hasSearched && !isLoading && order && (
         <div className="fade-in">
 
-          {/* PRN heading */}
-          <p className="text-xl font-bold text-slate-900 mb-3">
-            PRN{order.rationCardNumber}
+          {/* Order heading */}
+          <p className="text-xl font-bold text-slate-900 mb-1">
+            Order #{order.orderNumber}
             <span className="text-slate-400 font-normal mx-2">•</span>
             {order.quantity} Cards
             <span className="text-slate-400 font-normal mx-2">•</span>
             {fmtDate(order.createdAt)}
+          </p>
+          <p className="text-sm text-slate-500 mb-3">
+            Ration Card: <span className="font-mono">{order.rationCardNumber}</span>
           </p>
 
           {/* Pending shipment count for this mobile number */}

@@ -181,7 +181,7 @@ export default function OrderUpload() {
             {order.customerName}
           </h1>
           <div className="flex items-center gap-2 text-sm text-slate-500 flex-wrap">
-            <span className="font-mono font-semibold text-primary">PRN{order.orderNumber}</span>
+            <span className="font-mono font-semibold text-primary">Order #{order.orderNumber}</span>
             <span className="text-slate-300">•</span>
             <span>{formatDate(order.createdAt)}</span>
             <span className="text-slate-300">•</span>
