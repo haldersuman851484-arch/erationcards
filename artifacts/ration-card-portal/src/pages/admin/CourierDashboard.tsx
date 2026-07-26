@@ -768,16 +768,24 @@ function PrintStatusView({
   // ── Auto-mark on successful match ────────────────────────────────────────────
   // Fires once per unique order ID when the result panel first appears.
   // Skipped for orders already in a printed/dispatched/delivered state.
+  // Skipped when the search looks like an order number lookup (not a ration card scan).
   useEffect(() => {
     if (!order) return;
     if (autoMarkedIds.current.has(order.id)) return;
     if (["printed", "dispatched", "delivered"].includes(order.status)) return;
+    // If the search term is a prefix of the order number but NOT of the ration card number,
+    // the courier is doing a manual order lookup — do not auto-mark.
+    const isOrderNumberSearch =
+      debouncedSearch.length > 0 &&
+      order.orderNumber.startsWith(debouncedSearch) &&
+      !order.rationCardNumber.startsWith(debouncedSearch);
+    if (isOrderNumberSearch) return;
     autoMarkedIds.current.add(order.id);
     // Optimistically flip badges green before the PATCH resolves
     setOptimisticPrintedIds(prev => new Set([...prev, order.id]));
     markAsPrinted(order.id, { auto: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [order?.id]);
+  }, [order?.id, debouncedSearch]);
 
   // Push each displayed order into session scan history for the sidebar
   useEffect(() => {
