@@ -41,10 +41,9 @@ const BASE_ROW = {
 /** All order-numbers inserted by this run — used for cleanup. */
 const seededOrderNumbers: string[] = [];
 
-async function seed(rows: Parameters<typeof db.insert>[0] extends { values: (v: infer V) => any } ? V : never[]) {
-  // drizzle mysql insert types are loose; cast through any
-  await db.insert(ordersTable).values(rows as any);
-  for (const r of rows as any[]) {
+async function seed(rows: (typeof ordersTable.$inferInsert)[]) {
+  await db.insert(ordersTable).values(rows);
+  for (const r of rows) {
     seededOrderNumbers.push(r.orderNumber);
   }
 }

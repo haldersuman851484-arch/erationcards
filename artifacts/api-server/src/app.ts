@@ -47,7 +47,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files (screenshots & PDFs) from cloud object storage
 app.get("/api/uploads/:filename", async (req: Request, res: Response) => {
-  const filename = req.params.filename;
+  const rawFilename = req.params.filename;
+  const filename = Array.isArray(rawFilename) ? rawFilename[0] : rawFilename;
   // Basic safety check — no path traversal
   if (!filename || filename.includes("/") || filename.includes("..")) {
     res.status(400).end();
