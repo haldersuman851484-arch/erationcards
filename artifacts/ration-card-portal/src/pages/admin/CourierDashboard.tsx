@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import JsBarcode from "jsbarcode";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -916,26 +917,47 @@ function PrintStatusView({
   }
 
   /**
-   * Escape a string for safe insertion as a JS double-quoted string literal
-   * inside a <script> block written into a Blob page.
+   * Build the barcode as an inline SVG string using the bundled jsbarcode
+   * library (no CDN, no scripts inside the letter). The SVG is produced via
+   * DOM APIs + XMLSerializer, so all text nodes are safely escaped.
    */
-  function escJs(s: string): string {
-    return String(s)
-      .replace(/\\/g, "\\\\")
-      .replace(/"/g, '\\"')
-      .replace(/\r/g, "")
-      .replace(/\n/g, "\\n")
-      .replace(/</g, "\\x3c")
-      .replace(/>/g, "\\x3e")
-      .replace(/&/g, "\\x26");
+  function buildBarcodeSvg(value: string, label: string): string {
+    try {
+      const svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      JsBarcode(svgEl, value, {
+        format: "CODE128",
+        displayValue: true,
+        text: label,
+        fontSize: 14,
+        width: 2,
+        height: 56,
+        margin: 0,
+        textMargin: 2,
+      });
+      // Replace fixed px dimensions with a viewBox so CSS mm sizing scales it
+      const w = parseFloat(svgEl.getAttribute("width") || "0");
+      const h = parseFloat(svgEl.getAttribute("height") || "0");
+      if (w > 0 && h > 0) {
+        svgEl.setAttribute("viewBox", `0 0 ${w} ${h}`);
+        svgEl.setAttribute("preserveAspectRatio", "xMidYMid meet");
+        svgEl.removeAttribute("width");
+        svgEl.removeAttribute("height");
+      }
+      return new XMLSerializer().serializeToString(svgEl);
+    } catch {
+      return ""; // invalid/empty value — letter prints without a barcode
+    }
   }
 
-  /** Generate welcome letter as printable HTML and open browser print dialog */
+  /**
+   * Generate the welcome letter and open the browser print dialog IN PLACE
+   * (hidden iframe — no new tab, no redirect). Layout matches the reference:
+   * block anchored at the bottom of an A4 page, vertical barcode on the left.
+   */
   function printWelcomeLetter(o: any) {
     const customerName = escHtml((o.customerName || "").toUpperCase());
-    const date = new Date(o.createdAt);
-    const formattedDate = escHtml(date.toLocaleDateString("en-IN", {
-      day: "2-digit", month: "short", year: "numeric",
+    const formattedDate = escHtml(new Date(o.createdAt).toLocaleDateString("en-US", {
+      month: "short", day: "2-digit", year: "numeric",
     }));
     const addressText = escHtml([
       o.address    && `Street: ${o.address}`,
@@ -944,75 +966,87 @@ function PrintStatusView({
       o.pincode    && `Pin: ${o.pincode}`,
       o.state      && `State: ${o.state}`,
     ].filter(Boolean).join(" "));
-    const cardCount = Number(o.quantity ?? (Array.isArray(o.rationCardPdfs) ? o.rationCardPdfs.length : 1));
-    // orderNum is server-generated but escape it anyway for defence-in-depth
-    const orderNumHtml = escHtml(String(o.orderNumber));
-    const orderNumJs   = escJs(String(o.orderNumber));
-    const rcNum        = escHtml(String(o.rationCardNumber || ""));
-    const phone        = escHtml(String(o.customerPhone || ""));
+    const phone    = escHtml(String(o.customerPhone || ""));
+    const orderNum = String(o.orderNumber || "");
+    const orderNumHtml = escHtml(orderNum);
 
+    // All ration card numbers on the order: main card + every family card
+    const cards = buildAllCards(o);
+    const cardNumbersLine = cards
+      .map((c) => escHtml(String(c.cardNumber || "")))
+      .filter(Boolean)
+      .join(" &#8226; ");
+    const cardCount = cards.length;
+
+    const barcodeSvg = buildBarcodeSvg(orderNum, `Order #${orderNum}`);
+
+    // Static HTML — no scripts inside the letter document
     const html = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="utf-8">
 <title>Welcome Letter &#8212; Order #${orderNumHtml}</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-  body{padding:40px;background:#fff}
-  .wrapper{display:flex;align-items:flex-start;gap:18px}
-  .bc-col{flex-shrink:0;width:88px;height:210px;overflow:hidden;display:flex;align-items:center;justify-content:center}
-  .bc-col svg{transform:rotate(-90deg)}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000}
+  @page{size:A4;margin:0}
+  html,body{width:210mm;height:296mm}
+  body{position:relative;background:#fff;overflow:hidden}
+  /* Block anchored to the lower area of the A4 sheet (windowed-envelope zone) */
+  .wrapper{position:absolute;left:80mm;bottom:27mm;width:106mm;display:flex;align-items:flex-end;gap:4mm}
+  .bc-outer{flex-shrink:0;width:17mm;height:50mm;position:relative}
+  .bc-inner{position:absolute;width:50mm;height:17mm;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-90deg)}
+  .bc-inner svg{width:50mm;height:17mm;display:block}
   .details{flex:1;min-width:0}
-  .name{font-size:15px;font-weight:700;text-transform:uppercase;margin-bottom:5px}
-  .order-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
-  .mobile{font-size:11px;margin-bottom:6px}
-  .addr-label{font-size:11px;font-weight:700;margin-bottom:2px}
-  .addr-text{font-size:10px;line-height:1.5;margin-bottom:8px;color:#333}
-  .card-count{font-size:11px;margin-bottom:2px}
-  .rc-num{font-size:11px}
-  @media print{body{padding:0}}
+  .name{font-size:4.4mm;font-weight:700;text-transform:uppercase;margin-bottom:1.6mm}
+  .order-row{display:flex;justify-content:space-between;align-items:baseline;gap:4mm;margin-bottom:1.6mm}
+  .order-num{font-size:3.7mm;font-weight:700}
+  .order-date{font-size:3.5mm}
+  .mobile{font-size:3.4mm;margin-bottom:1.8mm}
+  .addr-label{font-size:3.4mm;font-weight:700;margin-bottom:0.8mm}
+  .addr-text{font-size:3.2mm;line-height:1.45;margin-bottom:1.8mm}
+  .card-count{font-size:3.4mm;font-weight:700;margin-bottom:0.8mm}
+  .card-nums{font-size:3.4mm}
 </style>
 </head>
 <body>
 <div class="wrapper">
-  <div class="bc-col">
-    <svg id="bc" style="width:210px;height:80px"></svg>
-  </div>
+  <div class="bc-outer"><div class="bc-inner">${barcodeSvg}</div></div>
   <div class="details">
     <p class="name">${customerName}</p>
     <div class="order-row">
-      <span>Order #${orderNumHtml}</span>
-      <span>${formattedDate}</span>
+      <span class="order-num">Order #${orderNumHtml}</span>
+      <span class="order-date">${formattedDate}</span>
     </div>
     <p class="mobile">Mobile Number: ${phone}</p>
     <p class="addr-label">Address</p>
     <p class="addr-text">${addressText}</p>
     <p class="card-count">${cardCount} Card${cardCount !== 1 ? "s" : ""}</p>
-    <p class="rc-num">${rcNum}</p>
+    <p class="card-nums">${cardNumbersLine}</p>
   </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
-<script>
-window.onload=function(){
-  JsBarcode("#bc","${orderNumJs}",{
-    format:"CODE128",
-    displayValue:true,
-    text:"Order #${orderNumJs}",
-    fontSize:9,
-    width:2,
-    height:72,
-    margin:4
-  });
-  window.print();
-};
-<\/script>
 </body>
 </html>`;
 
-    const blob = new Blob([html], { type: "text/html" });
-    const url  = URL.createObjectURL(blob);
-    window.open(url, "_blank");
-    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    // Print via a hidden same-page iframe — the dashboard never navigates away
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "210mm";
+    iframe.style.height = "297mm";
+    iframe.style.border = "0";
+    iframe.srcdoc = html;
+    iframe.onload = () => {
+      const win = iframe.contentWindow;
+      if (!win) { iframe.remove(); return; }
+      const cleanup = () => setTimeout(() => iframe.remove(), 300);
+      win.addEventListener("afterprint", cleanup);
+      setTimeout(cleanup, 120000); // fallback if afterprint never fires
+      win.focus();
+      win.print();
+    };
+    document.body.appendChild(iframe);
   }
 
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
