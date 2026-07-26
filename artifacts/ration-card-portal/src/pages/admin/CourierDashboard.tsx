@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import JsBarcode from "jsbarcode";
+import { jsPDF } from "jspdf";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -1011,88 +1012,115 @@ function PrintStatusView({
   }
 
   /**
-   * A6 Delhivery shipping label (105 × 148 mm), content anchored at the TOP of
-   * the page. Static HTML, no scripts; barcode encodes the Delhivery waybill.
+   * Build the A6 shipping label (105 × 148 mm) as a real PDF and download it
+   * as `shipping-label-<orderNumber>.pdf`. Mirrors the printed label exactly:
+   * top-aligned content, PREPAID box, customer info, boxed Order # (never
+   * PRN), waybill barcode with digits below, help@printpvccard.in footer.
    */
-  function printShippingLabel(o: any, awb: string) {
-    const customerName = escHtml((o.deliveryName || o.customerName || "").toUpperCase());
-    const placeLine = escHtml([o.district, o.pincode].filter(Boolean).join(", "));
-    const rawPhone = String(o.customerPhone || "");
-    const phone = escHtml(rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`);
-    const orderNumHtml = escHtml(String(o.orderNumber || ""));
-    const awbSvg = buildBarcodeSvg(awb, awb); // digits rendered below the bars
-    const invoiceDate = escHtml(new Date().toLocaleDateString("en-US", {
-      month: "long", day: "numeric", year: "numeric",
-    }));
+  function downloadShippingLabelPdf(o: any, awb: string) {
+    try {
+      const name = (o.deliveryName || o.customerName || "").toUpperCase();
+      const placeLine = [o.district, o.pincode].filter(Boolean).join(", ");
+      const rawPhone = String(o.customerPhone || "");
+      const phone = rawPhone ? (rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`) : "";
+      const orderLabel = `Order #${o.orderNumber || ""}`;
+      const invoiceDate = new Date().toLocaleDateString("en-US", {
+        month: "long", day: "numeric", year: "numeric",
+      });
 
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Shipping Label &#8212; Order #${orderNumHtml}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000}
-  @page{size:105mm 148mm;margin:0}
-  html,body{width:105mm;height:147mm}
-  body{background:#fff;overflow:hidden}
-  /* Content block anchored to the TOP of the A6 sheet */
-  .label{padding:4mm 6mm 0}
-  .prepaid-row{display:flex;justify-content:flex-end}
-  .prepaid{border:0.5mm solid #555;padding:0.6mm 2.4mm;font-size:5mm;font-weight:700;letter-spacing:0.2mm}
-  .ci{font-size:3.6mm;margin-top:3.5mm}
-  .name{font-size:4.8mm;font-weight:700;text-transform:uppercase;margin-top:0.8mm}
-  .main{display:flex;justify-content:space-between;align-items:flex-end;gap:4mm;margin-top:2mm}
-  .left{min-width:0}
-  .line{font-size:3.9mm;margin-top:1.4mm}
-  .ord-row{display:flex;gap:2mm;margin-top:3mm}
-  .ord-box{border:0.4mm solid #444;padding:1.2mm 2.2mm;font-size:4mm;font-weight:600;white-space:nowrap}
-  .dl-box{border:0.4mm solid #444;padding:1.2mm 2mm;font-size:4mm;font-weight:600}
-  .bc{flex-shrink:0}
-  .bc svg{width:40mm;height:19mm;display:block}
-  .footer{margin-top:7mm;text-align:center}
-  .inv{font-size:2.9mm}
-  .auto{font-size:2.9mm;font-weight:700;margin-top:1mm}
-  .notice{font-size:2.4mm;font-style:italic;margin-top:1mm}
-</style>
-</head>
-<body>
-<div class="label">
-  <div class="prepaid-row"><span class="prepaid">PREPAID</span></div>
-  <p class="ci">Customer Info</p>
-  <p class="name">${customerName}</p>
-  <div class="main">
-    <div class="left">
-      <p class="line">${placeLine}</p>
-      <p class="line">${phone}</p>
-      <div class="ord-row">
-        <span class="ord-box">Order #${orderNumHtml}</span>
-        <span class="dl-box">DL</span>
-      </div>
-    </div>
-    <div class="bc">${awbSvg}</div>
-  </div>
-  <div class="footer">
-    <p class="inv">Invoice Date: ${invoiceDate} | Email: help@printpvccard.in | www.printpvccard.in</p>
-    <p class="auto">THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE</p>
-    <p class="notice">Notice: www.printpvccard.in is not a government portal. It is a PVC card printing portal</p>
-  </div>
-</div>
-</body>
-</html>`;
+      // Waybill barcode → high-res canvas (digits below the bars), embedded as PNG
+      const canvas = document.createElement("canvas");
+      JsBarcode(canvas, awb, {
+        format: "CODE128",
+        displayValue: true,
+        fontSize: 22,
+        textMargin: 4,
+        height: 80,
+        width: 3,
+        margin: 6,
+      });
+      const barcodePng = canvas.toDataURL("image/png");
 
-    printHtmlInPlace(html);
+      const doc = new jsPDF({ unit: "mm", format: [105, 148] });
+      const pt = (mm: number) => mm * 2.8346; // CSS mm font-size → pt (parity with printed label)
+      const L = 6;   // left content edge
+      const R = 99;  // right content edge
+
+      // PREPAID box — top right
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(pt(5));
+      const prepaidW = doc.getTextWidth("PREPAID");
+      doc.setDrawColor(85);
+      doc.setLineWidth(0.5);
+      doc.rect(R - prepaidW - 4.8, 4, prepaidW + 4.8, 6.6);
+      doc.text("PREPAID", R - prepaidW - 2.4, 4.9, { baseline: "top" });
+
+      // Customer info block
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(pt(3.6));
+      doc.text("Customer Info", L, 14.5, { baseline: "top" });
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(pt(4.8));
+      doc.text(name, L, 18.9, { baseline: "top" });
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(pt(3.9));
+      doc.text(placeLine, L, 27.1, { baseline: "top" });
+      doc.text(phone, L, 32.4, { baseline: "top" });
+
+      // Boxed Order # + DL
+      const boxTop = 39.3;
+      const boxH = 6.8;
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(pt(4));
+      doc.setDrawColor(68);
+      doc.setLineWidth(0.4);
+      const ordW = doc.getTextWidth(orderLabel) + 4.4;
+      doc.rect(L, boxTop, ordW, boxH);
+      doc.text(orderLabel, L + 2.2, boxTop + 1.4, { baseline: "top" });
+      const dlW = doc.getTextWidth("DL") + 4;
+      doc.rect(L + ordW + 2, boxTop, dlW, boxH);
+      doc.text("DL", L + ordW + 4, boxTop + 1.4, { baseline: "top" });
+
+      // Barcode — right side, bottom-aligned with the Order # row
+      const bcW = 40;
+      const bcH = Math.min(20, (canvas.height / canvas.width) * bcW);
+      doc.addImage(barcodePng, "PNG", R - bcW, boxTop + boxH - bcH, bcW, bcH);
+
+      // Footer — centered
+      const cx = 105 / 2;
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(pt(2.9));
+      doc.text(
+        `Invoice Date: ${invoiceDate} | Email: help@printpvccard.in | www.printpvccard.in`,
+        cx, 53.1, { baseline: "top", align: "center" },
+      );
+      doc.setFont("helvetica", "bold");
+      doc.text("THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE", cx, 57, {
+        baseline: "top", align: "center",
+      });
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(pt(2.4));
+      doc.text(
+        "Notice: www.printpvccard.in is not a government portal. It is a PVC card printing portal",
+        cx, 60.9, { baseline: "top", align: "center" },
+      );
+
+      doc.save(`shipping-label-${o.orderNumber || awb}.pdf`);
+    } catch {
+      toast({ title: "Could not build the shipping label PDF. Please try again.", variant: "destructive" });
+    }
   }
 
   /**
    * Create the Delhivery shipment for the active order (or reuse the existing
-   * waybill) and print the A6 label — all without leaving the dashboard.
+   * waybill) — all without leaving the dashboard.
    */
   async function handleCreateShipment() {
     if (!order || creatingShipment) return;
 
-    // Shipment already exists — just reprint the label, never create a duplicate
+    // Shipment already exists — download its label, never create a duplicate
     if (order.trackingNumber) {
-      printShippingLabel(order, String(order.trackingNumber));
+      downloadShippingLabelPdf(order, String(order.trackingNumber));
       return;
     }
 
@@ -1105,11 +1133,11 @@ function PrintStatusView({
       const data: any = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        // "Already dispatched" still returns the waybill — reprint with it
+        // "Already dispatched" still returns the waybill — download its label
         if (data?.trackingNumber) {
           queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
           queryClient.invalidateQueries({ queryKey: ["phone-history"] });
-          printShippingLabel(order, String(data.trackingNumber));
+          downloadShippingLabelPdf(order, String(data.trackingNumber));
           return;
         }
         if (r.status === 504) {
@@ -1128,7 +1156,7 @@ function PrintStatusView({
       queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
       queryClient.invalidateQueries({ queryKey: ["phone-history"] });
       toast({ title: `Shipment created — AWB ${awb}` });
-      printShippingLabel(data.order ?? order, awb);
+      downloadShippingLabelPdf(data.order ?? order, awb);
     } catch {
       toast({ title: "Failed to create shipment. Check your connection.", variant: "destructive" });
     } finally {
@@ -1244,6 +1272,14 @@ function PrintStatusView({
             {order.quantity} Cards
             <span className="text-slate-400 font-normal mx-2">•</span>
             {fmtDate(order.createdAt)}
+            {order.trackingNumber && (
+              <span
+                data-testid="badge-shipped-delhivery"
+                className="inline-flex items-center gap-1.5 align-middle ml-3 px-3 py-1 rounded-md border border-slate-300 bg-slate-100 text-sm font-medium text-slate-800 whitespace-nowrap"
+              >
+                Shipped With Delhivery <span aria-hidden="true">🚚</span>
+              </span>
+            )}
           </p>
           <p className="text-sm text-slate-500 mb-3">
             Ration Card: <span className="font-mono">{order.rationCardNumber}</span>
@@ -1388,7 +1424,11 @@ function PrintStatusView({
             </button>
           )}
           <button
-            onClick={handleCreateShipment}
+            onClick={() =>
+              order.trackingNumber
+                ? downloadShippingLabelPdf(order, String(order.trackingNumber))
+                : handleCreateShipment()
+            }
             disabled={creatingShipment || cancellingShipment}
             data-testid="button-create-shipment"
             className="px-5 py-2.5 rounded-md bg-[#16257d] hover:bg-[#1d309e] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-lg transition-colors"
@@ -1396,7 +1436,7 @@ function PrintStatusView({
             {creatingShipment
               ? "Creating Shipment…"
               : order.trackingNumber
-                ? "Print Shipping Label"
+                ? "Download Shipping Label"
                 : "Create Shipment with Delhivery"}
           </button>
         </div>
