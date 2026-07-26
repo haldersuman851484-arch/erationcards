@@ -21,6 +21,29 @@ interface DelhiveryScan {
 const trackingCache = new Map<string, { scans: DelhiveryScan[]; expiresAt: number }>();
 const TRACKING_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+// A Delhivery shipment is delivered when a scan's status is the word
+// "Delivered" (e.g. "Delivered", "Delivered to consignee") or the status code
+// is "DL". Strict word matching plus explicit exclusions prevent false
+// positives from "Undelivered", "Not delivered", "Failed delivery", or
+// RTO/return scans.
+export function hasDeliveredScan(scans: DelhiveryScan[]): boolean {
+  return scans.some((s) => {
+    const status = s.status.toLowerCase();
+    const activity = s.activity.toLowerCase();
+    const combined = `${status} ${activity}`;
+    const excluded =
+      /\bundelivered\b/.test(combined) ||
+      /\bnot\s+delivered\b/.test(combined) ||
+      /\bfailed\b/.test(combined) ||
+      /\brto\b/.test(combined) ||
+      /\breturn(ed|ing)?\b/.test(combined);
+    if (excluded) return false;
+    // "delivered" as a standalone word (not part of "undelivered" — \b treats
+    // the "un" prefix as the same word, so the regex won't match it).
+    return /\bdelivered\b/.test(status) || activity === "dl";
+  });
+}
+
 function getDelhiveryBaseUrl(): string {
   return (process.env["DELHIVERY_ENV"] ?? "staging") === "production"
     ? "https://track.delhivery.com"
@@ -583,6 +606,23 @@ router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
   }
 });
 
+// Flips a dispatched order to "delivered" when the Delhivery scan feed shows a
+// Delivered scan. Never throws — a status-sync failure must not break tracking.
+async function autoMarkDelivered(order: { id: number; status: string }, scans: DelhiveryScan[], req: Request): Promise<void> {
+  try {
+    if (order.status !== "dispatched") return;
+    if (!hasDeliveredScan(scans)) return;
+    const [result]: any = await db.update(ordersTable)
+      .set({ status: "delivered" as any, updatedAt: new Date() })
+      .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "dispatched" as any)));
+    if ((result?.affectedRows ?? 0) > 0) {
+      req.log.info({ orderId: order.id }, "Order auto-marked as delivered from Delhivery scan");
+    }
+  } catch (err) {
+    req.log.error({ err, orderId: order.id }, "Failed to auto-mark order as delivered");
+  }
+}
+
 // GET /orders/:id/tracking  — public, proxies Delhivery tracking with 5-min cache
 router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
   try {
@@ -599,6 +639,7 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
     const now = Date.now();
     const cached = trackingCache.get(awb);
     if (cached && cached.expiresAt > now) {
+      await autoMarkDelivered(order, cached.scans, req);
       res.json({ scans: cached.scans, awb }); return;
     }
 
@@ -630,6 +671,7 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
       .reverse(); // most recent first
 
     trackingCache.set(awb, { scans, expiresAt: now + TRACKING_TTL_MS });
+    await autoMarkDelivered(order, scans, req);
     res.json({ scans, awb });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch Delhivery tracking");
