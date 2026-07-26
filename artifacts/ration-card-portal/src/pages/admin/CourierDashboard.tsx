@@ -630,6 +630,7 @@ function PrintStatusView({
   const [recentScans, setRecentScans] = useState<any[]>([]); // session-local scan history for sidebar
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null); // null = show picker when multiple
   const [optimisticPrintedIds, setOptimisticPrintedIds] = useState<Set<number>>(new Set()); // instant green badge before PATCH resolves
+  const [creatingShipment, setCreatingShipment] = useState(false); // dispatch API call in flight
 
   // Refs never go stale inside closures — used for undo gate + toast teardown
   const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -858,54 +859,6 @@ function PrintStatusView({
     (card) => pdfs.some(p => p.cardIndex === card.cardIndex && p.downloaded === true)
   );
 
-  /** Generate a formatted shipping label and trigger download */
-  function downloadShippingLabel(o: any) {
-    const recipientName = (o.deliveryName || o.customerName || "").toUpperCase();
-    const addrLine1 = [o.address, o.postOffice].filter(Boolean).join(", ");
-    const addrLine2 = [o.district, o.state].filter(Boolean).join(", ");
-    const labelHtml = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<title>Shipping Label — Order #${o.orderNumber}</title>
-<style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
-  body{display:flex;justify-content:center;align-items:flex-start;padding:24px;background:#f5f5f5}
-  .card{border:2px solid #111;border-radius:6px;padding:20px 22px;width:340px;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
-  .brand{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-  .prn{font-family:monospace;font-size:14px;font-weight:700;color:#1a1a1a;margin-bottom:14px;border-bottom:1px dashed #ccc;padding-bottom:10px}
-  .label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#888;margin-bottom:3px}
-  .name{font-size:20px;font-weight:800;text-transform:uppercase;color:#111;line-height:1.1;margin-bottom:6px}
-  .addr{font-size:13px;color:#333;line-height:1.6;margin-bottom:2px}
-  .pin{font-size:22px;font-weight:900;color:#111;letter-spacing:.05em;margin-top:10px}
-  .phone{font-size:13px;color:#444;margin-top:4px}
-  .footer{margin-top:14px;padding-top:10px;border-top:1px dashed #ccc;font-size:11px;color:#666}
-  @media print{body{padding:0;background:#fff}.card{box-shadow:none;border-color:#000}}
-</style>
-</head>
-<body>
-<div class="card">
-  <p class="brand">PVC Ration Card Portal</p>
-  <p class="prn">Order #${o.orderNumber}</p>
-  <p class="label">Ship To</p>
-  <p class="name">${recipientName}</p>
-  <p class="addr">${addrLine1}</p>
-  <p class="addr">${addrLine2}</p>
-  <p class="pin">PIN ${o.pincode}</p>
-  <p class="phone">&#128222; ${o.customerPhone}</p>
-  <div class="footer">${o.quantity} PVC Ration Card${o.quantity > 1 ? "s" : ""} &middot; ${o.cardType}</div>
-</div>
-<script>window.onload=function(){window.print();}<\/script>
-</body>
-</html>`;
-    const blob = new Blob([labelHtml], { type: "text/html" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a");
-    a.href     = url;
-    a.download = `shipping-label-${o.orderNumber}.html`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }
   /** Escape a string for safe insertion into an HTML text/attribute context */
   function escHtml(s: string): string {
     return String(s)
@@ -947,6 +900,32 @@ function PrintStatusView({
     } catch {
       return ""; // invalid/empty value — letter prints without a barcode
     }
+  }
+
+  /**
+   * Open the browser print dialog IN PLACE for the given HTML document via a
+   * hidden same-page iframe — no new tab, no navigation away from the dashboard.
+   */
+  function printHtmlInPlace(html: string) {
+    const iframe = document.createElement("iframe");
+    iframe.setAttribute("aria-hidden", "true");
+    iframe.style.position = "fixed";
+    iframe.style.left = "-10000px";
+    iframe.style.top = "0";
+    iframe.style.width = "210mm";
+    iframe.style.height = "297mm";
+    iframe.style.border = "0";
+    iframe.srcdoc = html;
+    iframe.onload = () => {
+      const win = iframe.contentWindow;
+      if (!win) { iframe.remove(); return; }
+      const cleanup = () => setTimeout(() => iframe.remove(), 300);
+      win.addEventListener("afterprint", cleanup);
+      setTimeout(cleanup, 120000); // fallback if afterprint never fires
+      win.focus();
+      win.print();
+    };
+    document.body.appendChild(iframe);
   }
 
   /**
@@ -1027,26 +1006,125 @@ function PrintStatusView({
 </body>
 </html>`;
 
-    // Print via a hidden same-page iframe — the dashboard never navigates away
-    const iframe = document.createElement("iframe");
-    iframe.setAttribute("aria-hidden", "true");
-    iframe.style.position = "fixed";
-    iframe.style.left = "-10000px";
-    iframe.style.top = "0";
-    iframe.style.width = "210mm";
-    iframe.style.height = "297mm";
-    iframe.style.border = "0";
-    iframe.srcdoc = html;
-    iframe.onload = () => {
-      const win = iframe.contentWindow;
-      if (!win) { iframe.remove(); return; }
-      const cleanup = () => setTimeout(() => iframe.remove(), 300);
-      win.addEventListener("afterprint", cleanup);
-      setTimeout(cleanup, 120000); // fallback if afterprint never fires
-      win.focus();
-      win.print();
-    };
-    document.body.appendChild(iframe);
+    printHtmlInPlace(html);
+  }
+
+  /**
+   * A6 Delhivery shipping label (105 × 148 mm), content anchored at the TOP of
+   * the page. Static HTML, no scripts; barcode encodes the Delhivery waybill.
+   */
+  function printShippingLabel(o: any, awb: string) {
+    const customerName = escHtml((o.deliveryName || o.customerName || "").toUpperCase());
+    const placeLine = escHtml([o.district, o.pincode].filter(Boolean).join(", "));
+    const rawPhone = String(o.customerPhone || "");
+    const phone = escHtml(rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`);
+    const orderNumHtml = escHtml(String(o.orderNumber || ""));
+    const awbSvg = buildBarcodeSvg(awb, awb); // digits rendered below the bars
+    const invoiceDate = escHtml(new Date().toLocaleDateString("en-US", {
+      month: "long", day: "numeric", year: "numeric",
+    }));
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Shipping Label &#8212; Order #${orderNumHtml}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000}
+  @page{size:105mm 148mm;margin:0}
+  html,body{width:105mm;height:147mm}
+  body{background:#fff;overflow:hidden}
+  /* Content block anchored to the TOP of the A6 sheet */
+  .label{padding:4mm 6mm 0}
+  .prepaid-row{display:flex;justify-content:flex-end}
+  .prepaid{border:0.5mm solid #555;padding:0.6mm 2.4mm;font-size:5mm;font-weight:700;letter-spacing:0.2mm}
+  .ci{font-size:3.6mm;margin-top:3.5mm}
+  .name{font-size:4.8mm;font-weight:700;text-transform:uppercase;margin-top:0.8mm}
+  .main{display:flex;justify-content:space-between;align-items:flex-end;gap:4mm;margin-top:2mm}
+  .left{min-width:0}
+  .line{font-size:3.9mm;margin-top:1.4mm}
+  .ord-row{display:flex;gap:2mm;margin-top:3mm}
+  .ord-box{border:0.4mm solid #444;padding:1.2mm 2.2mm;font-size:4mm;font-weight:600;white-space:nowrap}
+  .dl-box{border:0.4mm solid #444;padding:1.2mm 2mm;font-size:4mm;font-weight:600}
+  .bc{flex-shrink:0}
+  .bc svg{width:40mm;height:19mm;display:block}
+  .footer{margin-top:7mm;text-align:center}
+  .inv{font-size:2.9mm}
+  .auto{font-size:2.9mm;font-weight:700;margin-top:1mm}
+  .notice{font-size:2.4mm;font-style:italic;margin-top:1mm}
+</style>
+</head>
+<body>
+<div class="label">
+  <div class="prepaid-row"><span class="prepaid">PREPAID</span></div>
+  <p class="ci">Customer Info</p>
+  <p class="name">${customerName}</p>
+  <div class="main">
+    <div class="left">
+      <p class="line">${placeLine}</p>
+      <p class="line">${phone}</p>
+      <div class="ord-row">
+        <span class="ord-box">Order #${orderNumHtml}</span>
+        <span class="dl-box">DL</span>
+      </div>
+    </div>
+    <div class="bc">${awbSvg}</div>
+  </div>
+  <div class="footer">
+    <p class="inv">Invoice Date: ${invoiceDate} | Email: help@printpvccard.in | www.printpvccard.in</p>
+    <p class="auto">THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE</p>
+    <p class="notice">Notice: www.printpvccard.in is not a government portal. It is a PVC card printing portal</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    printHtmlInPlace(html);
+  }
+
+  /**
+   * Create the Delhivery shipment for the active order (or reuse the existing
+   * waybill) and print the A6 label — all without leaving the dashboard.
+   */
+  async function handleCreateShipment() {
+    if (!order || creatingShipment) return;
+
+    // Shipment already exists — just reprint the label, never create a duplicate
+    if (order.trackingNumber) {
+      printShippingLabel(order, String(order.trackingNumber));
+      return;
+    }
+
+    setCreatingShipment(true);
+    try {
+      const r = await fetch(`/api/orders/${order.id}/dispatch`, {
+        method: "POST",
+        headers: getAuthHeader(),
+      });
+      const data: any = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        // "Already dispatched" still returns the waybill — reprint with it
+        if (data?.trackingNumber) {
+          queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+          queryClient.invalidateQueries({ queryKey: ["phone-history"] });
+          printShippingLabel(order, String(data.trackingNumber));
+          return;
+        }
+        toast({ title: data?.error || "Failed to create shipment", variant: "destructive" });
+        return;
+      }
+
+      const awb = String(data.awb || data.trackingNumber || "");
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+      queryClient.invalidateQueries({ queryKey: ["phone-history"] });
+      toast({ title: `Shipment created — AWB ${awb}` });
+      printShippingLabel(data.order ?? order, awb);
+    } catch {
+      toast({ title: "Failed to create shipment. Check your connection.", variant: "destructive" });
+    } finally {
+      setCreatingShipment(false);
+    }
   }
 
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
@@ -1240,22 +1318,36 @@ function PrintStatusView({
                 </div>
               )}
 
-              {/* Download Shipping Label — only when every card is downloaded AND printed */}
-              {isPrinted && allCardsDownloaded ? (
-                <button
-                  onClick={() => downloadShippingLabel(order)}
-                  className="w-full py-3 px-4 rounded-lg font-bold text-sm bg-slate-800 hover:bg-slate-900 text-white transition-colors shadow-md"
-                >
-                  Create Shipment
-                </button>
-              ) : isPrinted && !allCardsDownloaded ? (
+              {/* Shipment hint — cards still pending download */}
+              {isPrinted && !allCardsDownloaded && (
                 <div className="w-full py-2.5 px-4 rounded-lg text-sm bg-slate-100 border border-slate-200 text-slate-500 text-center">
                   Download all cards first to create shipment
                 </div>
-              ) : null}
+              )}
 
             </div>
           </div>
+
+          {/* Spacer so the fixed shipment button never overlaps content */}
+          {isPrinted && allCardsDownloaded && <div className="h-20" />}
+        </div>
+      )}
+
+      {/* ── Create Shipment with Delhivery — pinned bottom-right ── */}
+      {order && isPrinted && allCardsDownloaded && (
+        <div className="fixed bottom-6 right-6 z-50">
+          <button
+            onClick={handleCreateShipment}
+            disabled={creatingShipment}
+            data-testid="button-create-shipment"
+            className="px-5 py-2.5 rounded-md bg-[#16257d] hover:bg-[#1d309e] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-lg transition-colors"
+          >
+            {creatingShipment
+              ? "Creating Shipment…"
+              : order.trackingNumber
+                ? "Print Shipping Label"
+                : "Create Shipment with Delhivery"}
+          </button>
         </div>
       )}
     </div>
