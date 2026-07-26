@@ -183,6 +183,7 @@ export const GetOrderStatsResponse = zod.object({
   "printedOrders": zod.number(),
   "dispatchedOrders": zod.number(),
   "deliveredOrders": zod.number(),
+  "returnedOrders": zod.number(),
   "totalRevenue": zod.number(),
   "todayOrders": zod.number(),
   "todayRevenue": zod.number()

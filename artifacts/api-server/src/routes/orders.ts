@@ -44,6 +44,17 @@ export function hasDeliveredScan(scans: DelhiveryScan[]): boolean {
   });
 }
 
+// A Delhivery shipment is returned to sender when a scan mentions RTO or
+// return wording (e.g. "RTO Initiated", "RTO Delivered", "Returned to
+// origin"). These are exactly the scans hasDeliveredScan() excludes, so a
+// returned shipment would otherwise stay "dispatched" forever.
+export function hasRtoScan(scans: DelhiveryScan[]): boolean {
+  return scans.some((s) => {
+    const combined = `${s.status.toLowerCase()} ${s.activity.toLowerCase()}`;
+    return /\brto\b/.test(combined) || /\breturn(ed|ing)?\b/.test(combined);
+  });
+}
+
 function getDelhiveryBaseUrl(): string {
   return (process.env["DELHIVERY_ENV"] ?? "staging") === "production"
     ? "https://track.delhivery.com"
@@ -280,6 +291,7 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
         printedOrders: sql<number>`sum(case when status = 'printed' then 1 else 0 end)`,
         dispatchedOrders: sql<number>`sum(case when status = 'dispatched' then 1 else 0 end)`,
         deliveredOrders: sql<number>`sum(case when status = 'delivered' then 1 else 0 end)`,
+        returnedOrders: sql<number>`sum(case when status = 'returned' then 1 else 0 end)`,
         totalRevenue: sql<number>`coalesce(sum(amount), 0)`,
       })
       .from(ordersTable);
@@ -299,6 +311,7 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
       printedOrders: Number(allStats.printedOrders),
       dispatchedOrders: Number(allStats.dispatchedOrders),
       deliveredOrders: Number(allStats.deliveredOrders),
+      returnedOrders: Number(allStats.returnedOrders),
       totalRevenue: Number(allStats.totalRevenue),
       todayOrders: Number(todayStats.todayOrders),
       todayRevenue: Number(todayStats.todayRevenue),
@@ -629,21 +642,26 @@ router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
 });
 
 // Flips a dispatched order to "delivered" when the Delhivery scan feed shows a
-// Delivered scan. Never throws — a status-sync failure must not break tracking.
+// Delivered scan, or to "returned" when it shows an RTO/return scan. A genuine
+// Delivered scan wins over RTO wording (e.g. delivered on a later attempt).
+// Never throws — a status-sync failure must not break tracking.
 async function autoMarkDelivered(order: { id: number; status: string }, scans: DelhiveryScan[], log: Log): Promise<boolean> {
   try {
     if (order.status !== "dispatched") return false;
-    if (!hasDeliveredScan(scans)) return false;
+    let newStatus: "delivered" | "returned";
+    if (hasDeliveredScan(scans)) newStatus = "delivered";
+    else if (hasRtoScan(scans)) newStatus = "returned";
+    else return false;
     const [result]: any = await db.update(ordersTable)
-      .set({ status: "delivered" as any, updatedAt: new Date() })
+      .set({ status: newStatus as any, updatedAt: new Date() })
       .where(and(eq(ordersTable.id, order.id), eq(ordersTable.status, "dispatched" as any)));
     if ((result?.affectedRows ?? 0) > 0) {
-      log.info({ orderId: order.id }, "Order auto-marked as delivered from Delhivery scan");
+      log.info({ orderId: order.id, status: newStatus }, `Order auto-marked as ${newStatus} from Delhivery scan`);
       return true;
     }
     return false;
   } catch (err) {
-    log.error({ err, orderId: order.id }, "Failed to auto-mark order as delivered");
+    log.error({ err, orderId: order.id }, "Failed to auto-mark order status from scans");
     return false;
   }
 }

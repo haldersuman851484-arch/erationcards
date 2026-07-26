@@ -56,3 +56,33 @@ describe("hasDeliveredScan", () => {
     ).toBe(true);
   });
 });
+
+import { hasRtoScan } from "../routes/orders";
+
+describe("hasRtoScan", () => {
+  it("matches 'RTO Initiated'", () => {
+    expect(hasRtoScan([scan("RTO Initiated")])).toBe(true);
+  });
+
+  it("matches 'RTO Delivered'", () => {
+    expect(hasRtoScan([scan("RTO Delivered")])).toBe(true);
+  });
+
+  it("matches 'Returned to origin'", () => {
+    expect(hasRtoScan([scan("Returned to origin")])).toBe(true);
+  });
+
+  it("matches RTO wording in activity", () => {
+    expect(hasRtoScan([scan("Dispatched", "RTO - returned to shipper")])).toBe(true);
+  });
+
+  it("does NOT match normal transit scans", () => {
+    expect(hasRtoScan([scan("In Transit")])).toBe(false);
+    expect(hasRtoScan([scan("Delivered")])).toBe(false);
+    expect(hasRtoScan([scan("Undelivered")])).toBe(false);
+  });
+
+  it("handles empty scan list", () => {
+    expect(hasRtoScan([])).toBe(false);
+  });
+});

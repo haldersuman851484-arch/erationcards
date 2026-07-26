@@ -13,6 +13,7 @@ export interface OrderStats {
   printedOrders: number;
   dispatchedOrders: number;
   deliveredOrders: number;
+  returnedOrders: number;
   totalRevenue: number;
   todayOrders: number;
   todayRevenue: number;

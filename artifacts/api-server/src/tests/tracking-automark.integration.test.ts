@@ -7,7 +7,7 @@
  * Covers:
  *  - a Delivered scan flips dispatched → delivered exactly once
  *  - a cache-hit repeat call does not re-flip or un-flip the status
- *  - RTO / return scans never flip the status
+ *  - RTO / return scans flip dispatched → returned (not delivered)
  *  - non-dispatched orders are untouched even with a Delivered scan
  *  - a Delhivery fetch failure returns an error without corrupting the order
  */
@@ -156,12 +156,21 @@ describe("GET /api/orders/:id/tracking auto-mark delivered", () => {
     expect(await getStatus(order.id)).toBe("delivered");
   });
 
-  it("does not flip on RTO scans", async () => {
+  it("flips dispatched → returned (not delivered) on RTO scans", async () => {
     const order = await seedOrder("rto", "dispatched", `${RUN_ID}AWB4`);
     mockDelhivery(delhiveryPayload([
       { scan: "RTO Delivered" },
       { scan: "Delivered", instructions: "RTO - returned to shipper" },
     ]));
+
+    const res = await request(app).get(`/api/orders/${order.id}/tracking`);
+    expect(res.status).toBe(200);
+    expect(await getStatus(order.id)).toBe("returned");
+  });
+
+  it("leaves in-transit scans (no delivered, no RTO) as dispatched", async () => {
+    const order = await seedOrder("transit", "dispatched", `${RUN_ID}AWB8`);
+    mockDelhivery(delhiveryPayload([{ scan: "In Transit" }, { scan: "Out for delivery" }]));
 
     const res = await request(app).get(`/api/orders/${order.id}/tracking`);
     expect(res.status).toBe(200);

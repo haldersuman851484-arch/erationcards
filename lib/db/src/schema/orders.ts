@@ -45,7 +45,7 @@ export const ordersTable = mysqlTable("orders", {
   paymentMethod: text("payment_method"),
   paymentScreenshotUrl: text("payment_screenshot_url"),
   rationCardPdfs: json("ration_card_pdfs").$type<CardPdfEntry[]>().notNull().default([]),
-  status: mysqlEnum("status", ["pending", "processing", "printed", "dispatched", "delivered", "cancelled"]).notNull().default("pending"),
+  status: mysqlEnum("status", ["pending", "processing", "printed", "dispatched", "delivered", "returned", "cancelled"]).notNull().default("pending"),
   operatorId: int("operator_id"),
   trackingNumber: text("tracking_number"),
   courierName: text("courier_name"),

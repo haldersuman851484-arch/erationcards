@@ -35,7 +35,7 @@ import {
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
-  Star, MessageSquare,
+  Star, MessageSquare, RotateCcw,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -44,6 +44,7 @@ const STATUS_BADGE: Record<string, string> = {
   printed: "bg-purple-100 text-purple-700 border-purple-200",
   dispatched: "bg-orange-100 text-orange-700 border-orange-200",
   delivered: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  returned: "bg-rose-100 text-rose-700 border-rose-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
 
@@ -358,6 +359,9 @@ export default function AdminDashboard() {
               { label: "Pending Payment", value: stats?.pendingOrders ?? 0, icon: Clock, color: "text-amber-600", delay: 1 },
               { label: "Pending Delivery", value: pendingDeliveries, icon: Truck, color: "text-blue-600", delay: 2 },
               { label: "Delivered", value: stats?.deliveredOrders ?? 0, icon: CheckCircle, color: "text-emerald-600", delay: 3 },
+              ...((stats?.returnedOrders ?? 0) > 0
+                ? [{ label: "Returned (RTO)", value: stats!.returnedOrders, icon: RotateCcw, color: "text-rose-600", delay: 4 }]
+                : []),
             ].map(({ label, value, icon: Icon, color, delay }) => (
               <Card key={label} className="stat-card border-0 shadow-sm bg-white overflow-hidden" style={{ animationDelay: `${delay * 80}ms` }}>
                 <CardContent className="pt-5 pb-4">
@@ -460,6 +464,7 @@ export default function AdminDashboard() {
                           <SelectItem value="printed">Printed</SelectItem>
                           <SelectItem value="dispatched">Dispatched</SelectItem>
                           <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="returned">Returned</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -613,6 +618,7 @@ export default function AdminDashboard() {
                           <SelectItem value="printed">Printed</SelectItem>
                           <SelectItem value="dispatched">Dispatched</SelectItem>
                           <SelectItem value="delivered">Delivered</SelectItem>
+                          <SelectItem value="returned">Returned</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1244,6 +1250,7 @@ export default function AdminDashboard() {
                         <SelectItem value="printed">Printed</SelectItem>
                         <SelectItem value="dispatched">Dispatched</SelectItem>
                         <SelectItem value="delivered">Delivered</SelectItem>
+                        <SelectItem value="returned">Returned</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

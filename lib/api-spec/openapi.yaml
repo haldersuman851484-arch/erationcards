@@ -881,6 +881,8 @@ components:
           type: integer
         deliveredOrders:
           type: integer
+        returnedOrders:
+          type: integer
         totalRevenue:
           type: number
         todayOrders:
@@ -894,6 +896,7 @@ components:
         - printedOrders
         - dispatchedOrders
         - deliveredOrders
+        - returnedOrders
         - totalRevenue
         - todayOrders
         - todayRevenue
