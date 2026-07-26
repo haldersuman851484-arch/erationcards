@@ -1112,6 +1112,14 @@ function PrintStatusView({
           printShippingLabel(order, String(data.trackingNumber));
           return;
         }
+        if (r.status === 504) {
+          toast({
+            title: "Delhivery timed out",
+            description: data?.error || "Delhivery is taking too long to respond. The shipment was not created — please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
         toast({ title: data?.error || "Failed to create shipment", variant: "destructive" });
         return;
       }

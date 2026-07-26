@@ -448,14 +448,30 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
       format: "json",
       data: JSON.stringify(shipmentPayload),
     });
-    const dResponse = await fetch(`${baseUrl}/api/cmu/create.json`, {
-      method: "POST",
-      headers: {
-        "Authorization": `Token ${apiToken}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: formBody.toString(),
-    });
+    // Abort the Delhivery request after 15s so a hung upstream can't leave
+    // the courier's UI spinning forever or exhaust server connection slots.
+    const DELHIVERY_TIMEOUT_MS = 15_000;
+    let dResponse: globalThis.Response;
+    try {
+      dResponse = await fetch(`${baseUrl}/api/cmu/create.json`, {
+        method: "POST",
+        headers: {
+          "Authorization": `Token ${apiToken}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formBody.toString(),
+        signal: AbortSignal.timeout(DELHIVERY_TIMEOUT_MS),
+      });
+    } catch (fetchErr: any) {
+      if (fetchErr?.name === "TimeoutError" || fetchErr?.name === "AbortError") {
+        req.log.error({ orderId: id }, "Delhivery API timed out during dispatch");
+        res.status(504).json({ error: "Delhivery is taking too long to respond. The shipment was not created — please try again in a few minutes." });
+        return;
+      }
+      req.log.error({ err: fetchErr, orderId: id }, "Delhivery API unreachable during dispatch");
+      res.status(504).json({ error: "Could not reach Delhivery. The shipment was not created — please check the connection and try again." });
+      return;
+    }
 
     const rawText = await dResponse.text();
     let dData: any;
