@@ -442,13 +442,19 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
     };
 
     const baseUrl = getDelhiveryBaseUrl();
+    // Delhivery's CMU endpoint expects application/x-www-form-urlencoded
+    // with two fields: format=json and data=<JSON-stringified payload>.
+    const formBody = new URLSearchParams({
+      format: "json",
+      data: JSON.stringify(shipmentPayload),
+    });
     const dResponse = await fetch(`${baseUrl}/api/cmu/create.json`, {
       method: "POST",
       headers: {
         "Authorization": `Token ${apiToken}`,
-        "Content-Type": "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      body: JSON.stringify(shipmentPayload),
+      body: formBody.toString(),
     });
 
     const rawText = await dResponse.text();
