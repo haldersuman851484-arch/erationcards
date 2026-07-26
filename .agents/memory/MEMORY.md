@@ -1,1 +1,2 @@
 - [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning()
+- [Typecheck & stale references](typecheck-stale-references.md) — tsc -p reads stale lib dist d.ts; validation rebuilds lib references first

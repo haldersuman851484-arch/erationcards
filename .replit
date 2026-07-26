@@ -9,6 +9,27 @@ args = ["pnpm", "store", "prune"]
 env = { "CI" = "true" }
 
 [workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "typecheck"
+
+[[workflows.workflow]]
+name = "typecheck"
+author = "agent"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npx tsc -b lib/api-client-react lib/api-zod && pnpm --filter @workspace/api-server typecheck && pnpm --filter @workspace/ration-card-portal typecheck"
 
 [agent]
 stack = "PNPM_WORKSPACE"
