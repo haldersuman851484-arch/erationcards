@@ -905,6 +905,116 @@ function PrintStatusView({
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
+  /** Escape a string for safe insertion into an HTML text/attribute context */
+  function escHtml(s: string): string {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  /**
+   * Escape a string for safe insertion as a JS double-quoted string literal
+   * inside a <script> block written into a Blob page.
+   */
+  function escJs(s: string): string {
+    return String(s)
+      .replace(/\\/g, "\\\\")
+      .replace(/"/g, '\\"')
+      .replace(/\r/g, "")
+      .replace(/\n/g, "\\n")
+      .replace(/</g, "\\x3c")
+      .replace(/>/g, "\\x3e")
+      .replace(/&/g, "\\x26");
+  }
+
+  /** Generate welcome letter as printable HTML and open browser print dialog */
+  function printWelcomeLetter(o: any) {
+    const customerName = escHtml((o.customerName || "").toUpperCase());
+    const date = new Date(o.createdAt);
+    const formattedDate = escHtml(date.toLocaleDateString("en-IN", {
+      day: "2-digit", month: "short", year: "numeric",
+    }));
+    const addressText = escHtml([
+      o.address    && `Street: ${o.address}`,
+      o.postOffice && `Post: ${o.postOffice}`,
+      o.district   && `Town: ${o.district}`,
+      o.pincode    && `Pin: ${o.pincode}`,
+      o.state      && `State: ${o.state}`,
+    ].filter(Boolean).join(" "));
+    const cardCount = Number(o.quantity ?? (Array.isArray(o.rationCardPdfs) ? o.rationCardPdfs.length : 1));
+    // orderNum is server-generated but escape it anyway for defence-in-depth
+    const orderNumHtml = escHtml(String(o.orderNumber));
+    const orderNumJs   = escJs(String(o.orderNumber));
+    const rcNum        = escHtml(String(o.rationCardNumber || ""));
+    const phone        = escHtml(String(o.customerPhone || ""));
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Welcome Letter &#8212; Order #${orderNumHtml}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif}
+  body{padding:40px;background:#fff}
+  .wrapper{display:flex;align-items:flex-start;gap:18px}
+  .bc-col{flex-shrink:0;width:88px;height:210px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .bc-col svg{transform:rotate(-90deg)}
+  .details{flex:1;min-width:0}
+  .name{font-size:15px;font-weight:700;text-transform:uppercase;margin-bottom:5px}
+  .order-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+  .mobile{font-size:11px;margin-bottom:6px}
+  .addr-label{font-size:11px;font-weight:700;margin-bottom:2px}
+  .addr-text{font-size:10px;line-height:1.5;margin-bottom:8px;color:#333}
+  .card-count{font-size:11px;margin-bottom:2px}
+  .rc-num{font-size:11px}
+  @media print{body{padding:0}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="bc-col">
+    <svg id="bc" style="width:210px;height:80px"></svg>
+  </div>
+  <div class="details">
+    <p class="name">${customerName}</p>
+    <div class="order-row">
+      <span>Order #${orderNumHtml}</span>
+      <span>${formattedDate}</span>
+    </div>
+    <p class="mobile">Mobile Number: ${phone}</p>
+    <p class="addr-label">Address</p>
+    <p class="addr-text">${addressText}</p>
+    <p class="card-count">${cardCount} Card${cardCount !== 1 ? "s" : ""}</p>
+    <p class="rc-num">${rcNum}</p>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+<script>
+window.onload=function(){
+  JsBarcode("#bc","${orderNumJs}",{
+    format:"CODE128",
+    displayValue:true,
+    text:"Order #${orderNumJs}",
+    fontSize:9,
+    width:2,
+    height:72,
+    margin:4
+  });
+  window.print();
+};
+<\/script>
+</body>
+</html>`;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url  = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+  }
+
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1056,17 +1166,10 @@ function PrintStatusView({
               </div>
 
 
-              {/* Welcome Letter — sky blue, disabled until URL is uploaded */}
+              {/* Welcome Letter — generated in-browser, always enabled */}
               <button
-                disabled={!order.welcomeLetterUrl}
-                onClick={() => {
-                  const a = document.createElement("a");
-                  a.href = order.welcomeLetterUrl;
-                  a.download = `welcome-letter-${order.rationCardNumber}.pdf`;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                }}
-                className="w-full py-2.5 px-4 rounded-lg font-semibold text-sm bg-sky-500 hover:bg-sky-600 text-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-                title={!order.welcomeLetterUrl ? "Not uploaded yet" : undefined}
+                onClick={() => printWelcomeLetter(order)}
+                className="w-full py-2.5 px-4 rounded-lg font-semibold text-sm bg-sky-500 hover:bg-sky-600 text-white transition-colors"
               >
                 Download Welcome Letter
               </button>
