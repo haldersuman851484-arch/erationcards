@@ -631,6 +631,7 @@ function PrintStatusView({
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null); // null = show picker when multiple
   const [optimisticPrintedIds, setOptimisticPrintedIds] = useState<Set<number>>(new Set()); // instant green badge before PATCH resolves
   const [creatingShipment, setCreatingShipment] = useState(false); // dispatch API call in flight
+  const [cancellingShipment, setCancellingShipment] = useState(false); // cancel API call in flight
 
   // Refs never go stale inside closures — used for undo gate + toast teardown
   const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1127,6 +1128,38 @@ function PrintStatusView({
     }
   }
 
+  /**
+   * Cancel the Delhivery shipment for the active order (only possible before
+   * pickup) and reset it back to 'printed' so it can be re-dispatched.
+   */
+  async function handleCancelShipment() {
+    if (!order || cancellingShipment || !order.trackingNumber) return;
+
+    if (!window.confirm(`Cancel shipment AWB ${order.trackingNumber} with Delhivery? The order will go back to printed status.`)) return;
+
+    setCancellingShipment(true);
+    try {
+      const r = await fetch(`/api/orders/${order.id}/dispatch`, {
+        method: "DELETE",
+        headers: getAuthHeader(),
+      });
+      const data: any = await r.json().catch(() => ({}));
+
+      if (!r.ok) {
+        toast({ title: data?.error || "Delhivery rejected the cancellation", variant: "destructive" });
+        return;
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+      queryClient.invalidateQueries({ queryKey: ["phone-history"] });
+      toast({ title: "Shipment cancelled — you can re-dispatch when ready" });
+    } catch {
+      toast({ title: "Failed to cancel shipment. Check your connection.", variant: "destructive" });
+    } finally {
+      setCancellingShipment(false);
+    }
+  }
+
   const recentForSidebar = recentScans.filter((r: any) => r.id !== order?.id).slice(0, 3);
 
   // ── Render ───────────────────────────────────────────────────────────────────
@@ -1335,10 +1368,20 @@ function PrintStatusView({
 
       {/* ── Create Shipment with Delhivery — pinned bottom-right ── */}
       {order && isPrinted && allCardsDownloaded && (
-        <div className="fixed bottom-6 right-6 z-50">
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2">
+          {order.trackingNumber && (
+            <button
+              onClick={handleCancelShipment}
+              disabled={cancellingShipment || creatingShipment}
+              data-testid="button-cancel-shipment"
+              className="px-5 py-2.5 rounded-md bg-white border border-red-300 text-red-600 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed text-sm font-semibold shadow-lg transition-colors"
+            >
+              {cancellingShipment ? "Cancelling…" : "Cancel Shipment"}
+            </button>
+          )}
           <button
             onClick={handleCreateShipment}
-            disabled={creatingShipment}
+            disabled={creatingShipment || cancellingShipment}
             data-testid="button-create-shipment"
             className="px-5 py-2.5 rounded-md bg-[#16257d] hover:bg-[#1d309e] disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold shadow-lg transition-colors"
           >

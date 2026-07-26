@@ -495,6 +495,78 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /orders/:id/dispatch — admin only, cancels the Delhivery shipment and
+// resets the order back to 'printed' so it can be re-dispatched.
+router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    if (!order.trackingNumber) {
+      res.status(400).json({ error: "Order has no shipment to cancel" }); return;
+    }
+    if (order.status !== "dispatched") {
+      res.status(400).json({ error: "Only dispatched orders can have their shipment cancelled" }); return;
+    }
+
+    const apiToken = process.env["DELHIVERY_API_TOKEN"];
+    if (!apiToken) {
+      res.status(503).json({ error: "Delhivery not configured. Missing secret: DELHIVERY_API_TOKEN" }); return;
+    }
+
+    const awb = order.trackingNumber;
+    const baseUrl = getDelhiveryBaseUrl();
+    // Delhivery's edit endpoint cancels a shipment (before pickup) when called
+    // with cancellation: "true" for the given waybill.
+    const dResponse = await fetch(`${baseUrl}/api/p/edit`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Token ${apiToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ waybill: awb, cancellation: "true" }),
+    });
+
+    const rawText = await dResponse.text();
+    let dData: any;
+    try { dData = JSON.parse(rawText); } catch {
+      req.log.error({ status: dResponse.status, body: rawText }, "Delhivery cancel non-JSON response");
+      res.status(502).json({ error: "Delhivery API returned an invalid response" }); return;
+    }
+
+    // Delhivery rejects cancellation (e.g. already picked up) with status:false
+    // or an error/remark message.
+    if (!dResponse.ok || dData?.status === false) {
+      const errMsg = dData?.error ?? dData?.rmk ?? dData?.remark ?? "Delhivery rejected the cancellation";
+      req.log.error({ status: dResponse.status, body: dData }, "Delhivery cancel error");
+      res.status(502).json({ error: typeof errMsg === "string" ? errMsg : "Delhivery rejected the cancellation" });
+      return;
+    }
+
+    // Reset the order so it can be re-dispatched
+    await db.update(ordersTable).set({
+      trackingNumber: null,
+      courierName:    null,
+      status:         "printed" as any,
+      updatedAt:      new Date(),
+    }).where(eq(ordersTable.id, id));
+
+    trackingCache.delete(awb);
+
+    const [updated] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    res.json({ ok: true, cancelledAwb: awb, order: formatOrder(updated) });
+  } catch (err) {
+    req.log.error({ err }, "Failed to cancel Delhivery shipment");
+    res.status(500).json({ error: "Failed to cancel shipment" });
+  }
+});
+
 // GET /orders/:id/tracking  — public, proxies Delhivery tracking with 5-min cache
 router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
   try {
