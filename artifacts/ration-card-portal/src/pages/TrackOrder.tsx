@@ -118,8 +118,23 @@ function DelhiveryScanTimeline({ orderId, trackingNumber }: { orderId: number; t
   }
 
   if (error || !data || data.scans.length === 0) {
-    // Silent fallback — the tracking number link is already shown above
-    return null;
+    // Graceful fallback — no scan events yet (or tracking temporarily unavailable)
+    return (
+      <Card className="border-slate-200 shadow-sm" data-testid="tracking-no-events">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Truck className="w-4 h-4 text-orange-500" />
+              Shipment Tracking
+            </div>
+            <span className="text-xs font-mono font-normal text-slate-500">{trackingNumber}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-slate-500">Tracking details will appear once the courier scans the package.</p>
+        </CardContent>
+      </Card>
+    );
   }
 
   const scans = data.scans;
