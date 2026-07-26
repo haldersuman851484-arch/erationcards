@@ -118,7 +118,7 @@ export default function OperatorDashboard() {
               <p>District: <span className="font-medium">{operator.district}</span></p>
               <p>Email: <span className="font-medium">{operator.email}</span></p>
             </div>
-            <Button variant="outline" className="w-full" onClick={handleLogout}>Logout</Button>
+            <Button className="w-full bg-rose-500 hover:bg-rose-600 text-white border-rose-500" onClick={handleLogout}>Logout</Button>
           </div>
         </div>
       </OperatorLayout>

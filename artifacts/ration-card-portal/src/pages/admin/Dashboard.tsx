@@ -375,7 +375,7 @@ export default function AdminDashboard() {
                 </Link>
               </div>
               <span className="text-slate-300 text-sm hidden lg:block">{admin?.email}</span>
-              <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white" data-testid="button-admin-logout" onClick={handleLogout}>
+              <Button variant="outline" size="sm" className="border-rose-500 text-rose-400 hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-colors" data-testid="button-admin-logout" onClick={handleLogout}>
                 <LogOut className="w-4 h-4 mr-1" /> Logout
               </Button>
             </div>

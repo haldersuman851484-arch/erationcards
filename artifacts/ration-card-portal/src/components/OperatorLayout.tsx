@@ -74,7 +74,7 @@ export function OperatorLayout({ children, operatorName, shopName, district, onL
           <div className="p-3 border-t border-white/10">
             <button
               onClick={onLogout}
-              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-white/10 hover:text-white transition-colors w-full"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-rose-400 hover:bg-rose-500 hover:text-white border border-rose-500/30 transition-colors w-full"
             >
               <LogOut className="w-4 h-4 shrink-0" />
               <span className="text-sm font-medium">Logout</span>
@@ -97,7 +97,7 @@ export function OperatorLayout({ children, operatorName, shopName, district, onL
             </div>
           </div>
           {onLogout && (
-            <button onClick={onLogout} className="text-slate-400 hover:text-white p-1">
+            <button onClick={onLogout} className="text-rose-400 hover:text-rose-300 p-1 transition-colors">
               <LogOut className="w-5 h-5" />
             </button>
           )}
