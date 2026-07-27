@@ -26,7 +26,12 @@ order state through the real endpoints — no SQL needed:
 
 Admin token for scripts: `POST /api/admin/login` with ADMIN_EMAIL/ADMIN_PASSWORD env,
 or `createAdminToken()` from the api-server's auth lib (signs with SESSION_SECRET).
-Note: `GET /api/orders` (list/quickSearch) is admin-only — unauthenticated callers get 401.
+Note: order reads/writes are guarded (since 2026-07-27): list, detail, stats, recent,
+status PATCH and assign all need an admin token (detail + status PATCH alternatively
+accept the assigned operator's token). Public: create, track-by-number, :id/tracking,
+card-PDF upload. Seeding scripts must send the admin token on every PATCH.
+UI note: "mark printed" lives inside the courier mPanel scan workflow
+(/admin/courier/public) — there is no /admin/print-status route.
 
 Full realistic order seeding (proven end-to-end 2026-07-27, AWB issued):
 `POST /api/payments/upload-screenshot` (multipart `screenshot`) → use returned url as

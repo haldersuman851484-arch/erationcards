@@ -210,7 +210,9 @@ router.get("/orders", async (req: Request, res: Response) => {
       .select()
       .from(ordersTable)
       .where(whereClause)
-      .orderBy(desc(ordersTable.createdAt))
+      // id tie-break: batch-created orders share a createdAt second; without a
+      // deterministic order, paginated pages can repeat or skip tied rows.
+      .orderBy(desc(ordersTable.createdAt), desc(ordersTable.id))
       .limit(limit)
       .offset(offset);
 
@@ -305,7 +307,7 @@ router.get("/orders/track", async (req: Request, res: Response) => {
       .select()
       .from(ordersTable)
       .where(or(...conditions))
-      .orderBy(desc(ordersTable.createdAt))
+      .orderBy(desc(ordersTable.createdAt), desc(ordersTable.id))
       .limit(1);
 
     if (!order) {
@@ -323,6 +325,9 @@ router.get("/orders/track", async (req: Request, res: Response) => {
 // GET /orders/stats
 router.get("/orders/stats", async (req: Request, res: Response) => {
   try {
+    // Admin only — exposes revenue and order volume
+    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -368,10 +373,13 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
 // GET /orders/recent
 router.get("/orders/recent", async (req: Request, res: Response) => {
   try {
+    // Admin only — rows carry full customer contact details
+    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+
     const orders = await db
       .select()
       .from(ordersTable)
-      .orderBy(desc(ordersTable.createdAt))
+      .orderBy(desc(ordersTable.createdAt), desc(ordersTable.id))
       .limit(10);
     res.json(orders.map(formatOrder));
   } catch (err) {
@@ -386,8 +394,14 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
+    // Admin, or the operator the order is assigned to — full customer PII
+    const admin = parseAdminToken(req);
+    const operatorId = parseOperatorToken(req);
+    if (!admin && operatorId === null) { res.status(401).json({ error: "Not authenticated" }); return; }
+
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id));
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+    if (!admin && order.operatorId !== operatorId) { res.status(403).json({ error: "Not authorized" }); return; }
 
     res.json(formatOrder(order));
   } catch (err) {
@@ -396,13 +410,29 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
   }
 });
 
-// PATCH /orders/:id
+// Valid order statuses — mirrors the mysqlEnum in the @workspace/db orders schema
+const ALLOWED_ORDER_STATUSES = new Set([
+  "pending", "processing", "printed", "dispatched", "delivered", "returned", "cancelled",
+]);
+
+// PATCH /orders/:id — admin, or the operator the order is assigned to
 router.patch("/orders/:id", async (req: Request, res: Response) => {
   try {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
+    const admin = parseAdminToken(req);
+    const operatorId = parseOperatorToken(req);
+    if (!admin && operatorId === null) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
+    if (!admin && existing.operatorId !== operatorId) { res.status(403).json({ error: "Not authorized" }); return; }
+
     const body = UpdateOrderStatusBody.parse(req.body);
+    if (body.status && !ALLOWED_ORDER_STATUSES.has(body.status)) {
+      res.status(400).json({ error: `Invalid status: ${body.status}` }); return;
+    }
     const updates: Record<string, any> = { updatedAt: new Date() };
     if (body.status) updates.status = body.status;
     if (body.trackingNumber) updates.trackingNumber = body.trackingNumber;
@@ -852,6 +882,9 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
 // PATCH /orders/:id/assign
 router.patch("/orders/:id/assign", async (req: Request, res: Response) => {
   try {
+    // Admin only
+    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 

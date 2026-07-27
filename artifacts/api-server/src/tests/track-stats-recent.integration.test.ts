@@ -16,6 +16,7 @@ import request from "supertest";
 import { db, ordersTable } from "@workspace/db";
 import { inArray } from "drizzle-orm";
 import app from "../app";
+import { createAdminToken } from "../lib/auth";
 
 // ── Seed helpers ──────────────────────────────────────────────────────────────
 
@@ -102,8 +103,13 @@ afterAll(async () => {
 
 // ── Helper ────────────────────────────────────────────────────────────────────
 
+// /stats and /recent are admin-only since the 2026-07 auth hardening; the
+// header is harmless on the public /track endpoint, so attach it everywhere.
+// (Unauthenticated 401 contracts are covered in order-auth.integration.test.ts.)
+const ADMIN_AUTH = `Bearer ${createAdminToken("track-stats-tests@printpvccard.in", "admin")}`;
+
 function get(path: string) {
-  return request(app).get(path);
+  return request(app).get(path).set("Authorization", ADMIN_AUTH);
 }
 
 // ── GET /api/orders/track ─────────────────────────────────────────────────────

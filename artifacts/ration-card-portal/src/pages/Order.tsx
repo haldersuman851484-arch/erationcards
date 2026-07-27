@@ -52,7 +52,9 @@ const WB_DISTRICTS = [
   "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-const SINGLE_CARD_PRICE = 50;
+// Must mirror the server's pricing in api-server routes/orders.ts:
+// single card ₹70; 2+ cards ₹50 each (public orders).
+const SINGLE_CARD_PRICE = 70;
 const MULTI_CARD_PRICE = 50;
 
 export default function Order() {

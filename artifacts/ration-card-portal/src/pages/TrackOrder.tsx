@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey, useSubmitReview } from "@workspace/api-client-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck, ChevronDown, ChevronUp } from "lucide-react";
 
 type PdfEntry = { cardIndex: number; pdfUrl: string; uploadedAt: string };
@@ -27,7 +27,9 @@ function formatDate(d: Date): string {
 }
 
 function getDeliveryTimeline(status: string, createdAt: string, updatedAt: string): { label: string; date: string } | null {
-  if (status === "delivered" || status === "pending") return null;
+  // No forward-looking estimate for terminal/inapplicable states — a
+  // "returned" order must never show a bogus "Estimated delivery" date.
+  if (status === "delivered" || status === "pending" || status === "returned" || status === "cancelled") return null;
   if (status === "dispatched") {
     const dispatchDate = new Date(updatedAt);
     const earliest = addWorkingDays(dispatchDate, 5);
@@ -198,6 +200,8 @@ const STATUS_BADGE: Record<string, string> = {
   printed: "bg-purple-100 text-purple-700 border-purple-200",
   dispatched: "bg-orange-100 text-orange-700 border-orange-200",
   delivered: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  returned: "bg-rose-100 text-rose-700 border-rose-200",
+  cancelled: "bg-slate-200 text-slate-600 border-slate-300",
 };
 
 function StarRatingInput({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -252,6 +256,7 @@ export default function TrackOrder() {
   const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const submitReview = useSubmitReview();
+  const queryClient = useQueryClient();
 
   const { data: order, isLoading, error } = useTrackOrder(
     searchParams ?? {},
@@ -298,10 +303,15 @@ export default function TrackOrder() {
     setReviewError(null);
     setReviewRating(0);
     setReviewQuote("");
-    setSearchParams({
+    const params = {
       orderNumber: orderNumber || undefined,
       rationCardNumber: rationCardNumber || undefined,
-    });
+    };
+    setSearchParams(params);
+    // Re-searching (even the same order number) must fetch fresh status —
+    // without this, React Query keeps serving the cached result and the
+    // page looks stuck on the old status until a full reload.
+    queryClient.invalidateQueries({ queryKey: getTrackOrderQueryKey(params) });
   }
 
   function handleReviewSubmit(e: React.FormEvent) {
@@ -327,7 +337,10 @@ export default function TrackOrder() {
     );
   }
 
-  const currentStepIdx = order ? STATUS_STEPS.findIndex(s => s.key === order.status) : -1;
+  // "returned" isn't one of the linear steps — show progress up to Dispatched
+  // (the card did ship) instead of an all-grey tracker.
+  const progressKey = order?.status === "returned" ? "dispatched" : order?.status;
+  const currentStepIdx = order ? STATUS_STEPS.findIndex(s => s.key === progressKey) : -1;
 
   const whatsAppUrl = order
     ? `https://wa.me/${BRAND.phone.replace(/\D/g, "")}?text=${encodeURIComponent(

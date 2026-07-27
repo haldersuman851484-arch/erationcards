@@ -195,8 +195,12 @@ export default function AdminDashboard() {
     request: { headers: getAuthHeader() },
   } as any);
 
-  const assignOrder = useAssignOrderToOperator();
-  const updateStatus = useUpdateOrderStatus();
+  const assignOrder = useAssignOrderToOperator({
+    request: { headers: getAuthHeader() },
+  } as any);
+  const updateStatus = useUpdateOrderStatus({
+    request: { headers: getAuthHeader() },
+  } as any);
   const updatePaymentStatus = useUpdateOrderPaymentStatus({
     request: { headers: getAuthHeader() },
   } as any);

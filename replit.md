@@ -40,6 +40,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 - **`mysql2` is externalized** — kept out of the esbuild bundle so native bindings load correctly; must be present in `node_modules` at the deployment root.
 - **Uploads via env var** — `UPLOADS_DIR` controls where payment screenshots land; omitting it defaults to `uploads/` relative to the server binary.
 - **JWT auth, no sessions** — `SESSION_SECRET` signs JWTs for both admin and operator tokens (7-day expiry).
+- **Order route authorization** — list/detail/stats/recent/status-PATCH/assign require an admin token; order detail and status-PATCH also accept the token of the operator the order is assigned to. Public by design: order creation, `GET /orders/track` (by order number), `GET /orders/:id/tracking`, card-PDF upload.
 
 ## Product
 

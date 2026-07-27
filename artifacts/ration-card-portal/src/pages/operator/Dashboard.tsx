@@ -55,7 +55,9 @@ export default function OperatorDashboard() {
     request: { headers: getAuthHeader() },
   } as any);
 
-  const updateStatus = useUpdateOrderStatus();
+  const updateStatus = useUpdateOrderStatus({
+    request: { headers: getAuthHeader() },
+  } as any);
   const logoutOperator = useLogoutOperator();
 
   useEffect(() => { if (opError) setLocation("/operator/login"); }, [opError, setLocation]);
