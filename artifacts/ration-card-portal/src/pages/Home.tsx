@@ -10,7 +10,6 @@ import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 import { useListApprovedReviews } from "@workspace/api-client-react";
 import { DISTRICTS } from "@/pages/DistrictPage";
-import { PRICING } from "@workspace/pricing";
 
 function HeroPVCCard() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -654,9 +653,6 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p className="text-center text-slate-700 font-medium mt-8">
-            ₹{PRICING.special.single.public} for one card · ₹{PRICING.special.multi.public} per card when you order 2 or more
-          </p>
           <div className="text-center mt-6">
             <Link href="/order">
               <Button className="bg-primary hover:bg-primary/90 px-8">Order Now</Button>
