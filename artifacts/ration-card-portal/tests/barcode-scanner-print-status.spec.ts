@@ -72,7 +72,7 @@ test.describe("Barcode scanner — Print Status Update", () => {
     await page.getByText("Print Status Update").click();
 
     // Verify we are on the scan view
-    await expect(page.getByText("Scan Ration Card or PRN Number")).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText("Scan Order Number or Ration Card Number")).toBeVisible({ timeout: 8000 });
 
     // Simulate a barcode scanner: type characters very fast (20 ms apart).
     // The first character is caught by the global keydown listener which opens
@@ -141,7 +141,7 @@ test.describe("Barcode scanner — Print Status Update", () => {
 
     await page.goto("/admin/courier/public");
     await page.getByText("Print Status Update").click();
-    await expect(page.getByText("Scan Ration Card or PRN Number")).toBeVisible({ timeout: 8000 });
+    await expect(page.getByText("Scan Order Number or Ration Card Number")).toBeVisible({ timeout: 8000 });
 
     // Simulate scanner burst (all chars within ~260 ms total for a 13-char string at 20 ms/char)
     await page.keyboard.type(SCANNED_VALUE, { delay: 20 });

@@ -102,6 +102,7 @@ async function reachStep3(page: import("@playwright/test").Page) {
   await expect(page.locator("text=Screenshot selected")).toBeVisible({
     timeout: 3000,
   });
+  await page.getByTestId("checkbox-payment-confirmed").click();
 }
 
 test.describe("Order form", () => {
@@ -134,6 +135,8 @@ test.describe("Order form", () => {
     await expect(page.locator("text=Screenshot selected")).toBeVisible({
       timeout: 3000,
     });
+
+    await page.getByTestId("checkbox-payment-confirmed").click();
 
     const submitButton = page.getByTestId("button-submit-order");
     await expect(submitButton).toBeEnabled({ timeout: 3000 });

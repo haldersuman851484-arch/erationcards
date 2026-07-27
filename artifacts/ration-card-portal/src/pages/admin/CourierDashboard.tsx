@@ -97,6 +97,10 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
     function onKeyDown(e: KeyboardEvent) {
       if (printSearchOpen) return;
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Prevent the browser's default text insertion — the input opens and
+        // autofocuses synchronously, so without this the same keystroke is
+        // inserted again into the focused input (ghost first character).
+        e.preventDefault();
         setPrintSearchOpen(true);
         setPrintSearchValue(e.key);
       }
