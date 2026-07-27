@@ -27,3 +27,15 @@ order state through the real endpoints — no SQL needed:
 Admin token for scripts: `POST /api/admin/login` with ADMIN_EMAIL/ADMIN_PASSWORD env,
 or `createAdminToken()` from the api-server's auth lib (signs with SESSION_SECRET).
 Note: `GET /api/orders` (list/quickSearch) is admin-only — unauthenticated callers get 401.
+
+Full realistic order seeding (proven end-to-end 2026-07-27, AWB issued):
+`POST /api/payments/upload-screenshot` (multipart `screenshot`) → use returned url as
+`paymentScreenshotUrl` in `POST /api/orders` (required, non-empty), then admin
+`PATCH /orders/:id/payment-status` with `{"paymentStatus":"confirmed"}` (NOT "verified" —
+only confirmed/rejected are logged as verifications), then `PATCH /orders/:id` status printed.
+
+**Delhivery env:** `getDelhiveryBaseUrl()` switches on `DELHIVERY_ENV` (default **staging**).
+The dev workspace has no DELHIVERY_ENV secret, so dispatch/cancel/track there hit
+staging-express.delhivery.com — clicking "Create Shipment" in dev creates only a staging AWB
+(no real courier). Real shipments require `DELHIVERY_ENV=production` (deployment must set it).
+Still never dispatch arbitrary existing orders in tests — use a purpose-made test order.

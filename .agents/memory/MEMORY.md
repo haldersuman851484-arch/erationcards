@@ -1,3 +1,3 @@
 - [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning()
 - [Typecheck & stale references](typecheck-stale-references.md) — tsc -p reads stale lib dist d.ts; validation rebuilds lib references first
-- [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — shipment buttons need printed status + all card PDFs downloaded; seed via real endpoints before UI tests
+- [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — seed via real endpoints (printed + PDFs downloaded); dev dispatch hits Delhivery STAGING unless DELHIVERY_ENV=production
