@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig, type HtmlTagDescriptor, type Plugin, type ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
@@ -24,12 +24,66 @@ if (!isBuild && !basePath) {
   );
 }
 
+// Above-the-fold fonts to preload on every page. In dev these are served from
+// /node_modules; in a production build the hashed asset URLs are looked up in
+// the output bundle so the preload links never 404 on the published site.
+const PRELOAD_FONTS = [
+  "@fontsource/inter/files/inter-latin-400-normal.woff2",
+  "@fontsource/inter/files/inter-latin-700-normal.woff2",
+];
+
+function fontPreloadPlugin(): Plugin {
+  let config: ResolvedConfig;
+  return {
+    name: "font-preload",
+    configResolved(resolved) {
+      config = resolved;
+    },
+    transformIndexHtml: {
+      order: "post",
+      handler(_html, ctx) {
+        const hrefs = PRELOAD_FONTS.map((file) => {
+          if (ctx.bundle) {
+            // Production build: find the hashed emitted asset for this font.
+            const stem = path.basename(file, ".woff2");
+            const asset = Object.keys(ctx.bundle).find(
+              (key) => key.includes(stem) && key.endsWith(".woff2"),
+            );
+            if (!asset) {
+              throw new Error(
+                `font-preload: "${file}" was not emitted in the build output. ` +
+                  "Is it still imported via src/index.css?",
+              );
+            }
+            return config.base + asset;
+          }
+          // Dev server: node_modules files are served directly.
+          return `${config.base}node_modules/${file}`;
+        });
+        const tags: HtmlTagDescriptor[] = hrefs.map((href) => ({
+          tag: "link",
+          attrs: {
+            rel: "preload",
+            as: "font",
+            type: "font/woff2",
+            crossorigin: true,
+            href,
+          },
+          injectTo: "head",
+        }));
+        return tags;
+      },
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
     tailwindcss(),
     runtimeErrorOverlay(),
+    fontPreloadPlugin(),
     ...(process.env.NODE_ENV !== "production" &&
     process.env.REPL_ID !== undefined
       ? [

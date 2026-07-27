@@ -225,9 +225,9 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
     <!-- Fonts are self-hosted via @fontsource imports in src/index.css.
-         Preload only the woff2 files used above the fold on the homepage. -->
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/inter/files/inter-latin-400-normal.woff2" />
-    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/inter/files/inter-latin-700-normal.woff2" />
+         Preload links for the above-the-fold woff2 files are injected by the
+         font-preload plugin in vite.config.ts so the correct (hashed) asset
+         paths are used in both dev and production builds. -->
   </head>
   <body>
     <div id="root"></div>
