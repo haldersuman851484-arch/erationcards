@@ -269,10 +269,18 @@ describe("GET /api/orders", () => {
   // ── Pagination ──────────────────────────────────────────────────────────────
 
   it("page=1 and page=2 with limit=5 return different sets of orders", async () => {
-    const res1 = await get("/api/orders?page=1&limit=5");
-    const res2 = await get("/api/orders?page=2&limit=5");
+    // Scope pagination to this run's seeded orders (via the unique RUN_ID
+    // order-number prefix) so concurrent inserts from other test files
+    // cannot shift rows between the two page fetches.
+    const scope = `search=${encodeURIComponent(RUN_ID)}`;
+    const res1 = await get(`/api/orders?${scope}&page=1&limit=5`);
+    const res2 = await get(`/api/orders?${scope}&page=2&limit=5`);
     expect(res1.status).toBe(200);
     expect(res2.status).toBe(200);
+
+    // We seeded 15 rows under this prefix, so both pages must be full
+    expect(res1.body.orders).toHaveLength(5);
+    expect(res2.body.orders).toHaveLength(5);
 
     const ids1: number[] = res1.body.orders.map((o: any) => o.id);
     const ids2: number[] = res2.body.orders.map((o: any) => o.id);
