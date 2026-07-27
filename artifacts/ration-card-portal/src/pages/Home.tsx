@@ -106,12 +106,12 @@ function HeroPVCCard() {
               <div className="w-10 h-10 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
                 <Shield className="w-5 h-5 text-white/90" />
               </div>
-              <span className="text-[9px] text-white/60 mt-1 font-medium tracking-widest uppercase">Govt. of WB</span>
+              <span className="text-[11px] text-white/60 mt-1 font-medium tracking-widest uppercase">Govt. of WB</span>
             </div>
           </div>
 
           <div className="px-6 pb-2">
-            <p className="text-white/50 text-[10px] tracking-widest uppercase font-medium mb-1">Ration Card No.</p>
+            <p className="text-white/50 text-[12px] tracking-widest uppercase font-medium mb-1">Ration Card No.</p>
             <p className="text-white font-mono text-lg tracking-[0.2em] font-bold drop-shadow">
               WB •••• •••• 7291
             </p>
@@ -119,19 +119,19 @@ function HeroPVCCard() {
 
           <div className="px-6 pb-4 pt-1 flex items-end justify-between">
             <div>
-              <p className="text-white/50 text-[10px] tracking-widest uppercase font-medium mb-0.5">Card Holder</p>
+              <p className="text-white/50 text-[12px] tracking-widest uppercase font-medium mb-0.5">Card Holder</p>
               <p className="text-white font-bold text-sm tracking-wide">RAHUL SHARMA</p>
               <p className="text-white/60 text-xs mt-0.5">Family of 4 · PHH</p>
             </div>
             <div className="text-right">
-              <p className="text-white/50 text-[10px] tracking-widest uppercase font-medium mb-0.5">Valid Thru</p>
+              <p className="text-white/50 text-[12px] tracking-widest uppercase font-medium mb-0.5">Valid Thru</p>
               <p className="text-white font-bold text-sm tracking-wider">12/28</p>
             </div>
           </div>
 
           <div className="bg-white/10 backdrop-blur-sm px-6 py-2 flex items-center justify-between border-t border-white/10">
-            <span className="text-white/70 text-[10px] tracking-widest uppercase font-semibold">West Bengal</span>
-            <span className="text-white/70 text-[10px] tracking-widest uppercase font-semibold flex items-center gap-1">
+            <span className="text-white/70 text-[12px] tracking-widest uppercase font-semibold">West Bengal</span>
+            <span className="text-white/70 text-[12px] tracking-widest uppercase font-semibold flex items-center gap-1">
               <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               PVC Printed
             </span>

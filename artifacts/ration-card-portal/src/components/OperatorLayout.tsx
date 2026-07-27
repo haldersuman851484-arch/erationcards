@@ -118,7 +118,7 @@ export function OperatorLayout({ children, operatorName, shopName, district, onL
                   <div className={`p-1 rounded-lg transition-all ${active ? "bg-primary/10" : ""}`}>
                     <Icon className="w-5 h-5" />
                   </div>
-                  <span className="text-[9px] font-semibold leading-none">{short}</span>
+                  <span className="text-[11px] font-semibold leading-none">{short}</span>
                 </div>
               </Link>
             );

@@ -134,7 +134,7 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
             {/* Brand — print view shows source label instead of link */}
             {activeService === "print" ? (
               <div className="flex items-center gap-1.5 shrink-0">
-                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">■</div>
+                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[12px]">■</div>
                 <span className="font-semibold text-sm text-slate-800">Ration Card</span>
                 <span className="text-slate-400 text-sm font-normal">mPanel</span>
                 <span className="text-slate-300 text-sm select-none">•</span>
@@ -145,7 +145,7 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
                 href="/admin/dashboard"
                 className="flex items-center gap-1.5 hover:opacity-70 transition-opacity shrink-0"
               >
-                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[10px]">C</div>
+                <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[12px]">C</div>
                 <span className="font-semibold text-sm text-slate-800">Ration Card</span>
                 <span className="text-slate-400 text-sm font-normal">mPanel</span>
               </Link>

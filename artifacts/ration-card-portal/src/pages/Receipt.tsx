@@ -295,7 +295,7 @@ export default function Receipt() {
           <p className="text-xs font-semibold text-slate-600">
             This is a computer-generated receipt and does not require a signature.
           </p>
-          <p className="text-[10px] italic text-slate-400">
+          <p className="text-[12px] italic text-slate-400">
             Notice: erationcards.in is not a government portal. It is a private PVC card printing service.
           </p>
         </div>

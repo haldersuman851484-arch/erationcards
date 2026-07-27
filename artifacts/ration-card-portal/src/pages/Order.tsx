@@ -313,26 +313,26 @@ export default function Order() {
                     <div className="mt-3 space-y-2">
                       {/* Ration card pricing */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-white/90 text-[11px] font-bold uppercase tracking-wide w-full sm:w-44">Ration Card</span>
+                        <span className="text-white/90 text-[13px] font-bold uppercase tracking-wide w-full sm:w-52">Ration Card</span>
                         <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
                           <span className="text-white/80 text-xs font-medium">1 card</span>
                           <span className="text-white text-sm font-extrabold">₹{PRICING.ration.single.public}</span>
                         </div>
                         <div className="relative flex items-center gap-1.5 bg-yellow-400 rounded-full px-3 py-1 shadow-md">
-                          <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
+                          <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
                           <span className="text-yellow-900 text-xs font-medium">2+ cards</span>
                           <span className="text-yellow-900 text-sm font-extrabold">₹{PRICING.ration.multi.public} each</span>
                         </div>
                       </div>
                       {/* ABHA / E-SHRAM / GENERAL pricing */}
                       <div className="flex flex-wrap items-center gap-2" data-testid="hero-special-pricing">
-                        <span className="text-white/90 text-[11px] font-bold uppercase tracking-wide w-full sm:w-44">ABHA · E-SHRAM · GENERAL</span>
+                        <span className="text-white/90 text-[13px] font-bold uppercase tracking-wide w-full sm:w-52">ABHA · E-SHRAM · GENERAL</span>
                         <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
                           <span className="text-white/80 text-xs font-medium">1 card</span>
                           <span className="text-white text-sm font-extrabold">₹{PRICING.special.single.public}</span>
                         </div>
                         <div className="relative flex items-center gap-1.5 bg-yellow-400 rounded-full px-3 py-1 shadow-md">
-                          <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
+                          <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[11px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
                           <span className="text-yellow-900 text-xs font-medium">2+ cards</span>
                           <span className="text-yellow-900 text-sm font-extrabold">₹{PRICING.special.multi.public} each</span>
                         </div>
