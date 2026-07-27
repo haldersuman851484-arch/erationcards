@@ -61,6 +61,44 @@ function getDelhiveryBaseUrl(): string {
     : "https://staging-express.delhivery.com";
 }
 
+// Normalizes the reply of Delhivery's edit (cancel) endpoint, which answers in
+// JSON on some deployments and XML on others (observed 2026-07-27: staging
+// answers a successful cancel with
+// <root><status>True</status>...<remark>Shipment has been cancelled.</remark></root>).
+// Delhivery uses string booleans ("True"/"False"), so ONLY an explicit positive
+// status counts as success — an ambiguous reply must never reset the order,
+// because wrongly clearing the AWB would let the same order be dispatched twice
+// while the first shipment is still live. Exported for tests.
+export function parseDelhiveryCancelResponse(
+  rawText: string,
+): { kind: "success" | "rejected" | "invalid"; remark?: string } {
+  const xmlStatus = rawText.match(
+    /<(?:\w+:)?status\b[^>]*>\s*(?:<!\[CDATA\[)?\s*(true|false)\s*(?:\]\]>)?\s*<\/(?:\w+:)?status>/i,
+  );
+  if (xmlStatus) {
+    const remark = rawText
+      .match(/<(?:\w+:)?remark\b[^>]*>\s*(?:<!\[CDATA\[)?([\s\S]*?)(?:\]\]>)?\s*<\/(?:\w+:)?remark>/i)?.[1]
+      ?.trim();
+    return { kind: xmlStatus[1]!.toLowerCase() === "true" ? "success" : "rejected", remark };
+  }
+
+  let dData: any;
+  try { dData = JSON.parse(rawText); } catch {
+    return { kind: "invalid" };
+  }
+  const errMsg = dData?.error ?? dData?.rmk ?? dData?.remark;
+  const remark = typeof errMsg === "string" ? errMsg : undefined;
+  const s = dData?.status;
+  if (s === true || (typeof s === "string" && s.trim().toLowerCase() === "true")) {
+    return { kind: "success", remark };
+  }
+  if (s === false || (typeof s === "string" && s.trim().toLowerCase() === "false")) {
+    return { kind: "rejected", remark };
+  }
+  // Unknown shape / missing status — refuse to guess.
+  return { kind: "invalid", remark };
+}
+
 // Maps a raw Delhivery scan entry to our normalized shape.
 function mapShipmentScans(shipment: any): DelhiveryScan[] {
   const shipmentScans: any[] = shipment?.Scans ?? [];
@@ -618,18 +656,18 @@ router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
     });
 
     const rawText = await dResponse.text();
-    let dData: any;
-    try { dData = JSON.parse(rawText); } catch {
-      req.log.error({ status: dResponse.status, body: rawText }, "Delhivery cancel non-JSON response");
-      res.status(502).json({ error: "Delhivery API returned an invalid response" }); return;
-    }
+    const parsed = parseDelhiveryCancelResponse(rawText);
 
-    // Delhivery rejects cancellation (e.g. already picked up) with status:false
-    // or an error/remark message.
-    if (!dResponse.ok || dData?.status === false) {
-      const errMsg = dData?.error ?? dData?.rmk ?? dData?.remark ?? "Delhivery rejected the cancellation";
-      req.log.error({ status: dResponse.status, body: dData }, "Delhivery cancel error");
-      res.status(502).json({ error: typeof errMsg === "string" ? errMsg : "Delhivery rejected the cancellation" });
+    if (parsed.kind === "invalid") {
+      req.log.error({ status: dResponse.status, body: rawText }, "Delhivery cancel unrecognized response");
+      res.status(502).json({ error: "Delhivery API returned an invalid response" });
+      return;
+    }
+    // Delhivery rejects cancellation (e.g. already picked up) with status false
+    // plus a remark/error message. Only an explicit success may reset the order.
+    if (!dResponse.ok || parsed.kind === "rejected") {
+      req.log.error({ status: dResponse.status, body: rawText }, "Delhivery cancel rejected");
+      res.status(502).json({ error: parsed.remark || "Delhivery rejected the cancellation" });
       return;
     }
 
