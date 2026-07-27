@@ -471,7 +471,12 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
     const shipmentPayload = {
       shipments: [{
         name:         order.customerName,
-        add:          order.address,
+        // Full street address incl. post office — city/state/pin have their own
+        // fields. Trim first so whitespace-only parts can't leave stray commas.
+        add:          [order.address, order.postOffice]
+                        .map((v) => String(v ?? "").trim())
+                        .filter(Boolean)
+                        .join(", "),
         pin:          order.pincode,
         city:         order.district,
         state:        order.state,

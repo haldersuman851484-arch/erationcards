@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { buildLabelAddressLines } from "@/lib/labelAddress";
 import JsBarcode from "jsbarcode";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1017,7 +1018,11 @@ function PrintStatusView({
    */
   function printShippingLabel(o: any, awb: string) {
     const customerName = escHtml((o.deliveryName || o.customerName || "").toUpperCase());
-    const placeLine = escHtml([o.district, o.pincode].filter(Boolean).join(", "));
+    // Full delivery address, one entry per printed line (shared with the
+    // label page in ShippingLabel.tsx via buildLabelAddressLines)
+    const addressHtml = buildLabelAddressLines(o)
+      .map((l) => `<p class="line">${escHtml(l)}</p>`)
+      .join("\n      ");
     const rawPhone = String(o.customerPhone || "");
     const phone = escHtml(rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`);
     const orderNumHtml = escHtml(String(o.orderNumber || ""));
@@ -1063,7 +1068,7 @@ function PrintStatusView({
   <p class="name">${customerName}</p>
   <div class="main">
     <div class="left">
-      <p class="line">${placeLine}</p>
+      ${addressHtml}
       <p class="line">${phone}</p>
       <div class="ord-row">
         <span class="ord-box">Order #${orderNumHtml}</span>

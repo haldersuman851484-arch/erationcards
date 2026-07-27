@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { buildLabelAddressLines } from "@/lib/labelAddress";
 import JsBarcode from "jsbarcode";
 import { Link, useParams } from "wouter";
 import { useQuery } from "@tanstack/react-query";
@@ -86,7 +87,9 @@ export default function ShippingLabel() {
 
   const awb = order?.trackingNumber ? String(order.trackingNumber) : "";
   const name = order ? String(order.deliveryName || order.customerName || "").toUpperCase() : "";
-  const placeLine = order ? [order.district, order.pincode].filter(Boolean).join(", ") : "";
+  // Full delivery address, one entry per printed line (shared with the
+  // print popup in CourierDashboard.tsx via buildLabelAddressLines)
+  const addressLines = order ? buildLabelAddressLines(order) : [];
   const rawPhone = order ? String(order.customerPhone || "") : "";
   const phone = rawPhone ? (rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`) : "";
   const invoiceDate = new Date().toLocaleDateString("en-US", {
@@ -162,7 +165,15 @@ export default function ShippingLabel() {
             }}
           >
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: "3.9mm", marginTop: "1.4mm" }}>{placeLine}</p>
+              {addressLines.map((line, i) => (
+                <p
+                  key={i}
+                  data-testid={`text-label-address-${i}`}
+                  style={{ fontSize: "3.9mm", marginTop: "1.4mm" }}
+                >
+                  {line}
+                </p>
+              ))}
               <p style={{ fontSize: "3.9mm", marginTop: "1.4mm" }}>{phone}</p>
               <div style={{ display: "flex", gap: "2mm", marginTop: "3mm" }}>
                 <span
