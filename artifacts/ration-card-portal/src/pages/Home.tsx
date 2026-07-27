@@ -632,7 +632,7 @@ export default function Home() {
               <CreditCard className="w-4 h-4" />
               New Services
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-4"> We are Also Printing ABHA, E-SHRAM & GENERAL Cards</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4"> We Are Also Printing ABHA, E-SHRAM & GENERAL Cards</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
               Get the same premium PVC print for your ABHA health card, E-SHRAM labour card, or any other card — with doorstep delivery across West Bengal.
             </p>
