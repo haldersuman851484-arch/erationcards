@@ -170,7 +170,7 @@ paths:
     patch:
       operationId: updateOrderStatus
       tags: [orders]
-      summary: Update order status (operator/admin)
+      summary: Update order status (admin only)
       parameters:
         - in: path
           name: id

@@ -272,7 +272,7 @@ export const GetOrderResponse = zod.object({
 
 
 /**
- * @summary Update order status (operator/admin)
+ * @summary Update order status (admin only)
  */
 export const UpdateOrderStatusParams = zod.object({
   "id": zod.coerce.number()

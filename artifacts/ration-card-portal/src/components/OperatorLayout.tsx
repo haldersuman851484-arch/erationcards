@@ -84,7 +84,7 @@ export function OperatorLayout({ children, operatorName, shopName, district, onL
       </aside>
 
       {/* ── Main Content Area ── */}
-      <div className="flex-1 md:ml-64 flex flex-col min-h-screen">
+      <div className="flex-1 min-w-0 md:ml-64 flex flex-col min-h-screen">
         {/* Mobile top header */}
         <header className="md:hidden bg-slate-900 text-white px-4 h-14 flex items-center justify-between sticky top-0 z-30 shadow-md">
           <div className="flex items-center gap-2.5">

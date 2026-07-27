@@ -417,19 +417,19 @@ const ALLOWED_ORDER_STATUSES = new Set([
   "pending", "processing", "printed", "dispatched", "delivered", "returned", "cancelled",
 ]);
 
-// PATCH /orders/:id — admin, or the operator the order is assigned to
+// PATCH /orders/:id — admin only. Operators must not modify orders (status
+// changes are the admin's job), so operator tokens are rejected like any
+// other non-admin credential.
 router.patch("/orders/:id", async (req: Request, res: Response) => {
   try {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
     const admin = parseAdminToken(req);
-    const operatorId = parseOperatorToken(req);
-    if (!admin && operatorId === null) { res.status(401).json({ error: "Not authenticated" }); return; }
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
-    if (!admin && existing.operatorId !== operatorId) { res.status(403).json({ error: "Not authorized" }); return; }
 
     const body = UpdateOrderStatusBody.parse(req.body);
     if (body.status && !ALLOWED_ORDER_STATUSES.has(body.status)) {

@@ -85,11 +85,12 @@ describe("order route auth guards", () => {
       .set("Authorization", foreignOperator);
     expect(read.status).toBe(403);
 
+    // PATCH is now admin-only: any operator token is rejected up front (401)
     const patch = await request(app)
       .patch(`/api/orders/${order.id}`)
       .set("Authorization", foreignOperator)
       .send({ status: "processing" });
-    expect(patch.status).toBe(403);
+    expect(patch.status).toBe(401);
   });
 
   it("lets an admin read and update, but rejects invalid status values", async () => {
@@ -115,7 +116,7 @@ describe("order route auth guards", () => {
     expect(good.body.status).toBe("processing");
   });
 
-  it("lets the assigned operator read and update their own order", async () => {
+  it("lets the assigned operator read their own order, but blocks their status updates (admin-only)", async () => {
     const operatorId = 987_654_321; // plain int column, no FK — token id just has to match
     const order = await seedOrder({ operatorId });
     const ownOperator = `Bearer ${createOperatorToken(operatorId)}`;
@@ -126,11 +127,15 @@ describe("order route auth guards", () => {
     expect(read.status).toBe(200);
     expect(read.body.orderNumber).toBe(order.orderNumber);
 
+    // Even the operator the order is assigned to cannot change status anymore.
     const patch = await request(app)
       .patch(`/api/orders/${order.id}`)
       .set("Authorization", ownOperator)
       .send({ status: "processing" });
-    expect(patch.status).toBe(200);
-    expect(patch.body.status).toBe("processing");
+    expect(patch.status).toBe(401);
+
+    // And the order must be untouched in the database.
+    const [row] = await db.select().from(ordersTable).where(eq(ordersTable.id, order.id));
+    expect(String(row!.status)).toBe("pending");
   });
 });

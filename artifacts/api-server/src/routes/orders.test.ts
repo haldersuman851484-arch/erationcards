@@ -46,10 +46,17 @@ vi.mock("@workspace/db", () => {
   };
   const selectFn = vi.fn(() => selectChain);
 
+  const updateChain = {
+    set: vi.fn().mockReturnThis(),
+    where: vi.fn().mockResolvedValue(undefined),
+  };
+  const updateFn = vi.fn(() => updateChain);
+
   return {
     db: {
       insert: insertFn,
       select: selectFn,
+      update: updateFn,
     },
     ordersTable: {},
     FamilyCardsSchema: {
@@ -240,5 +247,38 @@ describe("POST /api/orders — server-side group pricing (client amount ignored)
 
     expect(res.status).toBe(201);
     expect(await lastInsertedAmount()).toBe("100");
+  });
+});
+
+describe("PATCH /api/orders/:id — admin only (operators cannot modify status)", () => {
+  it("returns 401 when no Authorization header is sent", async () => {
+    const res = await request(app).patch("/api/orders/1").send({ status: "processing" });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for an operator token — rejected before any order lookup, so even the assigned operator is blocked", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1")
+      .send({ status: "processing" })
+      .set("Authorization", `Bearer ${makeOperatorToken()}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for a JWT with role != admin (privilege escalation blocked)", async () => {
+    const badRoleToken = jwt.sign({ email: "op@test.com", role: "operator" }, TEST_SECRET, { expiresIn: "1h" });
+    const res = await request(app)
+      .patch("/api/orders/1")
+      .send({ status: "processing" })
+      .set("Authorization", `Bearer ${badRoleToken}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("still lets an admin update an order (200 with the order body)", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1")
+      .send({ status: "processing" })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orderNumber: "TEST000001" });
   });
 });

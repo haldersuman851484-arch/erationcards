@@ -636,7 +636,7 @@ export const getUpdateOrderStatusUrl = (id: number,) => {
 }
 
 /**
- * @summary Update order status (operator/admin)
+ * @summary Update order status (admin only)
  */
 export const updateOrderStatus = async (id: number,
     orderStatusUpdate: OrderStatusUpdate, options?: RequestInit): Promise<Order> => {
@@ -685,7 +685,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateOrderStatusMutationError = ErrorType<unknown>
 
     /**
- * @summary Update order status (operator/admin)
+ * @summary Update order status (admin only)
  */
 export const useUpdateOrderStatus = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderStatus>>, TError,{id: number;data: BodyType<OrderStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
