@@ -1012,6 +1012,79 @@ function PrintStatusView({
   }
 
   /**
+   * A6 Delhivery shipping label (105 × 148 mm), content anchored at the TOP of
+   * the page. Static HTML, no scripts; barcode encodes the Delhivery waybill.
+   */
+  function printShippingLabel(o: any, awb: string) {
+    const customerName = escHtml((o.deliveryName || o.customerName || "").toUpperCase());
+    const placeLine = escHtml([o.district, o.pincode].filter(Boolean).join(", "));
+    const rawPhone = String(o.customerPhone || "");
+    const phone = escHtml(rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`);
+    const orderNumHtml = escHtml(String(o.orderNumber || ""));
+    const awbSvg = buildBarcodeSvg(awb, awb); // digits rendered below the bars
+    const invoiceDate = escHtml(new Date().toLocaleDateString("en-US", {
+      month: "long", day: "numeric", year: "numeric",
+    }));
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Shipping Label &#8212; Order #${orderNumHtml}</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial,Helvetica,sans-serif;color:#000}
+  @page{size:105mm 148mm;margin:0}
+  html,body{width:105mm;height:147mm}
+  body{background:#fff;overflow:hidden}
+  /* Content block anchored to the TOP of the A6 sheet */
+  .label{padding:4mm 6mm 0}
+  .prepaid-row{display:flex;justify-content:flex-end}
+  .prepaid{border:0.5mm solid #555;padding:0.6mm 2.4mm;font-size:5mm;font-weight:700;letter-spacing:0.2mm}
+  .ci{font-size:3.6mm;margin-top:3.5mm}
+  .name{font-size:4.8mm;font-weight:700;text-transform:uppercase;margin-top:0.8mm}
+  .main{display:flex;justify-content:space-between;align-items:flex-end;gap:4mm;margin-top:2mm}
+  .left{min-width:0}
+  .line{font-size:3.9mm;margin-top:1.4mm}
+  .ord-row{display:flex;gap:2mm;margin-top:3mm}
+  .ord-box{border:0.4mm solid #444;padding:1.2mm 2.2mm;font-size:4mm;font-weight:600;white-space:nowrap}
+  .dl-box{border:0.4mm solid #444;padding:1.2mm 2mm;font-size:4mm;font-weight:600}
+  .bc{flex-shrink:0}
+  .bc svg{width:40mm;height:19mm;display:block}
+  .footer{margin-top:7mm;text-align:center}
+  .inv{font-size:2.9mm}
+  .auto{font-size:2.9mm;font-weight:700;margin-top:1mm}
+  .notice{font-size:2.4mm;font-style:italic;margin-top:1mm}
+</style>
+</head>
+<body>
+<div class="label">
+  <div class="prepaid-row"><span class="prepaid">PREPAID</span></div>
+  <p class="ci">Customer Info</p>
+  <p class="name">${customerName}</p>
+  <div class="main">
+    <div class="left">
+      <p class="line">${placeLine}</p>
+      <p class="line">${phone}</p>
+      <div class="ord-row">
+        <span class="ord-box">Order #${orderNumHtml}</span>
+        <span class="dl-box">DL</span>
+      </div>
+    </div>
+    <div class="bc">${awbSvg}</div>
+  </div>
+  <div class="footer">
+    <p class="inv">Invoice Date: ${invoiceDate} | Email: help@printpvccard.in | www.printpvccard.in</p>
+    <p class="auto">THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE</p>
+    <p class="notice">Notice: www.printpvccard.in is not a government portal. It is a PVC card printing portal</p>
+  </div>
+</div>
+</body>
+</html>`;
+
+    printHtmlInPlace(html);
+  }
+
+  /**
    * Build the A6 shipping label (105 × 148 mm) as a real PDF and download it
    * as `shipping-label-<orderNumber>.pdf`. Mirrors the printed label exactly:
    * top-aligned content, PREPAID box, customer info, boxed Order # (never
@@ -1156,7 +1229,7 @@ function PrintStatusView({
       queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
       queryClient.invalidateQueries({ queryKey: ["phone-history"] });
       toast({ title: `Shipment created — AWB ${awb}` });
-      downloadShippingLabelPdf(data.order ?? order, awb);
+      printShippingLabel(data.order ?? order, awb);
     } catch {
       toast({ title: "Failed to create shipment. Check your connection.", variant: "destructive" });
     } finally {
