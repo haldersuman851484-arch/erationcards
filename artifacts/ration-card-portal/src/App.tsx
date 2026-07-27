@@ -19,6 +19,7 @@ import Shipping from "./pages/Shipping";
 import DistrictPage from "./pages/DistrictPage";
 
 import OrderUpload from "./pages/OrderUpload";
+import Receipt from "./pages/Receipt";
 import OperatorRegister from "./pages/operator/Register";
 import OperatorLogin from "./pages/operator/Login";
 import OperatorDashboard from "./pages/operator/Dashboard";
@@ -60,6 +61,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/order" component={Order} />
       <Route path="/order-upload/:orderNumber" component={OrderUpload} />
+      <Route path="/receipt/:orderNumber" component={Receipt} />
       <Route path="/track" component={TrackOrder} />
       <Route path="/download" component={DownloadCard} />
       <Route path="/about" component={About} />

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, useLocation } from "wouter";
+import { Link, useParams, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -161,15 +161,11 @@ export default function OrderUpload() {
             </div>
             <span className="font-bold text-slate-900 text-sm">PVC Card Portal</span>
           </div>
-          <a
-            href={`${BASE}/api/orders/track?orderNumber=${orderNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+          <Link href={`/receipt/${orderNumber}`}>
+            <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" data-testid="button-download-receipt">
               <Download className="w-3.5 h-3.5" /> Download Receipt
             </Button>
-          </a>
+          </Link>
         </div>
       </header>
 

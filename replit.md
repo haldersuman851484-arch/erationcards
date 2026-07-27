@@ -41,6 +41,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 - **Uploads via env var** — `UPLOADS_DIR` controls where payment screenshots land; omitting it defaults to `uploads/` relative to the server binary.
 - **JWT auth, no sessions** — `SESSION_SECRET` signs JWTs for both admin and operator tokens (7-day expiry).
 - **Order route authorization** — list/detail/stats/recent/status-PATCH/assign require an admin token; order detail and status-PATCH also accept the token of the operator the order is assigned to. Public by design: order creation, `GET /orders/track` (by order number), `GET /orders/:id/tracking`, card-PDF upload.
+- **Customer receipt** — public frontend page at `/receipt/:orderNumber` (fed by the public track endpoint) renders the payment receipt; "Download PDF" uses the browser print dialog (print CSS scoped to `#receipt-sheet`, A4), same pattern as the admin shipping label. Maps all six `payment_status` enum values (PAID / pending / failed / refunded) — don't reduce it back to confirmed-only.
 
 ## Product
 

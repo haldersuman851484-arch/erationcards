@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { Link } from "wouter";
 import { Navbar, Footer, BRAND } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useTrackOrder, getTrackOrderQueryKey, useSubmitReview } from "@workspace/api-client-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, MessageCircle, MapPin, CalendarClock, ExternalLink, Star, CheckCircle2, Upload, FileCheck, ChevronDown, ChevronUp, Download } from "lucide-react";
 
 type PdfEntry = { cardIndex: number; pdfUrl: string; uploadedAt: string };
 
@@ -437,6 +438,12 @@ export default function TrackOrder() {
                       <p className="font-medium text-emerald-600">₹{order.amount}</p>
                     </div>
                   </div>
+
+                  <Link href={`/receipt/${order.orderNumber}`}>
+                    <Button variant="outline" size="sm" className="gap-1.5" data-testid="link-download-receipt">
+                      <Download className="w-3.5 h-3.5" /> Download Receipt
+                    </Button>
+                  </Link>
                   {order.trackingNumber && (() => {
                     const isShipped = order.status === "dispatched" || order.status === "delivered";
                     const courier = isShipped ? getCourierTrackingUrl(order.trackingNumber) : null;
