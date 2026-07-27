@@ -1,4 +1,18 @@
 import { defineConfig, devices } from "@playwright/test";
+import { execSync } from "node:child_process";
+
+// The Playwright-bundled chromium can't run on NixOS (missing shared libs),
+// so use the system chromium from the Nix environment when available.
+function systemChromium(): string | undefined {
+  if (process.env.PLAYWRIGHT_CHROMIUM_PATH) return process.env.PLAYWRIGHT_CHROMIUM_PATH;
+  try {
+    return execSync("which chromium", { encoding: "utf8" }).trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const executablePath = systemChromium();
 
 export default defineConfig({
   testDir: "./tests",
@@ -13,12 +27,12 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: { ...devices["Desktop Chrome"], launchOptions: { executablePath } },
       testIgnore: ["**/track-order-mobile.spec.ts"],
     },
     {
       name: "mobile-chrome",
-      use: { ...devices["Pixel 5"] },
+      use: { ...devices["Pixel 5"], launchOptions: { executablePath } },
       testMatch: ["**/track-order-mobile.spec.ts"],
     },
   ],
