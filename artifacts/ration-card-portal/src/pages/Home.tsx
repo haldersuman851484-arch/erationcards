@@ -703,7 +703,7 @@ export default function Home() {
                   <span className="text-xs text-slate-500 ml-1.5">{t.rating}.0</span>
                 </div>
 
-                <p className="text-slate-600 text-sm leading-relaxed flex-1">"{t.quote}"</p>
+                <p className="font-bengali text-slate-600 text-sm leading-relaxed flex-1">"{t.quote}"</p>
 
                 <p className="text-xs text-slate-400">{t.date}</p>
               </div>

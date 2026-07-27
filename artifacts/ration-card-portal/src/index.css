@@ -1,6 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 @plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
@@ -58,6 +58,7 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --font-sans: var(--app-font-sans);
+  --font-display: var(--app-font-display);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
@@ -108,7 +109,9 @@
   --sidebar-accent-foreground: 222.2 47.4% 11.2%;
   --sidebar-ring: 190 100% 42%;
 
-  --app-font-sans: 'Inter', sans-serif;
+  --app-font-sans: 'DM Sans', sans-serif;
+  --app-font-display: 'Plus Jakarta Sans', sans-serif;
+  --app-font-bengali: 'Hind Siliguri', 'DM Sans', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   
@@ -162,6 +165,13 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--app-font-display);
+  }
+  /* Bengali script sections */
+  [lang="bn"], .font-bengali {
+    font-family: var(--app-font-bengali);
   }
 }
 
