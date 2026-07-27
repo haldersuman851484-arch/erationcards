@@ -224,7 +224,11 @@
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
-    <!-- Fonts are self-hosted via @fontsource imports in src/index.css -->
+    <!-- Fonts are self-hosted via @fontsource imports in src/index.css.
+         Preload only the woff2 files used above the fold on the homepage. -->
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/node_modules/@fontsource/dm-sans/files/dm-sans-latin-400-normal.woff2" />
   </head>
   <body>
     <div id="root"></div>
