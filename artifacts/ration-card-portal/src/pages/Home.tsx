@@ -350,7 +350,6 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-
       {/* Hero Section */}
       <section className="bg-slate-50 border-b border-slate-200">
         <div className="container mx-auto px-4 py-20 md:py-32 flex flex-col md:flex-row items-center gap-12">
@@ -384,7 +383,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Stats Bar */}
       <section className="bg-primary py-10">
         <div className="container mx-auto px-4">
@@ -399,7 +397,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Sample Card Gallery */}
       <section className="py-20 bg-white border-b border-slate-100">
         <div className="container mx-auto px-4">
@@ -516,7 +513,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Quick Actions */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -572,7 +568,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* 3 Easy Steps */}
       <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto px-4">
@@ -605,7 +600,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Ration Card Types */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -630,7 +624,6 @@ export default function Home() {
           </p>
         </div>
       </section>
-
       {/* NEW: ABHA / E-SHRAM / GENERAL PVC cards */}
       <section className="py-20 bg-gradient-to-br from-primary/5 via-white to-cyan-50 border-y border-slate-100">
         <div className="container mx-auto px-4">
@@ -639,7 +632,7 @@ export default function Home() {
               <CreditCard className="w-4 h-4" />
               New Services
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Now Also Printing ABHA, E-SHRAM &amp; GENERAL Cards</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4"> We are Also Printing ABHA, E-SHRAM & GENERAL Cards</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
               Get the same premium PVC print for your ABHA health card, E-SHRAM labour card, or any other card — with doorstep delivery across West Bengal.
             </p>
@@ -660,7 +653,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Customer Testimonials */}
       <section className="py-20 bg-slate-50 border-y border-slate-200">
         <div className="container mx-auto px-4">
@@ -719,7 +711,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Features */}
       <section className="py-20 bg-white border-b border-slate-100">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
@@ -764,7 +755,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* District Coverage */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-4">
@@ -795,7 +785,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
       {/* Bengali Section */}
       <section className="py-16 bg-primary" lang="bn">
         <div className="container mx-auto px-4 text-center">
@@ -818,7 +807,6 @@ export default function Home() {
           </Link>
         </div>
       </section>
-
       <Footer />
     </div>
   );
