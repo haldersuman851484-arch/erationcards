@@ -443,13 +443,7 @@ importers:
 
   artifacts/ration-card-portal:
     dependencies:
-      '@fontsource/dm-sans':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/hind-siliguri':
-        specifier: ^5.3.0
-        version: 5.3.0
-      '@fontsource/plus-jakarta-sans':
+      '@fontsource/inter':
         specifier: ^5.3.0
         version: 5.3.0
       '@workspace/pricing':
@@ -843,14 +837,8 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
-  '@fontsource/dm-sans@5.3.0':
-    resolution: {integrity: sha512-lYJtMXXO28q1z+yz+z8XKd0s4hXaa9QdkETzkyD760sidCv5heI86weYA0sx0Nc4pAMAQTUuyf4gO44cYKKS9g==}
-
-  '@fontsource/hind-siliguri@5.3.0':
-    resolution: {integrity: sha512-jTxXVXLTUYpiCqQ8zGzX9gK4pHkJ6nOn05nKqFjPEpqf3VY6gGREKAIvHfHprE/6N4ittSudnHsMPT10QQfgtw==}
-
-  '@fontsource/plus-jakarta-sans@5.3.0':
-    resolution: {integrity: sha512-9WRw3G74Ve4cyPApAZSXLPY5DiLOZXDn7Q7dIBjFBpA0Pj56ljDItEdy2UUajjJxRuTg2HkMLO5C3K2nAQORWg==}
+  '@fontsource/inter@5.3.0':
+    resolution: {integrity: sha512-RofMylZmjlJEfELXeNHFWBRcSs75rGU/6bV2S2jfnvv/3rPXPGe0LgUJTklcHZ9lM4OZmAVFhcJPnACfb91A3g==}
 
   '@gerrit0/mini-shiki@3.23.0':
     resolution: {integrity: sha512-bEMORlG0cqdjVyCEuU0cDQbORWX+kYCeo0kV1lbxF5bt4r7SID2l9bqsxJEM0zndaxpOUT7riCyIVEuqq/Ynxg==}
@@ -3852,11 +3840,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@fontsource/dm-sans@5.3.0': {}
-
-  '@fontsource/hind-siliguri@5.3.0': {}
-
-  '@fontsource/plus-jakarta-sans@5.3.0': {}
+  '@fontsource/inter@5.3.0': {}
 
   '@gerrit0/mini-shiki@3.23.0':
     dependencies:

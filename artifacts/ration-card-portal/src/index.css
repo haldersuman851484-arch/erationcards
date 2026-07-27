@@ -1,20 +1,10 @@
-/* Self-hosted fonts (woff2 served from our own origin via @fontsource).
+/* Self-hosted Inter (woff2 served from our own origin via @fontsource).
    Only the weights actually used are imported. font-display: swap is built in. */
-@import "@fontsource/plus-jakarta-sans/latin-400.css";
-@import "@fontsource/plus-jakarta-sans/latin-500.css";
-@import "@fontsource/plus-jakarta-sans/latin-600.css";
-@import "@fontsource/plus-jakarta-sans/latin-700.css";
-@import "@fontsource/plus-jakarta-sans/latin-800.css";
-@import "@fontsource/dm-sans/latin-400.css";
-@import "@fontsource/dm-sans/latin-500.css";
-@import "@fontsource/dm-sans/latin-600.css";
-@import "@fontsource/dm-sans/latin-700.css";
-@import "@fontsource/hind-siliguri/bengali-400.css";
-@import "@fontsource/hind-siliguri/bengali-500.css";
-@import "@fontsource/hind-siliguri/bengali-600.css";
-@import "@fontsource/hind-siliguri/latin-400.css";
-@import "@fontsource/hind-siliguri/latin-500.css";
-@import "@fontsource/hind-siliguri/latin-600.css";
+@import "@fontsource/inter/latin-300.css";
+@import "@fontsource/inter/latin-400.css";
+@import "@fontsource/inter/latin-500.css";
+@import "@fontsource/inter/latin-600.css";
+@import "@fontsource/inter/latin-700.css";
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -75,7 +65,6 @@
   --color-sidebar-ring: hsl(var(--sidebar-ring));
 
   --font-sans: var(--app-font-sans);
-  --font-display: var(--app-font-display);
   --font-serif: var(--app-font-serif);
   --font-mono: var(--app-font-mono);
 
@@ -126,9 +115,7 @@
   --sidebar-accent-foreground: 222.2 47.4% 11.2%;
   --sidebar-ring: 190 100% 42%;
 
-  --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-display: 'Plus Jakarta Sans', sans-serif;
-  --app-font-bengali: 'Hind Siliguri', 'DM Sans', sans-serif;
+  --app-font-sans: 'Inter', sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   
@@ -182,13 +169,6 @@
   }
   body {
     @apply font-sans antialiased bg-background text-foreground;
-  }
-  h1, h2, h3, h4 {
-    font-family: var(--app-font-display);
-  }
-  /* Bengali script sections */
-  [lang="bn"], .font-bengali {
-    font-family: var(--app-font-bengali);
   }
 }
 
