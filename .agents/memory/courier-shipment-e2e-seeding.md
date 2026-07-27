@@ -1,0 +1,29 @@
+---
+name: Courier shipment e2e seeding
+description: How to make the courier dashboard's shipment buttons appear for a test order before UI/e2e testing shipment flows
+---
+
+# Courier shipment e2e seeding
+
+The courier Print Status view only shows the pinned bottom-right shipment button
+("Create Shipment with Delhivery" / "Download Shipping Label" / "Cancel Shipment")
+when **both** are true for the selected order:
+
+1. `isPrinted` — order status is `printed`, `dispatched`, or `delivered`
+2. `allCardsDownloaded` — every expected card has a `rationCardPdfs` entry with `downloaded: true`
+
+**Why:** test orders dispatched directly via the API (`POST /api/orders/:id/dispatch`)
+get a tracking number but have empty `rationCardPdfs`, so the button never renders
+and a UI tester reports the flow "missing". This cost a failed e2e round on 2026-07-27.
+
+**How to apply:** before e2e-testing any shipment UI (create/cancel/label), seed the
+order state through the real endpoints — no SQL needed:
+
+1. `POST /api/orders/:orderNumber/upload-card-pdf` (public, multipart: file field `pdf`,
+   body field `cardIndex`, one per card — quantity N needs indexes 0..N-1)
+2. `PATCH /api/orders/:id/pdfs/:cardIndex/downloaded` with an admin Bearer token
+3. Ensure status is printed/dispatched (dispatch API or status PATCH)
+
+Admin token for scripts: `POST /api/admin/login` with ADMIN_EMAIL/ADMIN_PASSWORD env,
+or `createAdminToken()` from the api-server's auth lib (signs with SESSION_SECRET).
+Note: `GET /api/orders` (list/quickSearch) is admin-only — unauthenticated callers get 401.

@@ -90,8 +90,13 @@ const PUBLIC_CARD_PRICE = 50;
 const OPERATOR_CARD_PRICE = 40;
 
 // GET /orders - list all orders
+// Courier/admin only — rows carry full customer contact details (name, phone,
+// address, ration-card number), so unauthenticated access would leak PII.
 router.get("/orders", async (req: Request, res: Response) => {
   try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
     const params = ListOrdersQueryParams.parse(req.query);
     const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
     const page = params.page ?? 1;

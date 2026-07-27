@@ -14,6 +14,7 @@ import request from "supertest";
 import { db, ordersTable } from "@workspace/db";
 import { inArray } from "drizzle-orm";
 import app from "../app";
+import { createAdminToken } from "../lib/auth";
 
 // ── Seed helpers ──────────────────────────────────────────────────────────────
 
@@ -116,12 +117,20 @@ afterAll(async () => {
 // ── Helper ────────────────────────────────────────────────────────────────────
 
 function get(path: string) {
-  return request(app).get(path);
+  // GET /api/orders is courier/admin-only — attach a real admin token
+  return request(app)
+    .get(path)
+    .set("Authorization", `Bearer ${createAdminToken("integration-tests@printpvccard.in", "admin")}`);
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────────
 
 describe("GET /api/orders", () => {
+  it("rejects requests without an admin token", async () => {
+    const res = await request(app).get("/api/orders?limit=1");
+    expect(res.status).toBe(401);
+  });
+
   it("returns a paginated list with orders, total, page, and limit fields", async () => {
     const res = await get("/api/orders?limit=5&page=1");
     expect(res.status).toBe(200);

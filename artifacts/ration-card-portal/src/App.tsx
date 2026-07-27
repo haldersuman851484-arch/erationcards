@@ -30,6 +30,7 @@ import AdminLogin from "./pages/admin/Login";
 import AdminDashboard from "./pages/admin/Dashboard";
 import PublicCourierDashboard from "./pages/admin/PublicCourierDashboard";
 import OperatorCourierDashboard from "./pages/admin/OperatorCourierDashboard";
+import ShippingLabel from "./pages/admin/ShippingLabel";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ function Router() {
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/courier/public" component={PublicCourierDashboard} />
       <Route path="/admin/courier/operator" component={OperatorCourierDashboard} />
+      <Route path="/admin/shipping-label/:orderNumber" component={ShippingLabel} />
       
       <Route component={NotFound} />
     </Switch>

@@ -8,11 +8,13 @@
  * then confirms the search endpoint responds quickly and returns results.
  * It cleans up after itself regardless of pass/fail.
  *
- * Requires MYSQL_DATABASE_URL (same env var the api-server uses).
+ * Requires MYSQL_DATABASE_URL (same env var the api-server uses) and
+ * SESSION_SECRET (must match the target server's — GET /orders is admin-only).
  */
 
 import { db, ordersTable } from "@workspace/db";
 import { inArray } from "drizzle-orm";
+import { createAdminToken } from "../lib/auth";
 
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:8080/api";
 const SEED_COUNT = 10_000;
@@ -65,7 +67,9 @@ async function cleanupOrders(orderNumbers: string[]) {
 async function measureSearch(search: string): Promise<{ elapsed: number; total: number }> {
   const url = `${BASE_URL}/orders?search=${encodeURIComponent(search)}&limit=20`;
   const start = performance.now();
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${createAdminToken("smoke-test@printpvccard.in", "admin")}` },
+  });
   const elapsed = performance.now() - start;
   if (!res.ok) throw new Error(`HTTP ${res.status} for search="${search}": ${await res.text()}`);
   const data = (await res.json()) as { total: number };

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import JsBarcode from "jsbarcode";
-import { jsPDF } from "jspdf";
 import { useLocation, Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -625,6 +624,7 @@ function PrintStatusView({
   onSearchChange: (value: string) => void;
   onSearchClear: () => void;
 }) {
+  const [, setLocation] = useLocation();
   const debouncedSearch = useDebounce(searchValue, 300);
   const [markingId, setMarkingId] = useState<number | null>(null);
   const [undoOrderId, setUndoOrderId] = useState<number | null>(null);
@@ -1085,103 +1085,11 @@ function PrintStatusView({
   }
 
   /**
-   * Build the A6 shipping label (105 × 148 mm) as a real PDF and download it
-   * as `shipping-label-<orderNumber>.pdf`. Mirrors the printed label exactly:
-   * top-aligned content, PREPAID box, customer info, boxed Order # (never
-   * PRN), waybill barcode with digits below, help@printpvccard.in footer.
+   * Redirect to the full-page shipping label view for this order
+   * (reference-portal style: label shown on its own light-grey page).
    */
-  function downloadShippingLabelPdf(o: any, awb: string) {
-    try {
-      const name = (o.deliveryName || o.customerName || "").toUpperCase();
-      const placeLine = [o.district, o.pincode].filter(Boolean).join(", ");
-      const rawPhone = String(o.customerPhone || "");
-      const phone = rawPhone ? (rawPhone.startsWith("+") ? rawPhone : `+91${rawPhone}`) : "";
-      const orderLabel = `Order #${o.orderNumber || ""}`;
-      const invoiceDate = new Date().toLocaleDateString("en-US", {
-        month: "long", day: "numeric", year: "numeric",
-      });
-
-      // Waybill barcode → high-res canvas (digits below the bars), embedded as PNG
-      const canvas = document.createElement("canvas");
-      JsBarcode(canvas, awb, {
-        format: "CODE128",
-        displayValue: true,
-        fontSize: 22,
-        textMargin: 4,
-        height: 80,
-        width: 3,
-        margin: 6,
-      });
-      const barcodePng = canvas.toDataURL("image/png");
-
-      const doc = new jsPDF({ unit: "mm", format: [105, 148] });
-      const pt = (mm: number) => mm * 2.8346; // CSS mm font-size → pt (parity with printed label)
-      const L = 6;   // left content edge
-      const R = 99;  // right content edge
-
-      // PREPAID box — top right
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(pt(5));
-      const prepaidW = doc.getTextWidth("PREPAID");
-      doc.setDrawColor(85);
-      doc.setLineWidth(0.5);
-      doc.rect(R - prepaidW - 4.8, 4, prepaidW + 4.8, 6.6);
-      doc.text("PREPAID", R - prepaidW - 2.4, 4.9, { baseline: "top" });
-
-      // Customer info block
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(pt(3.6));
-      doc.text("Customer Info", L, 14.5, { baseline: "top" });
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(pt(4.8));
-      doc.text(name, L, 18.9, { baseline: "top" });
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(pt(3.9));
-      doc.text(placeLine, L, 27.1, { baseline: "top" });
-      doc.text(phone, L, 32.4, { baseline: "top" });
-
-      // Boxed Order # + DL
-      const boxTop = 39.3;
-      const boxH = 6.8;
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(pt(4));
-      doc.setDrawColor(68);
-      doc.setLineWidth(0.4);
-      const ordW = doc.getTextWidth(orderLabel) + 4.4;
-      doc.rect(L, boxTop, ordW, boxH);
-      doc.text(orderLabel, L + 2.2, boxTop + 1.4, { baseline: "top" });
-      const dlW = doc.getTextWidth("DL") + 4;
-      doc.rect(L + ordW + 2, boxTop, dlW, boxH);
-      doc.text("DL", L + ordW + 4, boxTop + 1.4, { baseline: "top" });
-
-      // Barcode — right side, bottom-aligned with the Order # row
-      const bcW = 40;
-      const bcH = Math.min(20, (canvas.height / canvas.width) * bcW);
-      doc.addImage(barcodePng, "PNG", R - bcW, boxTop + boxH - bcH, bcW, bcH);
-
-      // Footer — centered
-      const cx = 105 / 2;
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(pt(2.9));
-      doc.text(
-        `Invoice Date: ${invoiceDate} | Email: help@printpvccard.in | www.printpvccard.in`,
-        cx, 53.1, { baseline: "top", align: "center" },
-      );
-      doc.setFont("helvetica", "bold");
-      doc.text("THIS IS AN AUTO-GENERATED LABEL AND DOES NOT NEED SIGNATURE", cx, 57, {
-        baseline: "top", align: "center",
-      });
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(pt(2.4));
-      doc.text(
-        "Notice: www.printpvccard.in is not a government portal. It is a PVC card printing portal",
-        cx, 60.9, { baseline: "top", align: "center" },
-      );
-
-      doc.save(`shipping-label-${o.orderNumber || awb}.pdf`);
-    } catch {
-      toast({ title: "Could not build the shipping label PDF. Please try again.", variant: "destructive" });
-    }
+  function openShippingLabelPage(o: any) {
+    setLocation(`/admin/shipping-label/${encodeURIComponent(String(o.orderNumber || ""))}`);
   }
 
   /**
@@ -1191,9 +1099,9 @@ function PrintStatusView({
   async function handleCreateShipment() {
     if (!order || creatingShipment) return;
 
-    // Shipment already exists — download its label, never create a duplicate
+    // Shipment already exists — open its label page, never create a duplicate
     if (order.trackingNumber) {
-      downloadShippingLabelPdf(order, String(order.trackingNumber));
+      openShippingLabelPage(order);
       return;
     }
 
@@ -1206,11 +1114,11 @@ function PrintStatusView({
       const data: any = await r.json().catch(() => ({}));
 
       if (!r.ok) {
-        // "Already dispatched" still returns the waybill — download its label
+        // "Already dispatched" still returns the waybill — open its label page
         if (data?.trackingNumber) {
           queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
           queryClient.invalidateQueries({ queryKey: ["phone-history"] });
-          downloadShippingLabelPdf(order, String(data.trackingNumber));
+          openShippingLabelPage(order);
           return;
         }
         if (r.status === 504) {
@@ -1499,7 +1407,7 @@ function PrintStatusView({
           <button
             onClick={() =>
               order.trackingNumber
-                ? downloadShippingLabelPdf(order, String(order.trackingNumber))
+                ? openShippingLabelPage(order)
                 : handleCreateShipment()
             }
             disabled={creatingShipment || cancellingShipment}
