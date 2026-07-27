@@ -55,7 +55,7 @@ vi.mock("@workspace/db", () => {
     FamilyCardsSchema: {
       safeParse: (v: unknown) => ({ success: true, data: v ?? [] }),
     },
-    ALLOWED_CARD_TYPES: ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"],
+    ALLOWED_CARD_TYPES: ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II", "ABHA", "E-SHRAM", "GENERAL"],
   };
 });
 
@@ -168,5 +168,77 @@ describe("POST /api/orders — screenshot guard", () => {
       customerName: "Test Customer",
       paymentScreenshotUrl: expect.any(String),
     });
+  });
+});
+
+describe("POST /api/orders — server-side group pricing (client amount ignored)", () => {
+  /** The amount the route passed to db.insert(...).values(...) for the most recent POST. */
+  async function lastInsertedAmount(): Promise<string> {
+    const { db } = await import("@workspace/db");
+    // The mock's insert() always returns the same chain object, so calling it
+    // here hands us the shared `values` spy without touching real code paths.
+    const insertMock = db.insert as unknown as (
+      table: unknown,
+    ) => { values: { mock: { calls: Array<[{ amount: string }]> } } };
+    const lastCall = insertMock({}).values.mock.calls.at(-1);
+    if (!lastCall) throw new Error("no insert call captured");
+    return lastCall[0].amount;
+  }
+
+  it("public mixed order (1 PHH + 1 ABHA) stores ₹125 — 50 + 75, tier from total count", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .send({
+        ...VALID_PAYLOAD,
+        cardType: "PHH",
+        familyCards: [{ customerName: "Family Member", rationCardNumber: "RC99999", cardType: "ABHA" }],
+        amount: 1, // deliberately wrong — server must ignore it
+      })
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(await lastInsertedAmount()).toBe("125");
+  });
+
+  it("operator single ABHA stores ₹85 (operator special single rate)", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .send({ ...VALID_PAYLOAD, cardType: "ABHA", amount: 1 })
+      .set("Authorization", `Bearer ${makeOperatorToken()}`)
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(await lastInsertedAmount()).toBe("85");
+  });
+
+  it("operator 2 E-SHRAM stores ₹140 (2 × 70 operator special multi rate)", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .send({
+        ...VALID_PAYLOAD,
+        cardType: "E-SHRAM",
+        familyCards: [{ customerName: "Family Member", rationCardNumber: "RC88888", cardType: "E-SHRAM" }],
+        amount: 1,
+      })
+      .set("Authorization", `Bearer ${makeOperatorToken()}`)
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(await lastInsertedAmount()).toBe("140");
+  });
+
+  it("public 2-ration order still stores ₹100 (regression: 2 × 50)", async () => {
+    const res = await request(app)
+      .post("/api/orders")
+      .send({
+        ...VALID_PAYLOAD,
+        cardType: "PHH",
+        familyCards: [{ customerName: "Family Member", rationCardNumber: "RC77777", cardType: "PHH" }],
+        amount: 1,
+      })
+      .set("Content-Type", "application/json");
+
+    expect(res.status).toBe(201);
+    expect(await lastInsertedAmount()).toBe("100");
   });
 });

@@ -7,7 +7,7 @@ import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -17,8 +17,14 @@ import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/hooks/use-seo";
-
-const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
+import {
+  RATION_CARD_TYPES,
+  SPECIAL_CARD_TYPES,
+  ALLOWED_CARD_TYPES,
+  PRICING,
+  computeOrderAmount,
+  priceBreakdown,
+} from "@workspace/pricing";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -38,7 +44,7 @@ const orderSchema = z.object({
   state: z.string().min(1, "Select your state"),
   district: z.string().min(2, "Enter your district"),
   pincode: z.string().length(6, "Pincode must be 6 digits"),
-  cardType: z.enum(["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"]),
+  cardType: z.enum(ALLOWED_CARD_TYPES),
   quantity: z.coerce.number().min(1).max(10),
 });
 
@@ -52,15 +58,33 @@ const WB_DISTRICTS = [
   "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-// Must mirror the server's pricing in api-server routes/orders.ts:
-// single card ₹70; 2+ cards ₹50 each (public orders).
-const SINGLE_CARD_PRICE = 70;
-const MULTI_CARD_PRICE = 50;
+// Pricing lives in @workspace/pricing — shared with the API server, which
+// recomputes the amount authoritatively when the order is created.
+
+/** Card-category options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+function CardTypeOptions() {
+  return (
+    <>
+      <SelectGroup>
+        <SelectLabel>Ration Card</SelectLabel>
+        {RATION_CARD_TYPES.map((c) => (
+          <SelectItem key={c} value={c}>{c}</SelectItem>
+        ))}
+      </SelectGroup>
+      <SelectGroup>
+        <SelectLabel>Other PVC Cards</SelectLabel>
+        {SPECIAL_CARD_TYPES.map((c) => (
+          <SelectItem key={c} value={c}>{c}</SelectItem>
+        ))}
+      </SelectGroup>
+    </>
+  );
+}
 
 export default function Order() {
   useSeo({
-    title: "Apply for PVC Ration Card | ₹50 Only | Fast Delivery West Bengal",
-    description: "Fill out a simple form and get your PVC ration card printed and delivered to your door. ₹50 per card. All West Bengal districts served.",
+    title: "Apply for PVC Ration Card | From ₹50 Per Card | Fast Delivery West Bengal",
+    description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM or GENERAL card printed and delivered to your door. All West Bengal districts served.",
     canonical: "https://erationcards.in/order",
   });
   const [step, setStep] = useState(1);
@@ -136,7 +160,9 @@ export default function Order() {
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const amount = totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE * totalCards;
+  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
+  const amount = computeOrderAmount(allCardTypes, false);
+  const breakdown = priceBreakdown(allCardTypes, false);
 
   function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -284,17 +310,31 @@ export default function Order() {
                     <h2 className="text-2xl md:text-3xl font-extrabold leading-tight">
                       Get Your <span className="text-yellow-300">e Ration</span> Card
                     </h2>
-                    <div className="flex flex-wrap items-center gap-2 mt-3">
-                      {/* Single card pill */}
-                      <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1.5">
-                        <span className="text-white/80 text-xs font-medium">1 card</span>
-                        <span className="text-white text-base font-extrabold">₹70</span>
+                    <div className="mt-3 space-y-2">
+                      {/* Ration card pricing */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-white/90 text-[11px] font-bold uppercase tracking-wide w-full sm:w-44">Ration Card</span>
+                        <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
+                          <span className="text-white/80 text-xs font-medium">1 card</span>
+                          <span className="text-white text-sm font-extrabold">₹{PRICING.ration.single.public}</span>
+                        </div>
+                        <div className="relative flex items-center gap-1.5 bg-yellow-400 rounded-full px-3 py-1 shadow-md">
+                          <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
+                          <span className="text-yellow-900 text-xs font-medium">2+ cards</span>
+                          <span className="text-yellow-900 text-sm font-extrabold">₹{PRICING.ration.multi.public} each</span>
+                        </div>
                       </div>
-                      {/* Multi-card pill — highlighted */}
-                      <div className="relative flex items-center gap-1.5 bg-yellow-400 rounded-full px-3 py-1.5 shadow-md">
-                        <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none tracking-wide uppercase">SAVE</span>
-                        <span className="text-yellow-900 text-xs font-medium">2+ cards</span>
-                        <span className="text-yellow-900 text-base font-extrabold">₹50 each</span>
+                      {/* ABHA / E-SHRAM / GENERAL pricing */}
+                      <div className="flex flex-wrap items-center gap-2" data-testid="hero-special-pricing">
+                        <span className="text-white/90 text-[11px] font-bold uppercase tracking-wide w-full sm:w-44">ABHA · E-SHRAM · GENERAL</span>
+                        <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
+                          <span className="text-white/80 text-xs font-medium">1 card</span>
+                          <span className="text-white text-sm font-extrabold">₹{PRICING.special.single.public}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
+                          <span className="text-white/80 text-xs font-medium">2+ cards</span>
+                          <span className="text-white text-sm font-extrabold">₹{PRICING.special.multi.public} each</span>
+                        </div>
                       </div>
                     </div>
                     <p className="text-white/60 text-xs mt-1.5">incl. GST &amp; postage</p>
@@ -316,7 +356,7 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
-                      <CardDescription>Type Ration Card Holder Name, Card Number &amp; Select Ration Card Category</CardDescription>
+                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Category</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -329,7 +369,7 @@ export default function Order() {
                         )} />
                         <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Ration Card Number *</FormLabel>
+                            <FormLabel>Card Number *</FormLabel>
                             <FormControl><Input data-testid="input-ration-card-number" placeholder="00000 00000" {...field} /></FormControl>
                             <FormMessage />
                           </FormItem>
@@ -341,11 +381,7 @@ export default function Order() {
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
                             <SelectContent>
-                              <SelectItem value="AAY">AAY</SelectItem>
-                              <SelectItem value="PHH">PHH</SelectItem>
-                              <SelectItem value="SPHH">SPHH</SelectItem>
-                              <SelectItem value="RKSY-I">RKSY-I</SelectItem>
-                              <SelectItem value="RKSY-II">RKSY-II</SelectItem>
+                              <CardTypeOptions />
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -398,7 +434,7 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Add Another Card Details</CardTitle>
-                      <CardDescription>Type Ration Card Holder Name, Card Number &amp; Select Ration Card Category</CardDescription>
+                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Category</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="space-y-1">
@@ -407,7 +443,7 @@ export default function Order() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1">
-                          <label className="text-sm font-medium text-slate-700">Ration Card Number *</label>
+                          <label className="text-sm font-medium text-slate-700">Card Number *</label>
                           <Input data-testid="input-family-number" placeholder="00000 00000" value={subCard.rationCardNumber} onChange={(e) => setSubCard((s) => ({ ...s, rationCardNumber: e.target.value }))} />
                         </div>
                         <div className="space-y-1">
@@ -415,7 +451,7 @@ export default function Order() {
                           <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
                             <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Category" /></SelectTrigger>
                             <SelectContent>
-                              {CARD_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              <CardTypeOptions />
                             </SelectContent>
                           </Select>
                         </div>
@@ -526,17 +562,19 @@ export default function Order() {
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="text-slate-600">Rate per card</span>
-                        <span>₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</span>
-                      </div>
+                      {breakdown.map((line) => (
+                        <div key={line.group} className="flex justify-between text-sm mb-1" data-testid={`price-line-${line.group}`}>
+                          <span className="text-slate-600">{line.label} — {line.count} × ₹{line.unitPrice}</span>
+                          <span>₹{line.subtotal}</span>
+                        </div>
+                      ))}
                       <div className="flex justify-between text-sm mb-1">
                         <span className="text-slate-600">Total Cards</span>
                         <span>{totalCards}</span>
                       </div>
                       <div className="border-t border-primary/20 pt-2 mt-2 flex justify-between font-semibold text-lg">
                         <span>Amount to Pay</span>
-                        <span className="text-primary">₹{amount}</span>
+                        <span className="text-primary" data-testid="text-amount-to-pay">₹{amount}</span>
                       </div>
                     </div>
 

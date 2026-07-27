@@ -14,6 +14,7 @@ import {
   Download, FileText, ArrowLeft, Printer,
   Package, CheckCircle2, AlertCircle, ChevronRight, Search, X,
 } from "lucide-react";
+import { ALLOWED_CARD_TYPES } from "@workspace/pricing";
 
 const COURIER_OPTIONS = [
   { value: "ecom-express", label: "Ecom Express" },
@@ -22,7 +23,8 @@ const COURIER_OPTIONS = [
   { value: "xpressbees", label: "XpressBees" },
 ];
 
-const CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
+// All orderable categories (ration + ABHA/E-SHRAM/GENERAL) — shared source of truth.
+const CARD_TYPES = ALLOWED_CARD_TYPES;
 const COURIER_STORAGE_KEY = "courierDashboard_selectedCourier";
 
 function getAuthHeader(): Record<string, string> {

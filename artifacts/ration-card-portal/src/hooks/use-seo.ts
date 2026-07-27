@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const SITE_NAME = "PVC Card Portal";
 const DEFAULT_DESC =
-  "Order a durable PVC printed ration card online for West Bengal. Wallet-size, waterproof, fast doorstep delivery. ₹70 only. Non-government printing service.";
+  "Order a durable PVC printed ration card online for West Bengal. Wallet-size, waterproof, fast doorstep delivery. From ₹50 per card. Non-government printing service.";
 
 interface SeoOptions {
   title?: string;

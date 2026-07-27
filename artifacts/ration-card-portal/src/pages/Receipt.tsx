@@ -4,6 +4,7 @@ import { BRAND } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
 import { Download, ArrowLeft, CreditCard, AlertCircle, Loader2 } from "lucide-react";
+import { computeOrderAmount, perCardPrice } from "@workspace/pricing";
 
 /**
  * Customer payment receipt — public page at /receipt/:orderNumber.
@@ -96,7 +97,23 @@ export default function Receipt() {
     ...(((order as any).familyCards ?? []) as FamilyCard[]),
   ];
   const quantity = order.quantity || cards.length;
-  const unitPrice = order.amount / Math.max(quantity, 1);
+  // Reconstruct per-card prices from the shared pricing rules. The public
+  // track endpoint doesn't say whether an operator placed the order, so try
+  // the public scheme first, then the operator scheme — whichever reproduces
+  // the stored total priced this order (when both match, the prices are
+  // identical anyway). Orders whose stored amount matches neither (e.g.
+  // legacy or manually adjusted) fall back to an even split across cards.
+  const cardTypes = cards.map((c) => c.cardType);
+  let unitPrices: number[] | null = null;
+  for (const isOperator of [false, true]) {
+    if (Math.abs(computeOrderAmount(cardTypes, isOperator) - order.amount) < 0.005) {
+      unitPrices = cardTypes.map((t) => perCardPrice(t, cardTypes.length, isOperator));
+      break;
+    }
+  }
+  const evenUnit = order.amount / Math.max(quantity, 1);
+  const rowPrice = (i: number) => (unitPrices ? unitPrices[i] : evenUnit);
+  const uniformUnit = cards.every((_, i) => rowPrice(i) === rowPrice(0)) ? rowPrice(0) : null;
   const payKind: PayKind = PAY_GROUP[order.paymentStatus] ?? "unknown";
   const pill = payKind === "unknown"
     ? { label: String(order.paymentStatus || "UNKNOWN").toUpperCase(), style: PAYMENT_PILL.unknown.style }
@@ -225,7 +242,7 @@ export default function Receipt() {
                     <p className="text-xs text-slate-500 font-mono">{card.rationCardNumber}</p>
                   </td>
                   <td className="py-2.5 text-slate-600">{card.cardType}</td>
-                  <td className="py-2.5 text-right text-slate-800">₹{fmtMoney(unitPrice)}</td>
+                  <td className="py-2.5 text-right text-slate-800">₹{fmtMoney(rowPrice(i))}</td>
                 </tr>
               ))}
             </tbody>
@@ -236,8 +253,8 @@ export default function Receipt() {
               </tr>
             </tfoot>
           </table>
-          {quantity > 1 && (
-            <p className="text-xs text-slate-400 mt-2 text-right">{quantity} cards × ₹{fmtMoney(unitPrice)} per card</p>
+          {quantity > 1 && uniformUnit !== null && (
+            <p className="text-xs text-slate-400 mt-2 text-right">{quantity} cards × ₹{fmtMoney(uniformUnit)} per card</p>
           )}
         </div>
 

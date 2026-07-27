@@ -2,7 +2,11 @@ import { mysqlTable, text, int, timestamp, decimal, json, mysqlEnum, index } fro
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const ALLOWED_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
+// Card categories (and their pricing) live in @workspace/pricing so the
+// frontend and API server share one source of truth; re-exported here so
+// existing @workspace/db consumers keep working.
+import { ALLOWED_CARD_TYPES } from "@workspace/pricing";
+export { ALLOWED_CARD_TYPES, RATION_CARD_TYPES, SPECIAL_CARD_TYPES } from "@workspace/pricing";
 
 export const FamilyCardSchema = z.object({
   customerName: z.string().min(2, "customerName must be at least 2 characters"),

@@ -7,7 +7,7 @@ import { OperatorLayout } from "@/components/OperatorLayout";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +23,13 @@ import {
   QrCode, ImageIcon, AlertTriangle,
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import {
+  RATION_CARD_TYPES,
+  SPECIAL_CARD_TYPES,
+  ALLOWED_CARD_TYPES,
+  computeOrderAmount,
+  priceBreakdown,
+} from "@workspace/pricing";
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -32,9 +39,28 @@ const WB_DISTRICTS = [
   "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-const CARD_CATEGORIES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
-const SINGLE_CARD_PRICE = 70;
-const MULTI_CARD_PRICE = 40;
+// Card categories & operator pricing come from @workspace/pricing — shared
+// with the API server, which recomputes the amount when the order is created.
+
+/** Card-category options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+function CardTypeOptions() {
+  return (
+    <>
+      <SelectGroup>
+        <SelectLabel>Ration Card</SelectLabel>
+        {RATION_CARD_TYPES.map((c) => (
+          <SelectItem key={c} value={c}>{c}</SelectItem>
+        ))}
+      </SelectGroup>
+      <SelectGroup>
+        <SelectLabel>Other PVC Cards</SelectLabel>
+        {SPECIAL_CARD_TYPES.map((c) => (
+          <SelectItem key={c} value={c}>{c}</SelectItem>
+        ))}
+      </SelectGroup>
+    </>
+  );
+}
 
 type FamilyCard = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -47,7 +73,7 @@ const orderSchema = z.object({
   postOffice: z.string().min(2, "Post office required"),
   district: z.string().min(1, "Select district"),
   pincode: z.string().length(6, "6-digit pincode required"),
-  cardType: z.enum(CARD_CATEGORIES),
+  cardType: z.enum(ALLOWED_CARD_TYPES),
   quantity: z.coerce.number().min(1),
 });
 type OrderForm = z.infer<typeof orderSchema>;
@@ -119,7 +145,9 @@ export default function PlaceOrder() {
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const amount = totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE * totalCards;
+  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
+  const amount = computeOrderAmount(allCardTypes, true);
+  const breakdown = priceBreakdown(allCardTypes, true);
 
   const upiLink = merchantUpiId
     ? `upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Ration+Card`
@@ -258,15 +286,15 @@ export default function PlaceOrder() {
                         <FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
-                      <FormItem><FormLabel>Ration Card Number *</FormLabel>
-                        <FormControl><Input placeholder="Ration card number" {...field} /></FormControl>
+                      <FormItem><FormLabel>Card Number *</FormLabel>
+                        <FormControl><Input placeholder="Card number" {...field} /></FormControl>
                         <FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="cardType" render={({ field }) => (
                       <FormItem><FormLabel>Card Category *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
-                          <SelectContent>{CARD_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                          <SelectContent><CardTypeOptions /></SelectContent>
                         </Select>
                         <FormMessage /></FormItem>
                     )} />
@@ -302,7 +330,11 @@ export default function PlaceOrder() {
                   {/* Price summary */}
                   <div className="bg-primary/5 rounded-xl p-3 border border-primary/10 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-slate-500">Total: {totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</p>
+                      {breakdown.map((line) => (
+                        <p key={line.group} className="text-xs text-slate-500" data-testid={`price-line-${line.group}`}>
+                          {line.label}: {line.count} card{line.count !== 1 ? "s" : ""} × ₹{line.unitPrice}
+                        </p>
+                      ))}
                       <p className="text-sm font-bold text-primary">₹{amount} total</p>
                     </div>
                     <Badge variant="outline" className="border-primary/30 text-primary text-xs">{cardType}</Badge>
@@ -407,7 +439,11 @@ export default function PlaceOrder() {
                           </a>
                           <div className="bg-primary/5 rounded-lg p-2.5 border border-primary/10">
                             <p className="text-xs text-primary font-semibold">Amount: ₹{amount}</p>
-                            <p className="text-xs text-slate-500">{totalCards} card{totalCards !== 1 ? "s" : ""} × ₹{totalCards === 1 ? SINGLE_CARD_PRICE : MULTI_CARD_PRICE}</p>
+                            {breakdown.map((line) => (
+                              <p key={line.group} className="text-xs text-slate-500">
+                                {line.label}: {line.count} card{line.count !== 1 ? "s" : ""} × ₹{line.unitPrice}
+                              </p>
+                            ))}
                           </div>
                         </div>
                       </div>
@@ -463,14 +499,14 @@ export default function PlaceOrder() {
               <Input placeholder="Full name" value={subCard.customerName} onChange={e => setSubCard(p => ({ ...p, customerName: e.target.value }))} />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1.5">Ration Card Number *</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Number *</label>
               <Input placeholder="Card number" value={subCard.rationCardNumber} onChange={e => setSubCard(p => ({ ...p, rationCardNumber: e.target.value }))} />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Category *</label>
               <Select value={subCard.cardType} onValueChange={v => setSubCard(p => ({ ...p, cardType: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{CARD_CATEGORIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                <SelectContent><CardTypeOptions /></SelectContent>
               </Select>
             </div>
             {subError && <p className="text-sm text-red-500">{subError}</p>}

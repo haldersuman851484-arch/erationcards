@@ -10,6 +10,7 @@ import {
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
 import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
+import { computeOrderAmount } from "@workspace/pricing";
 
 // ── Delhivery tracking in-memory cache ──────────────────────────────────────
 interface DelhiveryScan {
@@ -122,10 +123,6 @@ type Log = {
 };
 
 const router = Router();
-
-const SINGLE_CARD_PRICE = 70;
-const PUBLIC_CARD_PRICE = 50;
-const OPERATOR_CARD_PRICE = 40;
 
 // GET /orders - list all orders
 // Courier/admin only — rows carry full customer contact details (name, phone,
@@ -253,8 +250,13 @@ router.post("/orders", async (req: Request, res: Response) => {
     const quantity = 1 + familyCards.length;
     const operatorId = parseOperatorToken(req);
     const isOperator = operatorId !== null;
-    const perCard = quantity === 1 ? SINGLE_CARD_PRICE : (isOperator ? OPERATOR_CARD_PRICE : PUBLIC_CARD_PRICE);
-    const amount = perCard * quantity;
+    // Group-aware pricing from @workspace/pricing: ration categories vs
+    // ABHA/E-SHRAM/GENERAL have different rates, and the single/multi tier is
+    // decided by the order's total card count. Client-sent amount is ignored.
+    const amount = computeOrderAmount(
+      [body.cardType, ...familyCards.map((c) => c.cardType)],
+      isOperator,
+    );
 
     await db
       .insert(ordersTable)

@@ -26,6 +26,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 
 ## Where things live
 
+- `lib/pricing/src/index.ts` — card catalog + pricing matrix (single source of truth shared by portal, API server, and DB schema)
 - `lib/db/src/schema/` — Drizzle MySQL schema (source of truth for DB shape)
 - `lib/db/drizzle.config.ts` — Drizzle-kit config (reads `MYSQL_DATABASE_URL`)
 - `artifacts/api-server/src/` — Express routes, auth, middleware
@@ -45,7 +46,13 @@ A web application for ordering PVC ration cards online — customers fill in det
 
 ## Product
 
-- **Order form** — customers enter personal details and select ration card type; each order gets a unique order number.
+- **Card products & pricing** — two price groups, defined in `@workspace/pricing` (`lib/pricing`):
+  - Ration cards (AAY, PHH, SPHH, RKSY-I, RKSY-II): public ₹70 single / ₹50 each for 2+; operator ₹70 single / ₹40 each for 2+.
+  - ABHA / E-SHRAM / GENERAL: public ₹100 single / ₹75 each for 2+; operator ₹85 single / ₹70 each for 2+.
+  - Mixed orders: the single-vs-multi tier is decided by the TOTAL card count in the order; each card is then billed at its own group's rate for that tier (e.g. public 1 PHH + 1 ABHA = ₹50 + ₹75 = ₹125).
+  - The server recomputes the amount on order creation (client-sent `amount` is ignored). To change prices, edit `lib/pricing/src/index.ts` only — forms, receipts, FAQ/SEO copy, and the API all read from it.
+  - Exception: `artifacts/ration-card-portal/index.html` (static meta tags + JSON-LD) states prices literally — update it by hand whenever prices change.
+- **Order form** — customers enter personal details and select a card category (ration or ABHA/E-SHRAM/GENERAL); each order gets a unique order number.
 - **UPI payment** — QR code + manual UPI ID shown after order; customer uploads a payment screenshot.
 - **Admin dashboard** — login-protected view of all orders with status management (pending → confirmed → dispatched).
 - **Operator portal** — separate login for field operators to view and update their assigned orders.

@@ -10,6 +10,7 @@ import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 import { useListApprovedReviews } from "@workspace/api-client-react";
 import { DISTRICTS } from "@/pages/DistrictPage";
+import { PRICING } from "@workspace/pricing";
 
 function HeroPVCCard() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -204,6 +205,32 @@ const CARD_TYPES = [
   },
 ];
 
+// The 3 non-ration PVC card products — pricing comes from @workspace/pricing
+// so this section always matches the order form and the server.
+const SPECIAL_CARD_PRODUCTS = [
+  {
+    code: "ABHA",
+    name: "ABHA Health Card",
+    desc: "Ayushman Bharat Health Account card printed on premium PVC — carry your health ID everywhere.",
+    color: "bg-sky-50 border-sky-200 text-sky-700",
+    badge: "bg-sky-100 text-sky-700",
+  },
+  {
+    code: "E-SHRAM",
+    name: "E-SHRAM Card",
+    desc: "Unorganised workers' E-SHRAM card in durable wallet size — waterproof and long-lasting.",
+    color: "bg-rose-50 border-rose-200 text-rose-700",
+    badge: "bg-rose-100 text-rose-700",
+  },
+  {
+    code: "GENERAL",
+    name: "General PVC Card",
+    desc: "Any other document or card printed as a premium PVC card — same quality and delivery.",
+    color: "bg-slate-50 border-slate-300 text-slate-700",
+    badge: "bg-slate-200 text-slate-700",
+  },
+];
+
 const STATS = [
   { value: "10,000+", label: "Cards Delivered", icon: Award },
   { value: "8,500+", label: "Happy Customers", icon: Star },
@@ -302,7 +329,7 @@ function formatReviewDate(iso: string): string {
 export default function Home() {
   useSeo({
     title: "Order PVC Ration Card Online | West Bengal",
-    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. ₹50 only.",
+    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. From ₹50 per card.",
     canonical: "https://erationcards.in/",
   });
 
@@ -343,7 +370,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link href="/order">
                 <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white shadow-md text-base px-8 h-12">
-                  Order PVC Card — ₹50
+                  Order PVC Card
                 </Button>
               </Link>
               <Link href="/track">
@@ -485,7 +512,7 @@ export default function Home() {
               All cards printed at <strong>85.6mm × 54mm</strong> (standard credit card size) on high-quality PVC with UV-resistant ink.
             </p>
             <Link href="/order">
-              <Button className="bg-primary hover:bg-primary/90 px-8">Order PVC Card — ₹50</Button>
+              <Button className="bg-primary hover:bg-primary/90 px-8">Order PVC Card</Button>
             </Link>
           </div>
         </div>
@@ -566,7 +593,7 @@ export default function Home() {
               <div className="w-16 h-16 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-2xl font-bold text-primary mb-6 relative z-10">
                 2
               </div>
-              <h3 className="text-xl font-semibold mb-3">Pay ₹50 via UPI</h3>
+              <h3 className="text-xl font-semibold mb-3">Pay via UPI</h3>
               <p className="text-slate-600">Pay the nominal processing fee securely via UPI (GPay, PhonePe, Paytm).</p>
             </div>
             <div className="flex flex-col items-center text-center">
@@ -602,6 +629,39 @@ export default function Home() {
             Not sure which category you have? It's printed on your existing ration card or visible in your e-Ration Card PDF from{" "}
             <a href="https://food.wb.gov.in" target="_blank" rel="noopener noreferrer" className="text-primary underline">food.wb.gov.in</a>.
           </p>
+        </div>
+      </section>
+
+      {/* NEW: ABHA / E-SHRAM / GENERAL PVC cards */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-white to-cyan-50 border-y border-slate-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-4">
+              <CreditCard className="w-4 h-4" />
+              New Services
+            </div>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Now Also Printing ABHA, E-SHRAM &amp; GENERAL Cards</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">
+              Get the same premium PVC print for your ABHA health card, E-SHRAM labour card, or any other card — with doorstep delivery across West Bengal.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+            {SPECIAL_CARD_PRODUCTS.map((ct) => (
+              <div key={ct.code} className={`border rounded-xl p-5 flex flex-col gap-2 ${ct.color}`} data-testid={`card-special-${ct.code}`}>
+                <span className={`self-start text-xs font-bold px-2 py-0.5 rounded-full ${ct.badge}`}>{ct.code}</span>
+                <h3 className="font-semibold text-sm leading-snug">{ct.name}</h3>
+                <p className="text-xs leading-relaxed opacity-80">{ct.desc}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-slate-700 font-medium mt-8">
+            ₹{PRICING.special.single.public} for one card · ₹{PRICING.special.multi.public} per card when you order 2 or more
+          </p>
+          <div className="text-center mt-6">
+            <Link href="/order">
+              <Button className="bg-primary hover:bg-primary/90 px-8">Order Now</Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -747,9 +807,10 @@ export default function Home() {
             বাংলায় PVC রেশন কার্ড অর্ডার করুন
           </h2>
           <p className="text-white/85 text-base md:text-lg max-w-2xl mx-auto leading-relaxed mb-6">
-            আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — মাত্র <strong className="text-white">₹৫০</strong> খরচে।
+            আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — সাশ্রয়ী মূল্যে।
             পশ্চিমবঙ্গের ২৩টি জেলায় দ্রুত ডেলিভারি। জলরোধী, টেকসই এবং ওয়ালেট সাইজের কার্ড।
             AAY, PHH, SPHH, RKSY-I এবং RKSY-II — সমস্ত ধরনের রেশন কার্ড সমর্থিত।
+            এখন ABHA, E-SHRAM এবং GENERAL কার্ডও PVC প্রিন্ট করা যায়।
           </p>
           <p className="text-white/70 text-sm mb-8">
             এটি একটি বেসরকারি মুদ্রণ পরিষেবা। পশ্চিমবঙ্গ সরকারের সাথে সম্পর্কিত নয়।

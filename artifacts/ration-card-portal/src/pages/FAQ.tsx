@@ -3,6 +3,7 @@ import { useSeo } from "@/hooks/use-seo";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
+import { PRICING } from "@workspace/pricing";
 
 const FAQS = [
   {
@@ -27,15 +28,15 @@ const FAQS = [
   },
   {
     q: "How is this different from the government ration card service?",
-    a: "The Government of West Bengal issues free digital e-Ration Cards (PDF format) through food.wb.gov.in. Our service is separate — we take your already-approved e-Ration Card and print it onto a durable, wallet-size PVC card for a nominal fee of ₹50. We do not issue, create, or modify any government documents. Official services (new applications, corrections, updates) are free at food.wb.gov.in.",
+    a: "The Government of West Bengal issues free digital e-Ration Cards (PDF format) through food.wb.gov.in. Our service is separate — we take your already-approved e-Ration Card and print it onto a durable, wallet-size PVC card for a small printing fee. We do not issue, create, or modify any government documents. Official services (new applications, corrections, updates) are free at food.wb.gov.in.",
   },
   {
     q: "Can I order PVC cards for all family members?",
-    a: "Yes. You can order a PVC card for every member listed on your ration card. The price is ₹50 per card for any quantity. You'll upload the PDF for each family member during the order process.",
+    a: `Yes. You can order a PVC card for every member listed on your ration card. Ration card prints cost ₹${PRICING.ration.single.public} for one card, or ₹${PRICING.ration.multi.public} per card when you order 2 or more together. You'll upload the PDF for each family member during the order process.`,
   },
   {
     q: "How do I place an order?",
-    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card category (AAY / PHH / SPHH / RKSY-I / RKSY-II), complete the UPI payment, and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
+    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card category (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), complete the UPI payment, and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
   },
   {
     q: "How long does delivery take?",
@@ -47,7 +48,7 @@ const FAQS = [
   },
   {
     q: "What is the cost of a PVC card?",
-    a: "A PVC ration card costs ₹50 per card (inclusive of printing and delivery), for any quantity.",
+    a: `A PVC ration card costs ₹${PRICING.ration.single.public} for a single card, or ₹${PRICING.ration.multi.public} per card when you order 2 or more (printing and delivery included). ABHA, E-SHRAM and GENERAL PVC cards cost ₹${PRICING.special.single.public} for a single card, or ₹${PRICING.special.multi.public} per card for 2 or more.`,
   },
   {
     q: "What payment methods are accepted?",
@@ -70,7 +71,7 @@ const FAQS = [
 export default function FAQ() {
   useSeo({
     title: "FAQ — PVC Ration Card Printing | AAY PHH SPHH RKSY West Bengal",
-    description: "Answers to common questions about PVC ration card printing: legality, card size (85.6mm×54mm), card types (AAY, PHH, SPHH, RKSY-I, RKSY-II), district delivery, pricing ₹50, and more.",
+    description: "Answers to common questions about PVC ration card printing: legality, card size (85.6mm×54mm), card types (AAY, PHH, SPHH, RKSY-I, RKSY-II, ABHA, E-SHRAM, GENERAL), district delivery, pricing from ₹50, and more.",
     canonical: "https://erationcards.in/faq",
   });
   return (
