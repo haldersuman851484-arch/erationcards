@@ -1,37 +1,54 @@
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/not-found";
 
 import Home from "./pages/Home";
-import Order from "./pages/Order";
-import TrackOrder from "./pages/TrackOrder";
-import DownloadCard from "./pages/DownloadCard";
-import About from "./pages/About";
-import Contact from "./pages/Contact";
-import FAQ from "./pages/FAQ";
-import Privacy from "./pages/Privacy";
-import Terms from "./pages/Terms";
-import Refund from "./pages/Refund";
-import Shipping from "./pages/Shipping";
-import DistrictPage from "./pages/DistrictPage";
 
-import OrderUpload from "./pages/OrderUpload";
-import Receipt from "./pages/Receipt";
-import OperatorRegister from "./pages/operator/Register";
-import OperatorLogin from "./pages/operator/Login";
-import OperatorDashboard from "./pages/operator/Dashboard";
-import OperatorPlaceOrder from "./pages/operator/PlaceOrder";
-import OperatorTrackOrder from "./pages/operator/OperatorTrackOrder";
-import OperatorDownloadCard from "./pages/operator/OperatorDownloadCard";
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Order = lazy(() => import("./pages/Order"));
+const TrackOrder = lazy(() => import("./pages/TrackOrder"));
+const DownloadCard = lazy(() => import("./pages/DownloadCard"));
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const Refund = lazy(() => import("./pages/Refund"));
+const Shipping = lazy(() => import("./pages/Shipping"));
+const DistrictPage = lazy(() => import("./pages/DistrictPage"));
 
-import AdminLogin from "./pages/admin/Login";
-import AdminDashboard from "./pages/admin/Dashboard";
-import PublicCourierDashboard from "./pages/admin/PublicCourierDashboard";
-import OperatorCourierDashboard from "./pages/admin/OperatorCourierDashboard";
-import ShippingLabel from "./pages/admin/ShippingLabel";
+const OrderUpload = lazy(() => import("./pages/OrderUpload"));
+const Receipt = lazy(() => import("./pages/Receipt"));
+const OperatorRegister = lazy(() => import("./pages/operator/Register"));
+const OperatorLogin = lazy(() => import("./pages/operator/Login"));
+const OperatorDashboard = lazy(() => import("./pages/operator/Dashboard"));
+const OperatorPlaceOrder = lazy(() => import("./pages/operator/PlaceOrder"));
+const OperatorTrackOrder = lazy(
+  () => import("./pages/operator/OperatorTrackOrder"),
+);
+const OperatorDownloadCard = lazy(
+  () => import("./pages/operator/OperatorDownloadCard"),
+);
+
+const AdminLogin = lazy(() => import("./pages/admin/Login"));
+const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const PublicCourierDashboard = lazy(
+  () => import("./pages/admin/PublicCourierDashboard"),
+);
+const OperatorCourierDashboard = lazy(
+  () => import("./pages/admin/OperatorCourierDashboard"),
+);
+const ShippingLabel = lazy(() => import("./pages/admin/ShippingLabel"));
+
+function PageLoader() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
+}
 
 const queryClient = new QueryClient();
 
@@ -57,6 +74,7 @@ function Router() {
     <>
     <ScrollToTop />
     <PageTransition>
+    <Suspense fallback={<PageLoader />}>
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/order" component={Order} />
@@ -88,6 +106,7 @@ function Router() {
       
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
     </PageTransition>
     </>
   );
