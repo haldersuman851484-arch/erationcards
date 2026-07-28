@@ -87,7 +87,7 @@ function getAuthHeader() {
 /** Pricing rows shown to the operator before they start filling the form. */
 function OperatorPricingBanner() {
   const rows: Array<{ group: string; label: string; types: readonly string[]; typesColor: string; single: number; multi: number }> = [
-    { group: "ration", label: "Ration Card", types: RATION_CARD_TYPES, typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
+    { group: "ration", label: "RATION CARD", types: RATION_CARD_TYPES, typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
     { group: "special", label: "OTHER PVC CARDS", types: SPECIAL_CARD_TYPES, typesColor: "text-[#c5e6eb]", single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
   ];
   return (
