@@ -671,7 +671,29 @@ export default function Order() {
                               className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
                             />
                             <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
-                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below. I have read and understood all the Terms &amp; Conditions and the Return/Refund Policy, and I hereby give my consent to proceed with the printing of my document.
+                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below. I have read and understood all the{" "}
+                              <a
+                                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/terms`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-primary hover:text-primary/80"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid="link-consent-terms"
+                              >
+                                Terms &amp; Conditions
+                              </a>{" "}
+                              and the{" "}
+                              <a
+                                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/refund`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="underline text-primary hover:text-primary/80"
+                                onClick={(e) => e.stopPropagation()}
+                                data-testid="link-consent-refund"
+                              >
+                                Return/Refund Policy
+                              </a>
+                              , and I hereby give my consent to proceed with the printing of my document.
                             </span>
                           </label>
 
