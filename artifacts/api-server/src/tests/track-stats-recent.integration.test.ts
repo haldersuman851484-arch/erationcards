@@ -53,6 +53,10 @@ async function seed(rows: any[]) {
 // Rows used across tests
 const TRACK_ORDER_NUMBER = orderNum("track-by-num");
 const TRACK_RATION_NUMBER = `RCTRACK${RUN_ID.slice(-8)}`;
+// Ration card with multiple orders (a family that reordered)
+const MULTI_RATION_NUMBER = `RCMULTI${RUN_ID.slice(-8)}`;
+const MULTI_OLD_ORDER = orderNum("multi-old");
+const MULTI_NEW_ORDER = orderNum("multi-new");
 
 beforeAll(async () => {
   await seed([
@@ -75,6 +79,25 @@ beforeAll(async () => {
       rationCardNumber: TRACK_RATION_NUMBER,
       status: "delivered" as const,
       amount: "70.00",
+    },
+    // Two orders under the same ration card (reorder scenario)
+    {
+      ...BASE_ROW,
+      orderNumber: MULTI_OLD_ORDER,
+      customerName: "Multi Order Family",
+      customerPhone: "9100000003",
+      rationCardNumber: MULTI_RATION_NUMBER,
+      status: "returned" as const,
+      createdAt: new Date("2026-01-01T10:00:00Z"),
+    },
+    {
+      ...BASE_ROW,
+      orderNumber: MULTI_NEW_ORDER,
+      customerName: "Multi Order Family",
+      customerPhone: "9100000003",
+      rationCardNumber: MULTI_RATION_NUMBER,
+      status: "processing" as const,
+      createdAt: new Date("2026-06-01T10:00:00Z"),
     },
     // Extra rows so recent/stats have meaningful counts
     ...Array.from({ length: 8 }, (_, i) => ({
@@ -139,6 +162,69 @@ describe("GET /api/orders/track", () => {
     expect(res.body.rationCardNumber).toBe(TRACK_RATION_NUMBER);
     expect(res.body.customerName).toBe("Track By RC");
     expect(res.body.status).toBe("delivered");
+  });
+
+  it("returns the newest order plus otherOrders summaries when a ration card has multiple orders", async () => {
+    const res = await get(
+      `/api/orders/track?rationCardNumber=${encodeURIComponent(MULTI_RATION_NUMBER)}`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.orderNumber).toBe(MULTI_NEW_ORDER);
+    expect(Array.isArray(res.body.otherOrders)).toBe(true);
+    expect(res.body.otherOrders).toHaveLength(2);
+    // Newest first
+    expect(res.body.otherOrders[0].orderNumber).toBe(MULTI_NEW_ORDER);
+    expect(res.body.otherOrders[1].orderNumber).toBe(MULTI_OLD_ORDER);
+    expect(res.body.otherOrders[1].status).toBe("returned");
+    expect(typeof res.body.otherOrders[0].createdAt).toBe("string");
+  });
+
+  it("exact orderNumber hit returns that order, with otherOrders kept when the card param also matched several", async () => {
+    const res = await get(
+      `/api/orders/track?orderNumber=${encodeURIComponent(MULTI_OLD_ORDER)}&rationCardNumber=${encodeURIComponent(MULTI_RATION_NUMBER)}`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.orderNumber).toBe(MULTI_OLD_ORDER);
+    expect(res.body.otherOrders).toHaveLength(2);
+  });
+
+  it("does not include otherOrders for a ration card with a single order", async () => {
+    const res = await get(
+      `/api/orders/track?rationCardNumber=${encodeURIComponent(TRACK_RATION_NUMBER)}`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.otherOrders).toBeUndefined();
+  });
+
+  it("returns every order for a card with more than 20 orders (no truncation)", async () => {
+    const bigCard = `RCBIG${RUN_ID.slice(-8)}`;
+    const rows = Array.from({ length: 25 }, (_, i) => ({
+      ...BASE_ROW,
+      orderNumber: orderNum(`big-${i}`),
+      customerName: "Big Family",
+      customerPhone: "9100000004",
+      rationCardNumber: bigCard,
+      createdAt: new Date(Date.UTC(2026, 0, 1 + i)),
+    }));
+    await seed(rows);
+
+    const res = await get(
+      `/api/orders/track?rationCardNumber=${encodeURIComponent(bigCard)}`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.orderNumber).toBe(orderNum("big-24")); // newest
+    expect(res.body.otherOrders).toHaveLength(25);
+    const numbers = res.body.otherOrders.map((o: any) => o.orderNumber);
+    for (const r of rows) expect(numbers).toContain(r.orderNumber);
+  });
+
+  it("orderNumber-only search still jumps straight to that order without otherOrders", async () => {
+    const res = await get(
+      `/api/orders/track?orderNumber=${encodeURIComponent(MULTI_OLD_ORDER)}`
+    );
+    expect(res.status).toBe(200);
+    expect(res.body.orderNumber).toBe(MULTI_OLD_ORDER);
+    expect(res.body.otherOrders).toBeUndefined();
   });
 
   it("returns 404 for an orderNumber that does not exist", async () => {

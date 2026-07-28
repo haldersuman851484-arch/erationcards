@@ -26,6 +26,7 @@ export * from './orderFamilyCardsItem';
 export * from './orderInput';
 export * from './orderInputFamilyCardsItem';
 export * from './orderListResponse';
+export * from './orderOtherOrdersItem';
 export * from './orderStats';
 export * from './orderStatusUpdate';
 export * from './paymentScreenshotUploadResponse';

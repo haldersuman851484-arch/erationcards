@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OrderFamilyCardsItem } from './orderFamilyCardsItem';
+import type { OrderOtherOrdersItem } from './orderOtherOrdersItem';
 
 export interface Order {
   id: number;
@@ -45,4 +46,6 @@ export interface Order {
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Present only on GET /orders/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders. */
+  otherOrders?: OrderOtherOrdersItem[];
 }

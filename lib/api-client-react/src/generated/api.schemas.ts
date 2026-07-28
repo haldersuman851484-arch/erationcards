@@ -24,6 +24,14 @@ export type OrderFamilyCardsItem = {
   cardType: string;
 };
 
+export type OrderOtherOrdersItem = {
+  orderNumber: string;
+  status: string;
+  cardType?: string;
+  quantity?: number;
+  createdAt: string;
+};
+
 export interface Order {
   id: number;
   orderNumber: string;
@@ -62,6 +70,8 @@ export interface Order {
   notes?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** Present only on GET /orders/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders. */
+  otherOrders?: OrderOtherOrdersItem[];
 }
 
 export type OrderInputFamilyCardsItem = {

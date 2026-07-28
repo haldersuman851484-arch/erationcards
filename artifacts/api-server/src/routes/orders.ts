@@ -305,19 +305,42 @@ router.get("/orders/track", async (req: Request, res: Response) => {
       return;
     }
 
-    const [order] = await db
+    // Fetch all matches (newest first) instead of just one: a family that
+    // reordered has several orders under the same ration card number, and a
+    // limit-1 query made the older ones unreachable from the one-box search.
+    const matches = await db
       .select()
       .from(ordersTable)
       .where(or(...conditions))
-      .orderBy(desc(ordersTable.createdAt), desc(ordersTable.id))
-      .limit(1);
+      .orderBy(desc(ordersTable.createdAt), desc(ordersTable.id));
 
-    if (!order) {
+    if (matches.length === 0) {
       res.status(404).json({ error: "Order not found" });
       return;
     }
 
-    res.json(formatOrder(order));
+    // An exact order-number hit always wins and jumps straight to that order.
+    const byOrderNumber = params.orderNumber
+      ? matches.find((m) => m.orderNumber === params.orderNumber)
+      : undefined;
+
+    // Otherwise it's a ration-card match: show the newest order. Either way,
+    // when the query matched multiple orders (a family that reordered),
+    // attach lightweight summaries of all of them so clients can offer a
+    // pick list instead of silently hiding older orders. (The public track
+    // page deliberately ignores otherOrders and keeps its newest-only view.)
+    const selected = byOrderNumber ?? matches[0]!;
+    const payload = formatOrder(selected) as Record<string, unknown>;
+    if (matches.length > 1) {
+      payload.otherOrders = matches.map((m) => ({
+        orderNumber: m.orderNumber,
+        status: m.status,
+        cardType: m.cardType,
+        quantity: m.quantity,
+        createdAt: m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt),
+      }));
+    }
+    res.json(payload);
   } catch (err) {
     req.log.error({ err }, "Failed to track order");
     res.status(500).json({ error: "Failed to track order" });

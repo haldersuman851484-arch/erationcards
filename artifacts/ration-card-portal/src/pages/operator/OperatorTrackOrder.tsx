@@ -129,6 +129,47 @@ export default function OperatorTrackOrder() {
           <div className="space-y-4" style={{ animation: "fadeIn 0.3s ease" }}>
             <style>{`@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }`}</style>
 
+            {order.otherOrders && order.otherOrders.length > 1 && (
+              <Card className="border-0 shadow-sm bg-white" data-testid="card-order-picker">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-sm font-semibold text-slate-700">
+                    {order.otherOrders.length} orders found for this ration card
+                  </CardTitle>
+                  <p className="text-xs text-slate-500">Select an order to view its details. Showing the most recent by default.</p>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-2">
+                  {order.otherOrders.map((o) => {
+                    const isSelected = o.orderNumber === order.orderNumber;
+                    return (
+                      <button
+                        key={o.orderNumber}
+                        type="button"
+                        data-testid={`button-pick-order-${o.orderNumber}`}
+                        disabled={isSelected}
+                        onClick={() => {
+                          // Keep the ration card param so the server keeps
+                          // returning the full list and the picker stays visible.
+                          const params = { orderNumber: o.orderNumber, rationCardNumber: order.rationCardNumber };
+                          setSearchParams(params);
+                          queryClient.invalidateQueries({ queryKey: getTrackOrderQueryKey(params) });
+                        }}
+                        className={`w-full flex items-center justify-between gap-3 rounded-lg border p-3 text-left transition-colors ${isSelected ? "border-primary bg-primary/5" : "border-slate-200 hover:border-primary/40 hover:bg-slate-50"}`}
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-slate-900 font-mono">#{o.orderNumber}</p>
+                          <p className="text-xs text-slate-500">
+                            {new Date(o.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                            {o.cardType ? ` · ${o.cardType}` : ""}
+                          </p>
+                        </div>
+                        <Badge className={`${STATUS_BADGE[o.status] || "bg-slate-100 text-slate-600 border-slate-200"} border capitalize shrink-0`}>{o.status}</Badge>
+                      </button>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
             <Card className="border-0 shadow-sm bg-white">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">

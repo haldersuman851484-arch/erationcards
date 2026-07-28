@@ -711,6 +711,30 @@ components:
           type: string
         updatedAt:
           type: string
+        otherOrders:
+          description: >-
+            Present only on GET /orders/track when the searched ration card
+            number has more than one order. Summaries (newest first) of every
+            order under that card, so a caller can offer a pick list instead of
+            silently hiding older orders.
+          type: array
+          items:
+            type: object
+            properties:
+              orderNumber:
+                type: string
+              status:
+                type: string
+              cardType:
+                type: string
+              quantity:
+                type: integer
+              createdAt:
+                type: string
+            required:
+              - orderNumber
+              - status
+              - createdAt
       required:
         - id
         - orderNumber

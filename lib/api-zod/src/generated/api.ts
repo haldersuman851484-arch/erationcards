@@ -60,7 +60,14 @@ export const ListOrdersResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })),
   "total": zod.number(),
   "page": zod.number(),
@@ -126,7 +133,14 @@ export const CreateOrderResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 
 
@@ -169,7 +183,14 @@ export const TrackOrderResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 
 
@@ -224,7 +245,14 @@ export const ListRecentOrdersResponseItem = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 export const ListRecentOrdersResponse = zod.array(ListRecentOrdersResponseItem)
 
@@ -267,7 +295,14 @@ export const GetOrderResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 
 
@@ -316,7 +351,14 @@ export const UpdateOrderStatusResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 
 
@@ -379,7 +421,14 @@ export const AssignOrderToOperatorResponse = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 
 
@@ -554,7 +603,14 @@ export const GetOperatorOrdersResponseItem = zod.object({
   "courierName": zod.string().nullish(),
   "notes": zod.string().nullish(),
   "createdAt": zod.string(),
-  "updatedAt": zod.string()
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
 })
 export const GetOperatorOrdersResponse = zod.array(GetOperatorOrdersResponseItem)
 
