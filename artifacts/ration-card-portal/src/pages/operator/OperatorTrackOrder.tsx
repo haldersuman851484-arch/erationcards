@@ -39,8 +39,7 @@ function getAuthHeader() {
 export default function OperatorTrackOrder() {
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [orderNumber, setOrderNumber] = useState("");
-  const [rationCardNumber, setRationCardNumber] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [searchParams, setSearchParams] = useState<{ orderNumber?: string; rationCardNumber?: string } | null>(null);
 
   const { data: operator, error: opError } = useGetCurrentOperator({
@@ -59,8 +58,14 @@ export default function OperatorTrackOrder() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!orderNumber && !rationCardNumber) return;
-    setSearchParams({ orderNumber: orderNumber || undefined, rationCardNumber: rationCardNumber || undefined });
+    const value = searchValue.trim();
+    if (!value) return;
+    // One box accepts either kind of number: send it as BOTH params — the
+    // track endpoint ORs them, so whichever column matches wins.
+    const params = { orderNumber: value, rationCardNumber: value };
+    setSearchParams(params);
+    // Re-searching must fetch fresh status, not the cached result.
+    queryClient.invalidateQueries({ queryKey: getTrackOrderQueryKey(params) });
   }
 
   function handleLogout() {
@@ -88,32 +93,20 @@ export default function OperatorTrackOrder() {
           <CardContent className="pt-5">
             <form onSubmit={handleSearch} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number or Card Number</label>
                 <Input
-                  placeholder="Enter 10-digit order number"
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  className="h-11"
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-slate-200" />
-                <span className="text-xs text-slate-400 font-semibold uppercase tracking-wide">or</span>
-                <div className="flex-1 h-px bg-slate-200" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">Ration Card Number</label>
-                <Input
-                  placeholder="Enter ration card number"
-                  value={rationCardNumber}
-                  onChange={(e) => setRationCardNumber(e.target.value)}
+                  data-testid="input-operator-track-search"
+                  placeholder="Enter order number or ration card number"
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
                   className="h-11"
                 />
               </div>
               <Button
                 type="submit"
+                data-testid="button-operator-track-search"
                 className="w-full h-11 bg-primary hover:bg-primary/90 gap-2"
-                disabled={isLoading || (!orderNumber && !rationCardNumber)}
+                disabled={isLoading || !searchValue.trim()}
               >
                 <Search className="w-4 h-4" />
                 {isLoading ? "Searching…" : "Track Order"}
