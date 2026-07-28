@@ -156,6 +156,7 @@ export default function PlaceOrder() {
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -227,6 +228,10 @@ export default function PlaceOrder() {
   }
 
   async function onSubmit(data: OrderForm) {
+    if (!paymentConfirmed) {
+      toast({ title: "Confirmation required", description: "Tick the payment confirmation box to proceed.", variant: "destructive" });
+      return;
+    }
     if (!screenshotFile) {
       toast({ title: "Screenshot required", description: "Upload the UPI payment screenshot to proceed.", variant: "destructive" });
       return;
@@ -256,7 +261,7 @@ export default function PlaceOrder() {
   }
 
   function resetOrder() {
-    setSuccess(null); setStep(1); setFamilyCards([]); setScreenshotFile(null); setScreenshotPreview(null); form.reset();
+    setSuccess(null); setStep(1); setFamilyCards([]); setScreenshotFile(null); setScreenshotPreview(null); setPaymentConfirmed(false); form.reset();
   }
 
   if (success) {
@@ -489,14 +494,64 @@ export default function PlaceOrder() {
                       </div>
                     )}
 
-                    {/* Screenshot upload */}
+                    {/* Payment confirmation checkbox — mirrors the public order form */}
+                    <div className="border-t border-slate-200 pt-4">
+                      <label className="flex items-start gap-3 cursor-pointer group" data-testid="label-payment-confirmed">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfirmed}
+                          onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                          data-testid="checkbox-payment-confirmed"
+                          className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
+                        />
+                        <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
+                          I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below. I have read and understood all the{" "}
+                          <a
+                            href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/terms`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline text-primary hover:text-primary/80"
+                            onClick={(e) => e.stopPropagation()}
+                            data-testid="link-consent-terms"
+                          >
+                            Terms &amp; Conditions
+                          </a>{" "}
+                          and the{" "}
+                          <a
+                            href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/refund`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="underline text-primary hover:text-primary/80"
+                            onClick={(e) => e.stopPropagation()}
+                            data-testid="link-consent-refund"
+                          >
+                            Return/Refund Policy
+                          </a>
+                          , and I hereby give my consent to proceed with the printing of the customer&apos;s document.
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Screenshot upload — locked until payment is confirmed */}
                     <div>
                       <p className="text-sm font-semibold text-slate-700 mb-2">Upload Payment Screenshot *</p>
                       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleScreenshot} />
                       {!screenshotPreview ? (
-                        <button type="button" onClick={() => fileRef.current?.click()} className="w-full border-2 border-dashed border-slate-300 hover:border-primary rounded-xl p-6 text-center transition-colors group">
-                          <Upload className="w-8 h-8 text-slate-300 group-hover:text-primary mx-auto mb-2 transition-colors" />
-                          <p className="text-sm text-slate-500 group-hover:text-primary font-medium">Click to upload screenshot</p>
+                        <button
+                          type="button"
+                          data-testid="button-upload-screenshot"
+                          onClick={() => paymentConfirmed && fileRef.current?.click()}
+                          disabled={!paymentConfirmed}
+                          className={`w-full border-2 border-dashed rounded-xl p-6 text-center transition-colors group ${
+                            paymentConfirmed
+                              ? "border-slate-300 hover:border-primary cursor-pointer"
+                              : "border-slate-200 cursor-not-allowed bg-slate-100/70 opacity-60"
+                          }`}
+                        >
+                          <Upload className={`w-8 h-8 mx-auto mb-2 transition-colors ${paymentConfirmed ? "text-slate-300 group-hover:text-primary" : "text-slate-300"}`} />
+                          <p className={`text-sm font-medium ${paymentConfirmed ? "text-slate-500 group-hover:text-primary" : "text-slate-400"}`}>
+                            {paymentConfirmed ? "Click to upload screenshot" : "Confirm payment above to unlock upload"}
+                          </p>
                           <p className="text-xs text-slate-400 mt-0.5">PNG, JPG up to 10MB</p>
                         </button>
                       ) : (
@@ -513,13 +568,34 @@ export default function PlaceOrder() {
                   </CardContent>
                 </Card>
 
-                <div className="flex gap-3">
-                  <Button type="button" variant="outline" className="flex-1 gap-2" onClick={() => setStep(2)}>
-                    <ChevronLeft className="w-4 h-4" /> Back
-                  </Button>
-                  <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90" disabled={isUploading || createOrder.isPending || !screenshotFile}>
-                    {isUploading ? "Uploading…" : createOrder.isPending ? "Placing Order…" : "Place Order"}
-                  </Button>
+                <div className="space-y-2">
+                  {(!paymentConfirmed || !screenshotFile) && !isUploading && !createOrder.isPending && (
+                    <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="submit-disabled-hint">
+                      <span>⚠️</span>
+                      {!paymentConfirmed
+                        ? "Please confirm you have completed payment before submitting."
+                        : "Please upload the UPI payment screenshot before submitting."}
+                    </p>
+                  )}
+                  <div className="flex gap-3">
+                    <Button type="button" variant="outline" className="flex-1 gap-2" onClick={() => setStep(2)}>
+                      <ChevronLeft className="w-4 h-4" /> Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1 bg-primary hover:bg-primary/90"
+                      disabled={isUploading || createOrder.isPending || !screenshotFile || !paymentConfirmed}
+                      title={
+                        !paymentConfirmed
+                          ? "Confirm you have completed payment first"
+                          : !screenshotFile
+                          ? "Upload the payment screenshot first"
+                          : undefined
+                      }
+                    >
+                      {isUploading ? "Uploading…" : createOrder.isPending ? "Placing Order…" : "Place Order"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
