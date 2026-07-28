@@ -2,9 +2,48 @@ import { Navbar, Footer } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Download, ExternalLink, Shield, FileText, AlertCircle } from "lucide-react";
+import { Download, ExternalLink, Shield, FileText, AlertCircle, HeartPulse, Briefcase, type LucideIcon } from "lucide-react";
 
-const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
+const DOWNLOAD_LINKS: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  url: string;
+  site: string;
+  testId: string;
+}[] = [
+  {
+    icon: Download,
+    title: "Official WB Ration Card Download",
+    description:
+      "You will be taken to the West Bengal Public Distribution System (WBPDS) government portal to download your e-Ration card.",
+    buttonLabel: "Download e-Ration Card",
+    url: "https://wbpds.wb.gov.in/E_Card_Download.aspx",
+    site: "wbpds.wb.gov.in",
+    testId: "button-download-pdf",
+  },
+  {
+    icon: HeartPulse,
+    title: "ABHA Health Card Download",
+    description:
+      "You will be taken to the official Ayushman Bharat Digital Mission (ABDM) portal to create or download your ABHA health card.",
+    buttonLabel: "Download ABHA Card",
+    url: "https://abha.abdm.gov.in/abha/v3/register/aadhaar",
+    site: "abha.abdm.gov.in",
+    testId: "button-download-abha",
+  },
+  {
+    icon: Briefcase,
+    title: "e-Shram Card Download",
+    description:
+      "You will be taken to the official e-Shram portal of the Ministry of Labour & Employment to download your e-Shram (UAN) card.",
+    buttonLabel: "Download e-Shram Card",
+    url: "https://register.eshram.gov.in/#/user/uan-login",
+    site: "register.eshram.gov.in",
+    testId: "button-download-eshram",
+  },
+];
 
 export default function DownloadCard() {
   useSeo({
@@ -20,39 +59,44 @@ export default function DownloadCard() {
       <div className="bg-primary/5 border-b border-primary/10 py-10">
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Download Your Ration Card</h1>
-          <p className="text-slate-600">Download your official digital e-Ration card from the West Bengal government portal.</p>
+          <p className="text-slate-600">Download your official digital e-Ration card, ABHA health card and e-Shram card from the government portals.</p>
         </div>
       </div>
 
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4 max-w-2xl space-y-6">
 
-          <Card className="border-primary/20 shadow-sm">
-            <CardContent className="pt-8 pb-8 text-center space-y-5">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-                <Download className="w-8 h-8 text-primary" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900 mb-2">Official WB Ration Card Download</h2>
-                <p className="text-slate-600 text-sm max-w-sm mx-auto">
-                  You will be taken to the West Bengal Public Distribution System (WBPDS) government portal to download your e-Ration card.
-                </p>
-              </div>
-              <a href={GOVT_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
-                <Button
-                  data-testid="button-download-pdf"
-                  className="bg-primary hover:bg-primary/90 h-12 px-8 text-base gap-2"
-                >
-                  <Download className="w-5 h-5" />
-                  Download e-Ration Card
-                  <ExternalLink className="w-4 h-4 opacity-70" />
-                </Button>
-              </a>
-              <p className="text-xs text-slate-400">
-                Opens <span className="font-mono">wbpds.wb.gov.in</span> in a new tab
-              </p>
-            </CardContent>
-          </Card>
+          {DOWNLOAD_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Card key={link.testId} className="border-primary/20 shadow-sm">
+                <CardContent className="pt-8 pb-8 text-center space-y-5">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-slate-900 mb-2">{link.title}</h2>
+                    <p className="text-slate-600 text-sm max-w-sm mx-auto">
+                      {link.description}
+                    </p>
+                  </div>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      data-testid={link.testId}
+                      className="bg-primary hover:bg-primary/90 h-12 px-8 text-base gap-2"
+                    >
+                      <Download className="w-5 h-5" />
+                      {link.buttonLabel}
+                      <ExternalLink className="w-4 h-4 opacity-70" />
+                    </Button>
+                  </a>
+                  <p className="text-xs text-slate-400">
+                    Opens <span className="font-mono">{link.site}</span> in a new tab
+                  </p>
+                </CardContent>
+              </Card>
+            );
+          })}
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 text-center">
