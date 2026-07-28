@@ -241,8 +241,7 @@ export default function TrackOrder() {
     description: "Enter your order number or ration card number to check the real-time printing and delivery status of your PVC ration card.",
     canonical: "https://erationcards.in/track",
   });
-  const [orderNumber, setOrderNumber] = useState("");
-  const [rationCardNumber, setRationCardNumber] = useState("");
+  const [searchValue, setSearchValue] = useState("");
   const [searchParams, setSearchParams] = useState<{ orderNumber?: string; rationCardNumber?: string } | null>(null);
 
   const [reviewRating, setReviewRating] = useState(0);
@@ -299,14 +298,17 @@ export default function TrackOrder() {
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
-    if (!orderNumber && !rationCardNumber) return;
+    const value = searchValue.trim();
+    if (!value) return;
     setReviewSubmitted(false);
     setReviewError(null);
     setReviewRating(0);
     setReviewQuote("");
+    // One box accepts either kind of number: send it as BOTH params — the
+    // track endpoint ORs them, so whichever column matches wins.
     const params = {
-      orderNumber: orderNumber || undefined,
-      rationCardNumber: rationCardNumber || undefined,
+      orderNumber: value,
+      rationCardNumber: value,
     };
     setSearchParams(params);
     // Re-searching (even the same order number) must fetch fresh status —
@@ -364,29 +366,15 @@ export default function TrackOrder() {
             <CardContent className="pt-6">
               <form onSubmit={handleSearch} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number or Card Number</label>
                   <Input
                     data-testid="input-order-number"
-                    placeholder="e.g. PVCABC1234XY"
-                    value={orderNumber}
-                    onChange={(e) => setOrderNumber(e.target.value)}
+                    placeholder="Enter your order number or ration card number"
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
                   />
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex-1 h-px bg-slate-200" />
-                  <span className="text-sm text-slate-400 font-medium">OR</span>
-                  <div className="flex-1 h-px bg-slate-200" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Card Number</label>
-                  <Input
-                    data-testid="input-ration-card-number"
-                    placeholder="Enter ration card number"
-                    value={rationCardNumber}
-                    onChange={(e) => setRationCardNumber(e.target.value)}
-                  />
-                </div>
-                <Button type="submit" data-testid="button-track-search" className="w-full bg-primary hover:bg-primary/90 h-11" disabled={isLoading || (!orderNumber && !rationCardNumber)}>
+                <Button type="submit" data-testid="button-track-search" className="w-full bg-primary hover:bg-primary/90 h-11" disabled={isLoading || !searchValue.trim()}>
                   <Search className="w-4 h-4 mr-2" />
                   {isLoading ? "Searching..." : "Track Order"}
                 </Button>
