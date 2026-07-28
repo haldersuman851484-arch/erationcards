@@ -8,9 +8,48 @@ import {
   getGetCurrentOperatorQueryKey,
   useLogoutOperator,
 } from "@workspace/api-client-react";
-import { Download, ExternalLink, Shield, FileText, AlertCircle, Smartphone, Globe } from "lucide-react";
+import { Download, ExternalLink, Shield, FileText, AlertCircle, Smartphone, HeartPulse, Briefcase, type LucideIcon } from "lucide-react";
 
-const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
+const OPERATOR_DOWNLOAD_LINKS: {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  url: string;
+  site: string;
+  testId: string;
+}[] = [
+  {
+    icon: Download,
+    title: "WB Ration Card e-Download",
+    description:
+      "Opens the West Bengal Public Distribution System (WBPDS) government portal where customers can download their official e-Ration card.",
+    buttonLabel: "Open Ration Card Portal",
+    url: "https://wbpds.wb.gov.in/E_Card_Download.aspx",
+    site: "wbpds.wb.gov.in",
+    testId: "button-operator-download-ration",
+  },
+  {
+    icon: HeartPulse,
+    title: "ABHA Health Card Download",
+    description:
+      "Opens the official Ayushman Bharat Digital Mission (ABDM) portal where customers can create or download their ABHA health card.",
+    buttonLabel: "Open ABHA Portal",
+    url: "https://abha.abdm.gov.in/abha/v3/register/aadhaar",
+    site: "abha.abdm.gov.in",
+    testId: "button-operator-download-abha",
+  },
+  {
+    icon: Briefcase,
+    title: "e-Shram Card Download",
+    description:
+      "Opens the official e-Shram portal of the Ministry of Labour & Employment where customers can download their e-Shram (UAN) card.",
+    buttonLabel: "Open e-Shram Portal",
+    url: "https://register.eshram.gov.in/#/user/uan-login",
+    site: "register.eshram.gov.in",
+    testId: "button-operator-download-eshram",
+  },
+];
 
 function getAuthHeader() {
   const token = localStorage.getItem("operatorToken");
@@ -45,30 +84,40 @@ export default function OperatorDownloadCard() {
       <div className="p-4 md:p-6 max-w-2xl mx-auto">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-slate-900">Download e-Card</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Help customers download their official digital ration card from the WB government portal.</p>
+          <p className="text-slate-500 text-sm mt-0.5">Help customers download their official ration card, ABHA health card and e-Shram card from the government portals.</p>
         </div>
 
-        <Card className="border-0 shadow-sm bg-white mb-5">
-          <CardContent className="pt-8 pb-8 text-center space-y-5">
-            <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto">
-              <Download className="w-10 h-10 text-primary" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 mb-1">WB Ration Card e-Download</h2>
-              <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
-                Opens the West Bengal Public Distribution System (WBPDS) government portal where customers can download their official e-Ration card.
-              </p>
-            </div>
-            <a href={GOVT_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer">
-              <Button className="bg-primary hover:bg-primary/90 h-12 px-8 gap-2 text-base">
-                <Download className="w-5 h-5" />
-                Open Download Portal
-                <ExternalLink className="w-4 h-4 opacity-70" />
-              </Button>
-            </a>
-            <p className="text-xs text-slate-400 font-mono">wbpds.wb.gov.in</p>
-          </CardContent>
-        </Card>
+        <div className="space-y-5 mb-5">
+          {OPERATOR_DOWNLOAD_LINKS.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Card key={link.testId} className="border-0 shadow-sm bg-white">
+                <CardContent className="pt-8 pb-8 text-center space-y-5">
+                  <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto">
+                    <Icon className="w-10 h-10 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900 mb-1">{link.title}</h2>
+                    <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed">
+                      {link.description}
+                    </p>
+                  </div>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      data-testid={link.testId}
+                      className="bg-primary hover:bg-primary/90 h-12 px-8 gap-2 text-base"
+                    >
+                      <Download className="w-5 h-5" />
+                      {link.buttonLabel}
+                      <ExternalLink className="w-4 h-4 opacity-70" />
+                    </Button>
+                  </a>
+                  <p className="text-xs text-slate-400 font-mono">{link.site}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
 
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
