@@ -86,7 +86,7 @@ export default function OperatorTrackOrder() {
       <div className="p-4 md:p-6 max-w-2xl mx-auto">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-slate-900">Track Order</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Search by order number or ration card number.</p>
+          <p className="text-slate-500 text-sm mt-0.5">Search by order number or card number.</p>
         </div>
 
         <Card className="border-0 shadow-sm bg-white mb-5">
@@ -96,7 +96,7 @@ export default function OperatorTrackOrder() {
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number or Card Number</label>
                 <Input
                   data-testid="input-operator-track-search"
-                  placeholder="Enter order number or ration card number"
+                  placeholder="Enter order number or card number"
                   value={searchValue}
                   onChange={(e) => setSearchValue(e.target.value)}
                   className="h-11"
