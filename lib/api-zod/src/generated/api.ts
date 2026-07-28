@@ -772,6 +772,19 @@ export const UpdateReviewStatusResponse = zod.object({
 
 
 /**
+ * @summary Permanently delete a review (admin)
+ */
+export const DeleteReviewParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteReviewResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().optional()
+})
+
+
+/**
  * @summary Admin login
  */
 export const LoginAdminBody = zod.object({

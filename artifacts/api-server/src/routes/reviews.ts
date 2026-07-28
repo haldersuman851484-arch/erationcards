@@ -121,6 +121,27 @@ router.get("/admin/reviews", async (req: Request, res: Response) => {
   }
 });
 
+// DELETE /admin/reviews/:id — permanently delete a review
+router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid review ID" }); return; }
+
+    const [review] = await db.select().from(reviewsTable).where(eq(reviewsTable.id, id)).limit(1);
+    if (!review) { res.status(404).json({ error: "Review not found" }); return; }
+
+    await db.delete(reviewsTable).where(eq(reviewsTable.id, id));
+
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete review");
+    res.status(500).json({ error: "Failed to delete review" });
+  }
+});
+
 // PATCH /admin/reviews/:id — approve or reject a review
 router.patch("/admin/reviews/:id", async (req: Request, res: Response) => {
   try {

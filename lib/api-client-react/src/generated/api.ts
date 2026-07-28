@@ -1971,6 +1971,76 @@ export const useUpdateReviewStatus = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateReviewStatusMutationOptions(options));
     }
 
+export const getDeleteReviewUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/reviews/${id}`
+}
+
+/**
+ * @summary Permanently delete a review (admin)
+ */
+export const deleteReview = async (id: number, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getDeleteReviewUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteReviewMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteReview'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteReview>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteReview(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteReviewMutationResult = NonNullable<Awaited<ReturnType<typeof deleteReview>>>
+
+    export type DeleteReviewMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Permanently delete a review (admin)
+ */
+export const useDeleteReview = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteReview>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteReview>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteReviewMutationOptions(options));
+    }
+
 export const getLoginAdminUrl = () => {
 
 

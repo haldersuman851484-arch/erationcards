@@ -9,6 +9,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   useGetCurrentAdmin,
   getGetCurrentAdminQueryKey,
   useGetOrderStats,
@@ -26,6 +30,7 @@ import {
   useListPaymentVerifications,
   getListPaymentVerificationsQueryKey,
   useUpdateReviewStatus,
+  useDeleteReview,
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -35,7 +40,7 @@ import {
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
-  Star, MessageSquare, RotateCcw,
+  Star, MessageSquare, RotateCcw, Trash2,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -110,6 +115,7 @@ export default function AdminDashboard() {
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [dispatchForm, setDispatchForm] = useState<{
     orderId: number;
     courier: string;
@@ -192,6 +198,10 @@ export default function AdminDashboard() {
   });
 
   const updateReviewStatus = useUpdateReviewStatus({
+    request: { headers: getAuthHeader() },
+  } as any);
+
+  const deleteReview = useDeleteReview({
     request: { headers: getAuthHeader() },
   } as any);
 
@@ -287,6 +297,24 @@ export default function AdminDashboard() {
           refetchReviews();
         },
         onError: () => toast({ title: "Failed to update review", variant: "destructive" }),
+      }
+    );
+  }
+
+  function handleDeleteReview() {
+    if (!deleteTarget) return;
+    deleteReview.mutate(
+      { id: deleteTarget.id },
+      {
+        onSuccess: () => {
+          toast({ title: "Review deleted permanently." });
+          setDeleteTarget(null);
+          refetchReviews();
+        },
+        onError: () => {
+          toast({ title: "Failed to delete review", variant: "destructive" });
+          setDeleteTarget(null);
+        },
       }
     );
   }
@@ -924,20 +952,20 @@ export default function AdminDashboard() {
                                 size="sm"
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-8 px-3"
                                 data-testid={`button-approve-review-${review.id}`}
-                                onClick={() => handleReviewAction(review.id, "approved")}
-                                disabled={updateReviewStatus.isPending}
+                                onClick={() => handleReviewAction(review.id, "approved", "Review confirmed — now live on the homepage!")}
+                                disabled={updateReviewStatus.isPending || deleteReview.isPending}
                               >
-                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Confirm
                               </Button>
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 h-8 px-3"
-                                data-testid={`button-reject-review-${review.id}`}
-                                onClick={() => handleReviewAction(review.id, "rejected")}
-                                disabled={updateReviewStatus.isPending}
+                                data-testid={`button-delete-review-${review.id}`}
+                                onClick={() => setDeleteTarget({ id: review.id, name: review.customerName })}
+                                disabled={updateReviewStatus.isPending || deleteReview.isPending}
                               >
-                                <XCircle className="w-3.5 h-3.5" /> Reject
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
                               </Button>
                             </div>
                           )}
@@ -962,9 +990,19 @@ export default function AdminDashboard() {
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-8 px-3"
                                 data-testid={`button-approve-review-${review.id}`}
                                 onClick={() => handleReviewAction(review.id, "approved")}
-                                disabled={updateReviewStatus.isPending}
+                                disabled={updateReviewStatus.isPending || deleteReview.isPending}
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" /> Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 h-8 px-3"
+                                data-testid={`button-delete-review-${review.id}`}
+                                onClick={() => setDeleteTarget({ id: review.id, name: review.customerName })}
+                                disabled={updateReviewStatus.isPending || deleteReview.isPending}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" /> Delete
                               </Button>
                             </div>
                           )}
@@ -1375,6 +1413,29 @@ export default function AdminDashboard() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Delete Review Confirmation */}
+        <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this review permanently?</AlertDialogTitle>
+              <AlertDialogDescription>
+                {deleteTarget ? `The review from ${deleteTarget.name} will be erased for good. It will never appear on the homepage or in this list again. This cannot be undone.` : ""}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-delete-review">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                data-testid="button-confirm-delete-review"
+                className="bg-red-600 hover:bg-red-700 text-white"
+                onClick={handleDeleteReview}
+                disabled={deleteReview.isPending}
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" /> Delete permanently
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Screenshot Lightbox */}
         {previewImg && (
