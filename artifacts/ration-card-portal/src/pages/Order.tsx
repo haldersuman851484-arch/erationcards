@@ -313,7 +313,10 @@ export default function Order() {
                     <div className="mt-3 space-y-2">
                       {/* Ration card pricing */}
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-white/90 text-[13px] font-bold uppercase tracking-wide w-full sm:w-52">Ration Card</span>
+                        <span className="w-full sm:w-52">
+                          <span className="block text-white/90 text-[13px] font-bold uppercase tracking-wide">Ration Card</span>
+                          <span className="block text-white/60 text-[11px] leading-tight" data-testid="hero-ration-types">{RATION_CARD_TYPES.join(" · ")}</span>
+                        </span>
                         <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
                           <span className="text-white/80 text-xs font-medium">1 card</span>
                           <span className="text-white text-sm font-extrabold">₹{PRICING.ration.single.public}</span>
@@ -326,7 +329,10 @@ export default function Order() {
                       </div>
                       {/* ABHA / E-SHRAM / GENERAL pricing */}
                       <div className="flex flex-wrap items-center gap-2" data-testid="hero-special-pricing">
-                        <span className="text-white/90 text-[13px] font-bold uppercase tracking-wide w-full sm:w-52">ABHA · E-SHRAM · GENERAL</span>
+                        <span className="w-full sm:w-52">
+                          <span className="block text-white/90 text-[13px] font-bold uppercase tracking-wide">Other PVC Cards</span>
+                          <span className="block text-white/60 text-[11px] leading-tight" data-testid="hero-special-types">{SPECIAL_CARD_TYPES.join(" · ")}</span>
+                        </span>
                         <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
                           <span className="text-white/80 text-xs font-medium">1 card</span>
                           <span className="text-white text-sm font-extrabold">₹{PRICING.special.single.public}</span>
