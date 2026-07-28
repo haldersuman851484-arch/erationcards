@@ -278,12 +278,12 @@ export default function AdminDashboard() {
     );
   }
 
-  function handleReviewAction(reviewId: number, status: "approved" | "rejected") {
+  function handleReviewAction(reviewId: number, status: "approved" | "rejected", successTitle?: string) {
     updateReviewStatus.mutate(
       { id: reviewId, data: { status } },
       {
         onSuccess: () => {
-          toast({ title: status === "approved" ? "Review approved and published!" : "Review rejected." });
+          toast({ title: successTitle ?? (status === "approved" ? "Review approved and published!" : "Review rejected.") });
           refetchReviews();
         },
         onError: () => toast({ title: "Failed to update review", variant: "destructive" }),
@@ -938,6 +938,33 @@ export default function AdminDashboard() {
                                 disabled={updateReviewStatus.isPending}
                               >
                                 <XCircle className="w-3.5 h-3.5" /> Reject
+                              </Button>
+                            </div>
+                          )}
+                          {review.status === "approved" && (
+                            <div className="flex sm:flex-col gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 h-8 px-3"
+                                data-testid={`button-remove-review-${review.id}`}
+                                onClick={() => handleReviewAction(review.id, "rejected", "Review removed from the homepage.")}
+                                disabled={updateReviewStatus.isPending}
+                              >
+                                <XCircle className="w-3.5 h-3.5" /> Remove from homepage
+                              </Button>
+                            </div>
+                          )}
+                          {review.status === "rejected" && (
+                            <div className="flex sm:flex-col gap-2 shrink-0">
+                              <Button
+                                size="sm"
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-8 px-3"
+                                data-testid={`button-approve-review-${review.id}`}
+                                onClick={() => handleReviewAction(review.id, "approved")}
+                                disabled={updateReviewStatus.isPending}
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Approve
                               </Button>
                             </div>
                           )}
