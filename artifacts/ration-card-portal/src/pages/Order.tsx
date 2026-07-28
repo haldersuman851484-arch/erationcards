@@ -671,7 +671,7 @@ export default function Order() {
                               className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
                             />
                             <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
-                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below.
+                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below. I have read and understood all the Terms &amp; Conditions and the Return/Refund Policy, and I hereby give my consent to proceed with the printing of my document.
                             </span>
                           </label>
 
