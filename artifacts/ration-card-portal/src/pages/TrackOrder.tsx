@@ -352,14 +352,12 @@ export default function TrackOrder() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
-
       <div className="bg-primary/5 border-b border-primary/10 py-10">
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Track Your Order</h1>
           <p className="text-slate-600">Enter your order number or ration card number to check the current status.</p>
         </div>
       </div>
-
       <main className="flex-1 py-12">
         <div className="container mx-auto px-4 max-w-2xl">
           <Card className="border-slate-200 shadow-sm mb-8">
@@ -380,7 +378,7 @@ export default function TrackOrder() {
                   <div className="flex-1 h-px bg-slate-200" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Ration Card Number</label>
+                  <label className="block text-sm font-medium text-slate-700 mb-1.5">Card Number</label>
                   <Input
                     data-testid="input-ration-card-number"
                     placeholder="Enter ration card number"
