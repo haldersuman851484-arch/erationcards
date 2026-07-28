@@ -560,7 +560,7 @@ export default function Home() {
                   <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-purple-500">
                     <Users className="w-6 h-6" />
                   </div>
-                  <CardTitle>Operator Portal</CardTitle>
+                  <CardTitle>Operator Login</CardTitle>
                   <CardDescription>Register as a printing partner and fulfill local orders.</CardDescription>
                 </CardHeader>
               </Link>

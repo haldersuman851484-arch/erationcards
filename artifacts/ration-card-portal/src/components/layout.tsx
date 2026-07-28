@@ -135,7 +135,7 @@ export function Footer() {
             <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
             <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
             <li><Link href="/terms" className="hover:text-primary transition-colors">Terms &amp; Conditions</Link></li>
-            <li><Link href="/refund" className="hover:text-primary transition-colors">Refund Policy</Link></li>
+            <li><Link href="/refund" className="hover:text-primary transition-colors">Return&amp;Refund Policy</Link></li>
             <li><Link href="/shipping" className="hover:text-primary transition-colors">Shipping Policy</Link></li>
           </ul>
         </div>
@@ -143,7 +143,7 @@ export function Footer() {
           <h3 className="text-white font-semibold mb-4">Partners</h3>
           <ul className="space-y-2 text-sm">
             <li><Link href="/operator/register" className="hover:text-primary transition-colors">Register as Operator</Link></li>
-            <li><Link href="/operator/login" className="hover:text-primary transition-colors">Operator Portal</Link></li>
+            <li><Link href="/operator/login" className="hover:text-primary transition-colors">Operator Login</Link></li>
             <li><Link href="/admin/login" className="hover:text-primary transition-colors">Admin Access</Link></li>
           </ul>
         </div>
