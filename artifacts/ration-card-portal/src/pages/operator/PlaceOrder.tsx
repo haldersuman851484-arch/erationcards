@@ -29,6 +29,8 @@ import {
   ALLOWED_CARD_TYPES,
   computeOrderAmount,
   priceBreakdown,
+  PRICING,
+  PRICE_GROUP_LABELS,
 } from "@workspace/pricing";
 
 const WB_DISTRICTS = [
@@ -81,6 +83,38 @@ type OrderForm = z.infer<typeof orderSchema>;
 function getAuthHeader() {
   const token = localStorage.getItem("operatorToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/** Pricing rows shown to the operator before they start filling the form. */
+function OperatorPricingBanner() {
+  const rows: Array<{ label: string; single: number; multi: number }> = [
+    { label: "Ration Card", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
+    { label: PRICE_GROUP_LABELS.special, single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
+  ];
+  return (
+    <div className="rounded-xl border border-primary/15 bg-gradient-to-br from-primary/5 to-sky-50 p-4 mb-4">
+      <p className="text-xs font-bold text-primary uppercase tracking-wide mb-3">Operator Rates</p>
+      <div className="space-y-2.5">
+        {rows.map((row) => (
+          <div key={row.label} className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-semibold text-slate-700 w-44 shrink-0">{row.label}</span>
+            {/* Single pill */}
+            <span className="rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-medium px-3 py-1">
+              1 card ₹{row.single}
+            </span>
+            {/* Multi pill with SAVE badge */}
+            <span className="relative rounded-full bg-amber-400 text-slate-900 text-xs font-bold px-3 py-1">
+              2+ cards ₹{row.multi} each
+              <span className="absolute -top-2 -right-1 bg-red-500 text-white text-[9px] font-extrabold rounded px-1 py-0.5 leading-none">
+                SAVE
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+      <p className="text-[11px] text-slate-400 mt-3">incl. GST &amp; postage · Operator rates</p>
+    </div>
+  );
 }
 
 function StepIndicator({ step }: { step: number }) {
@@ -259,6 +293,8 @@ export default function PlaceOrder() {
           <h1 className="text-xl font-bold text-slate-900">Order PVC Card</h1>
           <p className="text-slate-500 text-sm mt-0.5">Place a new PVC ration card order for your customer.</p>
         </div>
+
+        <OperatorPricingBanner />
 
         <StepIndicator step={step} />
 
