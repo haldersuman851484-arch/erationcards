@@ -357,7 +357,7 @@ export default function TrackOrder() {
       <div className="bg-primary/5 border-b border-primary/10 py-10">
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Track Your Order</h1>
-          <p className="text-slate-600">Enter your order number or ration card number to check the current status.</p>
+          <p className="text-slate-600">Enter your order number or card number to check the current status.</p>
         </div>
       </div>
       <main className="flex-1 py-12">
@@ -369,7 +369,7 @@ export default function TrackOrder() {
                   <label className="block text-sm font-medium text-slate-700 mb-1.5">Order Number or Card Number</label>
                   <Input
                     data-testid="input-order-number"
-                    placeholder="Enter your order number or ration card number"
+                    placeholder="Enter your order number or card number"
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
                   />
@@ -386,7 +386,7 @@ export default function TrackOrder() {
             <Card className="border-red-200 bg-red-50 shadow-sm">
               <CardContent className="pt-6 text-center">
                 <p className="text-red-600 font-medium">Order not found</p>
-                <p className="text-sm text-red-500 mt-1">Please check the order number or ration card number and try again.</p>
+                <p className="text-sm text-red-500 mt-1">Please check the order number or card number and try again.</p>
               </CardContent>
             </Card>
           )}
