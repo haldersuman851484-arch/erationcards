@@ -46,6 +46,36 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve uploaded files (screenshots & PDFs) from cloud object storage
+// Card PDFs live under per-order/per-card keys whose last segment is the
+// customer's original filename; it is echoed back via Content-Disposition
+// so viewing/saving the file keeps that exact name.
+app.get(
+  "/api/uploads/card-pdfs/:orderNumber/:cardIndex/:filename",
+  async (req: Request, res: Response) => {
+    const parts = [req.params.orderNumber, req.params.cardIndex, req.params.filename].map(
+      (p) => (Array.isArray(p) ? p[0] : p)
+    );
+    if (
+      parts.some(
+        (p) => !p || p.includes("/") || p.includes("\\") || p.includes("..")
+      )
+    ) {
+      res.status(400).end();
+      return;
+    }
+    const [orderNumber, cardIndex, filename] = parts;
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    const served = await serveFromStorage(
+      `card-pdfs/${orderNumber}/${cardIndex}/${filename}`,
+      res,
+      filename
+    );
+    if (!served) {
+      res.status(404).json({ error: "File not found" });
+    }
+  }
+);
+
 app.get("/api/uploads/:filename", async (req: Request, res: Response) => {
   const rawFilename = req.params.filename;
   const filename = Array.isArray(rawFilename) ? rawFilename[0] : rawFilename;

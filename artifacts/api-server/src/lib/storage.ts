@@ -47,13 +47,24 @@ export async function uploadToStorage(
   await file.save(buffer, { contentType, resumable: false });
 }
 
+/** RFC 5987 percent-encoding for Content-Disposition filename* values. */
+function encodeRFC5987(value: string): string {
+  return encodeURIComponent(value).replace(
+    /['()*!]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`
+  );
+}
+
 /**
  * Stream a GCS object to an Express response.
  * Returns true if the file was found and streamed, false if not found.
+ * When `downloadName` is given, a Content-Disposition header is sent so the
+ * browser opens/saves the file under exactly that name.
  */
 export async function serveFromStorage(
   filename: string,
-  res: Response
+  res: Response,
+  downloadName?: string
 ): Promise<boolean> {
   const dir = process.env.PRIVATE_OBJECT_DIR;
   if (!dir) return false;
@@ -69,6 +80,15 @@ export async function serveFromStorage(
     );
     res.setHeader("Cache-Control", "private, max-age=86400");
     if (meta.size) res.setHeader("Content-Length", String(meta.size));
+    if (downloadName) {
+      // ASCII fallback for old browsers + RFC 5987 field carrying the exact
+      // (possibly non-ASCII) original filename.
+      const fallback = downloadName.replace(/[^\x20-\x7e]/g, "_").replace(/["\\]/g, "_");
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="${fallback}"; filename*=UTF-8''${encodeRFC5987(downloadName)}`
+      );
+    }
     file.createReadStream().pipe(res);
     return true;
   } catch {

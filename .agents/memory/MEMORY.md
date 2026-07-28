@@ -5,3 +5,4 @@
 - [Playwright on NixOS](playwright-nixos-chromium.md) — bundled chromium can't load shared libs; use Nix chromium via launchOptions.executablePath; some older specs are stale
 - [Resend order emails](resend-order-emails.md) — sandbox delivers only to Resend account owner until domain verified; transport = Replit connector in dev, RESEND_API_KEY direct API on Hostinger
 - [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files vanish between ShellExec calls; create fixtures in the same command or use a workspace path
+- [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard

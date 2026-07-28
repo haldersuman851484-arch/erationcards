@@ -163,7 +163,7 @@ export default function PlaceOrder() {
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const [createdOrder, setCreatedOrder] = useState<{ orderNumber: string } | null>(null);
-  const [cardPdfs, setCardPdfs] = useState<Record<number, string>>({});
+  const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
   const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
@@ -207,6 +207,11 @@ export default function PlaceOrder() {
 
   async function handleCardPdfUpload(cardIndex: number, file: File) {
     if (!createdOrder) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if (!isPdf) {
+      toast({ title: "Only PDF files allowed", description: "Please choose the e-ration card PDF file — photos or images cannot be used.", variant: "destructive" });
+      return;
+    }
     setUploadingPdfIdx(cardIndex);
     try {
       const fd = new FormData();
@@ -216,11 +221,18 @@ export default function PlaceOrder() {
         method: "POST",
         body: fd,
       });
-      if (!res.ok) throw new Error("Upload failed");
-      const { pdfUrl } = await res.json();
-      setCardPdfs((prev) => ({ ...prev, [cardIndex]: pdfUrl }));
-    } catch {
-      toast({ title: "Upload failed", description: "Could not upload the PDF. Try again.", variant: "destructive" });
+      if (!res.ok) {
+        let msg = "Could not upload the PDF. Try again.";
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch { /* non-JSON error body */ }
+        throw new Error(msg);
+      }
+      const { pdfUrl, originalFilename } = await res.json();
+      setCardPdfs((prev) => ({ ...prev, [cardIndex]: { pdfUrl, originalFilename } }));
+    } catch (err) {
+      toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Could not upload the PDF. Try again.", variant: "destructive" });
     } finally {
       setUploadingPdfIdx(null);
     }
@@ -705,13 +717,13 @@ export default function PlaceOrder() {
                               <p className="text-sm font-medium text-slate-800 truncate">{card.name}</p>
                               <p className="text-xs text-slate-500 font-mono">{card.rationCardNumber} · {card.cardType}</p>
                               {uploaded && (
-                                <p className="inline-flex items-center gap-1 text-xs text-emerald-600 mt-0.5"><CheckCircle2 className="w-3 h-3" /> PDF uploaded</p>
+                                <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5 min-w-0" data-testid={`text-pdf-name-${card.cardIndex}`}><CheckCircle2 className="w-3 h-3 shrink-0" /> <span className="truncate">{cardPdfs[card.cardIndex]?.originalFilename ?? "PDF uploaded"}</span></p>
                               )}
                             </div>
                             <input
                               ref={(el) => { pdfFileRefs.current[card.cardIndex] = el; }}
                               type="file"
-                              accept=".pdf,image/*"
+                              accept=".pdf,application/pdf"
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];

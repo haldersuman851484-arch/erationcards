@@ -17,6 +17,7 @@ interface CardEntry {
   rationCardNumber: string;
   cardType: string;
   pdfUrl?: string;
+  originalFilename?: string;
 }
 
 interface OrderData {
@@ -25,7 +26,7 @@ interface OrderData {
   cardType: string;
   rationCardNumber: string;
   familyCards: { customerName: string; rationCardNumber: string; cardType: string }[];
-  rationCardPdfs: { cardIndex: number; pdfUrl: string; uploadedAt: string }[];
+  rationCardPdfs: { cardIndex: number; pdfUrl: string; uploadedAt: string; originalFilename?: string }[];
   amount: number;
   quantity: number;
   createdAt: string;
@@ -61,27 +62,38 @@ export default function OrderUpload() {
 
   function buildCardList(o: OrderData): CardEntry[] {
     const pdfs = o.rationCardPdfs ?? [];
+    const mainPdf = pdfs.find((p) => p.cardIndex === 0);
     const list: CardEntry[] = [
       {
         cardIndex: 0,
         name: o.customerName,
         rationCardNumber: o.rationCardNumber,
         cardType: o.cardType,
-        pdfUrl: pdfs.find((p) => p.cardIndex === 0)?.pdfUrl,
+        pdfUrl: mainPdf?.pdfUrl,
+        originalFilename: mainPdf?.originalFilename,
       },
-      ...((o.familyCards ?? []).map((fc, i) => ({
-        cardIndex: i + 1,
-        name: fc.customerName,
-        rationCardNumber: fc.rationCardNumber,
-        cardType: fc.cardType,
-        pdfUrl: pdfs.find((p) => p.cardIndex === i + 1)?.pdfUrl,
-      }))),
+      ...((o.familyCards ?? []).map((fc, i) => {
+        const pdf = pdfs.find((p) => p.cardIndex === i + 1);
+        return {
+          cardIndex: i + 1,
+          name: fc.customerName,
+          rationCardNumber: fc.rationCardNumber,
+          cardType: fc.cardType,
+          pdfUrl: pdf?.pdfUrl,
+          originalFilename: pdf?.originalFilename,
+        };
+      })),
     ];
     return list;
   }
 
   async function handleUpload(cardIndex: number, file: File) {
     if (!order) return;
+    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+    if (!isPdf) {
+      alert("Only PDF files are allowed. Please choose the e-ration card PDF file — photos or images cannot be used.");
+      return;
+    }
     setUploadingIdx(cardIndex);
     try {
       const fd = new FormData();
@@ -91,8 +103,15 @@ export default function OrderUpload() {
         method: "POST",
         body: fd,
       });
-      if (!res.ok) throw new Error("Upload failed");
-      const { pdfUrl } = await res.json();
+      if (!res.ok) {
+        let msg = "Upload failed. Please try again.";
+        try {
+          const j = await res.json();
+          if (j?.error) msg = j.error;
+        } catch { /* non-JSON error body */ }
+        throw new Error(msg);
+      }
+      const { pdfUrl, originalFilename } = await res.json();
       setOrder((prev) => {
         if (!prev) return prev;
         const existing = (prev.rationCardPdfs ?? []).filter((p) => p.cardIndex !== cardIndex);
@@ -100,12 +119,12 @@ export default function OrderUpload() {
           ...prev,
           rationCardPdfs: [
             ...existing,
-            { cardIndex, pdfUrl, uploadedAt: new Date().toISOString() },
+            { cardIndex, pdfUrl, uploadedAt: new Date().toISOString(), originalFilename },
           ],
         };
       });
-    } catch {
-      alert("Upload failed. Please try again.");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Upload failed. Please try again.");
     } finally {
       setUploadingIdx(null);
     }
@@ -220,9 +239,12 @@ export default function OrderUpload() {
                       href={`${BASE}${card.pdfUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-emerald-600 mt-1 hover:underline"
+                      className="flex items-center gap-1 text-xs text-emerald-600 mt-1 hover:underline min-w-0"
+                      data-testid={`link-pdf-${card.cardIndex}`}
                     >
-                      <CheckCircle2 className="w-3 h-3" /> Uploaded · View
+                      <CheckCircle2 className="w-3 h-3 shrink-0" />
+                      <span className="truncate">{card.originalFilename ?? "Uploaded"}</span>
+                      <span className="shrink-0">· View</span>
                     </a>
                   )}
                 </div>
@@ -231,7 +253,7 @@ export default function OrderUpload() {
                   <input
                     ref={(el) => { fileRefs.current[card.cardIndex] = el; }}
                     type="file"
-                    accept=".pdf,image/*"
+                    accept=".pdf,application/pdf"
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];

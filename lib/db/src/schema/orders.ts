@@ -20,6 +20,9 @@ export const CardPdfEntrySchema = z.object({
   uploadedAt: z.string().min(1, "uploadedAt is required"),
   downloaded: z.boolean().optional().default(false),
   downloadedAt: z.string().nullable().optional(),
+  // Customer's original filename (sanitized). Optional: entries uploaded
+  // before this field existed don't have it.
+  originalFilename: z.string().optional(),
 });
 
 export const FamilyCardsSchema = z.array(FamilyCardSchema);
