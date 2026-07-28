@@ -97,7 +97,7 @@ function OperatorPricingBanner() {
         {rows.map((row) => (
           <div key={row.group} className="flex flex-wrap items-center gap-2">
             <span className="w-44 shrink-0">
-              <span className="block font-semibold text-background text-sm">{row.label}</span>
+              <span className="block font-semibold text-background text-[14px]">{row.label}</span>
               <span className={`block ${row.typesColor} text-[12px]`} data-testid={`pricing-types-${row.group}`}>
                 {row.types.join(" · ")}
               </span>
