@@ -86,19 +86,19 @@ function getAuthHeader() {
 
 /** Pricing rows shown to the operator before they start filling the form. */
 function OperatorPricingBanner() {
-  const rows: Array<{ group: string; label: string; types: readonly string[]; single: number; multi: number }> = [
-    { group: "ration", label: "Ration Card", types: RATION_CARD_TYPES, single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
-    { group: "special", label: "OTHER PVC CARDS", types: SPECIAL_CARD_TYPES, single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
+  const rows: Array<{ group: string; label: string; types: readonly string[]; typesColor: string; single: number; multi: number }> = [
+    { group: "ration", label: "Ration Card", types: RATION_CARD_TYPES, typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
+    { group: "special", label: "OTHER PVC CARDS", types: SPECIAL_CARD_TYPES, typesColor: "text-[#c5e6eb]", single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
   ];
   return (
-    <div className="rounded-xl border border-primary/15 bg-gradient-to-br from-primary/5 to-sky-50 p-4 mb-4">
-      <p className="text-xs font-bold text-primary uppercase tracking-wide mb-3">Operator Rates</p>
+    <div className="rounded-xl border border-primary/15 from-primary/5 to-sky-50 p-4 mb-4 bg-[#038ffff2] text-[#ffffff]">
+      <p className="text-xs font-bold uppercase tracking-wide mb-3 text-[#ffd900]">Operator Rates</p>
       <div className="space-y-2.5">
         {rows.map((row) => (
           <div key={row.group} className="flex flex-wrap items-center gap-2">
             <span className="w-44 shrink-0">
-              <span className="block text-xs font-semibold text-slate-700">{row.label}</span>
-              <span className="block text-[10px] text-slate-400 leading-tight" data-testid={`pricing-types-${row.group}`}>
+              <span className="block font-semibold text-background text-sm">{row.label}</span>
+              <span className={`block ${row.typesColor} text-[12px]`} data-testid={`pricing-types-${row.group}`}>
                 {row.types.join(" · ")}
               </span>
             </span>
@@ -116,7 +116,7 @@ function OperatorPricingBanner() {
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-slate-400 mt-3">incl. GST &amp; postage · Operator rates</p>
+      <p className="text-[11px] mt-3 text-[#ffffff]">incl. GST &amp; postage · Operator rates</p>
     </div>
   );
 }
