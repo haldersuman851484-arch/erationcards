@@ -7,6 +7,7 @@
  */
 
 export * from './adminAuthResponse';
+export * from './customerInfoUpdate';
 export * from './errorResponse';
 export * from './getOperatorOrdersParams';
 export * from './healthStatus';

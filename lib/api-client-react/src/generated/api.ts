@@ -21,6 +21,7 @@ import type {
 
 import type {
   AdminAuthResponse,
+  CustomerInfoUpdate,
   ErrorResponse,
   GetOperatorOrdersParams,
   HealthStatus,
@@ -697,6 +698,77 @@ export const useUpdateOrderStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateOrderStatusMutationOptions(options));
+    }
+
+export const getUpdateOrderCustomerInfoUrl = (id: number,) => {
+
+
+
+
+  return `/api/orders/${id}/customer-info`
+}
+
+/**
+ * @summary Correct an order's customer contact & delivery details (admin only)
+ */
+export const updateOrderCustomerInfo = async (id: number,
+    customerInfoUpdate: CustomerInfoUpdate, options?: RequestInit): Promise<Order> => {
+
+  return customFetch<Order>(getUpdateOrderCustomerInfoUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(customerInfoUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateOrderCustomerInfoMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderCustomerInfo>>, TError,{id: number;data: BodyType<CustomerInfoUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOrderCustomerInfo>>, TError,{id: number;data: BodyType<CustomerInfoUpdate>}, TContext> => {
+
+const mutationKey = ['updateOrderCustomerInfo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrderCustomerInfo>>, {id: number;data: BodyType<CustomerInfoUpdate>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateOrderCustomerInfo(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOrderCustomerInfoMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrderCustomerInfo>>>
+    export type UpdateOrderCustomerInfoMutationBody = BodyType<CustomerInfoUpdate>
+    export type UpdateOrderCustomerInfoMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Correct an order's customer contact & delivery details (admin only)
+ */
+export const useUpdateOrderCustomerInfo = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderCustomerInfo>>, TError,{id: number;data: BodyType<CustomerInfoUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateOrderCustomerInfo>>,
+        TError,
+        {id: number;data: BodyType<CustomerInfoUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateOrderCustomerInfoMutationOptions(options));
     }
 
 export const getUpdateOrderPaymentStatusUrl = (id: number,) => {

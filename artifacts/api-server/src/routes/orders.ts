@@ -5,6 +5,7 @@ import { eq, and, desc, gte, lte, sql, or, like, isNull, isNotNull } from "drizz
 import {
   CreateOrderBody,
   UpdateOrderStatusBody,
+  UpdateOrderCustomerInfoBody,
   AssignOrderToOperatorBody,
   ListOrdersQueryParams,
   TrackOrderQueryParams,
@@ -530,6 +531,76 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update order");
     res.status(400).json({ error: "Failed to update order" });
+  }
+});
+
+// ── PATCH /orders/:id/customer-info ─────────────────────────────────────────
+// Admin corrects the customer's contact & delivery details after the customer
+// filled them in wrong. Strict whitelist: status, payment, and card fields can
+// never be changed through this endpoint (the zod schema strips unknown keys
+// and the update below only sets the seven customer columns).
+
+const CUSTOMER_INFO_FIELDS = [
+  "customerName", "customerPhone", "address", "postOffice", "district", "pincode", "state",
+] as const;
+
+const CUSTOMER_INFO_FRIENDLY_ERRORS: Record<string, string> = {
+  customerName: "Customer name cannot be empty",
+  customerPhone: "Mobile number must be exactly 10 digits",
+  address: "Street address cannot be empty",
+  postOffice: "Post office name is too long",
+  district: "Town/District cannot be empty",
+  pincode: "PIN code must be exactly 6 digits",
+  state: "State cannot be empty",
+};
+
+router.patch("/orders/:id/customer-info", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
+
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    // Trim before validation so "   " fails the same way "" does.
+    const raw = (req.body ?? {}) as Record<string, unknown>;
+    const trimmed: Record<string, unknown> = { ...raw };
+    for (const key of CUSTOMER_INFO_FIELDS) {
+      if (typeof trimmed[key] === "string") trimmed[key] = (trimmed[key] as string).trim();
+    }
+
+    const parsed = UpdateOrderCustomerInfoBody.safeParse(trimmed);
+    if (!parsed.success) {
+      const field = String(parsed.error.issues[0]?.path[0] ?? "");
+      res.status(400).json({ error: CUSTOMER_INFO_FRIENDLY_ERRORS[field] ?? "Invalid customer details" });
+      return;
+    }
+    const body = parsed.data;
+
+    const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Order not found" }); return; }
+
+    await db
+      .update(ordersTable)
+      .set({
+        customerName: body.customerName,
+        customerPhone: body.customerPhone,
+        address: body.address,
+        postOffice: body.postOffice && body.postOffice.length > 0 ? body.postOffice : null,
+        district: body.district,
+        pincode: body.pincode,
+        state: body.state,
+        updatedAt: new Date(),
+      })
+      .where(eq(ordersTable.id, id));
+
+    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    res.json(formatOrder(order));
+  } catch (err) {
+    req.log.error({ err }, "Failed to update customer info");
+    res.status(500).json({ error: "Failed to update customer details" });
   }
 });
 

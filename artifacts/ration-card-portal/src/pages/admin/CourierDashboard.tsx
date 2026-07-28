@@ -10,9 +10,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import {
   Download, FileText, ArrowLeft, Printer,
   Package, CheckCircle2, AlertCircle, ChevronRight, Search, X,
+  Pencil, Loader2,
 } from "lucide-react";
 import { ALLOWED_CARD_TYPES } from "@workspace/pricing";
 
@@ -641,6 +643,23 @@ function PrintStatusView({
   const [creatingShipment, setCreatingShipment] = useState(false); // dispatch API call in flight
   const [cancellingShipment, setCancellingShipment] = useState(false); // cancel API call in flight
 
+  // ── Customer info editing (fix wrong name / mobile / address) ──
+  const [editingCustomer, setEditingCustomer] = useState(false);
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [customerFormError, setCustomerFormError] = useState<string | null>(null);
+  // Status fetched fresh from the server when the dialog opens — the search
+  // result on screen can be stale (react-query cache), and the dispatched
+  // warning must reflect the real current status.
+  const [editOrderStatus, setEditOrderStatus] = useState<string | null>(null);
+  // The order the dialog was opened FOR. Saves always PATCH this id — never the
+  // live `order` from render state — so a search/selection change (e.g. a
+  // barcode scan) while the dialog is open can never write into another order.
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [customerForm, setCustomerForm] = useState({
+    customerName: "", customerPhone: "", address: "",
+    postOffice: "", district: "", pincode: "", state: "",
+  });
+
   // Refs never go stale inside closures — used for undo gate + toast teardown
   const undoTimerRef       = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeUndoTokenRef = useRef<string | null>(null);   // unique per mark-printed; null = window closed
@@ -809,6 +828,17 @@ function PrintStatusView({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order?.id]);
 
+  // Safety net: if the displayed order changes while the customer-info dialog
+  // is open (new scan / search), close the dialog instead of letting the form
+  // hang around over a different order.
+  useEffect(() => {
+    if (editingCustomer && !savingCustomer && order?.id !== editingOrderId) {
+      setEditingCustomer(false);
+      setEditingOrderId(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [order?.id]);
+
   // Fetch all orders by the same customer phone — runs once per unique phone number
   const activePhone = order?.customerPhone ?? null;
   const { data: phoneHistoryData } = useQuery<{ orders: any[] }>({
@@ -855,6 +885,89 @@ function PrintStatusView({
       o.pincode    && `Pin: ${o.pincode}`,
       o.state      && `State: ${o.state}`,
     ].filter(Boolean).join("  ");
+  }
+
+  // ── Customer info edit handlers ─────────────────────────────────────────────
+
+  async function openCustomerEdit() {
+    if (!order) return;
+    // Re-fetch the order so the form and the dispatched warning reflect the
+    // CURRENT server state — the on-screen search result can be a stale cache
+    // (e.g. the order was dispatched or edited elsewhere meanwhile).
+    const targetId: number = order.id;
+    let src: any = order;
+    try {
+      const r = await fetch(`/api/orders/${targetId}`, { headers: getAuthHeader() });
+      if (r.ok) src = await r.json();
+    } catch { /* network hiccup — fall back to the on-screen values */ }
+    setEditingOrderId(targetId);
+    setCustomerForm({
+      customerName: src.customerName ?? "",
+      customerPhone: src.customerPhone ?? "",
+      address: src.address ?? "",
+      postOffice: src.postOffice ?? "",
+      district: src.district ?? "",
+      pincode: src.pincode ?? "",
+      state: src.state ?? "",
+    });
+    setEditOrderStatus(src.status ?? order.status ?? null);
+    setCustomerFormError(null);
+    setEditingCustomer(true);
+    // If the status drifted from what's on screen, refresh the visible card too
+    if (src.status && src.status !== order.status) {
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+    }
+  }
+
+  /** Mirrors the server-side rules so obvious mistakes are caught before the request. */
+  function validateCustomerForm(): string | null {
+    const f = customerForm;
+    if (!f.customerName.trim()) return "Customer name cannot be empty";
+    if (!/^[0-9]{10}$/.test(f.customerPhone.trim())) return "Mobile number must be exactly 10 digits";
+    if (!f.address.trim()) return "Street address cannot be empty";
+    if (!f.district.trim()) return "Town/District cannot be empty";
+    if (!/^[0-9]{6}$/.test(f.pincode.trim())) return "PIN code must be exactly 6 digits";
+    if (!f.state.trim()) return "State cannot be empty";
+    return null;
+  }
+
+  async function saveCustomerInfo() {
+    if (editingOrderId == null) return;
+    const validationError = validateCustomerForm();
+    if (validationError) { setCustomerFormError(validationError); return; }
+    setSavingCustomer(true);
+    setCustomerFormError(null);
+    try {
+      const r = await fetch(`/api/orders/${editingOrderId}/customer-info`, {
+        method: "PATCH",
+        headers: { ...getAuthHeader(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: customerForm.customerName.trim(),
+          customerPhone: customerForm.customerPhone.trim(),
+          address: customerForm.address.trim(),
+          postOffice: customerForm.postOffice.trim(),
+          district: customerForm.district.trim(),
+          pincode: customerForm.pincode.trim(),
+          state: customerForm.state.trim(),
+        }),
+      });
+      if (!r.ok) {
+        let msg = "Could not save the changes. Please try again.";
+        try {
+          const j = await r.json();
+          if (j?.error) msg = j.error;
+        } catch { /* non-JSON error body */ }
+        throw new Error(msg);
+      }
+      setEditingCustomer(false);
+      queryClient.invalidateQueries({ queryKey: ["courier-print-search"] });
+      queryClient.invalidateQueries({ queryKey: ["phone-history"] });
+      toast({ title: "Customer info updated ✓" });
+    } catch (err) {
+      setCustomerFormError(err instanceof Error ? err.message : "Could not save the changes. Please try again.");
+    } finally {
+      setSavingCustomer(false);
+    }
   }
 
   const allCards  = order ? buildAllCards(order) : [];
@@ -1337,14 +1450,124 @@ function PrintStatusView({
 
               {/* Customer Info */}
               <div>
-                <p className="font-bold text-slate-900 mb-2">Customer Info</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-bold text-slate-900">Customer Info</p>
+                  <button
+                    onClick={openCustomerEdit}
+                    className="flex items-center gap-1 text-xs font-semibold text-primary hover:text-primary/80 transition-colors"
+                    data-testid="button-edit-customer-info"
+                  >
+                    <Pencil className="w-3 h-3" /> Edit
+                  </button>
+                </div>
                 <div className="space-y-1 text-sm text-slate-700">
-                  <p>Name: <span className="font-medium">{order.customerName}</span></p>
-                  <p>Mobile Number: <span className="font-medium">{order.customerPhone}</span></p>
+                  <p>Name: <span className="font-medium" data-testid="text-customer-name">{order.customerName}</span></p>
+                  <p>Mobile Number: <span className="font-medium" data-testid="text-customer-phone">{order.customerPhone}</span></p>
                   <p className="mt-2 font-medium text-slate-900">Address</p>
-                  <p className="text-xs text-slate-600 leading-relaxed">{fmtAddress(order)}</p>
+                  <p className="text-xs text-slate-600 leading-relaxed" data-testid="text-customer-address">{fmtAddress(order)}</p>
                 </div>
               </div>
+
+              {/* Customer info edit dialog */}
+              <Dialog open={editingCustomer} onOpenChange={(open) => { if (!savingCustomer) setEditingCustomer(open); }}>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Edit Customer Info</DialogTitle>
+                  </DialogHeader>
+
+                  {["dispatched", "delivered"].includes(editOrderStatus ?? order.status) && (
+                    <div className="flex items-start gap-2 text-xs bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-3 py-2" data-testid="text-dispatched-warning">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>This order was already dispatched — the courier shipment and label will <b>not</b> change. Only the details saved here are corrected.</span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 mb-1 block">Customer Name</label>
+                      <Input
+                        value={customerForm.customerName}
+                        onChange={(e) => setCustomerForm(f => ({ ...f, customerName: e.target.value }))}
+                        data-testid="input-edit-customer-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 mb-1 block">Mobile Number</label>
+                      <Input
+                        value={customerForm.customerPhone}
+                        onChange={(e) => setCustomerForm(f => ({ ...f, customerPhone: e.target.value }))}
+                        inputMode="numeric"
+                        maxLength={10}
+                        data-testid="input-edit-customer-phone"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-slate-600 mb-1 block">Street Address</label>
+                      <Input
+                        value={customerForm.address}
+                        onChange={(e) => setCustomerForm(f => ({ ...f, address: e.target.value }))}
+                        data-testid="input-edit-customer-street"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 mb-1 block">Post Office <span className="font-normal text-slate-400">(optional)</span></label>
+                        <Input
+                          value={customerForm.postOffice}
+                          onChange={(e) => setCustomerForm(f => ({ ...f, postOffice: e.target.value }))}
+                          data-testid="input-edit-customer-post"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 mb-1 block">Town / District</label>
+                        <Input
+                          value={customerForm.district}
+                          onChange={(e) => setCustomerForm(f => ({ ...f, district: e.target.value }))}
+                          data-testid="input-edit-customer-district"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 mb-1 block">PIN Code</label>
+                        <Input
+                          value={customerForm.pincode}
+                          onChange={(e) => setCustomerForm(f => ({ ...f, pincode: e.target.value }))}
+                          inputMode="numeric"
+                          maxLength={6}
+                          data-testid="input-edit-customer-pincode"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600 mb-1 block">State</label>
+                        <Input
+                          value={customerForm.state}
+                          onChange={(e) => setCustomerForm(f => ({ ...f, state: e.target.value }))}
+                          data-testid="input-edit-customer-state"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {customerFormError && (
+                    <p className="text-sm text-red-600" data-testid="text-customer-edit-error">{customerFormError}</p>
+                  )}
+
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                      variant="outline"
+                      onClick={() => setEditingCustomer(false)}
+                      disabled={savingCustomer}
+                      data-testid="button-cancel-customer-edit"
+                    >
+                      Cancel
+                    </Button>
+                    <Button onClick={saveCustomerInfo} disabled={savingCustomer} data-testid="button-save-customer-edit">
+                      {savingCustomer ? (<><Loader2 className="w-4 h-4 animate-spin mr-1.5" /> Saving…</>) : "Save Changes"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
 
               {/* Welcome Letter — generated in-browser, always enabled */}

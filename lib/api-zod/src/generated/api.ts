@@ -363,6 +363,79 @@ export const UpdateOrderStatusResponse = zod.object({
 
 
 /**
+ * @summary Correct an order's customer contact & delivery details (admin only)
+ */
+export const UpdateOrderCustomerInfoParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateOrderCustomerInfoBodyCustomerNameMax = 200;
+
+export const updateOrderCustomerInfoBodyCustomerPhoneRegExp = new RegExp('^[0-9]{10}$');
+export const updateOrderCustomerInfoBodyAddressMax = 500;
+
+export const updateOrderCustomerInfoBodyPostOfficeMax = 200;
+
+export const updateOrderCustomerInfoBodyDistrictMax = 100;
+
+export const updateOrderCustomerInfoBodyPincodeRegExp = new RegExp('^[0-9]{6}$');
+export const updateOrderCustomerInfoBodyStateMax = 100;
+
+
+
+export const UpdateOrderCustomerInfoBody = zod.object({
+  "customerName": zod.string().min(1).max(updateOrderCustomerInfoBodyCustomerNameMax),
+  "customerPhone": zod.string().regex(updateOrderCustomerInfoBodyCustomerPhoneRegExp),
+  "address": zod.string().min(1).max(updateOrderCustomerInfoBodyAddressMax),
+  "postOffice": zod.string().max(updateOrderCustomerInfoBodyPostOfficeMax).optional(),
+  "district": zod.string().min(1).max(updateOrderCustomerInfoBodyDistrictMax),
+  "pincode": zod.string().regex(updateOrderCustomerInfoBodyPincodeRegExp),
+  "state": zod.string().min(1).max(updateOrderCustomerInfoBodyStateMax)
+}).describe('Admin correction of the customer\'s contact & delivery details. All fields except postOffice are required — the edit form always submits the complete set. Status, payment, and card fields are deliberately not part of this schema.')
+
+export const UpdateOrderCustomerInfoResponse = zod.object({
+  "id": zod.number(),
+  "orderNumber": zod.string(),
+  "customerName": zod.string(),
+  "customerPhone": zod.string(),
+  "customerEmail": zod.string().nullish(),
+  "rationCardNumber": zod.string(),
+  "deliveryName": zod.string().nullish(),
+  "address": zod.string(),
+  "postOffice": zod.string().nullish(),
+  "state": zod.string(),
+  "district": zod.string(),
+  "pincode": zod.string(),
+  "cardType": zod.string(),
+  "familyCards": zod.array(zod.object({
+  "customerName": zod.string(),
+  "rationCardNumber": zod.string(),
+  "cardType": zod.string()
+})).optional(),
+  "quantity": zod.number(),
+  "amount": zod.number(),
+  "paymentStatus": zod.string(),
+  "paymentMethod": zod.string().nullish(),
+  "paymentScreenshotUrl": zod.string().nullish(),
+  "status": zod.string(),
+  "operatorId": zod.number().nullish(),
+  "operatorName": zod.string().nullish(),
+  "trackingNumber": zod.string().nullish(),
+  "courierName": zod.string().nullish(),
+  "notes": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string(),
+  "otherOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "status": zod.string(),
+  "cardType": zod.string().optional(),
+  "quantity": zod.number().optional(),
+  "createdAt": zod.string()
+})).optional().describe('Present only on GET \/orders\/track when the searched ration card number has more than one order. Summaries (newest first) of every order under that card, so a caller can offer a pick list instead of silently hiding older orders.')
+})
+
+
+/**
  * @summary Confirm or reject a payment (admin)
  */
 export const UpdateOrderPaymentStatusParams = zod.object({

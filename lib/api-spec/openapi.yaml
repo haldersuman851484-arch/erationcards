@@ -191,6 +191,43 @@ paths:
               schema:
                 $ref: "#/components/schemas/Order"
 
+  /orders/{id}/customer-info:
+    patch:
+      operationId: updateOrderCustomerInfo
+      tags: [orders]
+      summary: Correct an order's customer contact & delivery details (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInfoUpdate"
+      responses:
+        "200":
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   /orders/{id}/payment-status:
     patch:
       operationId: updateOrderPaymentStatus
@@ -921,6 +958,47 @@ components:
           type: string
         notes:
           type: string
+
+    CustomerInfoUpdate:
+      type: object
+      description: >-
+        Admin correction of the customer's contact & delivery details. All
+        fields except postOffice are required — the edit form always submits
+        the complete set. Status, payment, and card fields are deliberately
+        not part of this schema.
+      properties:
+        customerName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        customerPhone:
+          type: string
+          pattern: "^[0-9]{10}$"
+        address:
+          type: string
+          minLength: 1
+          maxLength: 500
+        postOffice:
+          type: string
+          maxLength: 200
+        district:
+          type: string
+          minLength: 1
+          maxLength: 100
+        pincode:
+          type: string
+          pattern: "^[0-9]{6}$"
+        state:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+        - customerName
+        - customerPhone
+        - address
+        - district
+        - pincode
+        - state
 
     OrderAssignment:
       type: object

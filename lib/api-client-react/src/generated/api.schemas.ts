@@ -138,6 +138,38 @@ export interface OrderStatusUpdate {
   notes?: string;
 }
 
+/**
+ * Admin correction of the customer's contact & delivery details. All fields except postOffice are required — the edit form always submits the complete set. Status, payment, and card fields are deliberately not part of this schema.
+ */
+export interface CustomerInfoUpdate {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
+  customerName: string;
+  /** @pattern ^[0-9]{10}$ */
+  customerPhone: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
+  address: string;
+  /** @maxLength 200 */
+  postOffice?: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  district: string;
+  /** @pattern ^[0-9]{6}$ */
+  pincode: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  state: string;
+}
+
 export interface OrderAssignment {
   operatorId: number;
 }

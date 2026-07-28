@@ -57,6 +57,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 - **Order confirmation email** — final Submit calls `POST /api/orders/:orderNumber/submit`, which emails the order number via Resend (`artifacts/api-server/src/lib/email.ts`). Email failure never blocks the order (`emailSent:false` + amber note on the success screen). The endpoint is idempotent: `orders.submitted_at` is claimed atomically, so the email goes out at most once per order no matter how often submit is replayed. The old `/order-upload/:orderNumber` page remains the resume path for incomplete orders (it does not send the email).
 - **UPI payment** — QR code + manual UPI ID shown after order; customer uploads a payment screenshot.
 - **Admin dashboard** — login-protected view of all orders with status management (pending → confirmed → dispatched).
+- **Customer info correction** — on both courier Print Status panels (public & operator), the Customer Info box has an Edit button: admins can fix a wrongly entered name, mobile, or delivery address via `PATCH /api/orders/:id/customer-info` (admin-only, validates like order creation, can never touch status/payment/card fields). The dialog re-fetches the order on open (stale-cache safe), locks onto the order it was opened for (scanner-proof), and warns when the order was already dispatched — the Delhivery shipment/label is not updated.
 - **Operator portal** — separate login for field operators to view and update their assigned orders.
 
 ## Hostinger Deployment

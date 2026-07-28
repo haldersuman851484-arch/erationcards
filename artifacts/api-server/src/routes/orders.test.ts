@@ -282,3 +282,122 @@ describe("PATCH /api/orders/:id — admin only (operators cannot modify status)"
     expect(res.body).toMatchObject({ orderNumber: "TEST000001" });
   });
 });
+
+describe("PATCH /api/orders/:id/customer-info — admin corrects customer details", () => {
+  const VALID_CUSTOMER_INFO = {
+    customerName: "Corrected Name",
+    customerPhone: "9876543210",
+    address: "45 New Street",
+    postOffice: "Baruipur",
+    district: "South 24 Parganas",
+    pincode: "743329",
+    state: "West Bengal",
+  };
+
+  /** The payload the route passed to db.update(...).set(...) most recently. */
+  async function lastUpdatePayload(): Promise<Record<string, unknown>> {
+    const { db } = await import("@workspace/db");
+    const updateMock = db.update as unknown as (
+      table: unknown,
+    ) => { set: { mock: { calls: Array<[Record<string, unknown>]> } } };
+    const lastCall = updateMock({}).set.mock.calls.at(-1);
+    if (!lastCall) throw new Error("no update call captured");
+    return lastCall[0];
+  }
+
+  it("returns 401 when no Authorization header is sent", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send(VALID_CUSTOMER_INFO);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for an operator token (couriers use admin auth; operators are blocked)", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send(VALID_CUSTOMER_INFO)
+      .set("Authorization", `Bearer ${makeOperatorToken()}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("lets an admin update customer details (200) and writes the corrected values", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send(VALID_CUSTOMER_INFO)
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ orderNumber: "TEST000001" });
+    const payload = await lastUpdatePayload();
+    expect(payload.customerName).toBe("Corrected Name");
+    expect(payload.customerPhone).toBe("9876543210");
+    expect(payload.address).toBe("45 New Street");
+    expect(payload.pincode).toBe("743329");
+  });
+
+  it("rejects a mobile number that is not exactly 10 digits", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send({ ...VALID_CUSTOMER_INFO, customerPhone: "12345" })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/10 digits/);
+  });
+
+  it("rejects a PIN code that is not exactly 6 digits", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send({ ...VALID_CUSTOMER_INFO, pincode: "74332" })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/6 digits/);
+  });
+
+  it("rejects a whitespace-only customer name (trimmed before validation)", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send({ ...VALID_CUSTOMER_INFO, customerName: "   " })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatch(/cannot be empty/i);
+  });
+
+  it("ignores non-whitelisted fields — status/payment/tracking cannot be smuggled in", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send({
+        ...VALID_CUSTOMER_INFO,
+        status: "delivered",
+        paymentStatus: "confirmed",
+        trackingNumber: "HACK123",
+        amount: 1,
+      })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(200);
+    const payload = await lastUpdatePayload();
+    expect(payload).not.toHaveProperty("status");
+    expect(payload).not.toHaveProperty("paymentStatus");
+    expect(payload).not.toHaveProperty("trackingNumber");
+    expect(payload).not.toHaveProperty("amount");
+  });
+
+  it("stores an empty post office as null (field is optional)", async () => {
+    const res = await request(app)
+      .patch("/api/orders/1/customer-info")
+      .send({ ...VALID_CUSTOMER_INFO, postOffice: "   " })
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(200);
+    const payload = await lastUpdatePayload();
+    expect(payload.postOffice).toBeNull();
+  });
+
+  it("returns 404 when the order does not exist", async () => {
+    const { db } = await import("@workspace/db");
+    const selectChain = (db.select as unknown as () => { limit: { mockResolvedValueOnce: (v: unknown[]) => void } })();
+    selectChain.limit.mockResolvedValueOnce([]);
+    const res = await request(app)
+      .patch("/api/orders/999/customer-info")
+      .send(VALID_CUSTOMER_INFO)
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(404);
+  });
+});
