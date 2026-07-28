@@ -52,7 +52,8 @@ A web application for ordering PVC ration cards online — customers fill in det
   - Mixed orders: the single-vs-multi tier is decided by the TOTAL card count in the order; each card is then billed at its own group's rate for that tier (e.g. public 1 PHH + 1 ABHA = ₹50 + ₹75 = ₹125).
   - The server recomputes the amount on order creation (client-sent `amount` is ignored). To change prices, edit `lib/pricing/src/index.ts` only — forms, receipts, FAQ/SEO copy, and the API all read from it.
   - Exception: `artifacts/ration-card-portal/index.html` (static meta tags + JSON-LD) states prices literally — update it by hand whenever prices change.
-- **Order form** — customers enter personal details and select a card category (ration or ABHA/E-SHRAM/GENERAL); each order gets a unique order number.
+- **Order form** — 4-step wizard in both the public (`/order`) and operator flows: Card Details → Delivery (requires a validated Email ID) → Payment (creates the order) → Upload PDF (one e-ration-card PDF per card, Submit enabled only when all are uploaded). Each order gets a unique order number.
+- **Order confirmation email** — final Submit calls `POST /api/orders/:orderNumber/submit`, which emails the order number via Resend (`artifacts/api-server/src/lib/email.ts`). Email failure never blocks the order (`emailSent:false` + amber note on the success screen). The endpoint is idempotent: `orders.submitted_at` is claimed atomically, so the email goes out at most once per order no matter how often submit is replayed. The old `/order-upload/:orderNumber` page remains the resume path for incomplete orders (it does not send the email).
 - **UPI payment** — QR code + manual UPI ID shown after order; customer uploads a payment screenshot.
 - **Admin dashboard** — login-protected view of all orders with status management (pending → confirmed → dispatched).
 - **Operator portal** — separate login for field operators to view and update their assigned orders.
@@ -68,6 +69,8 @@ A web application for ordering PVC ration cards online — customers fill in det
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — admin dashboard credentials
    - `MERCHANT_UPI_ID` — UPI ID for the payment QR code
    - `UPLOADS_DIR` — absolute path for payment screenshot storage (e.g. `/home/<user>/uploads`)
+   - `RESEND_API_KEY` — Resend API key for order confirmation emails (required on Hostinger; the Replit connector proxy is unreachable outside Replit)
+   - `EMAIL_FROM` — sender for order emails, e.g. `PVC Card Portal <orders@erationcards.in>` (only works after the domain is verified in Resend; defaults to `onboarding@resend.dev`)
 3. **Set Node.js startup file** in hPanel to `dist/index.mjs`.
 
 ### Deploying (first time & every update)
@@ -109,6 +112,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - **No `.returning()` in MySQL** — any new insert/update must do a follow-up `.select()` to get the inserted row.
+- **Resend email sandbox** — until `erationcards.in` is verified at resend.com/domains, Resend only delivers to the Resend account owner's own inbox and the `from` must stay `onboarding@resend.dev`; other recipients get a 403 (handled: order still completes, `emailSent:false`). `email.ts` picks its transport automatically: direct Resend API when `RESEND_API_KEY` is set (Hostinger), otherwise the Replit-managed Resend connector (dev).
 - **`mysql2` must be installed** at the Hostinger deployment root — it is externalized from the esbuild bundle.
 - **`drizzle-kit push` runs from the repo, not `hostinger/`** — the schema lives in `lib/db/src/schema/`, not in the deploy bundle.
 - **BASE_PATH not needed in production** — Vite defaults to `/` when `BASE_PATH` env var is absent during build.

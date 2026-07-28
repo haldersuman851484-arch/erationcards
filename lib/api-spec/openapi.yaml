@@ -247,6 +247,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Order"
 
+  /orders/{orderNumber}/submit:
+    post:
+      operationId: submitOrder
+      tags: [orders]
+      summary: Final submit of the order wizard — emails the order number to the customer
+      parameters:
+        - in: path
+          name: orderNumber
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Order submitted; email delivery attempted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrderSubmitResponse"
+        "404":
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Payments ─────────────────────────────────────────────────────────────────
   /payments/upload-screenshot:
     post:
@@ -662,6 +687,17 @@ components:
           type: string
       required:
         - success
+
+    OrderSubmitResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        emailSent:
+          type: boolean
+      required:
+        - success
+        - emailSent
 
     # ── Order Schemas ──────────────────────────────────────────────────────────
     Order:

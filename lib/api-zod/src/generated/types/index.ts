@@ -29,6 +29,7 @@ export * from './orderListResponse';
 export * from './orderOtherOrdersItem';
 export * from './orderStats';
 export * from './orderStatusUpdate';
+export * from './orderSubmitResponse';
 export * from './paymentScreenshotUploadResponse';
 export * from './paymentStatusUpdate';
 export * from './paymentStatusUpdatePaymentStatus';

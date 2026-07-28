@@ -11,6 +11,7 @@ import {
 } from "@workspace/api-zod";
 import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
+import { sendOrderConfirmationEmail } from "../lib/email";
 
 // ── Delhivery tracking in-memory cache ──────────────────────────────────────
 interface DelhiveryScan {
@@ -289,6 +290,63 @@ router.post("/orders", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to create order");
     res.status(400).json({ error: "Invalid order data" });
+  }
+});
+
+// POST /orders/:orderNumber/submit — final step of the order wizard: the
+// customer has uploaded their card PDFs and pressed Submit, so email them
+// their order number. Public by design — the order number itself is the
+// capability, same as the card-PDF upload endpoint. Email failure never
+// blocks the submission: the order already exists and must not be lost.
+router.post("/orders/:orderNumber/submit", async (req: Request, res: Response) => {
+  try {
+    const orderNumber = String(req.params.orderNumber);
+    const [order] = await db
+      .select()
+      .from(ordersTable)
+      .where(eq(ordersTable.orderNumber, orderNumber))
+      .limit(1);
+    if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    // Idempotency guard: atomically claim the submission. Only the first
+    // submit for an order sends the email — replays (double-clicks, network
+    // retries, or abuse of this public endpoint) report the stored outcome
+    // without re-sending anything.
+    const [claim] = await db
+      .update(ordersTable)
+      .set({ submittedAt: new Date(), updatedAt: new Date() })
+      .where(and(eq(ordersTable.id, order.id), isNull(ordersTable.submittedAt)));
+    if (claim.affectedRows === 0) {
+      res.json({ success: true, emailSent: order.confirmationEmailSentAt != null });
+      return;
+    }
+
+    let emailSent = false;
+    if (order.customerEmail) {
+      emailSent = await sendOrderConfirmationEmail(
+        {
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          amount: String(order.amount),
+          quantity: order.quantity,
+        },
+        req.log,
+      );
+      if (emailSent) {
+        await db
+          .update(ordersTable)
+          .set({ confirmationEmailSentAt: new Date() })
+          .where(eq(ordersTable.id, order.id));
+      }
+    } else {
+      req.log.warn({ orderNumber }, "Order submitted without customerEmail; skipping email");
+    }
+
+    res.json({ success: true, emailSent });
+  } catch (err) {
+    req.log.error({ err }, "Failed to submit order");
+    res.status(500).json({ error: "Failed to submit order" });
   }
 });
 

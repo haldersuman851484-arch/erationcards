@@ -1,0 +1,137 @@
+import { ReplitConnectors } from "@replit/connectors-sdk";
+
+// Minimal logger contract shared by pino (req.log) and the app logger.
+type Log = {
+  info: (obj: unknown, msg?: string) => void;
+  warn: (obj: unknown, msg?: string) => void;
+  error: (obj: unknown, msg?: string) => void;
+};
+
+// Emails are sent through the Resend connector (Replit-managed credentials).
+// Until the business domain (e.g. erationcards.in) is verified inside Resend,
+// Resend's sandbox only allows the onboarding@resend.dev sender and only
+// delivers to the Resend account owner's own inbox. Once the domain is
+// verified, set EMAIL_FROM (e.g. "PVC Card Portal <orders@erationcards.in>")
+// to send to all customers.
+const FROM_ADDRESS = process.env["EMAIL_FROM"] ?? "PVC Card Portal <onboarding@resend.dev>";
+const TRACK_URL = "https://erationcards.in/track";
+
+export interface OrderEmailData {
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  amount: string;
+  quantity: number;
+}
+
+function buildHtml(order: OrderEmailData): string {
+  return `
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
+  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
+  </div>
+  <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
+    <p style="margin: 0 0 12px;">Hello <strong>${escapeHtml(order.customerName)}</strong>,</p>
+    <p style="margin: 0 0 16px;">Thank you! We have received your PVC card order. Your order number is:</p>
+    <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 16px;">
+      <span style="font-family: monospace; font-size: 22px; font-weight: bold; color: #00afc8; letter-spacing: 1px;">${escapeHtml(order.orderNumber)}</span>
+    </div>
+    <table style="width: 100%; font-size: 14px; margin-bottom: 16px; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 6px 0; color: #64748b;">Total cards</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: bold;">${order.quantity}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; border-top: 1px solid #e2e8f0;">Amount paid</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: bold; border-top: 1px solid #e2e8f0;">&#8377;${escapeHtml(order.amount)}</td>
+      </tr>
+    </table>
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
+      Our team is now verifying your payment screenshot. Your card will be printed after verification and delivered within 5&ndash;7 working days.
+    </div>
+    <p style="margin: 0 0 6px; font-size: 14px;">Keep this order number safe &mdash; you will need it to track your order:</p>
+    <p style="margin: 0 0 16px;"><a href="${TRACK_URL}" style="color: #00afc8; font-weight: bold;">${TRACK_URL}</a></p>
+    <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automatic email from PVC Card Portal. Please do not reply.</p>
+  </div>
+</div>`.trim();
+}
+
+function buildText(order: OrderEmailData): string {
+  return [
+    `Hello ${order.customerName},`,
+    ``,
+    `Thank you! We have received your PVC card order.`,
+    `Your order number: ${order.orderNumber}`,
+    `Total cards: ${order.quantity}`,
+    `Amount paid: Rs ${order.amount}`,
+    ``,
+    `Our team is now verifying your payment screenshot. Your card will be printed after verification and delivered within 5-7 working days.`,
+    ``,
+    `Track your order: ${TRACK_URL}`,
+  ].join("\n");
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/**
+ * Sends the email through Resend. Two transports:
+ * - RESEND_API_KEY set (e.g. Hostinger production): call the Resend API
+ *   directly — the Replit connector proxy is not reachable outside Replit.
+ * - Otherwise (Replit dev/deploy): use the Replit-managed Resend connector.
+ */
+async function postToResend(body: Record<string, unknown>): Promise<globalThis.Response> {
+  const apiKey = process.env["RESEND_API_KEY"];
+  if (apiKey) {
+    return fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  }
+  // New client per call — connector tokens expire and must not be cached.
+  const connectors = new ReplitConnectors();
+  return connectors.proxy("resend", "/emails", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body,
+  });
+}
+
+/**
+ * Sends the order-number confirmation email via Resend.
+ * Never throws — email failure must not block or lose the order, so all
+ * errors are logged and reported as `false`.
+ */
+export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log): Promise<boolean> {
+  try {
+    const res = await postToResend({
+      from: FROM_ADDRESS,
+      to: [order.customerEmail],
+      subject: `Order ${order.orderNumber} received - PVC Card Portal`,
+      html: buildHtml(order),
+      text: buildText(order),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      log.error(
+        { status: res.status, body: errBody.slice(0, 500), orderNumber: order.orderNumber },
+        "Order confirmation email failed to send",
+      );
+      return false;
+    }
+
+    log.info({ orderNumber: order.orderNumber }, "Order confirmation email sent");
+    return true;
+  } catch (err) {
+    log.error({ err, orderNumber: order.orderNumber }, "Order confirmation email errored");
+    return false;
+  }
+}

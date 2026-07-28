@@ -433,6 +433,19 @@ export const AssignOrderToOperatorResponse = zod.object({
 
 
 /**
+ * @summary Final submit of the order wizard — emails the order number to the customer
+ */
+export const SubmitOrderParams = zod.object({
+  "orderNumber": zod.coerce.string()
+})
+
+export const SubmitOrderResponse = zod.object({
+  "success": zod.boolean(),
+  "emailSent": zod.boolean()
+})
+
+
+/**
  * @summary Upload a UPI payment screenshot
  */
 export const UploadPaymentScreenshotBody = zod.object({

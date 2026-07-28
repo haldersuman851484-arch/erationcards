@@ -39,6 +39,7 @@ import type {
   OrderListResponse,
   OrderStats,
   OrderStatusUpdate,
+  OrderSubmitResponse,
   PaymentScreenshotUploadResponse,
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
@@ -838,6 +839,76 @@ export const useAssignOrderToOperator = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getAssignOrderToOperatorMutationOptions(options));
+    }
+
+export const getSubmitOrderUrl = (orderNumber: string,) => {
+
+
+
+
+  return `/api/orders/${orderNumber}/submit`
+}
+
+/**
+ * @summary Final submit of the order wizard — emails the order number to the customer
+ */
+export const submitOrder = async (orderNumber: string, options?: RequestInit): Promise<OrderSubmitResponse> => {
+
+  return customFetch<OrderSubmitResponse>(getSubmitOrderUrl(orderNumber),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSubmitOrderMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitOrder>>, TError,{orderNumber: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitOrder>>, TError,{orderNumber: string}, TContext> => {
+
+const mutationKey = ['submitOrder'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitOrder>>, {orderNumber: string}> = (props) => {
+          const {orderNumber} = props ?? {};
+
+          return  submitOrder(orderNumber,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitOrderMutationResult = NonNullable<Awaited<ReturnType<typeof submitOrder>>>
+
+    export type SubmitOrderMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Final submit of the order wizard — emails the order number to the customer
+ */
+export const useSubmitOrder = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitOrder>>, TError,{orderNumber: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitOrder>>,
+        TError,
+        {orderNumber: string},
+        TContext
+      > => {
+      return useMutation(getSubmitOrderMutationOptions(options));
     }
 
 export const getUploadPaymentScreenshotUrl = () => {

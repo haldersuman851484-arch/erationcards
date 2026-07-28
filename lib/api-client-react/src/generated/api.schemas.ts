@@ -18,6 +18,11 @@ export interface SuccessResponse {
   message?: string;
 }
 
+export interface OrderSubmitResponse {
+  success: boolean;
+  emailSent: boolean;
+}
+
 export type OrderFamilyCardsItem = {
   customerName: string;
   rationCardNumber: string;

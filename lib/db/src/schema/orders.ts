@@ -55,6 +55,13 @@ export const ordersTable = mysqlTable("orders", {
   courierName: text("courier_name"),
   notes: text("notes"),
   welcomeLetterUrl: text("welcome_letter_url"),
+  // Set once when the customer finishes the order wizard (final Submit after
+  // PDF uploads). Acts as the idempotency guard: the confirmation email is
+  // attempted at most once per order, no matter how often submit is replayed.
+  submittedAt: timestamp("submitted_at"),
+  // Set only when the confirmation email actually went out, so replayed
+  // submits can report an accurate emailSent flag.
+  confirmationEmailSentAt: timestamp("confirmation_email_sent_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }, (table) => [
@@ -74,6 +81,9 @@ export const insertOrderSchema = createInsertSchema(ordersTable).omit({
   trackingNumber: true,
   courierName: true,
   notes: true,
+  // Server-managed submit tracking — never client-settable.
+  submittedAt: true,
+  confirmationEmailSentAt: true,
 });
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;

@@ -12,9 +12,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot } from "@workspace/api-client-react";
+import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot, useSubmitOrder } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CreditCard, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
+import { CheckCircle, CheckCircle2, CreditCard, ExternalLink, FileText, Loader2, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/hooks/use-seo";
 import {
@@ -28,6 +28,9 @@ import {
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
+const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 const SIDEBAR_FAQS = [
   { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
   { q: "What does PVC Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
@@ -37,6 +40,7 @@ const SIDEBAR_FAQS = [
 const orderSchema = z.object({
   customerName: z.string().min(2, "Name must be at least 2 characters"),
   customerPhone: z.string().min(10, "Enter a valid 10-digit phone number"),
+  customerEmail: z.string().trim().email("Enter a valid email address"),
   rationCardNumber: z.string().min(5, "Enter a valid ration card number"),
   deliveryName: z.string().min(2, "Enter full name"),
   address: z.string().min(10, "Enter complete address"),
@@ -100,8 +104,14 @@ export default function Order() {
   const [isUploading, setIsUploading] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [createdOrder, setCreatedOrder] = useState<{ orderNumber: string } | null>(null);
+  const [cardPdfs, setCardPdfs] = useState<Record<number, string>>({});
+  const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
+  const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
+  const submitOrder = useSubmitOrder();
   const uploadScreenshot = useUploadPaymentScreenshot();
   const { data: upiConfig, isLoading: upiLoading, isError: upiError, refetch: refetchUpi } = useGetUpiConfig();
   const merchantUpiId = upiConfig?.merchantUpiId || "";
@@ -146,6 +156,7 @@ export default function Order() {
     defaultValues: {
       customerName: "",
       customerPhone: "",
+      customerEmail: "",
       rationCardNumber: "",
       deliveryName: "",
       address: "",
@@ -163,6 +174,51 @@ export default function Order() {
   const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
   const amount = computeOrderAmount(allCardTypes, false);
   const breakdown = priceBreakdown(allCardTypes, false);
+
+  // Step 4 (after the order exists): one row per card in the order.
+  const step4Cards = [
+    { cardIndex: 0, name: form.getValues("customerName"), rationCardNumber: form.getValues("rationCardNumber"), cardType: form.getValues("cardType") as string },
+    ...familyCards.map((fc, i) => ({ cardIndex: i + 1, name: fc.customerName, rationCardNumber: fc.rationCardNumber, cardType: fc.cardType })),
+  ];
+  const allPdfsUploaded = step4Cards.every((c) => !!cardPdfs[c.cardIndex]);
+
+  async function handleCardPdfUpload(cardIndex: number, file: File) {
+    if (!createdOrder) return;
+    setUploadingPdfIdx(cardIndex);
+    try {
+      const fd = new FormData();
+      fd.append("pdf", file);
+      fd.append("cardIndex", String(cardIndex));
+      const res = await fetch(`${BASE}/api/orders/${encodeURIComponent(createdOrder.orderNumber)}/upload-card-pdf`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!res.ok) throw new Error("Upload failed");
+      const { pdfUrl } = await res.json();
+      setCardPdfs((prev) => ({ ...prev, [cardIndex]: pdfUrl }));
+    } catch {
+      toast({ title: "Upload failed", description: "Could not upload the PDF. Please try again.", variant: "destructive" });
+    } finally {
+      setUploadingPdfIdx(null);
+    }
+  }
+
+  function handleFinalSubmit() {
+    if (!createdOrder) return;
+    submitOrder.mutate(
+      { orderNumber: createdOrder.orderNumber },
+      {
+        onSuccess: (result) => {
+          setEmailSent(result.emailSent);
+          setSuccess({ orderNumber: createdOrder.orderNumber });
+          window.scrollTo(0, 0);
+        },
+        onError: () => {
+          toast({ title: "Submission failed", description: "Please try again. Your order and uploaded PDFs are saved.", variant: "destructive" });
+        },
+      },
+    );
+  }
 
   function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -182,6 +238,8 @@ export default function Order() {
   }
 
   async function onSubmit(data: OrderForm) {
+    // Order already created — the customer is on step 4; never create a duplicate.
+    if (createdOrder) { setStep(4); return; }
     if (!screenshotFile) {
       toast({ title: "Screenshot required", description: "Please upload your UPI payment screenshot.", variant: "destructive" });
       return;
@@ -203,6 +261,7 @@ export default function Order() {
         data: {
           customerName: data.customerName,
           customerPhone: data.customerPhone,
+          customerEmail: data.customerEmail,
           rationCardNumber: data.rationCardNumber,
           deliveryName: data.deliveryName,
           address: data.address,
@@ -222,7 +281,10 @@ export default function Order() {
       {
         onSuccess: (order) => {
           setIsUploading(false);
-          setLocation(`/order-upload/${order.orderNumber}`);
+          setCreatedOrder({ orderNumber: order.orderNumber });
+          setCardPdfs({});
+          setStep(4);
+          window.scrollTo(0, 0);
         },
         onError: () => {
           setIsUploading(false);
@@ -250,6 +312,18 @@ export default function Order() {
                 <p className="text-sm text-slate-500 mb-1">Your Order Number</p>
                 <p className="text-xl font-mono font-bold text-primary" data-testid="text-order-number">{success.orderNumber}</p>
               </div>
+              {emailSent === true && (
+                <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200 flex items-start gap-2 text-left" data-testid="note-email-sent">
+                  <Mail className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-emerald-700">We have emailed your order number to <strong>{form.getValues("customerEmail")}</strong>.</p>
+                </div>
+              )}
+              {emailSent === false && (
+                <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 flex items-start gap-2 text-left" data-testid="note-email-failed">
+                  <Mail className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-700">We could not send the email right now — please write down your order number shown above.</p>
+                </div>
+              )}
               <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-left">
                 <p className="text-sm text-amber-800 font-medium mb-1">⏳ Payment NOT yet confirmed</p>
                 <p className="text-xs text-amber-700">Our team will manually check your payment screenshot. <strong>Your card will NOT be printed until we verify your payment.</strong> If your screenshot is invalid or fake, your order will be cancelled. Verified orders are delivered in 5–7 working days.</p>
@@ -268,6 +342,10 @@ export default function Order() {
                   setShowFamilyDialog(false);
                   setScreenshotFile(null);
                   setScreenshotPreview(null);
+                  setPaymentConfirmed(false);
+                  setCreatedOrder(null);
+                  setCardPdfs({});
+                  setEmailSent(null);
                 }}>New Order</Button>
               </div>
             </CardContent>
@@ -287,13 +365,13 @@ export default function Order() {
           <h1 className="text-2xl font-bold text-slate-900">Order PVC Printed Card</h1>
           <p className="text-slate-600 mt-1">Fill in your details below to order a high-quality PVC ration card.</p>
           <div className="flex items-center gap-2 mt-4">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors ${step >= s ? "bg-primary border-primary text-white" : "bg-white border-slate-300 text-slate-400"}`}>{s}</div>
-                {s < 3 && <div className={`h-0.5 w-12 transition-colors ${step > s ? "bg-primary" : "bg-slate-200"}`} />}
+                {s < 4 && <div className={`h-0.5 w-12 transition-colors ${step > s ? "bg-primary" : "bg-slate-200"}`} />}
               </div>
             ))}
-            <span className="ml-2 text-sm text-slate-500">Step {step} of 3</span>
+            <span className="ml-2 text-sm text-slate-500">Step {step} of 4</span>
           </div>
         </div>
       </div>
@@ -550,10 +628,18 @@ export default function Order() {
                         </FormItem>
                       )} />
                     </div>
+                    <FormField control={form.control} name="customerEmail" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email ID *</FormLabel>
+                        <FormControl><Input data-testid="input-email" type="email" placeholder="yourname@example.com" {...field} /></FormControl>
+                        <p className="text-xs text-slate-500">We will send your order number to this email after you submit.</p>
+                        <FormMessage />
+                      </FormItem>
+                    )} />
                     <div className="flex gap-3 pt-2">
                       <Button type="button" variant="outline" onClick={() => setStep(1)}>Back</Button>
                       <Button type="button" data-testid="button-next-step2" className="bg-primary hover:bg-primary/90 px-8" onClick={async () => {
-                        const ok = await form.trigger(["deliveryName", "address", "postOffice", "state", "district", "pincode", "customerPhone"]);
+                        const ok = await form.trigger(["deliveryName", "address", "postOffice", "state", "district", "pincode", "customerPhone", "customerEmail"]);
                         if (ok) setStep(3);
                       }}>Continue</Button>
                     </div>
@@ -785,10 +871,97 @@ export default function Order() {
                               : undefined
                           }
                         >
-                          {isUploading || createOrder.isPending ? "Submitting…" : "Submit Order"}
+                          {isUploading || createOrder.isPending ? "Placing Order…" : "Place Order & Continue"}
                         </Button>
                       </div>
                     </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {step === 4 && createdOrder && (
+                <Card className="border-slate-200 shadow-sm" data-testid="card-step4-upload">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-primary" /> Upload e-Ration Card PDF</CardTitle>
+                    <CardDescription>Last step — upload the PDF for each card below, then press Submit.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-semibold text-emerald-800">Order created — {createdOrder.orderNumber}</p>
+                        <p className="text-xs text-emerald-700 mt-0.5">Do not close this page yet. Upload the PDF for every card and press Submit to finish your order.</p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {step4Cards.map((card) => {
+                        const uploaded = !!cardPdfs[card.cardIndex];
+                        const isUploadingPdf = uploadingPdfIdx === card.cardIndex;
+                        return (
+                          <div key={card.cardIndex} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4" data-testid={`step4-card-${card.cardIndex}`}>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-slate-900 text-sm truncate">{card.name}</p>
+                              <p className="text-xs text-slate-500 mt-0.5">Card No: <span className="font-mono">{card.rationCardNumber}</span> · {card.cardType}</p>
+                              {uploaded && (
+                                <p className="inline-flex items-center gap-1 text-xs text-emerald-600 mt-1"><CheckCircle2 className="w-3 h-3" /> PDF uploaded</p>
+                              )}
+                            </div>
+                            <input
+                              ref={(el) => { pdfFileRefs.current[card.cardIndex] = el; }}
+                              type="file"
+                              accept=".pdf,image/*"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleCardPdfUpload(card.cardIndex, file);
+                                e.target.value = "";
+                              }}
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              data-testid={`button-upload-pdf-${card.cardIndex}`}
+                              className={`shrink-0 ${uploaded ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary hover:bg-primary/90 text-white"}`}
+                              disabled={isUploadingPdf}
+                              onClick={() => pdfFileRefs.current[card.cardIndex]?.click()}
+                            >
+                              {isUploadingPdf ? (
+                                <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Uploading…</>
+                              ) : uploaded ? (
+                                "Re-upload"
+                              ) : (
+                                <><Upload className="w-3.5 h-3.5 mr-1" /> Upload PDF</>
+                              )}
+                            </Button>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        <span className="font-semibold">Don't have the PDF?</span> Download your e-Ration card from the official WB government website, then upload it here. Do not rename or edit the file.
+                      </p>
+                      <a href={GOVT_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-semibold mt-1.5 hover:underline">
+                        Open wbpds.wb.gov.in <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+
+                    {!allPdfsUploaded && (
+                      <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="step4-pending-hint">
+                        <span>⚠️</span> Upload the PDF for every card above to enable Submit.
+                      </p>
+                    )}
+                    <Button
+                      type="button"
+                      data-testid="button-final-submit"
+                      className="w-full bg-primary hover:bg-primary/90 h-11"
+                      disabled={!allPdfsUploaded || submitOrder.isPending}
+                      onClick={handleFinalSubmit}
+                    >
+                      {submitOrder.isPending ? "Submitting…" : "Submit"}
+                    </Button>
                   </CardContent>
                 </Card>
               )}
