@@ -115,6 +115,12 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 - **No `.returning()` in MySQL** — any new insert/update must do a follow-up `.select()` to get the inserted row.
 - **Resend domain verified (July 2026)** — `erationcards.in` is verified in Resend, so order emails deliver to any recipient. `RESEND_API_KEY` (full-access key, stored as a Replit secret) and `EMAIL_FROM` (`PVC Card Portal <orders@erationcards.in>`) are both set, so dev uses the direct Resend API — the same code path as Hostinger. The Replit connector remains only as a fallback when `RESEND_API_KEY` is absent; note the connector's own key is send-only and cannot call domain-management endpoints. If emails ever fail again with a 403 sandbox error, re-check the domain at resend.com/domains.
+- **Email DNS records (re-create at the DNS host if DNS ever moves; all values also shown at resend.com/domains)** — live and verified for `erationcards.in` as of July 2026:
+  - TXT `resend._domainkey` → `p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC9uC3ZL6SpE4WTYt9L0ztt4Z/77f1XT4bfaa0ksxkoF10BhCdSe2fmO/j+SBdPa3gr4uKomu3KP79tpZpqLJ+LwGcknXQaZDov0kcI/RvXOOyUkDfVZRLjKaZPcm/8GcHLpivR6+lun1t0WHKqqKadQ9QFFuQufKftbqQW+C8vIQIDAQAB` (DKIM)
+  - TXT `send` → `v=spf1 include:amazonses.com ~all` (SPF for Resend)
+  - MX `send` → `feedback-smtp.ap-northeast-1.amazonses.com`, priority 10
+  - TXT `_dmarc` → `v=DMARC1; p=none` (DMARC — required to stay out of Gmail/Yahoo spam)
+  - The root TXT `v=spf1 include:_spf.mail.hostinger.com ~all` belongs to Hostinger webmail, not Resend — leave it alone.
 - **`mysql2` must be installed** at the Hostinger deployment root — it is externalized from the esbuild bundle.
 - **`drizzle-kit push` runs from the repo, not `hostinger/`** — the schema lives in `lib/db/src/schema/`, not in the deploy bundle.
 - **BASE_PATH not needed in production** — Vite defaults to `/` when `BASE_PATH` env var is absent during build.
