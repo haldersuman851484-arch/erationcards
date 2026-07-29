@@ -752,6 +752,21 @@ export const UpdateUpiSettingResponse = zod.object({
 
 
 /**
+ * @summary Recent UPI ID and card price changes (admin, read-only)
+ */
+export const ListSettingsChangeHistoryResponse = zod.object({
+  "changes": zod.array(zod.object({
+  "id": zod.number(),
+  "field": zod.enum(['upi', 'pricing']).describe('Which money-affecting setting changed'),
+  "oldValue": zod.string().describe('Effective value before the save (pricing is a JSON matrix string)'),
+  "newValue": zod.string().describe('Value after the save (pricing is a JSON matrix string)'),
+  "changedBy": zod.string().describe('Admin email from the unlock session that made the change'),
+  "changedAt": zod.coerce.date()
+})).describe('Newest first')
+})
+
+
+/**
  * @summary Get the settings unlock gate status (admin)
  */
 export const GetSettingsOtpConfigResponse = zod.object({

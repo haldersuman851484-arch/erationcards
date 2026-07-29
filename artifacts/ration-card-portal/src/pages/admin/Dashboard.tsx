@@ -39,6 +39,8 @@ import {
   getGetPricingSettingQueryKey,
   useUpdatePricingSetting,
   getGetPricingConfigQueryKey,
+  useListSettingsChangeHistory,
+  getListSettingsChangeHistoryQueryKey,
   useGetSettingsOtpConfig,
   getGetSettingsOtpConfigQueryKey,
   useSendSettingsOtp,
@@ -93,6 +95,37 @@ function readStoredUnlock(): { token: string; expiresAt: number } | null {
     return { token: parsed.token, expiresAt: parsed.expiresAt };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Human-readable one-liner for a history entry. UPI changes show old → new
+ * directly; pricing changes are JSON matrices, so show only the cells that
+ * actually differ (e.g. "Ration · 1 card · Customer: ₹100 → ₹120").
+ */
+function describeHistoryChange(entry: { field: "upi" | "pricing"; oldValue: string; newValue: string }): string {
+  if (entry.field === "upi") return `${entry.oldValue || "— not set —"} → ${entry.newValue}`;
+  try {
+    const before = JSON.parse(entry.oldValue);
+    const after = JSON.parse(entry.newValue);
+    const parts: string[] = [];
+    for (const group of ["ration", "special"] as const) {
+      for (const tier of ["single", "multi"] as const) {
+        for (const audience of ["public", "operator"] as const) {
+          const b = before?.[group]?.[tier]?.[audience];
+          const a = after?.[group]?.[tier]?.[audience];
+          if (b !== a) {
+            const groupLabel = group === "ration" ? "Ration" : "ABHA/E-SHRAM/General";
+            const tierLabel = tier === "single" ? "1 card" : "2+ cards";
+            const audLabel = audience === "public" ? "Customer" : "Operator";
+            parts.push(`${groupLabel} · ${tierLabel} · ${audLabel}: ₹${b ?? "?"} → ₹${a}`);
+          }
+        }
+      }
+    }
+    return parts.length > 0 ? parts.join(", ") : "Prices re-saved (no values changed)";
+  } catch {
+    return "Prices updated";
   }
 }
 
@@ -403,6 +436,7 @@ export default function AdminDashboard() {
           toast({ title: "UPI ID updated!", description: "Customers now see the new UPI ID and QR code." });
           queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetUpiConfigQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListSettingsChangeHistoryQueryKey() });
         },
         onError: (err: unknown) => {
           if (handleSettingsAuthError(err)) return;
@@ -423,6 +457,12 @@ export default function AdminDashboard() {
     request: { headers: settingsHeaders },
   } as any);
   const updatePricingMutation = useUpdatePricingSetting({
+    request: { headers: settingsHeaders },
+  } as any);
+
+  // ── Recent changes (read-only audit trail, visible only while unlocked) ──
+  const historyQuery = useListSettingsChangeHistory({
+    query: { queryKey: getListSettingsChangeHistoryQueryKey(), enabled: settingsUnlocked },
     request: { headers: settingsHeaders },
   } as any);
 
@@ -482,6 +522,7 @@ export default function AdminDashboard() {
           toast({ title: "Prices updated!", description: "Order forms, new orders and Google search snippet prices all follow the new prices immediately." });
           queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetPricingConfigQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListSettingsChangeHistoryQueryKey() });
         },
         onError: (err: unknown) => {
           if (handleSettingsAuthError(err)) return;
@@ -1674,6 +1715,63 @@ export default function AdminDashboard() {
                         </p>
                       </div>
                     </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* ── Recent changes (read-only audit trail) ── */}
+              <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-settings-history">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <ClipboardList className="w-5 h-5 text-primary" /> Recent changes
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    Every saved UPI ID or price change is recorded here automatically — what changed,
+                    from and to what, and who saved it. This list cannot be edited or deleted.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  {historyQuery.isLoading ? (
+                    <p className="text-sm text-slate-500">Loading change history…</p>
+                  ) : historyQuery.isError ? (
+                    <p className="text-sm text-red-600" data-testid="text-history-load-error">
+                      Could not load the change history. Refresh the page to try again.
+                    </p>
+                  ) : (historyQuery.data?.changes?.length ?? 0) === 0 ? (
+                    <p className="text-sm text-slate-500" data-testid="text-history-empty">
+                      No changes recorded yet. The first UPI ID or price save will appear here.
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {historyQuery.data!.changes.map((entry, i) => (
+                        <li
+                          key={entry.id}
+                          className="border border-slate-200 rounded-lg px-3 py-2.5"
+                          data-testid={`row-history-${i}`}
+                        >
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <Badge
+                              variant="outline"
+                              className={entry.field === "upi"
+                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                : "bg-purple-50 text-purple-700 border-purple-200"}
+                            >
+                              {entry.field === "upi" ? "UPI ID" : "Card prices"}
+                            </Badge>
+                            <span className="text-xs text-slate-500">
+                              {new Date(entry.changedAt).toLocaleString("en-IN", {
+                                day: "numeric", month: "short", year: "numeric",
+                                hour: "numeric", minute: "2-digit",
+                              })}
+                            </span>
+                            <span className="text-xs text-slate-400">by {entry.changedBy}</span>
+                          </div>
+                          <p className="text-sm font-mono text-slate-800 break-all">
+                            {describeHistoryChange(entry)}
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
                   )}
                 </CardContent>
               </Card>

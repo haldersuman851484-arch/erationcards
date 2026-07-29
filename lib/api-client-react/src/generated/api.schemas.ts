@@ -185,6 +185,35 @@ export interface UpiSettingUpdate {
   merchantUpiId: string;
 }
 
+/**
+ * Which money-affecting setting changed
+ */
+export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryField[keyof typeof SettingsChangeHistoryEntryField];
+
+
+export const SettingsChangeHistoryEntryField = {
+  upi: 'upi',
+  pricing: 'pricing',
+} as const;
+
+export interface SettingsChangeHistoryEntry {
+  id: number;
+  /** Which money-affecting setting changed */
+  field: SettingsChangeHistoryEntryField;
+  /** Effective value before the save (pricing is a JSON matrix string) */
+  oldValue: string;
+  /** Value after the save (pricing is a JSON matrix string) */
+  newValue: string;
+  /** Admin email from the unlock session that made the change */
+  changedBy: string;
+  changedAt: string;
+}
+
+export interface SettingsChangeHistory {
+  /** Newest first */
+  changes: SettingsChangeHistoryEntry[];
+}
+
 export interface SettingsOtpConfig {
   /** Every partner address that must verify a code */
   partnerEmails: string[];

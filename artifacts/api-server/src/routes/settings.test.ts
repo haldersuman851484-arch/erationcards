@@ -8,6 +8,7 @@ vi.mock("@workspace/db", () => {
   const selectChain = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
+    orderBy: vi.fn().mockReturnThis(),
     limit: vi.fn().mockResolvedValue([]),
   };
   const selectFn = vi.fn(() => selectChain);
@@ -29,6 +30,7 @@ vi.mock("@workspace/db", () => {
       update: updateFn,
     },
     settingsTable: {},
+    settingsChangeHistoryTable: {},
     ordersTable: {},
     paymentVerificationsTable: {},
     operatorsTable: {},
@@ -284,5 +286,112 @@ describe("settings lock — OTP unlock header required", () => {
       .send({});
     expect(res.status).toBe(403);
     expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+});
+
+// ── Change history (audit trail) ─────────────────────────────────────────────
+
+const VALID_PRICING = {
+  ration: { single: { public: 100, operator: 80 }, multi: { public: 90, operator: 70 } },
+  special: { single: { public: 120, operator: 100 }, multi: { public: 110, operator: 90 } },
+};
+
+describe("settings change history — written on every successful save", () => {
+  it("PUT upi writes a history row with the old (env default) and new value", async () => {
+    const { valuesFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ merchantUpiId: "newstore@okaxis" });
+    expect(res.status).toBe(200);
+    expect(valuesFn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        field: "merchant_upi_id",
+        oldValue: "envdefault@okbank",
+        newValue: "newstore@okaxis",
+        changedBy: "admin@test.com",
+      })
+    );
+  });
+
+  it("PUT upi records the previously saved UPI ID as the old value", async () => {
+    vi.clearAllMocks();
+    // getMerchantUpiId select resolves to the saved row
+    selectChain().limit.mockResolvedValueOnce([SAVED_ROW]);
+    const res = await request(app)
+      .put("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ merchantUpiId: "changed@okaxis" });
+    expect(res.status).toBe(200);
+    const { valuesFn } = upsertMocks();
+    expect(valuesFn).toHaveBeenCalledWith(
+      expect.objectContaining({ oldValue: "saved@upi", newValue: "changed@okaxis" })
+    );
+  });
+
+  it("PUT pricing writes a history row with old/new matrices as JSON", async () => {
+    const { valuesFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/pricing")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ pricing: VALID_PRICING });
+    expect(res.status).toBe(200);
+    const historyCall = valuesFn.mock.calls.find((c) => (c[0] as any)?.field === "pricing_matrix");
+    expect(historyCall).toBeDefined();
+    const row = historyCall![0] as any;
+    expect(JSON.parse(row.newValue)).toEqual(VALID_PRICING);
+    expect(JSON.parse(row.oldValue)).toHaveProperty("ration");
+    expect(row.changedBy).toBe("admin@test.com");
+  });
+
+  it("a rejected UPI ID writes no history row", async () => {
+    const { valuesFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ merchantUpiId: "not a upi id" });
+    expect(res.status).toBe(400);
+    expect(valuesFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("GET /api/admin/settings/history — read-only audit list", () => {
+  it("returns 401 without a token", async () => {
+    const res = await request(app).get("/api/admin/settings/history");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 SETTINGS_LOCKED without the unlock header", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/history")
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+
+  it("maps rows to the API shape (upi/pricing field labels, ISO timestamps)", async () => {
+    const changedAt = new Date("2026-07-29T10:00:00.000Z");
+    selectChain().limit.mockResolvedValueOnce([
+      { id: 2, field: "pricing_matrix", oldValue: "{}", newValue: "{}", changedBy: "admin@test.com", changedAt },
+      { id: 1, field: "merchant_upi_id", oldValue: "a@b", newValue: "c@d", changedBy: "admin@test.com", changedAt },
+    ]);
+    const res = await request(app)
+      .get("/api/admin/settings/history")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken());
+    expect(res.status).toBe(200);
+    expect(res.body.changes).toHaveLength(2);
+    expect(res.body.changes[0]).toEqual({
+      id: 2, field: "pricing", oldValue: "{}", newValue: "{}",
+      changedBy: "admin@test.com", changedAt: changedAt.toISOString(),
+    });
+    expect(res.body.changes[1].field).toBe("upi");
   });
 });

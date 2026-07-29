@@ -446,6 +446,23 @@ paths:
         "403":
           description: Settings locked — both partners' emailed codes must be verified first
 
+  /admin/settings/history:
+    get:
+      operationId: listSettingsChangeHistory
+      tags: [dashboard]
+      summary: Recent UPI ID and card price changes (admin, read-only)
+      responses:
+        "200":
+          description: Most recent settings changes, newest first (max 20)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsChangeHistory"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
+
   /admin/settings/otp/config:
     get:
       operationId: getSettingsOtpConfig
@@ -1170,6 +1187,46 @@ components:
           maxLength: 120
       required:
         - merchantUpiId
+
+    SettingsChangeHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+        field:
+          type: string
+          enum: [upi, pricing]
+          description: Which money-affecting setting changed
+        oldValue:
+          type: string
+          description: Effective value before the save (pricing is a JSON matrix string)
+        newValue:
+          type: string
+          description: Value after the save (pricing is a JSON matrix string)
+        changedBy:
+          type: string
+          description: Admin email from the unlock session that made the change
+        changedAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - field
+        - oldValue
+        - newValue
+        - changedBy
+        - changedAt
+
+    SettingsChangeHistory:
+      type: object
+      properties:
+        changes:
+          type: array
+          description: Newest first
+          items:
+            $ref: "#/components/schemas/SettingsChangeHistoryEntry"
+      required:
+        - changes
 
     SettingsOtpConfig:
       type: object

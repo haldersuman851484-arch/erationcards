@@ -51,6 +51,7 @@ import type {
   Review,
   ReviewInput,
   ReviewStatusUpdate,
+  SettingsChangeHistory,
   SettingsOtpConfig,
   SettingsOtpSendResponse,
   SettingsOtpVerifyBody,
@@ -1511,6 +1512,83 @@ export const useUpdateUpiSetting = <TError = ErrorType<void>,
       > => {
       return useMutation(getUpdateUpiSettingMutationOptions(options));
     }
+
+export const getListSettingsChangeHistoryUrl = () => {
+
+
+
+
+  return `/api/admin/settings/history`
+}
+
+/**
+ * @summary Recent UPI ID and card price changes (admin, read-only)
+ */
+export const listSettingsChangeHistory = async ( options?: RequestInit): Promise<SettingsChangeHistory> => {
+
+  return customFetch<SettingsChangeHistory>(getListSettingsChangeHistoryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListSettingsChangeHistoryQueryKey = () => {
+    return [
+    `/api/admin/settings/history`
+    ] as const;
+    }
+
+
+export const getListSettingsChangeHistoryQueryOptions = <TData = Awaited<ReturnType<typeof listSettingsChangeHistory>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSettingsChangeHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSettingsChangeHistoryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSettingsChangeHistory>>> = ({ signal }) => listSettingsChangeHistory({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSettingsChangeHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListSettingsChangeHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof listSettingsChangeHistory>>>
+export type ListSettingsChangeHistoryQueryError = ErrorType<void>
+
+
+/**
+ * @summary Recent UPI ID and card price changes (admin, read-only)
+ */
+
+export function useListSettingsChangeHistory<TData = Awaited<ReturnType<typeof listSettingsChangeHistory>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listSettingsChangeHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListSettingsChangeHistoryQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetSettingsOtpConfigUrl = () => {
 

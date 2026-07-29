@@ -22,7 +22,7 @@ import {
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { db } from "@workspace/db";
-import { paymentVerificationsTable, operatorsTable } from "@workspace/db";
+import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable } from "@workspace/db";
 import { desc, sql, eq } from "drizzle-orm";
 
 const router = Router();
@@ -167,7 +167,16 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
       return;
     }
 
+    // Effective value before the save (env default included) for the audit trail.
+    const { merchantUpiId: previousUpiId } = await getMerchantUpiId();
+
     await setSettingValue(MERCHANT_UPI_SETTING_KEY, candidate);
+    await db.insert(settingsChangeHistoryTable).values({
+      field: MERCHANT_UPI_SETTING_KEY,
+      oldValue: previousUpiId,
+      newValue: candidate,
+      changedBy: admin.email,
+    });
     req.log.info({ adminEmail: admin.email, merchantUpiId: candidate }, "Merchant UPI ID updated");
     res.json({ merchantUpiId: candidate, source: "custom" as const });
   } catch (err) {
@@ -208,12 +217,54 @@ router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
       return;
     }
 
-    await setSettingValue(PRICING_SETTING_KEY, JSON.stringify(parsed.data.pricing));
+    // Effective matrix before the save (built-in defaults included) for the audit trail.
+    const { pricing: previousPricing } = await getPricingMatrix();
+
+    const newPricingJson = JSON.stringify(parsed.data.pricing);
+    await setSettingValue(PRICING_SETTING_KEY, newPricingJson);
+    await db.insert(settingsChangeHistoryTable).values({
+      field: PRICING_SETTING_KEY,
+      oldValue: JSON.stringify(previousPricing),
+      newValue: newPricingJson,
+      changedBy: admin.email,
+    });
     req.log.info({ adminEmail: admin.email, pricing: parsed.data.pricing }, "Card prices updated");
     res.json({ pricing: parsed.data.pricing, source: "custom" as const });
   } catch (err) {
     req.log.error({ err }, "Failed to update pricing setting");
     res.status(500).json({ error: "Failed to update pricing setting" });
+  }
+});
+
+// GET /admin/settings/history — read-only audit trail of UPI/price changes
+router.get("/admin/settings/history", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    if (!hasSettingsUnlock(req)) {
+      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
+      return;
+    }
+
+    const rows = await db
+      .select()
+      .from(settingsChangeHistoryTable)
+      .orderBy(desc(settingsChangeHistoryTable.changedAt), desc(settingsChangeHistoryTable.id))
+      .limit(20);
+
+    res.json({
+      changes: rows.map((r) => ({
+        id: r.id,
+        field: r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) : ("pricing" as const),
+        oldValue: r.oldValue,
+        newValue: r.newValue,
+        changedBy: r.changedBy,
+        changedAt: r.changedAt instanceof Date ? r.changedAt.toISOString() : String(r.changedAt),
+      })),
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load settings change history");
+    res.status(500).json({ error: "Failed to load change history" });
   }
 });
 
