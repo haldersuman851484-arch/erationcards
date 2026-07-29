@@ -7,7 +7,7 @@
  */
 
 /**
- * Which money-affecting setting changed
+ * Which protected setting changed
  */
 export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryField[keyof typeof SettingsChangeHistoryEntryField];
 
@@ -15,4 +15,5 @@ export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryF
 export const SettingsChangeHistoryEntryField = {
   upi: 'upi',
   pricing: 'pricing',
+  processing_password: 'processing_password',
 } as const;

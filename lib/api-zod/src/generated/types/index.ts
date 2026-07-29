@@ -44,6 +44,8 @@ export * from './pricingMatrix';
 export * from './pricingSetting';
 export * from './pricingSettingSource';
 export * from './pricingSettingUpdate';
+export * from './processingPasswordUpdate';
+export * from './processingPasswordUpdateResponse';
 export * from './review';
 export * from './reviewInput';
 export * from './reviewStatus';

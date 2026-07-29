@@ -19,15 +19,25 @@ export function getAdminCredentials(): { email: string; password: string } {
 export type StaffRole = "admin" | "processing";
 
 /**
- * Processing-staff credentials (employee panel). Optional: when the env vars
- * are unset, processing login is simply unavailable and the server still
- * boots fine.
+ * Checks an employee (processing) login attempt. The admin-saved hashed
+ * password in the settings table wins; the PROCESSING_PASSWORD env var is the
+ * fallback so existing deploys keep working. Changes take effect immediately —
+ * no server restart. Returns the processing email on success, null otherwise.
  */
-export function getProcessingCredentials(): { email: string; password: string } | null {
-  const email = process.env["PROCESSING_EMAIL"];
-  const password = process.env["PROCESSING_PASSWORD"];
-  if (!email || !password) return null;
-  return { email, password };
+export async function verifyProcessingLogin(email: string, password: string): Promise<string | null> {
+  const processingEmail = process.env["PROCESSING_EMAIL"];
+  if (!processingEmail || email !== processingEmail) return null;
+
+  // Lazy import so this auth module stays usable in contexts without a DB.
+  const { getSettingValue, PROCESSING_PASSWORD_SETTING_KEY } = await import("./settings");
+  const savedHash = await getSettingValue(PROCESSING_PASSWORD_SETTING_KEY);
+  if (savedHash) {
+    return hashPassword(password) === savedHash ? processingEmail : null;
+  }
+
+  const envPassword = process.env["PROCESSING_PASSWORD"];
+  if (!envPassword) return null;
+  return password === envPassword ? processingEmail : null;
 }
 
 export function parseOperatorToken(req: Request): number | null {

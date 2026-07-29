@@ -185,8 +185,21 @@ export interface UpiSettingUpdate {
   merchantUpiId: string;
 }
 
+export interface ProcessingPasswordUpdate {
+  /**
+     * New employee (processing) login password
+     * @minLength 8
+     * @maxLength 100
+     */
+  newPassword: string;
+}
+
+export interface ProcessingPasswordUpdateResponse {
+  success: boolean;
+}
+
 /**
- * Which money-affecting setting changed
+ * Which protected setting changed
  */
 export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryField[keyof typeof SettingsChangeHistoryEntryField];
 
@@ -194,11 +207,12 @@ export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryF
 export const SettingsChangeHistoryEntryField = {
   upi: 'upi',
   pricing: 'pricing',
+  processing_password: 'processing_password',
 } as const;
 
 export interface SettingsChangeHistoryEntry {
   id: number;
-  /** Which money-affecting setting changed */
+  /** Which protected setting changed */
   field: SettingsChangeHistoryEntryField;
   /** Effective value before the save (pricing is a JSON matrix string) */
   oldValue: string;

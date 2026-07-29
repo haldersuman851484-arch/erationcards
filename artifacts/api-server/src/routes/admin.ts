@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, VerifySettingsOtpBody } from "@workspace/api-zod";
-import { getAdminCredentials, getProcessingCredentials, createAdminToken, parseStaffToken, requireAdmin } from "../lib/auth";
+import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody } from "@workspace/api-zod";
+import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword } from "../lib/auth";
 import {
   getOtpGateStatus,
   createOtpCodes,
@@ -18,8 +18,10 @@ import {
   getMerchantUpiId,
   getPricingMatrix,
   setSettingValue,
+  getSettingValue,
   MERCHANT_UPI_SETTING_KEY,
   PRICING_SETTING_KEY,
+  PROCESSING_PASSWORD_SETTING_KEY,
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { db } from "@workspace/db";
@@ -125,10 +127,10 @@ router.post("/admin/login", async (req: Request, res: Response) => {
       return;
     }
 
-    const processing = getProcessingCredentials();
-    if (processing && body.email === processing.email && body.password === processing.password) {
-      const token = createAdminToken(body.email, "processing");
-      res.json({ role: "processing", email: body.email, token });
+    const processingEmail = await verifyProcessingLogin(body.email, body.password);
+    if (processingEmail) {
+      const token = createAdminToken(processingEmail, "processing");
+      res.json({ role: "processing", email: processingEmail, token });
       return;
     }
 
@@ -289,6 +291,57 @@ router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
   }
 });
 
+// PUT /admin/settings/processing-password — change the employee login password (takes effect immediately)
+router.put("/admin/settings/processing-password", async (req: Request, res: Response) => {
+  try {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    if (!hasSettingsUnlock(req)) {
+      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
+      return;
+    }
+
+    const parsed = UpdateProcessingPasswordBody.safeParse(req.body);
+    const candidate = parsed.success ? parsed.data.newPassword : "";
+    if (!candidate || candidate.length < 8 || candidate.length > 100 || candidate.trim() !== candidate) {
+      res.status(400).json({ error: "Password must be 8-100 characters with no leading or trailing spaces" });
+      return;
+    }
+
+    const hadCustom = !!(await getSettingValue(PROCESSING_PASSWORD_SETTING_KEY));
+    await setSettingValue(PROCESSING_PASSWORD_SETTING_KEY, hashPassword(candidate));
+
+    // Audit trail — never store the password itself, only that it changed.
+    const oldLabel = hadCustom ? "(previous saved password)" : "(server default password)";
+    const newLabel = "(new password — hidden for security)";
+    await db.insert(settingsChangeHistoryTable).values({
+      field: PROCESSING_PASSWORD_SETTING_KEY,
+      oldValue: oldLabel,
+      newValue: newLabel,
+      changedBy: admin.email,
+    });
+    req.log.info({ adminEmail: admin.email }, "Employee (processing) password updated");
+
+    // Notify both partners — fire-and-forget so email issues never block the save.
+    void sendSettingsChangedEmail(
+      getPartnerEmails(),
+      {
+        fieldLabel: "Employee password",
+        oldValue: oldLabel,
+        newValue: newLabel,
+        changedBy: admin.email,
+        changedAt: new Date(),
+      },
+      req.log,
+    ).catch(() => {});
+
+    res.json({ success: true });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update employee password");
+    res.status(500).json({ error: "Failed to update employee password" });
+  }
+});
+
 // GET /admin/settings/history — read-only audit trail of UPI/price changes
 router.get("/admin/settings/history", async (req: Request, res: Response) => {
   try {
@@ -308,7 +361,10 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
     res.json({
       changes: rows.map((r) => ({
         id: r.id,
-        field: r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) : ("pricing" as const),
+        field:
+          r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) :
+          r.field === PROCESSING_PASSWORD_SETTING_KEY ? ("processing_password" as const) :
+          ("pricing" as const),
         oldValue: r.oldValue,
         newValue: r.newValue,
         changedBy: r.changedBy,

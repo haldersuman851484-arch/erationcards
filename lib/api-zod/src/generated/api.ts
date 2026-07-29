@@ -752,12 +752,29 @@ export const UpdateUpiSettingResponse = zod.object({
 
 
 /**
+ * @summary Change the employee (processing) login password (admin)
+ */
+export const updateProcessingPasswordBodyNewPasswordMin = 8;
+export const updateProcessingPasswordBodyNewPasswordMax = 100;
+
+
+
+export const UpdateProcessingPasswordBody = zod.object({
+  "newPassword": zod.string().min(updateProcessingPasswordBodyNewPasswordMin).max(updateProcessingPasswordBodyNewPasswordMax).describe('New employee (processing) login password')
+})
+
+export const UpdateProcessingPasswordResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
  * @summary Recent UPI ID and card price changes (admin, read-only)
  */
 export const ListSettingsChangeHistoryResponse = zod.object({
   "changes": zod.array(zod.object({
   "id": zod.number(),
-  "field": zod.enum(['upi', 'pricing']).describe('Which money-affecting setting changed'),
+  "field": zod.enum(['upi', 'pricing', 'processing_password']).describe('Which protected setting changed'),
   "oldValue": zod.string().describe('Effective value before the save (pricing is a JSON matrix string)'),
   "newValue": zod.string().describe('Value after the save (pricing is a JSON matrix string)'),
   "changedBy": zod.string().describe('Admin email from the unlock session that made the change'),

@@ -8,3 +8,5 @@ description: Admin Settings (UPI + pricing) endpoints require an x-settings-unlo
 - E2E: in dev the server logs the plaintext codes (`DEV ONLY` line) after `otp/send` — but every send emails the REAL partner Gmail addresses (`SETTINGS_PARTNER_EMAILS` env not set in dev). Keep live sends to a minimum or set that env var to test addresses first.
 - Attempt lockout is atomic because verifies are serialized through an in-process queue. **Why:** code review flagged a read-modify-write race on the attempts counter; safe only because the server is a single Node process (dev and Hostinger prod alike). A multi-process deployment would need DB-level atomicity instead.
 - Public `/api/payments/upi-config` and `/api/pricing/config` must stay public — customer payment pages read them without auth.
+
+- Employee (processing) password: admin-saved sha256 hash in settings table (key processing_password_hash) beats PROCESSING_PASSWORD env at login; env is fallback only.

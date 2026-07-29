@@ -31,6 +31,7 @@ import {
   getGetPricingSettingQueryKey,
   useUpdatePricingSetting,
   getGetPricingConfigQueryKey,
+  useUpdateProcessingPassword,
   useListSettingsChangeHistory,
   getListSettingsChangeHistoryQueryKey,
   useGetSettingsOtpConfig,
@@ -77,8 +78,9 @@ function readStoredUnlock(): { token: string; expiresAt: number } | null {
  * directly; pricing changes are JSON matrices, so show only the cells that
  * actually differ (e.g. "Ration · 1 card · Customer: ₹100 → ₹120").
  */
-function describeHistoryChange(entry: { field: "upi" | "pricing"; oldValue: string; newValue: string }): string {
+function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_password"; oldValue: string; newValue: string }): string {
   if (entry.field === "upi") return `${entry.oldValue || "— not set —"} → ${entry.newValue}`;
+  if (entry.field === "processing_password") return "Employee password changed (hidden for security)";
   try {
     const before = JSON.parse(entry.oldValue);
     const after = JSON.parse(entry.newValue);
@@ -375,6 +377,43 @@ export default function AdminDashboard() {
   const updatePricingMutation = useUpdatePricingSetting({
     request: { headers: settingsHeaders },
   } as any);
+
+  // ── Employee (processing) password ──
+  const updateProcessingPasswordMutation = useUpdateProcessingPassword({
+    request: { headers: settingsHeaders },
+  } as any);
+  const [empPassword, setEmpPassword] = useState("");
+  const [empPasswordConfirm, setEmpPasswordConfirm] = useState("");
+  const [empPasswordError, setEmpPasswordError] = useState<string | null>(null);
+
+  function handleSaveEmployeePassword() {
+    const candidate = empPassword;
+    if (candidate.trim() !== candidate || candidate.length < 8 || candidate.length > 100) {
+      setEmpPasswordError("The password must be 8-100 characters with no spaces at the start or end.");
+      return;
+    }
+    if (candidate !== empPasswordConfirm) {
+      setEmpPasswordError("The two passwords don't match. Type the same password in both boxes.");
+      return;
+    }
+    setEmpPasswordError(null);
+    updateProcessingPasswordMutation.mutate(
+      { data: { newPassword: candidate } },
+      {
+        onSuccess: () => {
+          setEmpPassword("");
+          setEmpPasswordConfirm("");
+          toast({ title: "Employee password changed!", description: "The employee must use the new password from their very next login — no restart needed." });
+          queryClient.invalidateQueries({ queryKey: getListSettingsChangeHistoryQueryKey() });
+        },
+        onError: (err: unknown) => {
+          if (handleSettingsAuthError(err)) return;
+          const serverMsg = (err as { data?: { error?: string } })?.data?.error;
+          setEmpPasswordError(serverMsg || "Could not save the new password. Try again.");
+        },
+      }
+    );
+  }
 
   // ── Recent changes (read-only audit trail, visible only while unlocked) ──
   const historyQuery = useListSettingsChangeHistory({
@@ -1260,6 +1299,59 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* ── Employee password ── */}
+              <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-employee-password">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Lock className="w-5 h-5 text-primary" /> Employee Password
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    The password your employee uses to open the Processing Panel. Change it here any
+                    time — for example when someone leaves. The new password works from the very next
+                    login, no restart needed. The employee's email stays the same.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">New password</p>
+                    <Input
+                      type="password"
+                      value={empPassword}
+                      onChange={(e) => { setEmpPassword(e.target.value); setEmpPasswordError(null); }}
+                      placeholder="At least 8 characters"
+                      className="max-w-sm"
+                      data-testid="input-employee-password"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">Type it again</p>
+                    <Input
+                      type="password"
+                      value={empPasswordConfirm}
+                      onChange={(e) => { setEmpPasswordConfirm(e.target.value); setEmpPasswordError(null); }}
+                      placeholder="Same password again"
+                      className="max-w-sm"
+                      data-testid="input-employee-password-confirm"
+                    />
+                  </div>
+                  {empPasswordError && (
+                    <p className="text-xs text-red-600" data-testid="text-employee-password-error">{empPasswordError}</p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      onClick={handleSaveEmployeePassword}
+                      disabled={updateProcessingPasswordMutation.isPending || !empPassword || !empPasswordConfirm}
+                      data-testid="button-save-employee-password"
+                    >
+                      {updateProcessingPasswordMutation.isPending ? "Saving…" : "Change Password"}
+                    </Button>
+                    <p className="text-xs text-slate-400">
+                      Tell the employee the new password yourself — it is never emailed or shown anywhere.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* ── Recent changes (read-only audit trail) ── */}
               <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-settings-history">
                 <CardHeader>
@@ -1295,9 +1387,11 @@ export default function AdminDashboard() {
                               variant="outline"
                               className={entry.field === "upi"
                                 ? "bg-blue-50 text-blue-700 border-blue-200"
-                                : "bg-purple-50 text-purple-700 border-purple-200"}
+                                : entry.field === "processing_password"
+                                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                                  : "bg-purple-50 text-purple-700 border-purple-200"}
                             >
-                              {entry.field === "upi" ? "UPI ID" : "Card prices"}
+                              {entry.field === "upi" ? "UPI ID" : entry.field === "processing_password" ? "Employee password" : "Card prices"}
                             </Badge>
                             <span className="text-xs text-slate-500">
                               {new Date(entry.changedAt).toLocaleString("en-IN", {

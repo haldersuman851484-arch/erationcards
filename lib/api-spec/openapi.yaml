@@ -446,6 +446,31 @@ paths:
         "403":
           description: Settings locked — both partners' emailed codes must be verified first
 
+  /admin/settings/processing-password:
+    put:
+      operationId: updateProcessingPassword
+      tags: [dashboard]
+      summary: Change the employee (processing) login password (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProcessingPasswordUpdate"
+      responses:
+        "200":
+          description: Password saved; processing login uses it immediately, no restart needed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingPasswordUpdateResponse"
+        "400":
+          description: Password too short or otherwise invalid
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
+
   /admin/settings/history:
     get:
       operationId: listSettingsChangeHistory
@@ -1188,6 +1213,25 @@ components:
       required:
         - merchantUpiId
 
+    ProcessingPasswordUpdate:
+      type: object
+      properties:
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: New employee (processing) login password
+      required:
+        - newPassword
+
+    ProcessingPasswordUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
     SettingsChangeHistoryEntry:
       type: object
       properties:
@@ -1195,8 +1239,8 @@ components:
           type: integer
         field:
           type: string
-          enum: [upi, pricing]
-          description: Which money-affecting setting changed
+          enum: [upi, pricing, processing_password]
+          description: Which protected setting changed
         oldValue:
           type: string
           description: Effective value before the save (pricing is a JSON matrix string)

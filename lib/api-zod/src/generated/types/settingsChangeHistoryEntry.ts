@@ -9,7 +9,7 @@ import type { SettingsChangeHistoryEntryField } from './settingsChangeHistoryEnt
 
 export interface SettingsChangeHistoryEntry {
   id: number;
-  /** Which money-affecting setting changed */
+  /** Which protected setting changed */
   field: SettingsChangeHistoryEntryField;
   /** Effective value before the save (pricing is a JSON matrix string) */
   oldValue: string;

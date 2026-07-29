@@ -48,6 +48,8 @@ import type {
   PricingConfig,
   PricingSetting,
   PricingSettingUpdate,
+  ProcessingPasswordUpdate,
+  ProcessingPasswordUpdateResponse,
   Review,
   ReviewInput,
   ReviewStatusUpdate,
@@ -1511,6 +1513,76 @@ export const useUpdateUpiSetting = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateUpiSettingMutationOptions(options));
+    }
+
+export const getUpdateProcessingPasswordUrl = () => {
+
+
+
+
+  return `/api/admin/settings/processing-password`
+}
+
+/**
+ * @summary Change the employee (processing) login password (admin)
+ */
+export const updateProcessingPassword = async (processingPasswordUpdate: ProcessingPasswordUpdate, options?: RequestInit): Promise<ProcessingPasswordUpdateResponse> => {
+
+  return customFetch<ProcessingPasswordUpdateResponse>(getUpdateProcessingPasswordUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(processingPasswordUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateProcessingPasswordMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProcessingPassword>>, TError,{data: BodyType<ProcessingPasswordUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProcessingPassword>>, TError,{data: BodyType<ProcessingPasswordUpdate>}, TContext> => {
+
+const mutationKey = ['updateProcessingPassword'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProcessingPassword>>, {data: BodyType<ProcessingPasswordUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateProcessingPassword(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProcessingPasswordMutationResult = NonNullable<Awaited<ReturnType<typeof updateProcessingPassword>>>
+    export type UpdateProcessingPasswordMutationBody = BodyType<ProcessingPasswordUpdate>
+    export type UpdateProcessingPasswordMutationError = ErrorType<void>
+
+    /**
+ * @summary Change the employee (processing) login password (admin)
+ */
+export const useUpdateProcessingPassword = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProcessingPassword>>, TError,{data: BodyType<ProcessingPasswordUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateProcessingPassword>>,
+        TError,
+        {data: BodyType<ProcessingPasswordUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateProcessingPasswordMutationOptions(options));
     }
 
 export const getListSettingsChangeHistoryUrl = () => {
