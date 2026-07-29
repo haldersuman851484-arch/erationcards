@@ -7,6 +7,12 @@ Disallow: /operator/dashboard
 Disallow: /order-upload/
 Disallow: /processing
 
+# Block customer receipt pages (contain personal order details)
+Disallow: /receipt/
+
+# Block staff-only login pages
+Disallow: /operator/login
+
 # Allow key public pages
 Allow: /order
 Allow: /track
