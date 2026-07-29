@@ -257,6 +257,18 @@ describe("settings lock — OTP unlock header required", () => {
     expect(res.status).toBe(403);
   });
 
+  it("rejects a well-formed but expired unlock token", async () => {
+    const expired = jwt.sign({ scope: "settings_unlock", email: "admin@test.com" }, TEST_SECRET, {
+      expiresIn: -3600,
+    });
+    const res = await request(app)
+      .get("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, expired);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+
   it("GET pricing is also locked without the unlock header", async () => {
     const res = await request(app)
       .get("/api/admin/settings/pricing")
