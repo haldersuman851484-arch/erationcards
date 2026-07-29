@@ -219,6 +219,111 @@ export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log
   }
 }
 
+export interface SettingsChangeEmailData {
+  /** "UPI ID" or "Card prices" — human label for the changed field */
+  fieldLabel: string;
+  /** Human-readable previous value (already formatted for display) */
+  oldValue: string;
+  /** Human-readable new value (already formatted for display) */
+  newValue: string;
+  changedBy: string;
+  changedAt: Date;
+}
+
+function formatChangeTime(date: Date): string {
+  return new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZone: "Asia/Kolkata",
+  }).format(date) + " IST";
+}
+
+function buildSettingsChangeHtml(data: SettingsChangeEmailData): string {
+  return `
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
+  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
+  </div>
+  <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
+    <p style="margin: 0 0 16px;">The <strong>${escapeHtml(data.fieldLabel)}</strong> setting was just changed in the admin dashboard.</p>
+    <table style="width: 100%; font-size: 14px; margin-bottom: 16px; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; vertical-align: top;">Old value</td>
+        <td style="padding: 6px 0; text-align: right;"><span style="font-family: monospace; white-space: pre-line;">${escapeHtml(data.oldValue)}</span></td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; border-top: 1px solid #e2e8f0; vertical-align: top;">New value</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: bold; border-top: 1px solid #e2e8f0;"><span style="font-family: monospace; white-space: pre-line;">${escapeHtml(data.newValue)}</span></td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; border-top: 1px solid #e2e8f0;">Saved by</td>
+        <td style="padding: 6px 0; text-align: right; border-top: 1px solid #e2e8f0;">${escapeHtml(data.changedBy)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; border-top: 1px solid #e2e8f0;">When</td>
+        <td style="padding: 6px 0; text-align: right; border-top: 1px solid #e2e8f0;">${escapeHtml(formatChangeTime(data.changedAt))}</td>
+      </tr>
+    </table>
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
+      This value affects how customer money is collected. If you did not expect this change, contact your partner immediately.
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automatic email from PVC Card Portal. Please do not reply.</p>
+  </div>
+</div>`.trim();
+}
+
+function buildSettingsChangeText(data: SettingsChangeEmailData): string {
+  return [
+    `The ${data.fieldLabel} setting was just changed in the admin dashboard.`,
+    ``,
+    `Old value: ${data.oldValue}`,
+    `New value: ${data.newValue}`,
+    `Saved by: ${data.changedBy}`,
+    `When: ${formatChangeTime(data.changedAt)}`,
+    ``,
+    `This value affects how customer money is collected. If you did not expect this change, contact your partner immediately.`,
+  ].join("\n");
+}
+
+/**
+ * Notifies both partners that a money-related setting (UPI ID / prices)
+ * changed. Never throws — email failure must not block the save, so all
+ * errors are logged and reported as `false` per recipient.
+ */
+export async function sendSettingsChangedEmail(
+  recipients: string[],
+  data: SettingsChangeEmailData,
+  log: Log,
+): Promise<boolean> {
+  const results = await Promise.all(
+    recipients.map(async (to) => {
+      try {
+        const res = await postToResend({
+          from: FROM_ADDRESS,
+          to: [to],
+          subject: `${data.fieldLabel} changed - PVC Card Portal settings`,
+          html: buildSettingsChangeHtml(data),
+          text: buildSettingsChangeText(data),
+        });
+        if (!res.ok) {
+          const errBody = await res.text().catch(() => "");
+          log.error(
+            { status: res.status, body: errBody.slice(0, 500), to, field: data.fieldLabel },
+            "Settings change email failed to send",
+          );
+          return false;
+        }
+        log.info({ to, field: data.fieldLabel }, "Settings change email sent");
+        return true;
+      } catch (err) {
+        log.error({ err, to, field: data.fieldLabel }, "Settings change email errored");
+        return false;
+      }
+    }),
+  );
+  return results.every(Boolean);
+}
+
 export interface SettingsOtpEmailData {
   to: string;
   code: string;

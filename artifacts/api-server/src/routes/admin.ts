@@ -11,8 +11,9 @@ import {
   OTP_TTL_SECONDS,
   RESEND_COOLDOWN_SECONDS,
   UNLOCK_TTL_SECONDS,
+  getPartnerEmails,
 } from "../lib/settingsOtp";
-import { sendSettingsOtpEmail } from "../lib/email";
+import { sendSettingsOtpEmail, sendSettingsChangedEmail } from "../lib/email";
 import {
   getMerchantUpiId,
   getPricingMatrix,
@@ -26,6 +27,21 @@ import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable }
 import { desc, sql, eq } from "drizzle-orm";
 
 const router = Router();
+
+/** Compact human-readable summary of a price matrix for the change email. */
+function formatPricingForEmail(pricing: {
+  ration: { single: { public: number; operator: number }; multi: { public: number; operator: number } };
+  special: { single: { public: number; operator: number }; multi: { public: number; operator: number } };
+}): string {
+  const line = (label: string, tier: { public: number; operator: number }) =>
+    `${label}: ₹${tier.public} public / ₹${tier.operator} operator`;
+  return [
+    line("Ration single", pricing.ration.single),
+    line("Ration multi", pricing.ration.multi),
+    line("Special single", pricing.special.single),
+    line("Special multi", pricing.special.multi),
+  ].join("\n");
+}
 
 // GET /admin/verifications
 router.get("/admin/verifications", async (req: Request, res: Response) => {
@@ -178,6 +194,20 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
       changedBy: admin.email,
     });
     req.log.info({ adminEmail: admin.email, merchantUpiId: candidate }, "Merchant UPI ID updated");
+
+    // Notify both partners — fire-and-forget so email issues never block the save.
+    void sendSettingsChangedEmail(
+      getPartnerEmails(),
+      {
+        fieldLabel: "UPI ID",
+        oldValue: previousUpiId,
+        newValue: candidate,
+        changedBy: admin.email,
+        changedAt: new Date(),
+      },
+      req.log,
+    ).catch(() => {});
+
     res.json({ merchantUpiId: candidate, source: "custom" as const });
   } catch (err) {
     req.log.error({ err }, "Failed to update UPI setting");
@@ -229,6 +259,20 @@ router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
       changedBy: admin.email,
     });
     req.log.info({ adminEmail: admin.email, pricing: parsed.data.pricing }, "Card prices updated");
+
+    // Notify both partners — fire-and-forget so email issues never block the save.
+    void sendSettingsChangedEmail(
+      getPartnerEmails(),
+      {
+        fieldLabel: "Card prices",
+        oldValue: formatPricingForEmail(previousPricing),
+        newValue: formatPricingForEmail(parsed.data.pricing),
+        changedBy: admin.email,
+        changedAt: new Date(),
+      },
+      req.log,
+    ).catch(() => {});
+
     res.json({ pricing: parsed.data.pricing, source: "custom" as const });
   } catch (err) {
     req.log.error({ err }, "Failed to update pricing setting");
