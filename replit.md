@@ -71,8 +71,8 @@ A web application for ordering PVC ration cards online — customers fill in det
    - `ADMIN_EMAIL` / `ADMIN_PASSWORD` — admin dashboard credentials
    - `MERCHANT_UPI_ID` — UPI ID for the payment QR code
    - `UPLOADS_DIR` — absolute path for payment screenshot storage (e.g. `/home/<user>/uploads`)
-   - `RESEND_API_KEY` — Resend API key for order confirmation emails (required on Hostinger; the Replit connector proxy is unreachable outside Replit)
-   - `EMAIL_FROM` — sender for order emails, e.g. `PVC Card Portal <orders@erationcards.in>` (only works after the domain is verified in Resend; defaults to `onboarding@resend.dev`)
+   - `RESEND_API_KEY` — Resend API key for order confirmation emails (required on Hostinger; the Replit connector proxy is unreachable outside Replit). The same full-access key is already stored as a Replit secret — copy that value into hPanel.
+   - `EMAIL_FROM` — set to `PVC Card Portal <orders@erationcards.in>` (domain verified in Resend since July 2026; defaults to `onboarding@resend.dev` if unset)
 3. **Set Node.js startup file** in hPanel to `dist/index.mjs`.
 
 ### Deploying (first time & every update)
@@ -114,7 +114,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - **No `.returning()` in MySQL** — any new insert/update must do a follow-up `.select()` to get the inserted row.
-- **Resend email sandbox** — until `erationcards.in` is verified at resend.com/domains, Resend only delivers to the Resend account owner's own inbox and the `from` must stay `onboarding@resend.dev`; other recipients get a 403 (handled: order still completes, `emailSent:false`). `email.ts` picks its transport automatically: direct Resend API when `RESEND_API_KEY` is set (Hostinger), otherwise the Replit-managed Resend connector (dev).
+- **Resend domain verified (July 2026)** — `erationcards.in` is verified in Resend, so order emails deliver to any recipient. `RESEND_API_KEY` (full-access key, stored as a Replit secret) and `EMAIL_FROM` (`PVC Card Portal <orders@erationcards.in>`) are both set, so dev uses the direct Resend API — the same code path as Hostinger. The Replit connector remains only as a fallback when `RESEND_API_KEY` is absent; note the connector's own key is send-only and cannot call domain-management endpoints. If emails ever fail again with a 403 sandbox error, re-check the domain at resend.com/domains.
 - **`mysql2` must be installed** at the Hostinger deployment root — it is externalized from the esbuild bundle.
 - **`drizzle-kit push` runs from the repo, not `hostinger/`** — the schema lives in `lib/db/src/schema/`, not in the deploy bundle.
 - **BASE_PATH not needed in production** — Vite defaults to `/` when `BASE_PATH` env var is absent during build.

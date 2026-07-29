@@ -61,6 +61,7 @@ channel = "stable-25_05"
 
 [userenv.shared]
 DELHIVERY_ENV = "production"
+EMAIL_FROM = "PVC Card Portal <orders@erationcards.in>"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-1385b690-cb6e-4577-a122-1280056f167b"
