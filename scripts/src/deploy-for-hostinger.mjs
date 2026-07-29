@@ -72,6 +72,12 @@ console.log(`
 ║                                                                      ║
 ║  3. Restart the Node.js app in hPanel                               ║
 ║                                                                      ║
+║  4. Verify Google sees the live prices (no leftover tokens):        ║
+║       curl -s https://erationcards.in/ | grep -c '%%PRICE_'  → 0    ║
+║     or run the full smoke test:                                     ║
+║       API_BASE_URL=https://erationcards.in/api \\                   ║
+║         pnpm --filter @workspace/scripts run smoke-test             ║
+║                                                                      ║
 ║  That's it — your app is live!                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
 `);

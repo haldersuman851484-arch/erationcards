@@ -228,6 +228,27 @@ async function run() {
     pass(`GET /orders/stats → 200 (totalOrders=${body.totalOrders}, revenue=${body.totalRevenue})`);
   }
 
+  // ── 15. Homepage SEO prices (post-deploy check) ───────────────────────────
+  // The built index.html keeps %%PRICE_*%% tokens; the server injects live
+  // prices at serve time. The served homepage must show real prices to Google
+  // with no leftover tokens.
+  {
+    // Only meaningful against a deployed server (API_BASE_URL set): in dev,
+    // "/" is served by the Vite portal with the raw (tokenised) index.html.
+    const homeBase = BASE.replace(/\/api\/?$/, "") || BASE;
+    if (!process.env["API_BASE_URL"]) {
+      console.log("  ⚠️  Homepage SEO price check skipped — set API_BASE_URL to run it against a deployed server");
+    } else {
+      const res = await fetch(`${homeBase}/`, { headers: { Accept: "text/html" } });
+      assert.equal(res.status, 200, `homepage: expected 200, got ${res.status}`);
+      const html = await res.text();
+      assert.ok(!html.includes("%%PRICE_"), "homepage: leftover %%PRICE_ tokens — SEO prices not injected");
+      assert.ok(/"priceRange":\s*"₹\d+–₹\d+"/.test(html), "homepage: JSON-LD priceRange missing or not numeric");
+      assert.ok(/name="description" content="[^"]*₹\d+/.test(html), "homepage: meta description missing a real ₹ price");
+      pass(`GET ${homeBase}/ → 200 (live prices injected, no %%PRICE_ tokens)`);
+    }
+  }
+
   console.log("\n🎉 All MySQL smoke tests passed!\n");
 }
 
