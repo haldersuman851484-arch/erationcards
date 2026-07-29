@@ -4,7 +4,7 @@ import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useSeo } from "@/hooks/use-seo";
 import { MapPin, CreditCard, Truck, CheckCircle, Clock, Shield } from "lucide-react";
-import { PRICING } from "@workspace/pricing";
+import { usePricing } from "@/hooks/use-pricing";
 
 const SITE_URL = "https://erationcards.in";
 
@@ -220,6 +220,7 @@ function removeJsonLd(id: string) {
 }
 
 export default function DistrictPage() {
+  const PRICING = usePricing();
   const params = useParams<{ district: string }>();
   const district = params.district ?? "";
   const info = DISTRICTS[district];

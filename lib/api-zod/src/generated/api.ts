@@ -539,6 +539,192 @@ export const GetUpiConfigResponse = zod.object({
 
 
 /**
+ * @summary Get the live card price matrix used by order forms and receipts
+ */
+export const getPricingConfigResponsePricingRationSinglePublicMax = 10000;
+
+export const getPricingConfigResponsePricingRationSingleOperatorMax = 10000;
+
+export const getPricingConfigResponsePricingRationMultiPublicMax = 10000;
+
+export const getPricingConfigResponsePricingRationMultiOperatorMax = 10000;
+
+export const getPricingConfigResponsePricingSpecialSinglePublicMax = 10000;
+
+export const getPricingConfigResponsePricingSpecialSingleOperatorMax = 10000;
+
+export const getPricingConfigResponsePricingSpecialMultiPublicMax = 10000;
+
+export const getPricingConfigResponsePricingSpecialMultiOperatorMax = 10000;
+
+
+
+export const GetPricingConfigResponse = zod.object({
+  "pricing": zod.object({
+  "ration": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(getPricingConfigResponsePricingRationSinglePublicMax),
+  "operator": zod.number().min(1).max(getPricingConfigResponsePricingRationSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(getPricingConfigResponsePricingRationMultiPublicMax),
+  "operator": zod.number().min(1).max(getPricingConfigResponsePricingRationMultiOperatorMax)
+})
+}),
+  "special": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(getPricingConfigResponsePricingSpecialSinglePublicMax),
+  "operator": zod.number().min(1).max(getPricingConfigResponsePricingSpecialSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(getPricingConfigResponsePricingSpecialMultiPublicMax),
+  "operator": zod.number().min(1).max(getPricingConfigResponsePricingSpecialMultiOperatorMax)
+})
+})
+}).describe('Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)')
+})
+
+
+/**
+ * @summary Get the card price matrix setting (admin)
+ */
+export const getPricingSettingResponsePricingRationSinglePublicMax = 10000;
+
+export const getPricingSettingResponsePricingRationSingleOperatorMax = 10000;
+
+export const getPricingSettingResponsePricingRationMultiPublicMax = 10000;
+
+export const getPricingSettingResponsePricingRationMultiOperatorMax = 10000;
+
+export const getPricingSettingResponsePricingSpecialSinglePublicMax = 10000;
+
+export const getPricingSettingResponsePricingSpecialSingleOperatorMax = 10000;
+
+export const getPricingSettingResponsePricingSpecialMultiPublicMax = 10000;
+
+export const getPricingSettingResponsePricingSpecialMultiOperatorMax = 10000;
+
+
+
+export const GetPricingSettingResponse = zod.object({
+  "pricing": zod.object({
+  "ration": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(getPricingSettingResponsePricingRationSinglePublicMax),
+  "operator": zod.number().min(1).max(getPricingSettingResponsePricingRationSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(getPricingSettingResponsePricingRationMultiPublicMax),
+  "operator": zod.number().min(1).max(getPricingSettingResponsePricingRationMultiOperatorMax)
+})
+}),
+  "special": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(getPricingSettingResponsePricingSpecialSinglePublicMax),
+  "operator": zod.number().min(1).max(getPricingSettingResponsePricingSpecialSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(getPricingSettingResponsePricingSpecialMultiPublicMax),
+  "operator": zod.number().min(1).max(getPricingSettingResponsePricingSpecialMultiOperatorMax)
+})
+})
+}).describe('Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)'),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = built-in launch prices')
+})
+
+
+/**
+ * @summary Update the card price matrix (admin)
+ */
+export const updatePricingSettingBodyPricingRationSinglePublicMax = 10000;
+
+export const updatePricingSettingBodyPricingRationSingleOperatorMax = 10000;
+
+export const updatePricingSettingBodyPricingRationMultiPublicMax = 10000;
+
+export const updatePricingSettingBodyPricingRationMultiOperatorMax = 10000;
+
+export const updatePricingSettingBodyPricingSpecialSinglePublicMax = 10000;
+
+export const updatePricingSettingBodyPricingSpecialSingleOperatorMax = 10000;
+
+export const updatePricingSettingBodyPricingSpecialMultiPublicMax = 10000;
+
+export const updatePricingSettingBodyPricingSpecialMultiOperatorMax = 10000;
+
+
+
+export const UpdatePricingSettingBody = zod.object({
+  "pricing": zod.object({
+  "ration": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingBodyPricingRationSinglePublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingBodyPricingRationSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingBodyPricingRationMultiPublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingBodyPricingRationMultiOperatorMax)
+})
+}),
+  "special": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingBodyPricingSpecialSinglePublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingBodyPricingSpecialSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingBodyPricingSpecialMultiPublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingBodyPricingSpecialMultiOperatorMax)
+})
+})
+}).describe('Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)')
+})
+
+export const updatePricingSettingResponsePricingRationSinglePublicMax = 10000;
+
+export const updatePricingSettingResponsePricingRationSingleOperatorMax = 10000;
+
+export const updatePricingSettingResponsePricingRationMultiPublicMax = 10000;
+
+export const updatePricingSettingResponsePricingRationMultiOperatorMax = 10000;
+
+export const updatePricingSettingResponsePricingSpecialSinglePublicMax = 10000;
+
+export const updatePricingSettingResponsePricingSpecialSingleOperatorMax = 10000;
+
+export const updatePricingSettingResponsePricingSpecialMultiPublicMax = 10000;
+
+export const updatePricingSettingResponsePricingSpecialMultiOperatorMax = 10000;
+
+
+
+export const UpdatePricingSettingResponse = zod.object({
+  "pricing": zod.object({
+  "ration": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingResponsePricingRationSinglePublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingResponsePricingRationSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingResponsePricingRationMultiPublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingResponsePricingRationMultiOperatorMax)
+})
+}),
+  "special": zod.object({
+  "single": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingResponsePricingSpecialSinglePublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingResponsePricingSpecialSingleOperatorMax)
+}),
+  "multi": zod.object({
+  "public": zod.number().min(1).max(updatePricingSettingResponsePricingSpecialMultiPublicMax),
+  "operator": zod.number().min(1).max(updatePricingSettingResponsePricingSpecialMultiOperatorMax)
+})
+})
+}).describe('Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)'),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = built-in launch prices')
+})
+
+
+/**
  * @summary Get the merchant UPI ID setting (admin)
  */
 export const GetUpiSettingResponse = zod.object({

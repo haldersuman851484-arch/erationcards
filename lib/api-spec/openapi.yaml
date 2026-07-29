@@ -353,6 +353,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/UpiConfig"
 
+  /pricing/config:
+    get:
+      operationId: getPricingConfig
+      tags: [orders]
+      summary: Get the live card price matrix used by order forms and receipts
+      responses:
+        "200":
+          description: Current price matrix
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingConfig"
+
+  /admin/settings/pricing:
+    get:
+      operationId: getPricingSetting
+      tags: [dashboard]
+      summary: Get the card price matrix setting (admin)
+      responses:
+        "200":
+          description: Current price matrix and whether it is admin-saved or the built-in default
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingSetting"
+        "401":
+          description: Not authenticated
+    put:
+      operationId: updatePricingSetting
+      tags: [dashboard]
+      summary: Update the card price matrix (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PricingSettingUpdate"
+      responses:
+        "200":
+          description: Prices saved; order forms and server-side amounts use them immediately
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PricingSetting"
+        "400":
+          description: Invalid prices (must be whole rupees between 1 and 10000)
+        "401":
+          description: Not authenticated
+
   /admin/settings/upi:
     get:
       operationId: getUpiSetting
@@ -967,6 +1016,73 @@ components:
       required:
         - merchantUpiId
         - source
+
+    PriceTierPrices:
+      type: object
+      properties:
+        public:
+          type: integer
+          minimum: 1
+          maximum: 10000
+        operator:
+          type: integer
+          minimum: 1
+          maximum: 10000
+      required:
+        - public
+        - operator
+
+    PriceGroupPrices:
+      type: object
+      properties:
+        single:
+          $ref: "#/components/schemas/PriceTierPrices"
+        multi:
+          $ref: "#/components/schemas/PriceTierPrices"
+      required:
+        - single
+        - multi
+
+    PricingMatrix:
+      type: object
+      description: Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)
+      properties:
+        ration:
+          $ref: "#/components/schemas/PriceGroupPrices"
+        special:
+          $ref: "#/components/schemas/PriceGroupPrices"
+      required:
+        - ration
+        - special
+
+    PricingConfig:
+      type: object
+      properties:
+        pricing:
+          $ref: "#/components/schemas/PricingMatrix"
+      required:
+        - pricing
+
+    PricingSetting:
+      type: object
+      properties:
+        pricing:
+          $ref: "#/components/schemas/PricingMatrix"
+        source:
+          type: string
+          enum: [custom, default]
+          description: custom = saved by admin in the settings table, default = built-in launch prices
+      required:
+        - pricing
+        - source
+
+    PricingSettingUpdate:
+      type: object
+      properties:
+        pricing:
+          $ref: "#/components/schemas/PricingMatrix"
+      required:
+        - pricing
 
     UpiSettingUpdate:
       type: object

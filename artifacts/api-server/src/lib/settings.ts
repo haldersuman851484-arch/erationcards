@@ -1,7 +1,9 @@
 import { db, settingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { DEFAULT_PRICING, isValidPricingMatrix, type PricingMatrix } from "@workspace/pricing";
 
 export const MERCHANT_UPI_SETTING_KEY = "merchant_upi_id";
+export const PRICING_SETTING_KEY = "pricing_matrix";
 
 /**
  * UPI VPA format: handle@psp — e.g. mystore@okaxis, 9876543210@ybl.
@@ -36,4 +38,25 @@ export async function getMerchantUpiId(): Promise<{
   const saved = await getSettingValue(MERCHANT_UPI_SETTING_KEY);
   if (saved) return { merchantUpiId: saved, source: "custom" };
   return { merchantUpiId: process.env.MERCHANT_UPI_ID || "", source: "default" };
+}
+
+/**
+ * The live card price matrix: the admin-saved setting wins, otherwise the
+ * built-in launch defaults from @workspace/pricing. A malformed saved value
+ * (bad JSON / wrong shape) is ignored so pricing can never break orders.
+ */
+export async function getPricingMatrix(): Promise<{
+  pricing: PricingMatrix;
+  source: "custom" | "default";
+}> {
+  const saved = await getSettingValue(PRICING_SETTING_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (isValidPricingMatrix(parsed)) return { pricing: parsed, source: "custom" };
+    } catch {
+      // fall through to default
+    }
+  }
+  return { pricing: DEFAULT_PRICING, source: "default" };
 }

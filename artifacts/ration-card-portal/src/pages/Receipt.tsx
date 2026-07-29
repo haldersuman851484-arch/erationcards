@@ -14,6 +14,7 @@ import {
   type InvoiceOrder,
 } from "@/lib/invoice";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
+import { usePricing } from "@/hooks/use-pricing";
 
 /**
  * Customer invoice — public page at /receipt/:orderNumber.
@@ -42,6 +43,7 @@ const NOTE_CLASS: Record<PayKind, string> = {
 };
 
 export default function Receipt() {
+  const pricing = usePricing();
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = params.orderNumber ?? "";
   const { toast } = useToast();
@@ -64,7 +66,7 @@ export default function Receipt() {
     if (!order || downloading) return;
     setDownloading(true);
     try {
-      await downloadInvoicePdf(order as unknown as InvoiceOrder);
+      await downloadInvoicePdf(order as unknown as InvoiceOrder, pricing);
     } catch {
       toast({
         title: "Download failed",
@@ -101,7 +103,7 @@ export default function Receipt() {
     );
   }
 
-  const m = buildInvoiceModel(order as unknown as InvoiceOrder);
+  const m = buildInvoiceModel(order as unknown as InvoiceOrder, pricing);
   const pillStyle = PILL_STYLE[m.payKind];
 
   return (

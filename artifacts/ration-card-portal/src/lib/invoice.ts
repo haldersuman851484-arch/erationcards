@@ -1,4 +1,4 @@
-import { computeOrderAmount, perCardPrice } from "@workspace/pricing";
+import { computeOrderAmount, perCardPrice, DEFAULT_PRICING, type PricingMatrix } from "@workspace/pricing";
 import { BRAND } from "@/components/layout";
 
 /**
@@ -87,7 +87,7 @@ export type InvoiceModel = {
   phone: string;
 };
 
-export function buildInvoiceModel(order: InvoiceOrder): InvoiceModel {
+export function buildInvoiceModel(order: InvoiceOrder, pricing: PricingMatrix = DEFAULT_PRICING): InvoiceModel {
   const cards: InvoiceCard[] = [
     { customerName: order.customerName, rationCardNumber: order.rationCardNumber, cardType: order.cardType },
     ...(order.familyCards ?? []),
@@ -103,8 +103,8 @@ export function buildInvoiceModel(order: InvoiceOrder): InvoiceModel {
   const cardTypes = cards.map((c) => c.cardType);
   let unitPrices: number[] | null = null;
   for (const isOperator of [false, true]) {
-    if (Math.abs(computeOrderAmount(cardTypes, isOperator) - order.amount) < 0.005) {
-      unitPrices = cardTypes.map((t) => perCardPrice(t, cardTypes.length, isOperator));
+    if (Math.abs(computeOrderAmount(cardTypes, isOperator, pricing) - order.amount) < 0.005) {
+      unitPrices = cardTypes.map((t) => perCardPrice(t, cardTypes.length, isOperator, pricing));
       break;
     }
   }

@@ -59,6 +59,9 @@ vi.mock("@workspace/db", () => {
       update: updateFn,
     },
     ordersTable: {},
+    // settings lookups (pricing matrix) go through the same select chain;
+    // the fake row has no `value`, so getPricingMatrix falls back to defaults.
+    settingsTable: { key: {}, value: {} },
     FamilyCardsSchema: {
       safeParse: (v: unknown) => ({ success: true, data: v ?? [] }),
     },

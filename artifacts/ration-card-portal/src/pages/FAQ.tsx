@@ -3,9 +3,10 @@ import { useSeo } from "@/hooks/use-seo";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { PRICING } from "@workspace/pricing";
+import type { PricingMatrix } from "@workspace/pricing";
+import { usePricing } from "@/hooks/use-pricing";
 
-const FAQS = [
+const buildFaqs = (PRICING: PricingMatrix) => [
   {
     q: "What is a PVC Ration Card?",
     a: "A PVC Ration Card is a durable, wallet-size printed version of your digital e-Ration card. Made from high-quality PVC (polyvinyl chloride) material, it is waterproof, tear-resistant, and lasts for years unlike regular paper cards. The standard size is 85.6mm × 54mm — exactly the same as a credit or debit card.",
@@ -69,6 +70,8 @@ const FAQS = [
 ];
 
 export default function FAQ() {
+  const pricing = usePricing();
+  const FAQS = buildFaqs(pricing);
   useSeo({
     title: "FAQ — PVC Ration Card Printing | AAY PHH SPHH RKSY West Bengal",
     description: "Answers to common questions about PVC ration card printing: legality, card size (85.6mm×54mm), card types (AAY, PHH, SPHH, RKSY-I, RKSY-II, ABHA, E-SHRAM, GENERAL), district delivery, pricing from ₹50, and more.",

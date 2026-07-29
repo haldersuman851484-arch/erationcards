@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { parseAdminToken } from "../lib/auth";
 import { uploadToStorage } from "../lib/storage";
-import { getMerchantUpiId } from "../lib/settings";
+import { getMerchantUpiId, getPricingMatrix } from "../lib/settings";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MIME_TO_EXT: Record<string, string> = {
@@ -38,6 +38,17 @@ router.get("/payments/upi-config", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to load UPI config");
     res.status(500).json({ error: "Failed to load UPI config" });
+  }
+});
+
+// Public: live price matrix for order forms, FAQ copy and receipts.
+router.get("/pricing/config", async (req: Request, res: Response) => {
+  try {
+    const { pricing } = await getPricingMatrix();
+    res.json({ pricing });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load pricing config");
+    res.status(500).json({ error: "Failed to load pricing config" });
   }
 });
 

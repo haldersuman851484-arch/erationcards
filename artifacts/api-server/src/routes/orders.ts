@@ -12,6 +12,7 @@ import {
 } from "@workspace/api-zod";
 import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
+import { getPricingMatrix } from "../lib/settings";
 import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from "../lib/email";
 
 // ── Delhivery tracking in-memory cache ──────────────────────────────────────
@@ -252,12 +253,15 @@ router.post("/orders", async (req: Request, res: Response) => {
     const quantity = 1 + familyCards.length;
     const operatorId = parseOperatorToken(req);
     const isOperator = operatorId !== null;
-    // Group-aware pricing from @workspace/pricing: ration categories vs
-    // ABHA/E-SHRAM/GENERAL have different rates, and the single/multi tier is
-    // decided by the order's total card count. Client-sent amount is ignored.
+    // Group-aware pricing: ration categories vs ABHA/E-SHRAM/GENERAL have
+    // different rates, and the single/multi tier is decided by the order's
+    // total card count. Prices come from the admin-editable settings table
+    // (falling back to the launch defaults). Client-sent amount is ignored.
+    const { pricing } = await getPricingMatrix();
     const amount = computeOrderAmount(
       [body.cardType, ...familyCards.map((c) => c.cardType)],
       isOperator,
+      pricing,
     );
 
     await db

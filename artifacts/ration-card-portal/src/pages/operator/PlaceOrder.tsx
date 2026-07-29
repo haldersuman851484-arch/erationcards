@@ -29,9 +29,9 @@ import {
   ALLOWED_CARD_TYPES,
   computeOrderAmount,
   priceBreakdown,
-  PRICING,
 } from "@workspace/pricing";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
+import { usePricing } from "@/hooks/use-pricing";
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -91,6 +91,7 @@ function getAuthHeader() {
 
 /** Pricing rows shown to the operator before they start filling the form. */
 function OperatorPricingBanner() {
+  const PRICING = usePricing();
   const rows: Array<{ group: string; label: string; types: readonly string[]; typesColor: string; single: number; multi: number }> = [
     { group: "ration", label: "RATION CARD", types: RATION_CARD_TYPES, typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
     { group: "special", label: "OTHER PVC CARDS", types: SPECIAL_CARD_TYPES, typesColor: "text-[#c5e6eb]", single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
@@ -149,6 +150,7 @@ function StepIndicator({ step }: { step: number }) {
 }
 
 export default function PlaceOrder() {
+  const PRICING = usePricing();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -197,8 +199,8 @@ export default function PlaceOrder() {
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
   const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
-  const amount = computeOrderAmount(allCardTypes, true);
-  const breakdown = priceBreakdown(allCardTypes, true);
+  const amount = computeOrderAmount(allCardTypes, true, PRICING);
+  const breakdown = priceBreakdown(allCardTypes, true, PRICING);
 
   // Step 4 (after the order exists): one row per card in the order.
   const step4Cards = [
@@ -340,7 +342,7 @@ export default function PlaceOrder() {
       const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
       if (!res.ok) throw new Error("order lookup failed");
       const fullOrder = await res.json();
-      await downloadInvoicePdf(fullOrder);
+      await downloadInvoicePdf(fullOrder, PRICING);
     } catch {
       toast({
         title: "Download failed",

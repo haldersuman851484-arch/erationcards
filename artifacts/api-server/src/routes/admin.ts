@@ -1,10 +1,12 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody, UpdateUpiSettingBody } from "@workspace/api-zod";
+import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody } from "@workspace/api-zod";
 import { getAdminCredentials, createAdminToken, parseAdminToken } from "../lib/auth";
 import {
   getMerchantUpiId,
+  getPricingMatrix,
   setSettingValue,
   MERCHANT_UPI_SETTING_KEY,
+  PRICING_SETTING_KEY,
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { db } from "@workspace/db";
@@ -151,6 +153,39 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to update UPI setting");
     res.status(500).json({ error: "Failed to update UPI setting" });
+  }
+});
+
+// GET /admin/settings/pricing — current price matrix + whether it's admin-saved or the built-in default
+router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    res.json(await getPricingMatrix());
+  } catch (err) {
+    req.log.error({ err }, "Failed to load pricing setting");
+    res.status(500).json({ error: "Failed to load pricing setting" });
+  }
+});
+
+// PUT /admin/settings/pricing — save new card prices (used by forms & server amounts immediately)
+router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const parsed = UpdatePricingSettingBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Each price must be a whole rupee amount between 1 and 10000" });
+      return;
+    }
+
+    await setSettingValue(PRICING_SETTING_KEY, JSON.stringify(parsed.data.pricing));
+    req.log.info({ adminEmail: admin.email, pricing: parsed.data.pricing }, "Card prices updated");
+    res.json({ pricing: parsed.data.pricing, source: "custom" as const });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update pricing setting");
+    res.status(500).json({ error: "Failed to update pricing setting" });
   }
 });
 

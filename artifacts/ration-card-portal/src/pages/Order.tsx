@@ -21,11 +21,11 @@ import {
   RATION_CARD_TYPES,
   SPECIAL_CARD_TYPES,
   ALLOWED_CARD_TYPES,
-  PRICING,
   computeOrderAmount,
   priceBreakdown,
 } from "@workspace/pricing";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
+import { usePricing } from "@/hooks/use-pricing";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -87,6 +87,7 @@ function CardTypeOptions() {
 }
 
 export default function Order() {
+  const PRICING = usePricing();
   useSeo({
     title: "Apply for PVC Ration Card | From ₹50 Per Card | Fast Delivery West Bengal",
     description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM or GENERAL card printed and delivered to your door. All West Bengal districts served.",
@@ -174,8 +175,8 @@ export default function Order() {
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
   const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
-  const amount = computeOrderAmount(allCardTypes, false);
-  const breakdown = priceBreakdown(allCardTypes, false);
+  const amount = computeOrderAmount(allCardTypes, false, PRICING);
+  const breakdown = priceBreakdown(allCardTypes, false, PRICING);
 
   // Step 4 (after the order exists): one row per card in the order.
   const step4Cards = [
@@ -317,7 +318,7 @@ export default function Order() {
       const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
       if (!res.ok) throw new Error("order lookup failed");
       const fullOrder = await res.json();
-      await downloadInvoicePdf(fullOrder);
+      await downloadInvoicePdf(fullOrder, PRICING);
     } catch {
       toast({
         title: "Download failed",

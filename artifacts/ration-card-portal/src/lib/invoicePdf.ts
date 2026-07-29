@@ -7,6 +7,7 @@ import {
   type InvoiceOrder,
   type PayKind,
 } from "./invoice";
+import type { PricingMatrix } from "@workspace/pricing";
 
 /**
  * Builds the customer invoice as a real PDF file and saves it as
@@ -44,9 +45,9 @@ function capitalize(s: string | undefined): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
 }
 
-export async function downloadInvoicePdf(order: InvoiceOrder): Promise<void> {
+export async function downloadInvoicePdf(order: InvoiceOrder, pricing?: PricingMatrix): Promise<void> {
   const { jsPDF } = await import("jspdf");
-  const m = buildInvoiceModel(order);
+  const m = buildInvoiceModel(order, pricing);
 
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const W = doc.internal.pageSize.getWidth();

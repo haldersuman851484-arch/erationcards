@@ -35,7 +35,12 @@ import {
   getGetUpiSettingQueryKey,
   useUpdateUpiSetting,
   getGetUpiConfigQueryKey,
+  useGetPricingSetting,
+  getGetPricingSettingQueryKey,
+  useUpdatePricingSetting,
+  getGetPricingConfigQueryKey,
 } from "@workspace/api-client-react";
+import { PRICE_MIN, PRICE_MAX, type PricingMatrix } from "@workspace/pricing";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
@@ -266,6 +271,73 @@ export default function AdminDashboard() {
           toast({
             title: "Could not save UPI ID",
             description: serverMsg || "Check the format (yourname@bank) and try again.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  }
+
+  // ── Pricing settings (card price matrix) ──
+  const pricingSettingQuery = useGetPricingSetting({
+    request: { headers: getAuthHeader() },
+  } as any);
+  const updatePricingMutation = useUpdatePricingSetting({
+    request: { headers: getAuthHeader() },
+  } as any);
+  // Flat string inputs keyed "group.tier.audience" so partial typing never crashes
+  const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
+  const [priceErrors, setPriceErrors] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const p = pricingSettingQuery.data?.pricing as PricingMatrix | undefined;
+    if (!p) return;
+    const next: Record<string, string> = {};
+    for (const group of ["ration", "special"] as const)
+      for (const tier of ["single", "multi"] as const)
+        for (const audience of ["public", "operator"] as const)
+          next[`${group}.${tier}.${audience}`] = String(p[group][tier][audience]);
+    setPriceInputs(next);
+    setPriceErrors({});
+  }, [pricingSettingQuery.data]);
+
+  function handleSavePrices() {
+    const errors: Record<string, boolean> = {};
+    const matrix: any = { ration: {}, special: {} };
+    for (const group of ["ration", "special"] as const) {
+      for (const tier of ["single", "multi"] as const) {
+        const cell: any = {};
+        for (const audience of ["public", "operator"] as const) {
+          const key = `${group}.${tier}.${audience}`;
+          const n = Number((priceInputs[key] ?? "").trim());
+          if (!Number.isInteger(n) || n < PRICE_MIN || n > PRICE_MAX) errors[key] = true;
+          cell[audience] = n;
+        }
+        matrix[group][tier] = cell;
+      }
+    }
+    setPriceErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Check the highlighted prices",
+        description: `Each price must be a whole rupee amount between ₹${PRICE_MIN} and ₹${PRICE_MAX}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+    updatePricingMutation.mutate(
+      { data: { pricing: matrix } },
+      {
+        onSuccess: () => {
+          toast({ title: "Prices updated!", description: "Order forms and new orders use the new prices immediately." });
+          queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetPricingConfigQueryKey() });
+        },
+        onError: (err: unknown) => {
+          const serverMsg = (err as { data?: { error?: string } })?.data?.error;
+          toast({
+            title: "Could not save prices",
+            description: serverMsg || "Please check the values and try again.",
             variant: "destructive",
           });
         },
@@ -1174,7 +1246,7 @@ export default function AdminDashboard() {
             </TabsContent>
 
             {/* ── Settings Tab ── */}
-            <TabsContent value="settings" className="tab-panel mt-4">
+            <TabsContent value="settings" className="tab-panel mt-4 space-y-6">
               <Card className="border-slate-200 shadow-sm max-w-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -1240,6 +1312,102 @@ export default function AdminDashboard() {
                         )}
                         <p className="text-xs text-slate-400 mt-1.5">
                           Example: 9876543210@ybl or mystore@okaxis. Double-check before saving — customers will pay to this ID.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* ── Card Prices ── */}
+              <Card className="border-slate-200 shadow-sm max-w-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <RupeeIcon className="w-5 h-5 text-primary" /> Card Prices
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    Per-card prices in ₹. "1 card" applies when the order has a single card; "2+ cards"
+                    is the per-card rate when the order has two or more. Changes apply immediately to
+                    the order forms and to new orders — no restart needed.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {pricingSettingQuery.isLoading ? (
+                    <p className="text-sm text-slate-500">Loading current prices…</p>
+                  ) : pricingSettingQuery.isError ? (
+                    <p className="text-sm text-red-600" data-testid="text-pricing-load-error">
+                      Could not load the current prices. Refresh the page to try again.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={pricingSettingQuery.data?.source === "custom"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"}
+                          data-testid="badge-pricing-source"
+                        >
+                          {pricingSettingQuery.data?.source === "custom" ? "Saved by you" : "Default launch prices"}
+                        </Badge>
+                      </div>
+                      {([
+                        { group: "ration" as const, title: "Ration Card (AAY · PHH · SPHH · RKSY-I · RKSY-II)" },
+                        { group: "special" as const, title: "ABHA / E-SHRAM / GENERAL" },
+                      ]).map(({ group, title }) => (
+                        <div key={group} className="border border-slate-200 rounded-lg p-4">
+                          <p className="text-sm font-semibold text-slate-800 mb-3">{title}</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            {(["public", "operator"] as const).map((audience) => (
+                              <div key={audience}>
+                                <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">
+                                  {audience === "public" ? "Customer price" : "Operator price"}
+                                </p>
+                                <div className="space-y-2">
+                                  {(["single", "multi"] as const).map((tier) => {
+                                    const key = `${group}.${tier}.${audience}`;
+                                    return (
+                                      <div key={tier} className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-500 w-16">{tier === "single" ? "1 card" : "2+ cards"}</span>
+                                        <div className="relative">
+                                          <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
+                                          <Input
+                                            type="number"
+                                            min={PRICE_MIN}
+                                            max={PRICE_MAX}
+                                            value={priceInputs[key] ?? ""}
+                                            onChange={(e) => {
+                                              setPriceInputs((prev) => ({ ...prev, [key]: e.target.value }));
+                                              setPriceErrors((prev) => ({ ...prev, [key]: false }));
+                                            }}
+                                            className={`pl-6 w-28 ${priceErrors[key] ? "border-red-500 focus-visible:ring-red-500" : ""}`}
+                                            data-testid={`input-price-${group}-${tier}-${audience}`}
+                                          />
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                      {Object.values(priceErrors).some(Boolean) && (
+                        <p className="text-xs text-red-600" data-testid="text-pricing-format-error">
+                          Each price must be a whole rupee amount between ₹{PRICE_MIN} and ₹{PRICE_MAX}.
+                        </p>
+                      )}
+                      <div className="flex items-center gap-3">
+                        <Button
+                          onClick={handleSavePrices}
+                          disabled={updatePricingMutation.isPending}
+                          data-testid="button-save-prices"
+                        >
+                          {updatePricingMutation.isPending ? "Saving…" : "Save Prices"}
+                        </Button>
+                        <p className="text-xs text-slate-400">
+                          Double-check before saving — customers are charged these amounts.
                         </p>
                       </div>
                     </>

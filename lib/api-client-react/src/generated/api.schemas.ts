@@ -126,6 +126,57 @@ export interface UpiSetting {
   source: UpiSettingSource;
 }
 
+export interface PriceTierPrices {
+  /**
+     * @minimum 1
+     * @maximum 10000
+     */
+  public: number;
+  /**
+     * @minimum 1
+     * @maximum 10000
+     */
+  operator: number;
+}
+
+export interface PriceGroupPrices {
+  single: PriceTierPrices;
+  multi: PriceTierPrices;
+}
+
+/**
+ * Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)
+ */
+export interface PricingMatrix {
+  ration: PriceGroupPrices;
+  special: PriceGroupPrices;
+}
+
+export interface PricingConfig {
+  pricing: PricingMatrix;
+}
+
+/**
+ * custom = saved by admin in the settings table, default = built-in launch prices
+ */
+export type PricingSettingSource = typeof PricingSettingSource[keyof typeof PricingSettingSource];
+
+
+export const PricingSettingSource = {
+  custom: 'custom',
+  default: 'default',
+} as const;
+
+export interface PricingSetting {
+  pricing: PricingMatrix;
+  /** custom = saved by admin in the settings table, default = built-in launch prices */
+  source: PricingSettingSource;
+}
+
+export interface PricingSettingUpdate {
+  pricing: PricingMatrix;
+}
+
 export interface UpiSettingUpdate {
   /**
      * @minLength 3

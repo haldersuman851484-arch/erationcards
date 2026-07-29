@@ -45,6 +45,9 @@ import type {
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
   PaymentVerificationListResponse,
+  PricingConfig,
+  PricingSetting,
+  PricingSettingUpdate,
   Review,
   ReviewInput,
   ReviewStatusUpdate,
@@ -1133,6 +1136,230 @@ export function useGetUpiConfig<TData = Awaited<ReturnType<typeof getUpiConfig>>
 
 
 
+
+export const getGetPricingConfigUrl = () => {
+
+
+
+
+  return `/api/pricing/config`
+}
+
+/**
+ * @summary Get the live card price matrix used by order forms and receipts
+ */
+export const getPricingConfig = async ( options?: RequestInit): Promise<PricingConfig> => {
+
+  return customFetch<PricingConfig>(getGetPricingConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPricingConfigQueryKey = () => {
+    return [
+    `/api/pricing/config`
+    ] as const;
+    }
+
+
+export const getGetPricingConfigQueryOptions = <TData = Awaited<ReturnType<typeof getPricingConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPricingConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPricingConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPricingConfig>>> = ({ signal }) => getPricingConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPricingConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPricingConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getPricingConfig>>>
+export type GetPricingConfigQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the live card price matrix used by order forms and receipts
+ */
+
+export function useGetPricingConfig<TData = Awaited<ReturnType<typeof getPricingConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPricingConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPricingConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getGetPricingSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/pricing`
+}
+
+/**
+ * @summary Get the card price matrix setting (admin)
+ */
+export const getPricingSetting = async ( options?: RequestInit): Promise<PricingSetting> => {
+
+  return customFetch<PricingSetting>(getGetPricingSettingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPricingSettingQueryKey = () => {
+    return [
+    `/api/admin/settings/pricing`
+    ] as const;
+    }
+
+
+export const getGetPricingSettingQueryOptions = <TData = Awaited<ReturnType<typeof getPricingSetting>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPricingSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPricingSettingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPricingSetting>>> = ({ signal }) => getPricingSetting({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPricingSetting>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPricingSettingQueryResult = NonNullable<Awaited<ReturnType<typeof getPricingSetting>>>
+export type GetPricingSettingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the card price matrix setting (admin)
+ */
+
+export function useGetPricingSetting<TData = Awaited<ReturnType<typeof getPricingSetting>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPricingSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPricingSettingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdatePricingSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/pricing`
+}
+
+/**
+ * @summary Update the card price matrix (admin)
+ */
+export const updatePricingSetting = async (pricingSettingUpdate: PricingSettingUpdate, options?: RequestInit): Promise<PricingSetting> => {
+
+  return customFetch<PricingSetting>(getUpdatePricingSettingUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(pricingSettingUpdate)
+  }
+);}
+
+
+
+
+export const getUpdatePricingSettingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePricingSetting>>, TError,{data: BodyType<PricingSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updatePricingSetting>>, TError,{data: BodyType<PricingSettingUpdate>}, TContext> => {
+
+const mutationKey = ['updatePricingSetting'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updatePricingSetting>>, {data: BodyType<PricingSettingUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updatePricingSetting(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdatePricingSettingMutationResult = NonNullable<Awaited<ReturnType<typeof updatePricingSetting>>>
+    export type UpdatePricingSettingMutationBody = BodyType<PricingSettingUpdate>
+    export type UpdatePricingSettingMutationError = ErrorType<void>
+
+    /**
+ * @summary Update the card price matrix (admin)
+ */
+export const useUpdatePricingSetting = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updatePricingSetting>>, TError,{data: BodyType<PricingSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updatePricingSetting>>,
+        TError,
+        {data: BodyType<PricingSettingUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdatePricingSettingMutationOptions(options));
+    }
 
 export const getGetUpiSettingUrl = () => {
 
