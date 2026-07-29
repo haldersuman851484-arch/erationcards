@@ -1,10 +1,11 @@
 User-agent: *
 Allow: /
 
-# Block admin and operator-internal pages from indexing
+# Block admin, employee, and operator-internal pages from indexing
 Disallow: /admin/
 Disallow: /operator/dashboard
 Disallow: /order-upload/
+Disallow: /processing
 
 # Allow key public pages
 Allow: /order
