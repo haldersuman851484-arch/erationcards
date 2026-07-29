@@ -6,6 +6,7 @@ description: Email transport, domain verification state, and connector key limit
 ## Current state (since 2026-07-29)
 - `erationcards.in` is **verified** in the user's Resend account (region ap-northeast-1). Order emails deliver to any recipient — the old "sandbox only delivers to account owner" restriction is gone.
 - `RESEND_API_KEY` (full-access) is a Replit secret and `EMAIL_FROM` = `PVC Card Portal <orders@erationcards.in>` is a shared env var, so **dev and Hostinger both use the direct Resend API transport** (production parity). The Replit connector path in `email.ts` is only a fallback when the key is absent.
+- **All four sending DNS records are live** (DKIM `resend._domainkey`, SPF TXT + MX on `send` subdomain, DMARC `_dmarc` = `v=DMARC1; p=none`) — user set them up before we checked; verify with live DNS lookups before asking for DNS work. Gmail **inbox** placement confirmed by user 2026-07-29. Full record values documented in `replit.md` (root SPF belongs to Hostinger webmail — leave it).
 
 ## Durable lessons
 - **The Replit Resend connector's key is send-only.** Any call to `/domains` or other management endpoints returns `401 restricted_api_key`. Domain registration/verification/status checks need a user-created **Full access** API key.
