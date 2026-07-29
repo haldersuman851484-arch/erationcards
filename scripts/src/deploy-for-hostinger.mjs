@@ -46,16 +46,26 @@ if (!process.env.MYSQL_DATABASE_URL) {
 console.log("=== Hostinger full deploy prep ===\n");
 
 // ── 1. Generate SQL migration files from current schema ───────────────────
-console.log("Step 1/3 — Generating migration files from schema…");
+console.log("Step 1/4 — Generating migration files from schema…");
 run("pnpm --filter @workspace/db run generate");
 
 // ── 2. Build frontend + server bundle → hostinger/ ────────────────────────
-console.log("\nStep 2/3 — Building deploy bundle (frontend + server)…");
+console.log("\nStep 2/4 — Building deploy bundle (frontend + server)…");
 run("node ./src/build-for-hostinger.mjs", scriptsDir);
 
 // ── 3. Apply migrations to the target MySQL database ──────────────────────
-console.log("\nStep 3/3 — Applying migrations to MySQL…");
+console.log("\nStep 3/4 — Applying migrations to MySQL…");
 run("tsx ./src/migrate.ts", scriptsDir);
+
+// ── 4. Ping IndexNow so Bing (and ChatGPT search) re-crawls right away ────
+// Best-effort: the script logs failures itself and always exits 0, and even
+// so we guard with try/catch — a failed ping must never break a deploy.
+console.log("\nStep 4/4 — Submitting sitemap URLs to IndexNow…");
+try {
+  run("node ./src/submit-indexnow.mjs", scriptsDir);
+} catch (err) {
+  console.warn(`⚠ IndexNow step failed (deploy unaffected): ${err?.message ?? err}`);
+}
 
 // ── Summary ───────────────────────────────────────────────────────────────
 console.log(`

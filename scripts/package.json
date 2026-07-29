@@ -8,6 +8,7 @@
     "smoke-test": "tsx ./src/smoke-test.ts",
     "build-for-hostinger": "node ./src/build-for-hostinger.mjs",
     "deploy-for-hostinger": "node ./src/deploy-for-hostinger.mjs",
+    "submit-indexnow": "node ./src/submit-indexnow.mjs",
     "migrate": "tsx ./src/migrate.ts",
     "check-migrations": "tsx ./src/check-migrations.ts",
     "check-enum-conflicts": "tsx ./src/check-enum-conflicts.ts",
