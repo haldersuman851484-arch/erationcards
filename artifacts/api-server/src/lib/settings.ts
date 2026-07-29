@@ -1,9 +1,11 @@
 import { db, settingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { DEFAULT_PRICING, isValidPricingMatrix, type PricingMatrix } from "@workspace/pricing";
+import { DEFAULT_CONTACT, isValidContactInfo, type ContactInfo } from "@workspace/contact";
 
 export const MERCHANT_UPI_SETTING_KEY = "merchant_upi_id";
 export const PRICING_SETTING_KEY = "pricing_matrix";
+export const CONTACT_SETTING_KEY = "contact_info";
 export const PROCESSING_PASSWORD_SETTING_KEY = "processing_password_hash";
 export const PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY = "processing_password_changed_at";
 
@@ -61,4 +63,26 @@ export async function getPricingMatrix(): Promise<{
     }
   }
   return { pricing: DEFAULT_PRICING, source: "default" };
+}
+
+/**
+ * The live support contact details (phone, email, address, city, hours):
+ * the admin-saved setting wins, otherwise the built-in launch defaults from
+ * @workspace/contact. A malformed saved value (bad JSON / wrong shape) is
+ * ignored so the portal can never lose its contact info.
+ */
+export async function getContactInfo(): Promise<{
+  contact: ContactInfo;
+  source: "custom" | "default";
+}> {
+  const saved = await getSettingValue(CONTACT_SETTING_KEY);
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (isValidContactInfo(parsed)) return { contact: parsed, source: "custom" };
+    } catch {
+      // fall through to default
+    }
+  }
+  return { contact: DEFAULT_CONTACT, source: "default" };
 }

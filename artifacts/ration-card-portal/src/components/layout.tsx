@@ -2,14 +2,13 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
+import { useContact } from "@/hooks/use-contact";
 
+// Brand identity only. Contact details (phone, email, address, city, hours)
+// are admin-editable in the dashboard Settings tab — always read them via
+// useContact() so the live values show everywhere.
 export const BRAND = {
   name: "PVC Card Portal",
-  phone: "+91 96359 60507",
-  email: "help@erationcards.in",
-  address: "26 Krishna Nibas, Kolkata, South 24 Parganas – 700001",
-  city: "Kolkata, West Bengal",
-  hours: "Monday – Saturday, 9:00 AM – 6:00 PM IST",
   tagline: "This is a non-government website managed by PVC ID Card Portal Service. A secure and efficient platform for citizens to order high-quality and durable PVC cards. We are not affiliated by government.",
 };
 
@@ -100,6 +99,7 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const contact = useContact();
   return (
     <footer className="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8">
@@ -114,9 +114,9 @@ export function Footer() {
           </div>
           <p className="text-sm text-slate-400 mb-4 leading-relaxed">{BRAND.tagline}</p>
           <div className="space-y-1 text-xs text-slate-500">
-            <p>{BRAND.address}</p>
-            <p><a href={`tel:${BRAND.phone}`} className="hover:text-primary transition-colors">{BRAND.phone}</a></p>
-            <p><a href={`mailto:${BRAND.email}`} className="hover:text-primary transition-colors">{BRAND.email}</a></p>
+            <p>{contact.address}</p>
+            <p><a href={`tel:${contact.phone}`} className="hover:text-primary transition-colors">{contact.phone}</a></p>
+            <p><a href={`mailto:${contact.email}`} className="hover:text-primary transition-colors">{contact.email}</a></p>
           </div>
         </div>
         <div>

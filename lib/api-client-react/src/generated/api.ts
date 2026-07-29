@@ -21,6 +21,9 @@ import type {
 
 import type {
   AdminAuthResponse,
+  ContactConfig,
+  ContactSetting,
+  ContactSettingUpdate,
   CustomerInfoUpdate,
   ErrorResponse,
   GetOperatorOrdersParams,
@@ -1221,6 +1224,83 @@ export function useGetPricingConfig<TData = Awaited<ReturnType<typeof getPricing
 
 
 
+export const getGetContactConfigUrl = () => {
+
+
+
+
+  return `/api/contact/config`
+}
+
+/**
+ * @summary Get the live support contact details shown across the portal
+ */
+export const getContactConfig = async ( options?: RequestInit): Promise<ContactConfig> => {
+
+  return customFetch<ContactConfig>(getGetContactConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetContactConfigQueryKey = () => {
+    return [
+    `/api/contact/config`
+    ] as const;
+    }
+
+
+export const getGetContactConfigQueryOptions = <TData = Awaited<ReturnType<typeof getContactConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContactConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetContactConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getContactConfig>>> = ({ signal }) => getContactConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getContactConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetContactConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getContactConfig>>>
+export type GetContactConfigQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the live support contact details shown across the portal
+ */
+
+export function useGetContactConfig<TData = Awaited<ReturnType<typeof getContactConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContactConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetContactConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
 export const getGetPricingSettingUrl = () => {
 
 
@@ -1513,6 +1593,153 @@ export const useUpdateUpiSetting = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateUpiSettingMutationOptions(options));
+    }
+
+export const getGetContactSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/contact`
+}
+
+/**
+ * @summary Get the support contact details setting (admin)
+ */
+export const getContactSetting = async ( options?: RequestInit): Promise<ContactSetting> => {
+
+  return customFetch<ContactSetting>(getGetContactSettingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetContactSettingQueryKey = () => {
+    return [
+    `/api/admin/settings/contact`
+    ] as const;
+    }
+
+
+export const getGetContactSettingQueryOptions = <TData = Awaited<ReturnType<typeof getContactSetting>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContactSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetContactSettingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getContactSetting>>> = ({ signal }) => getContactSetting({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getContactSetting>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetContactSettingQueryResult = NonNullable<Awaited<ReturnType<typeof getContactSetting>>>
+export type GetContactSettingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the support contact details setting (admin)
+ */
+
+export function useGetContactSetting<TData = Awaited<ReturnType<typeof getContactSetting>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getContactSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetContactSettingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateContactSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/contact`
+}
+
+/**
+ * @summary Update the support contact details (admin)
+ */
+export const updateContactSetting = async (contactSettingUpdate: ContactSettingUpdate, options?: RequestInit): Promise<ContactSetting> => {
+
+  return customFetch<ContactSetting>(getUpdateContactSettingUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(contactSettingUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateContactSettingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateContactSetting>>, TError,{data: BodyType<ContactSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateContactSetting>>, TError,{data: BodyType<ContactSettingUpdate>}, TContext> => {
+
+const mutationKey = ['updateContactSetting'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateContactSetting>>, {data: BodyType<ContactSettingUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateContactSetting(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateContactSettingMutationResult = NonNullable<Awaited<ReturnType<typeof updateContactSetting>>>
+    export type UpdateContactSettingMutationBody = BodyType<ContactSettingUpdate>
+    export type UpdateContactSettingMutationError = ErrorType<void>
+
+    /**
+ * @summary Update the support contact details (admin)
+ */
+export const useUpdateContactSetting = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateContactSetting>>, TError,{data: BodyType<ContactSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateContactSetting>>,
+        TError,
+        {data: BodyType<ContactSettingUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateContactSettingMutationOptions(options));
     }
 
 export const getUpdateProcessingPasswordUrl = () => {

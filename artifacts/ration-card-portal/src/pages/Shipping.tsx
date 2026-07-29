@@ -1,4 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, Truck, Clock, MapPin, IndianRupee,
@@ -28,6 +29,7 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Shipping() {
+  const contact = useContact();
   useSeo({
     title: "Shipping Policy | PVC Card Portal — Ration Card Delivery",
     description: "Learn how we ship your PVC ration card. 3–5 working days in West Bengal, 5–7 days pan-India. Shipping included in card price. No hidden charges.",
@@ -182,8 +184,8 @@ export default function Shipping() {
             </ul>
             <p className="mt-2">
               To report, email us at{" "}
-              <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline font-medium">
-                {BRAND.email}
+              <a href={`mailto:${contact.email}`} className="text-primary hover:underline font-medium">
+                {contact.email}
               </a>{" "}
               with your order number and photos.
             </p>
@@ -192,20 +194,19 @@ export default function Shipping() {
           {/* Contact */}
           <Section icon={Mail} title="9. Contact Us">
             <p>
-              For any shipping-related queries, our support team is available Monday to Saturday,
-              10 AM – 6 PM.
+              For any shipping-related queries, our support team is available {contact.hours}.
             </p>
             <div className="mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1.5">
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline">
-                  {BRAND.email}
+                <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                  {contact.email}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline">
-                  {BRAND.phone}
+                <a href={`tel:${contact.phone}`} className="text-primary hover:underline">
+                  {contact.phone}
                 </a>
               </p>
             </div>

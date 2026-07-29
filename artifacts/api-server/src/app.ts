@@ -8,7 +8,8 @@ import { logger } from "./lib/logger";
 import { serveFromStorage } from "./lib/storage";
 import { readFile } from "fs/promises";
 import { applySeoPriceTokens } from "@workspace/pricing";
-import { getPricingMatrix } from "./lib/settings";
+import { applyContactTokens } from "@workspace/contact";
+import { getPricingMatrix, getContactInfo } from "./lib/settings";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -146,10 +147,10 @@ app.get("/llms.txt", async (_req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Cache-Control", "no-cache");
   try {
-    const { pricing } = await getPricingMatrix();
-    res.send(applySeoPriceTokens(rawLlmsTxt, pricing));
+    const [{ pricing }, { contact }] = await Promise.all([getPricingMatrix(), getContactInfo()]);
+    res.send(applyContactTokens(applySeoPriceTokens(rawLlmsTxt, pricing), contact));
   } catch {
-    res.send(applySeoPriceTokens(rawLlmsTxt)); // default prices beat a 500
+    res.send(applyContactTokens(applySeoPriceTokens(rawLlmsTxt))); // defaults beat a 500
   }
 });
 // Raw snapshots contain unsubstituted %%PRICE_*%% tokens — they are only
@@ -185,10 +186,10 @@ async function renderIndexHtml(): Promise<string | null> {
       return null; // no built frontend (dev API server) — behave like before (404)
     }
   }
-  const { pricing } = await getPricingMatrix();
-  const key = JSON.stringify(pricing);
+  const [{ pricing }, { contact }] = await Promise.all([getPricingMatrix(), getContactInfo()]);
+  const key = JSON.stringify([pricing, contact]);
   if (!renderedIndexHtml || renderedIndexHtml.key !== key) {
-    renderedIndexHtml = { key, html: applySeoPriceTokens(rawIndexHtml, pricing) };
+    renderedIndexHtml = { key, html: applyContactTokens(applySeoPriceTokens(rawIndexHtml, pricing), contact) };
   }
   return renderedIndexHtml.html;
 }
@@ -205,16 +206,18 @@ const renderedSnapshots = new Map<string, { key: string; html: string }>();
 
 async function renderSnapshot(file: string): Promise<string> {
   let pricing: Awaited<ReturnType<typeof getPricingMatrix>>["pricing"] | undefined;
+  let contact: Awaited<ReturnType<typeof getContactInfo>>["contact"] | undefined;
   try {
-    ({ pricing } = await getPricingMatrix());
+    [{ pricing }, { contact }] = await Promise.all([getPricingMatrix(), getContactInfo()]);
   } catch {
-    pricing = undefined; // default prices beat a 500
+    pricing = undefined; // default prices/contact beat a 500
+    contact = undefined;
   }
-  const key = pricing ? JSON.stringify(pricing) : "__default__";
+  const key = JSON.stringify([pricing ?? "__default__", contact ?? "__default__"]);
   const hit = renderedSnapshots.get(file);
   if (hit && hit.key === key) return hit.html;
   const raw = await readFile(file, "utf8");
-  const html = applySeoPriceTokens(raw, pricing);
+  const html = applyContactTokens(applySeoPriceTokens(raw, pricing), contact);
   renderedSnapshots.set(file, { key, html });
   return html;
 }
@@ -246,7 +249,7 @@ app.get("/{*path}", async (req, res) => {
     res.setHeader("Cache-Control", "no-cache");
     if (rawIndexHtml !== null) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(applySeoPriceTokens(rawIndexHtml));
+      res.send(applyContactTokens(applySeoPriceTokens(rawIndexHtml)));
       return;
     }
     res.sendFile(path.join(publicDir, "index.html"));

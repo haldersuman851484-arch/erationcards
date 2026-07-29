@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
 import jwt from "jsonwebtoken";
+import { DEFAULT_CONTACT } from "@workspace/contact";
 
 // ── DB mock must be declared before any import that pulls in @workspace/db ──
 // (vi.mock is hoisted; factory runs before app.ts is evaluated.)
@@ -393,5 +394,220 @@ describe("GET /api/admin/settings/history — read-only audit list", () => {
       changedBy: "admin@test.com", changedAt: changedAt.toISOString(),
     });
     expect(res.body.changes[1].field).toBe("upi");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Support contact details (phone, email, address, city, hours)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VALID_CONTACT = {
+  phone: "+91 91234 56789",
+  email: "support@example.in",
+  address: "1 New Office Road, Kolkata 700099",
+  city: "Kolkata",
+  hours: "Monday to Friday, 9 AM to 5 PM",
+};
+
+const SAVED_CONTACT_ROW = {
+  key: "contact_info",
+  value: JSON.stringify(VALID_CONTACT),
+  updatedAt: new Date(),
+};
+
+describe("GET /api/contact/config — public contact config", () => {
+  it("returns the built-in defaults when nothing is saved", async () => {
+    const res = await request(app).get("/api/contact/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: DEFAULT_CONTACT });
+  });
+
+  it("returns the admin-saved details when a setting row exists", async () => {
+    selectChain().limit.mockResolvedValueOnce([SAVED_CONTACT_ROW]);
+    const res = await request(app).get("/api/contact/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: VALID_CONTACT });
+  });
+
+  it("falls back to the defaults when the saved row is corrupt JSON", async () => {
+    selectChain().limit.mockResolvedValueOnce([{ ...SAVED_CONTACT_ROW, value: "{not json" }]);
+    const res = await request(app).get("/api/contact/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: DEFAULT_CONTACT });
+  });
+
+  it("falls back to the defaults when the saved row fails validation", async () => {
+    const bad = { ...VALID_CONTACT, email: "not-an-email" };
+    selectChain().limit.mockResolvedValueOnce([{ ...SAVED_CONTACT_ROW, value: JSON.stringify(bad) }]);
+    const res = await request(app).get("/api/contact/config");
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: DEFAULT_CONTACT });
+  });
+});
+
+describe("GET /api/admin/settings/contact — authorization & lock", () => {
+  it("returns 401 without a token", async () => {
+    const res = await request(app).get("/api/admin/settings/contact");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 for an operator token", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeOperatorToken()}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 403 SETTINGS_LOCKED without the unlock header", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+
+  it("reports source=default when nothing is saved", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken());
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: DEFAULT_CONTACT, source: "default" });
+  });
+
+  it("reports source=custom when an admin-saved row exists", async () => {
+    selectChain().limit.mockResolvedValueOnce([SAVED_CONTACT_ROW]);
+    const res = await request(app)
+      .get("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken());
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: VALID_CONTACT, source: "custom" });
+  });
+});
+
+describe("PUT /api/admin/settings/contact — authorization & lock", () => {
+  it("returns 401 without a token and does not write", async () => {
+    const { onDupFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .send({ contact: VALID_CONTACT });
+    expect(res.status).toBe(401);
+    expect(onDupFn).not.toHaveBeenCalled();
+  });
+
+  it("returns 403 without the unlock header and does not write", async () => {
+    const { onDupFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .send({ contact: VALID_CONTACT });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+    expect(onDupFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("PUT /api/admin/settings/contact — validation", () => {
+  it("rejects a missing body with 400", async () => {
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects a body missing one field with 400", async () => {
+    const { phone: _omit, ...partial } = VALID_CONTACT;
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: partial });
+    expect(res.status).toBe(400);
+  });
+
+  it.each([
+    ["phone with letters", { ...VALID_CONTACT, phone: "call me maybe" }],
+    ["phone too short", { ...VALID_CONTACT, phone: "12345" }],
+    ["invalid email", { ...VALID_CONTACT, email: "not-an-email" }],
+    ["HTML tag in address", { ...VALID_CONTACT, address: "26 <script>alert(1)</script>" }],
+    ["double quote in hours", { ...VALID_CONTACT, hours: 'Mon "10-6"' }],
+    ["ampersand in city", { ...VALID_CONTACT, city: "Kolkata & Howrah" }],
+    ["percent in address", { ...VALID_CONTACT, address: "26 Main %% Road" }],
+    ["empty city", { ...VALID_CONTACT, city: "" }],
+  ])("rejects %s with 400 and does not write", async (_label, bad) => {
+    const { onDupFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: bad });
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBeTruthy();
+    expect(onDupFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("PUT /api/admin/settings/contact — happy path", () => {
+  it("saves valid details and reports source=custom", async () => {
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: VALID_CONTACT });
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ contact: VALID_CONTACT, source: "custom" });
+  });
+
+  it("trims surrounding whitespace before validating and saving", async () => {
+    const padded = Object.fromEntries(
+      Object.entries(VALID_CONTACT).map(([k, v]) => [k, `  ${v}  `]),
+    );
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: padded });
+    expect(res.status).toBe(200);
+    expect(res.body.contact).toEqual(VALID_CONTACT);
+  });
+
+  it("writes a history row with old (default) and new values as JSON", async () => {
+    const { valuesFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: VALID_CONTACT });
+    expect(res.status).toBe(200);
+    const historyCall = valuesFn.mock.calls.find((c) => (c[0] as any)?.field === "contact_info");
+    expect(historyCall).toBeDefined();
+    const row = historyCall![0] as any;
+    expect(JSON.parse(row.newValue)).toEqual(VALID_CONTACT);
+    expect(JSON.parse(row.oldValue)).toEqual(DEFAULT_CONTACT);
+    expect(row.changedBy).toBe("admin@test.com");
+  });
+
+  it("records the previously saved details as the old value", async () => {
+    vi.clearAllMocks();
+    const previous = { ...VALID_CONTACT, phone: "+91 90000 00001" };
+    // getContactInfo inside the PUT resolves to the previously saved row
+    selectChain().limit.mockResolvedValueOnce([{ ...SAVED_CONTACT_ROW, value: JSON.stringify(previous) }]);
+    const res = await request(app)
+      .put("/api/admin/settings/contact")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
+      .send({ contact: VALID_CONTACT });
+    expect(res.status).toBe(200);
+    const { valuesFn } = upsertMocks();
+    const historyCall = valuesFn.mock.calls.find((c) => (c[0] as any)?.field === "contact_info");
+    expect(historyCall).toBeDefined();
+    expect(JSON.parse((historyCall![0] as any).oldValue)).toEqual(previous);
   });
 });

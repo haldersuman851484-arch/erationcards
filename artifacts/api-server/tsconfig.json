@@ -13,6 +13,9 @@
       "path": "../../lib/pricing"
     },
     {
+      "path": "../../lib/contact"
+    },
+    {
       "path": "../../lib/db"
     },
     {

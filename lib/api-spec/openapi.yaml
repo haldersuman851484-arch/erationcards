@@ -366,6 +366,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/PricingConfig"
 
+  /contact/config:
+    get:
+      operationId: getContactConfig
+      tags: [orders]
+      summary: Get the live support contact details shown across the portal
+      responses:
+        "200":
+          description: Current contact details (admin-saved or the built-in defaults)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactConfig"
+
   /admin/settings/pricing:
     get:
       operationId: getPricingSetting
@@ -441,6 +454,46 @@ paths:
                 $ref: "#/components/schemas/UpiSetting"
         "400":
           description: Invalid UPI ID format
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
+
+  /admin/settings/contact:
+    get:
+      operationId: getContactSetting
+      tags: [dashboard]
+      summary: Get the support contact details setting (admin)
+      responses:
+        "200":
+          description: Current contact details and whether they are admin-saved or the built-in defaults
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactSetting"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
+    put:
+      operationId: updateContactSetting
+      tags: [dashboard]
+      summary: Update the support contact details (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ContactSettingUpdate"
+      responses:
+        "200":
+          description: Contact details saved; the footer, Contact page, FAQ and policy pages show them immediately
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ContactSetting"
+        "400":
+          description: Invalid contact details (each field has length limits and a small set of banned characters)
         "401":
           description: Not authenticated
         "403":
@@ -1203,6 +1256,70 @@ components:
       required:
         - pricing
 
+    ContactInfo:
+      type: object
+      description: Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)
+      properties:
+        phone:
+          type: string
+          minLength: 8
+          maxLength: 20
+          description: Display format, e.g. "+91 96359 60507" — also used for the WhatsApp link
+        email:
+          type: string
+          minLength: 6
+          maxLength: 254
+        address:
+          type: string
+          minLength: 5
+          maxLength: 200
+          description: Full single-line office address
+        city:
+          type: string
+          minLength: 2
+          maxLength: 100
+          description: City / region shown under the address
+        hours:
+          type: string
+          minLength: 3
+          maxLength: 120
+          description: Business hours, e.g. "Monday – Saturday, 9:00 AM – 6:00 PM IST"
+      required:
+        - phone
+        - email
+        - address
+        - city
+        - hours
+
+    ContactConfig:
+      type: object
+      properties:
+        contact:
+          $ref: "#/components/schemas/ContactInfo"
+      required:
+        - contact
+
+    ContactSetting:
+      type: object
+      properties:
+        contact:
+          $ref: "#/components/schemas/ContactInfo"
+        source:
+          type: string
+          enum: [custom, default]
+          description: custom = saved by admin in the settings table, default = built-in launch contact details
+      required:
+        - contact
+        - source
+
+    ContactSettingUpdate:
+      type: object
+      properties:
+        contact:
+          $ref: "#/components/schemas/ContactInfo"
+      required:
+        - contact
+
     UpiSettingUpdate:
       type: object
       properties:
@@ -1239,7 +1356,7 @@ components:
           type: integer
         field:
           type: string
-          enum: [upi, pricing, processing_password]
+          enum: [upi, pricing, processing_password, contact]
           description: Which protected setting changed
         oldValue:
           type: string

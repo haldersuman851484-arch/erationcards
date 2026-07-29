@@ -32,6 +32,10 @@ import {
   getGetPricingSettingQueryKey,
   useUpdatePricingSetting,
   getGetPricingConfigQueryKey,
+  useGetContactSetting,
+  getGetContactSettingQueryKey,
+  useUpdateContactSetting,
+  getGetContactConfigQueryKey,
   useUpdateProcessingPassword,
   useListSettingsChangeHistory,
   getListSettingsChangeHistoryQueryKey,
@@ -41,6 +45,7 @@ import {
   useVerifySettingsOtp,
 } from "@workspace/api-client-react";
 import { PRICE_MIN, PRICE_MAX, type PricingMatrix } from "@workspace/pricing";
+import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, contactFieldError, type ContactField, type ContactInfo } from "@workspace/contact";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -79,9 +84,24 @@ function readStoredUnlock(): { token: string; expiresAt: number } | null {
  * directly; pricing changes are JSON matrices, so show only the cells that
  * actually differ (e.g. "Ration · 1 card · Customer: ₹100 → ₹120").
  */
-function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_password"; oldValue: string; newValue: string }): string {
+function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_password" | "contact"; oldValue: string; newValue: string }): string {
   if (entry.field === "upi") return `${entry.oldValue || "— not set —"} → ${entry.newValue}`;
   if (entry.field === "processing_password") return "Employee password changed (hidden for security)";
+  if (entry.field === "contact") {
+    try {
+      const before = JSON.parse(entry.oldValue) as Partial<ContactInfo>;
+      const after = JSON.parse(entry.newValue) as Partial<ContactInfo>;
+      const parts: string[] = [];
+      for (const f of CONTACT_FIELDS) {
+        if ((before?.[f] ?? "") !== (after?.[f] ?? "")) {
+          parts.push(`${CONTACT_FIELD_LABELS[f]}: ${before?.[f] || "—"} → ${after?.[f] || "—"}`);
+        }
+      }
+      return parts.length > 0 ? parts.join(", ") : "Contact details re-saved (no values changed)";
+    } catch {
+      return "Contact details updated";
+    }
+  }
   try {
     const before = JSON.parse(entry.oldValue);
     const after = JSON.parse(entry.newValue);
@@ -302,6 +322,7 @@ export default function AdminDashboard() {
         setOtpInputs({});
         queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetContactSettingQueryKey() });
         toast({ title: "Settings unlocked!", description: "Both codes matched. Settings stay open for 15 minutes." });
       },
       onError: (err: unknown) => {
@@ -370,6 +391,69 @@ export default function AdminDashboard() {
     );
   }
 
+  // ── Support contact details (phone, email, address, city, hours) ──
+  const contactSettingQuery = useGetContactSetting({
+    query: { queryKey: getGetContactSettingQueryKey(), enabled: settingsUnlocked },
+    request: { headers: settingsHeaders },
+  } as any);
+  const updateContactMutation = useUpdateContactSetting({
+    request: { headers: settingsHeaders },
+  } as any);
+  const [contactInputs, setContactInputs] = useState<Record<ContactField, string>>({
+    phone: "", email: "", address: "", city: "", hours: "",
+  });
+  const [contactErrors, setContactErrors] = useState<Partial<Record<ContactField, string>>>({});
+
+  useEffect(() => {
+    const c = contactSettingQuery.data?.contact as ContactInfo | undefined;
+    if (!c) return;
+    setContactInputs({ phone: c.phone, email: c.email, address: c.address, city: c.city, hours: c.hours });
+    setContactErrors({});
+  }, [contactSettingQuery.data]);
+
+  function handleSaveContact() {
+    const trimmed = Object.fromEntries(
+      CONTACT_FIELDS.map((f) => [f, (contactInputs[f] ?? "").trim()]),
+    ) as Record<ContactField, string>;
+    const errors: Partial<Record<ContactField, string>> = {};
+    for (const f of CONTACT_FIELDS) {
+      const msg = contactFieldError(f, trimmed[f]);
+      if (msg) errors[f] = msg;
+    }
+    setContactErrors(errors);
+    if (Object.keys(errors).length > 0) {
+      toast({
+        title: "Check the highlighted details",
+        description: "Fix the fields marked in red, then save again.",
+        variant: "destructive",
+      });
+      return;
+    }
+    updateContactMutation.mutate(
+      { data: { contact: trimmed } },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Contact details updated!",
+            description: "The footer, Contact page, FAQ, policy pages, WhatsApp button and invoices now show the new details.",
+          });
+          queryClient.invalidateQueries({ queryKey: getGetContactSettingQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetContactConfigQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getListSettingsChangeHistoryQueryKey() });
+        },
+        onError: (err: unknown) => {
+          if (handleSettingsAuthError(err)) return;
+          const serverMsg = (err as { data?: { error?: string } })?.data?.error;
+          toast({
+            title: "Could not save contact details",
+            description: serverMsg || "Please check the values and try again.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  }
+
   // ── Pricing settings (card price matrix) ──
   const pricingSettingQuery = useGetPricingSetting({
     query: { queryKey: getGetPricingSettingQueryKey(), enabled: settingsUnlocked },
@@ -426,11 +510,11 @@ export default function AdminDashboard() {
   // back 403 SETTINGS_LOCKED — treat that exactly like a mutation relock so the
   // gate reappears instead of a dead "unlocked" screen with load errors.
   useEffect(() => {
-    const errors: unknown[] = [upiSettingQuery.error, pricingSettingQuery.error];
+    const errors: unknown[] = [upiSettingQuery.error, pricingSettingQuery.error, contactSettingQuery.error];
     if (errors.some((e) => (e as { data?: { code?: string } } | null)?.data?.code === "SETTINGS_LOCKED")) {
       relockSettings(true);
     }
-  }, [upiSettingQuery.error, pricingSettingQuery.error, relockSettings]);
+  }, [upiSettingQuery.error, pricingSettingQuery.error, contactSettingQuery.error, relockSettings]);
   // Flat string inputs keyed "group.tier.audience" so partial typing never crashes
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [priceErrors, setPriceErrors] = useState<Record<string, boolean>>({});
@@ -1202,6 +1286,78 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
 
+              {/* ── Support contact details ── */}
+              <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-contact-details">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Phone className="w-5 h-5 text-primary" /> Support Contact Details
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    The phone number, email, office address and working hours shown across the whole
+                    website — footer, Contact page, FAQ, policy pages, the WhatsApp help button on
+                    Track Order, and downloaded invoices. The phone number also powers the WhatsApp
+                    chat link. Changes apply immediately — no restart needed.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {contactSettingQuery.isLoading ? (
+                    <p className="text-sm text-slate-500">Loading current details…</p>
+                  ) : contactSettingQuery.isError ? (
+                    <p className="text-sm text-red-600" data-testid="text-contact-load-error">
+                      Could not load the current contact details. Refresh the page to try again.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant="outline"
+                          className={contactSettingQuery.data?.source === "custom"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-slate-100 text-slate-600 border-slate-200"}
+                          data-testid="badge-contact-source"
+                        >
+                          {contactSettingQuery.data?.source === "custom" ? "Saved by you" : "Default launch details"}
+                        </Badge>
+                      </div>
+                      {CONTACT_FIELDS.map((f) => (
+                        <div key={f}>
+                          <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">
+                            {CONTACT_FIELD_LABELS[f]}
+                          </p>
+                          <Input
+                            value={contactInputs[f] ?? ""}
+                            onChange={(e) => {
+                              const v = e.target.value;
+                              setContactInputs((prev) => ({ ...prev, [f]: v }));
+                              setContactErrors((prev) => ({ ...prev, [f]: undefined }));
+                            }}
+                            className={contactErrors[f] ? "border-red-500 focus-visible:ring-red-500" : ""}
+                            data-testid={`input-contact-${f}`}
+                          />
+                          {contactErrors[f] && (
+                            <p className="text-xs text-red-600 mt-1.5" data-testid={`text-contact-error-${f}`}>
+                              {contactErrors[f]}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      <div className="flex items-center gap-3">
+                        <Button
+                          onClick={handleSaveContact}
+                          disabled={updateContactMutation.isPending}
+                          data-testid="button-save-contact"
+                        >
+                          {updateContactMutation.isPending ? "Saving…" : "Save Contact Details"}
+                        </Button>
+                        <p className="text-xs text-slate-400">
+                          Shown to every customer — double-check for typos before saving.
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
               {/* ── Card Prices ── */}
               <Card className="border-slate-200 shadow-sm max-w-2xl">
                 <CardHeader>
@@ -1390,9 +1546,17 @@ export default function AdminDashboard() {
                                 ? "bg-blue-50 text-blue-700 border-blue-200"
                                 : entry.field === "processing_password"
                                   ? "bg-amber-50 text-amber-700 border-amber-200"
-                                  : "bg-purple-50 text-purple-700 border-purple-200"}
+                                  : entry.field === "contact"
+                                    ? "bg-teal-50 text-teal-700 border-teal-200"
+                                    : "bg-purple-50 text-purple-700 border-purple-200"}
                             >
-                              {entry.field === "upi" ? "UPI ID" : entry.field === "processing_password" ? "Employee password" : "Card prices"}
+                              {entry.field === "upi"
+                                ? "UPI ID"
+                                : entry.field === "processing_password"
+                                  ? "Employee password"
+                                  : entry.field === "contact"
+                                    ? "Contact details"
+                                    : "Card prices"}
                             </Badge>
                             <span className="text-xs text-slate-500">
                               {new Date(entry.changedAt).toLocaleString("en-IN", {

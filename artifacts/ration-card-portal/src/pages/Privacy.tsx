@@ -1,4 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { useSeo } from "@/hooks/use-seo";
 import { AlertTriangle, Shield, Cookie, Database, Lock, Mail, Phone, UserCheck } from "lucide-react";
 
@@ -25,6 +26,7 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Privacy() {
+  const contact = useContact();
   useSeo({
     title: "Privacy & Cookie Policy | PVC Card Portal",
     description: "Read the Privacy and Cookie Policy of PVC Card Portal. Learn how we collect, use, and protect your personal data.",
@@ -92,8 +94,8 @@ export default function Privacy() {
             </p>
             <p>
               You may request deletion of your personal data at any time by contacting us at{" "}
-              <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline font-medium">
-                {BRAND.email}
+              <a href={`mailto:${contact.email}`} className="text-primary hover:underline font-medium">
+                {contact.email}
               </a>
               .
             </p>
@@ -137,14 +139,14 @@ export default function Privacy() {
             <div className="mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1.5">
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline">
-                  {BRAND.email}
+                <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                  {contact.email}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline">
-                  {BRAND.phone}
+                <a href={`tel:${contact.phone}`} className="text-primary hover:underline">
+                  {contact.phone}
                 </a>
               </p>
             </div>

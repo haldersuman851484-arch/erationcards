@@ -7,6 +7,11 @@
  */
 
 export * from './adminAuthResponse';
+export * from './contactConfig';
+export * from './contactInfo';
+export * from './contactSetting';
+export * from './contactSettingSource';
+export * from './contactSettingUpdate';
 export * from './customerInfoUpdate';
 export * from './errorResponse';
 export * from './getOperatorOrdersParams';

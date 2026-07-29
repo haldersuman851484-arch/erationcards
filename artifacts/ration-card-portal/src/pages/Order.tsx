@@ -26,6 +26,7 @@ import {
 } from "@workspace/pricing";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
+import { useContact } from "@/hooks/use-contact";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -88,6 +89,7 @@ function CardTypeOptions() {
 
 export default function Order() {
   const PRICING = usePricing();
+  const CONTACT = useContact();
   useSeo({
     title: "Apply for PVC Ration Card | From ₹50 Per Card | Fast Delivery West Bengal",
     description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM or GENERAL card printed and delivered to your door. All West Bengal districts served.",
@@ -318,7 +320,7 @@ export default function Order() {
       const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
       if (!res.ok) throw new Error("order lookup failed");
       const fullOrder = await res.json();
-      await downloadInvoicePdf(fullOrder, PRICING);
+      await downloadInvoicePdf(fullOrder, PRICING, CONTACT);
     } catch {
       toast({
         title: "Download failed",

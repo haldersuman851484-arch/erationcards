@@ -9,12 +9,13 @@ import {
   buildInvoiceModel,
   fmtMoney,
   formatInvoiceDate,
-  PAY_NOTE,
+  payNotes,
   type PayKind,
   type InvoiceOrder,
 } from "@/lib/invoice";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
+import { useContact } from "@/hooks/use-contact";
 
 /**
  * Customer invoice — public page at /receipt/:orderNumber.
@@ -44,6 +45,7 @@ const NOTE_CLASS: Record<PayKind, string> = {
 
 export default function Receipt() {
   const pricing = usePricing();
+  const contact = useContact();
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = params.orderNumber ?? "";
   const { toast } = useToast();
@@ -66,7 +68,7 @@ export default function Receipt() {
     if (!order || downloading) return;
     setDownloading(true);
     try {
-      await downloadInvoicePdf(order as unknown as InvoiceOrder, pricing);
+      await downloadInvoicePdf(order as unknown as InvoiceOrder, pricing, contact);
     } catch {
       toast({
         title: "Download failed",
@@ -256,14 +258,14 @@ export default function Receipt() {
         {/* Payment note */}
         <div className="py-5">
           <p className={`text-sm font-medium border rounded-lg px-3 py-2.5 ${NOTE_CLASS[m.payKind]}`}>
-            {PAY_NOTE[m.payKind]}
+            {payNotes(contact.email)[m.payKind]}
           </p>
         </div>
 
         {/* Footer */}
         <div className="pt-4 border-t border-slate-200 text-center space-y-1.5">
           <p className="text-xs text-slate-500">
-            {BRAND.email} | {BRAND.phone} | erationcards.in
+            {contact.email} | {contact.phone} | erationcards.in
           </p>
           <p className="text-xs font-semibold text-slate-600">
             This is a computer-generated invoice and does not require a signature.

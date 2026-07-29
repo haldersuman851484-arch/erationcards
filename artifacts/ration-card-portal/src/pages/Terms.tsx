@@ -1,4 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, FileCheck, ShoppingCart, Upload, RefreshCcw,
@@ -28,6 +29,7 @@ function Section({ icon: Icon, title, children }: SectionProps) {
 }
 
 export default function Terms() {
+  const contact = useContact();
   useSeo({
     title: "Terms & Conditions | PVC Card Portal",
     description: "Read the Terms & Conditions of PVC Card Portal. Understand your rights and responsibilities when using our PVC ration card printing service.",
@@ -123,8 +125,8 @@ export default function Terms() {
             </ul>
             <p className="mt-2">
               To request a refund, contact us at{" "}
-              <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline font-medium">
-                {BRAND.email}
+              <a href={`mailto:${contact.email}`} className="text-primary hover:underline font-medium">
+                {contact.email}
               </a>{" "}
               with your order number.
             </p>
@@ -179,14 +181,14 @@ export default function Terms() {
             <div className="mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1.5">
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline">
-                  {BRAND.email}
+                <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                  {contact.email}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline">
-                  {BRAND.phone}
+                <a href={`tel:${contact.phone}`} className="text-primary hover:underline">
+                  {contact.phone}
                 </a>
               </p>
             </div>

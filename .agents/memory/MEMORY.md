@@ -11,4 +11,4 @@
 - [Settings OTP gate](settings-otp-gate.md) — admin settings endpoints 403 without x-settings-unlock JWT; new settings routes need guard + header in tests; dev OTP sends email the real partners
 - [Staff-login e2e creds](testing-agent-env-credentials.md) — pass env var NAMES to the testing subagent (it reads them via shell, never prints them); staff roles share one email, password picks role
 - [Prod static serving test](prod-static-serving-test.md) — stage portal build into api-server/public, curl :8080; server memory-caches index.html, so restart after cleanup
-- [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE tokens (server substitutes live); JSON-LD needs serialized-dep hook or hydration bakes defaults; sitemap↔routes guard
+- [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard

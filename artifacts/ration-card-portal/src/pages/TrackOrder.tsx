@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { Navbar, Footer, BRAND } from "@/components/layout";
+import { Navbar, Footer } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -236,6 +237,7 @@ function StarRatingInput({ value, onChange }: { value: number; onChange: (v: num
 }
 
 export default function TrackOrder() {
+  const contact = useContact();
   useSeo({
     title: "Track Your PVC Ration Card Order Status",
     description: "Enter your order number or ration card number to check the real-time printing and delivery status of your PVC ration card.",
@@ -346,7 +348,7 @@ export default function TrackOrder() {
   const currentStepIdx = order ? STATUS_STEPS.findIndex(s => s.key === progressKey) : -1;
 
   const whatsAppUrl = order
-    ? `https://wa.me/${BRAND.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+    ? `https://wa.me/${contact.phoneDigits}?text=${encodeURIComponent(
         `Hi, I'd like to get updates on my order #${order.orderNumber} (Ration Card: ${order.rationCardNumber}). Please let me know the current status.`
       )}`
     : null;

@@ -16,4 +16,5 @@ export const SettingsChangeHistoryEntryField = {
   upi: 'upi',
   pricing: 'pricing',
   processing_password: 'processing_password',
+  contact: 'contact',
 } as const;

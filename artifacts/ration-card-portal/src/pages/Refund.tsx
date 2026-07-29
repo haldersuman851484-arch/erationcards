@@ -1,4 +1,5 @@
 import { Navbar, Footer, BRAND } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { useSeo } from "@/hooks/use-seo";
 import {
   AlertTriangle, RefreshCcw, CheckCircle2, XCircle, Clock,
@@ -44,6 +45,7 @@ const nonEligibleCases = [
 ];
 
 export default function Refund() {
+  const contact = useContact();
   useSeo({
     title: "Refund Policy | PVC Card Portal",
     description: "Learn about our refund policy for PVC ration card orders. Find out when you're eligible for a refund and how to request one.",
@@ -112,14 +114,14 @@ export default function Refund() {
             <div className="mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1.5">
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline">
-                  {BRAND.email}
+                <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                  {contact.email}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline">
-                  {BRAND.phone}
+                <a href={`tel:${contact.phone}`} className="text-primary hover:underline">
+                  {contact.phone}
                 </a>
               </p>
             </div>
@@ -165,19 +167,19 @@ export default function Refund() {
           <Section icon={HelpCircle} title="7. Questions?">
             <p>
               If you have any questions about our refund policy or need help with an order,
-              our support team is available Monday to Saturday, 10 AM – 6 PM.
+              our support team is available {contact.hours}.
             </p>
             <div className="mt-2 bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-1.5">
               <p className="flex items-center gap-2">
                 <Mail className="w-4 h-4 text-slate-400" />
-                <a href={`mailto:${BRAND.email}`} className="text-primary hover:underline">
-                  {BRAND.email}
+                <a href={`mailto:${contact.email}`} className="text-primary hover:underline">
+                  {contact.email}
                 </a>
               </p>
               <p className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-slate-400" />
-                <a href={`tel:${BRAND.phone}`} className="text-primary hover:underline">
-                  {BRAND.phone}
+                <a href={`tel:${contact.phone}`} className="text-primary hover:underline">
+                  {contact.phone}
                 </a>
               </p>
             </div>

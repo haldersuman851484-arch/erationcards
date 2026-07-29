@@ -1,4 +1,5 @@
-import { Navbar, Footer, BRAND } from "@/components/layout";
+import { Navbar, Footer } from "@/components/layout";
+import { useContact } from "@/hooks/use-contact";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +9,10 @@ import { useState } from "react";
 import { useSeo } from "@/hooks/use-seo";
 
 export default function Contact() {
+  const contact = useContact();
   useSeo({
     title: "Contact Support | PVC Card Portal",
-    description: "Get in touch with PVC Card Portal for help with your ration card order, delivery, or payment. Call +91 96359 60507 or email help@erationcards.in.",
+    description: `Get in touch with PVC Card Portal for help with your ration card order, delivery, or payment. Call ${contact.phone} or email ${contact.email}.`,
     canonical: "https://erationcards.in/contact",
   });
   const [submitted, setSubmitted] = useState(false);
@@ -42,10 +44,10 @@ export default function Contact() {
             </div>
 
             {[
-              { icon: Phone, label: "Phone / WhatsApp", value: BRAND.phone, sub: BRAND.hours },
-              { icon: Mail, label: "Email Support", value: BRAND.email, sub: "Response within 24 hours" },
-              { icon: MapPin, label: "Office Address", value: BRAND.address, sub: BRAND.city },
-              { icon: Clock, label: "Working Hours", value: "Monday – Saturday", sub: "9:00 AM to 6:00 PM IST" },
+              { icon: Phone, label: "Phone / WhatsApp", value: contact.phone, sub: contact.hours },
+              { icon: Mail, label: "Email Support", value: contact.email, sub: "Response within 24 hours" },
+              { icon: MapPin, label: "Office Address", value: contact.address, sub: contact.city },
+              { icon: Clock, label: "Working Hours", value: contact.hours, sub: "" },
             ].map(({ icon: Icon, label, value, sub }) => (
               <div key={label} className="flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -54,7 +56,7 @@ export default function Contact() {
                 <div>
                   <p className="font-medium text-slate-900 text-sm">{label}</p>
                   <p className="text-slate-700 text-sm">{value}</p>
-                  <p className="text-slate-500 text-xs">{sub}</p>
+                  {sub ? <p className="text-slate-500 text-xs">{sub}</p> : null}
                 </div>
               </div>
             ))}

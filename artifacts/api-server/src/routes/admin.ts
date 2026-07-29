@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody } from "@workspace/api-zod";
+import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, UpdateContactSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody } from "@workspace/api-zod";
 import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import {
   getOtpGateStatus,
@@ -17,14 +17,22 @@ import { sendSettingsOtpEmail, sendSettingsChangedEmail } from "../lib/email";
 import {
   getMerchantUpiId,
   getPricingMatrix,
+  getContactInfo,
   setSettingValue,
   getSettingValue,
   MERCHANT_UPI_SETTING_KEY,
   PRICING_SETTING_KEY,
+  CONTACT_SETTING_KEY,
   PROCESSING_PASSWORD_SETTING_KEY,
   PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY,
   UPI_ID_REGEX,
 } from "../lib/settings";
+import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, contactFieldError, type ContactInfo } from "@workspace/contact";
+
+/** Multi-line readable form of the contact details for change-alert emails. */
+function formatContactForEmail(c: ContactInfo): string {
+  return CONTACT_FIELDS.map((f) => `${CONTACT_FIELD_LABELS[f]}: ${c[f]}`).join("\n");
+}
 import { db } from "@workspace/db";
 import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable } from "@workspace/db";
 import { desc, sql, eq } from "drizzle-orm";
@@ -227,6 +235,86 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
   }
 });
 
+// ── Support contact details (footer, Contact page, FAQ, policy pages) ──────
+
+// GET /admin/settings/contact — current contact details + whether they're admin-saved or the built-in defaults
+router.get("/admin/settings/contact", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    if (!hasSettingsUnlock(req)) {
+      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
+      return;
+    }
+
+    const { contact, source } = await getContactInfo();
+    res.json({ contact, source });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load contact setting");
+    res.status(500).json({ error: "Failed to load contact setting" });
+  }
+});
+
+// PUT /admin/settings/contact — save new support contact details (shown across the portal immediately)
+router.put("/admin/settings/contact", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+    if (!hasSettingsUnlock(req)) {
+      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
+      return;
+    }
+
+    const parsed = UpdateContactSettingBody.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ error: "Fill in every contact field (phone, email, address, city and hours)." });
+      return;
+    }
+    // Trim, then run the strict shared validation (lengths, phone/email
+    // shape, characters that would be unsafe inside HTML / JSON-LD).
+    const candidate = Object.fromEntries(
+      CONTACT_FIELDS.map((f) => [f, parsed.data.contact[f].trim()]),
+    ) as unknown as ContactInfo;
+    for (const field of CONTACT_FIELDS) {
+      const fieldErr = contactFieldError(field, candidate[field]);
+      if (fieldErr) {
+        res.status(400).json({ error: `${CONTACT_FIELD_LABELS[field]}: ${fieldErr}` });
+        return;
+      }
+    }
+
+    // Effective values before the save (defaults included) for the audit trail.
+    const { contact: previousContact } = await getContactInfo();
+
+    await setSettingValue(CONTACT_SETTING_KEY, JSON.stringify(candidate));
+    await db.insert(settingsChangeHistoryTable).values({
+      field: CONTACT_SETTING_KEY,
+      oldValue: JSON.stringify(previousContact),
+      newValue: JSON.stringify(candidate),
+      changedBy: admin.email,
+    });
+    req.log.info({ adminEmail: admin.email }, "Support contact details updated");
+
+    // Notify both partners — fire-and-forget so email issues never block the save.
+    void sendSettingsChangedEmail(
+      getPartnerEmails(),
+      {
+        fieldLabel: "Support contact details",
+        oldValue: formatContactForEmail(previousContact),
+        newValue: formatContactForEmail(candidate),
+        changedBy: admin.email,
+        changedAt: new Date(),
+      },
+      req.log,
+    ).catch(() => {});
+
+    res.json({ contact: candidate, source: "custom" as const });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update contact setting");
+    res.status(500).json({ error: "Failed to update contact setting" });
+  }
+});
+
 // GET /admin/settings/pricing — current price matrix + whether it's admin-saved or the built-in default
 router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
   try {
@@ -370,6 +458,7 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
         field:
           r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) :
           r.field === PROCESSING_PASSWORD_SETTING_KEY ? ("processing_password" as const) :
+          r.field === CONTACT_SETTING_KEY ? ("contact" as const) :
           ("pricing" as const),
         oldValue: r.oldValue,
         newValue: r.newValue,

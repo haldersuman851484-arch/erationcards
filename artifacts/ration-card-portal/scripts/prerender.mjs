@@ -199,6 +199,15 @@ for (const route of ROUTES) {
     }
     if (/NaN/.test(html)) problems.push("literal NaN in output");
     if (/\d%%PRICE_/.test(html)) problems.push("number concatenated with a price token");
+    // Contact details: the head JSON-LD (every page) and the footer must carry
+    // %%CONTACT_*%% tokens, and no snapshot may bake in the launch literals —
+    // otherwise admin-edited contact details would go stale inside snapshots.
+    if (!html.includes("%%CONTACT_PHONE") || !html.includes("%%CONTACT_EMAIL%%")) {
+      problems.push("no %%CONTACT_*%% tokens — contact details got baked in as literals");
+    }
+    if (/96359\s?60507|help@erationcards\.in|26 Krishna Nibas/i.test(html)) {
+      problems.push("literal default contact details in output — useContact() bypassed somewhere");
+    }
     if (route === "/faq" && !html.includes('"FAQPage"')) problems.push("FAQPage JSON-LD missing");
     if (route.startsWith("/pvc-ration-card/")) {
       if (!html.includes('"FAQPage"')) problems.push("district FAQPage JSON-LD missing");

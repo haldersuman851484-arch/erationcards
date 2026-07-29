@@ -82,6 +82,7 @@
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
+    "@workspace/contact": "workspace:*",
     "@workspace/pricing": "workspace:*",
     "jspdf": "^4.2.1"
   }

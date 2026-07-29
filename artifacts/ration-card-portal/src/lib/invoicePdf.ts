@@ -3,11 +3,12 @@ import {
   buildInvoiceModel,
   fmtMoney,
   formatInvoiceDate,
-  PAY_NOTE,
+  payNotes,
   type InvoiceOrder,
   type PayKind,
 } from "./invoice";
 import type { PricingMatrix } from "@workspace/pricing";
+import { DEFAULT_CONTACT } from "@workspace/contact";
 
 /**
  * Builds the customer invoice as a real PDF file and saves it as
@@ -45,7 +46,12 @@ function capitalize(s: string | undefined): string {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : "—";
 }
 
-export async function downloadInvoicePdf(order: InvoiceOrder, pricing?: PricingMatrix): Promise<void> {
+export async function downloadInvoicePdf(
+  order: InvoiceOrder,
+  pricing?: PricingMatrix,
+  // Live support contact (admin-editable in Settings); defaults keep old callers working.
+  contact: { email: string; phone: string } = DEFAULT_CONTACT,
+): Promise<void> {
   const { jsPDF } = await import("jspdf");
   const m = buildInvoiceModel(order, pricing);
 
@@ -246,7 +252,7 @@ export async function downloadInvoicePdf(order: InvoiceOrder, pricing?: PricingM
   y += 22;
 
   /* ── Payment note ───────────────────────────────────────────────────── */
-  const note = PAY_NOTE[m.payKind];
+  const note = payNotes(contact.email)[m.payKind];
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   const noteLines: string[] = doc.splitTextToSize(note, R - M - 24);
@@ -267,7 +273,7 @@ export async function downloadInvoicePdf(order: InvoiceOrder, pricing?: PricingM
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   setTxt(SLATE_500);
-  doc.text(`${BRAND.email} | ${BRAND.phone} | ${SITE}`, W / 2, fy + 12, { align: "center", baseline: "top" });
+  doc.text(`${contact.email} | ${contact.phone} | ${SITE}`, W / 2, fy + 12, { align: "center", baseline: "top" });
   doc.setFont("helvetica", "bold");
   setTxt(SLATE_600);
   doc.text("This is a computer-generated invoice and does not require a signature.", W / 2, fy + 26, { align: "center", baseline: "top" });

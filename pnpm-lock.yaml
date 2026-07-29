@@ -178,6 +178,9 @@ importers:
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
+      '@workspace/contact':
+        specifier: workspace:*
+        version: link:../../lib/contact
       '@workspace/db':
         specifier: workspace:*
         version: link:../../lib/db
@@ -449,6 +452,9 @@ importers:
       '@fontsource/inter':
         specifier: ^5.3.0
         version: 5.3.0
+      '@workspace/contact':
+        specifier: workspace:*
+        version: link:../../lib/contact
       '@workspace/pricing':
         specifier: workspace:*
         version: link:../../lib/pricing
@@ -675,6 +681,8 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 3.25.76
+
+  lib/contact: {}
 
   lib/db:
     dependencies:

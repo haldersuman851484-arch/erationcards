@@ -32,6 +32,7 @@ import {
 } from "@workspace/pricing";
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
+import { useContact } from "@/hooks/use-contact";
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -151,6 +152,7 @@ function StepIndicator({ step }: { step: number }) {
 
 export default function PlaceOrder() {
   const PRICING = usePricing();
+  const CONTACT = useContact();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [step, setStep] = useState(1);
@@ -342,7 +344,7 @@ export default function PlaceOrder() {
       const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
       if (!res.ok) throw new Error("order lookup failed");
       const fullOrder = await res.json();
-      await downloadInvoicePdf(fullOrder, PRICING);
+      await downloadInvoicePdf(fullOrder, PRICING, CONTACT);
     } catch {
       toast({
         title: "Download failed",

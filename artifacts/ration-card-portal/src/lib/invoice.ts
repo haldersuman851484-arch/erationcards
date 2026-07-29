@@ -1,5 +1,4 @@
 import { computeOrderAmount, perCardPrice, DEFAULT_PRICING, type PricingMatrix } from "@workspace/pricing";
-import { BRAND } from "@/components/layout";
 
 /**
  * Shared invoice/receipt derivation used by the on-screen Receipt page and
@@ -32,14 +31,20 @@ export const PAY_LABEL: Record<PayKind, string> = {
   unknown: "PAYMENT STATUS",
 };
 
-/** Payment note shown on the sheet and inside the PDF — identical wording. */
-export const PAY_NOTE: Record<PayKind, string> = {
-  paid: "Payment received with thanks.",
-  pending: "Payment verification is pending. This invoice confirms your order details and becomes a payment receipt once your payment is verified.",
-  failed: `We could not verify this payment. Please contact ${BRAND.email} for help.`,
-  refunded: `This payment has been refunded. Contact ${BRAND.email} if you have any questions.`,
-  unknown: `For questions about this payment, contact ${BRAND.email}.`,
-};
+/**
+ * Payment note shown on the sheet and inside the PDF — identical wording.
+ * Takes the live support email (admin-editable in Settings) so the note
+ * always points customers at the current address.
+ */
+export function payNotes(supportEmail: string): Record<PayKind, string> {
+  return {
+    paid: "Payment received with thanks.",
+    pending: "Payment verification is pending. This invoice confirms your order details and becomes a payment receipt once your payment is verified.",
+    failed: `We could not verify this payment. Please contact ${supportEmail} for help.`,
+    refunded: `This payment has been refunded. Contact ${supportEmail} if you have any questions.`,
+    unknown: `For questions about this payment, contact ${supportEmail}.`,
+  };
+}
 
 /** ₹70 stays "70"; a hypothetical uneven split renders "23.33" instead of a rounded lie. */
 export function fmtMoney(n: number): string {

@@ -586,6 +586,37 @@ export const GetPricingConfigResponse = zod.object({
 
 
 /**
+ * @summary Get the live support contact details shown across the portal
+ */
+export const getContactConfigResponseContactPhoneMin = 8;
+export const getContactConfigResponseContactPhoneMax = 20;
+
+export const getContactConfigResponseContactEmailMin = 6;
+export const getContactConfigResponseContactEmailMax = 254;
+
+export const getContactConfigResponseContactAddressMin = 5;
+export const getContactConfigResponseContactAddressMax = 200;
+
+export const getContactConfigResponseContactCityMin = 2;
+export const getContactConfigResponseContactCityMax = 100;
+
+export const getContactConfigResponseContactHoursMin = 3;
+export const getContactConfigResponseContactHoursMax = 120;
+
+
+
+export const GetContactConfigResponse = zod.object({
+  "contact": zod.object({
+  "phone": zod.string().min(getContactConfigResponseContactPhoneMin).max(getContactConfigResponseContactPhoneMax).describe('Display format, e.g. \"+91 96359 60507\" — also used for the WhatsApp link'),
+  "email": zod.string().min(getContactConfigResponseContactEmailMin).max(getContactConfigResponseContactEmailMax),
+  "address": zod.string().min(getContactConfigResponseContactAddressMin).max(getContactConfigResponseContactAddressMax).describe('Full single-line office address'),
+  "city": zod.string().min(getContactConfigResponseContactCityMin).max(getContactConfigResponseContactCityMax).describe('City \/ region shown under the address'),
+  "hours": zod.string().min(getContactConfigResponseContactHoursMin).max(getContactConfigResponseContactHoursMax).describe('Business hours, e.g. \"Monday – Saturday, 9:00 AM – 6:00 PM IST\"')
+}).describe('Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)')
+})
+
+
+/**
  * @summary Get the card price matrix setting (admin)
  */
 export const getPricingSettingResponsePricingRationSinglePublicMax = 10000;
@@ -752,6 +783,97 @@ export const UpdateUpiSettingResponse = zod.object({
 
 
 /**
+ * @summary Get the support contact details setting (admin)
+ */
+export const getContactSettingResponseContactPhoneMin = 8;
+export const getContactSettingResponseContactPhoneMax = 20;
+
+export const getContactSettingResponseContactEmailMin = 6;
+export const getContactSettingResponseContactEmailMax = 254;
+
+export const getContactSettingResponseContactAddressMin = 5;
+export const getContactSettingResponseContactAddressMax = 200;
+
+export const getContactSettingResponseContactCityMin = 2;
+export const getContactSettingResponseContactCityMax = 100;
+
+export const getContactSettingResponseContactHoursMin = 3;
+export const getContactSettingResponseContactHoursMax = 120;
+
+
+
+export const GetContactSettingResponse = zod.object({
+  "contact": zod.object({
+  "phone": zod.string().min(getContactSettingResponseContactPhoneMin).max(getContactSettingResponseContactPhoneMax).describe('Display format, e.g. \"+91 96359 60507\" — also used for the WhatsApp link'),
+  "email": zod.string().min(getContactSettingResponseContactEmailMin).max(getContactSettingResponseContactEmailMax),
+  "address": zod.string().min(getContactSettingResponseContactAddressMin).max(getContactSettingResponseContactAddressMax).describe('Full single-line office address'),
+  "city": zod.string().min(getContactSettingResponseContactCityMin).max(getContactSettingResponseContactCityMax).describe('City \/ region shown under the address'),
+  "hours": zod.string().min(getContactSettingResponseContactHoursMin).max(getContactSettingResponseContactHoursMax).describe('Business hours, e.g. \"Monday – Saturday, 9:00 AM – 6:00 PM IST\"')
+}).describe('Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)'),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = built-in launch contact details')
+})
+
+
+/**
+ * @summary Update the support contact details (admin)
+ */
+export const updateContactSettingBodyContactPhoneMin = 8;
+export const updateContactSettingBodyContactPhoneMax = 20;
+
+export const updateContactSettingBodyContactEmailMin = 6;
+export const updateContactSettingBodyContactEmailMax = 254;
+
+export const updateContactSettingBodyContactAddressMin = 5;
+export const updateContactSettingBodyContactAddressMax = 200;
+
+export const updateContactSettingBodyContactCityMin = 2;
+export const updateContactSettingBodyContactCityMax = 100;
+
+export const updateContactSettingBodyContactHoursMin = 3;
+export const updateContactSettingBodyContactHoursMax = 120;
+
+
+
+export const UpdateContactSettingBody = zod.object({
+  "contact": zod.object({
+  "phone": zod.string().min(updateContactSettingBodyContactPhoneMin).max(updateContactSettingBodyContactPhoneMax).describe('Display format, e.g. \"+91 96359 60507\" — also used for the WhatsApp link'),
+  "email": zod.string().min(updateContactSettingBodyContactEmailMin).max(updateContactSettingBodyContactEmailMax),
+  "address": zod.string().min(updateContactSettingBodyContactAddressMin).max(updateContactSettingBodyContactAddressMax).describe('Full single-line office address'),
+  "city": zod.string().min(updateContactSettingBodyContactCityMin).max(updateContactSettingBodyContactCityMax).describe('City \/ region shown under the address'),
+  "hours": zod.string().min(updateContactSettingBodyContactHoursMin).max(updateContactSettingBodyContactHoursMax).describe('Business hours, e.g. \"Monday – Saturday, 9:00 AM – 6:00 PM IST\"')
+}).describe('Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)')
+})
+
+export const updateContactSettingResponseContactPhoneMin = 8;
+export const updateContactSettingResponseContactPhoneMax = 20;
+
+export const updateContactSettingResponseContactEmailMin = 6;
+export const updateContactSettingResponseContactEmailMax = 254;
+
+export const updateContactSettingResponseContactAddressMin = 5;
+export const updateContactSettingResponseContactAddressMax = 200;
+
+export const updateContactSettingResponseContactCityMin = 2;
+export const updateContactSettingResponseContactCityMax = 100;
+
+export const updateContactSettingResponseContactHoursMin = 3;
+export const updateContactSettingResponseContactHoursMax = 120;
+
+
+
+export const UpdateContactSettingResponse = zod.object({
+  "contact": zod.object({
+  "phone": zod.string().min(updateContactSettingResponseContactPhoneMin).max(updateContactSettingResponseContactPhoneMax).describe('Display format, e.g. \"+91 96359 60507\" — also used for the WhatsApp link'),
+  "email": zod.string().min(updateContactSettingResponseContactEmailMin).max(updateContactSettingResponseContactEmailMax),
+  "address": zod.string().min(updateContactSettingResponseContactAddressMin).max(updateContactSettingResponseContactAddressMax).describe('Full single-line office address'),
+  "city": zod.string().min(updateContactSettingResponseContactCityMin).max(updateContactSettingResponseContactCityMax).describe('City \/ region shown under the address'),
+  "hours": zod.string().min(updateContactSettingResponseContactHoursMin).max(updateContactSettingResponseContactHoursMax).describe('Business hours, e.g. \"Monday – Saturday, 9:00 AM – 6:00 PM IST\"')
+}).describe('Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)'),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = built-in launch contact details')
+})
+
+
+/**
  * @summary Change the employee (processing) login password (admin)
  */
 export const updateProcessingPasswordBodyNewPasswordMin = 8;
@@ -774,7 +896,7 @@ export const UpdateProcessingPasswordResponse = zod.object({
 export const ListSettingsChangeHistoryResponse = zod.object({
   "changes": zod.array(zod.object({
   "id": zod.number(),
-  "field": zod.enum(['upi', 'pricing', 'processing_password']).describe('Which protected setting changed'),
+  "field": zod.enum(['upi', 'pricing', 'processing_password', 'contact']).describe('Which protected setting changed'),
   "oldValue": zod.string().describe('Effective value before the save (pricing is a JSON matrix string)'),
   "newValue": zod.string().describe('Value after the save (pricing is a JSON matrix string)'),
   "changedBy": zod.string().describe('Admin email from the unlock session that made the change'),

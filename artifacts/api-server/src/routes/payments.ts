@@ -6,7 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { parseStaffToken } from "../lib/auth";
 import { uploadToStorage } from "../lib/storage";
-import { getMerchantUpiId, getPricingMatrix } from "../lib/settings";
+import { getMerchantUpiId, getPricingMatrix, getContactInfo } from "../lib/settings";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MIME_TO_EXT: Record<string, string> = {
@@ -49,6 +49,18 @@ router.get("/pricing/config", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to load pricing config");
     res.status(500).json({ error: "Failed to load pricing config" });
+  }
+});
+
+// Public: live support contact details for the footer, Contact page, FAQ,
+// policy pages and the Track-page WhatsApp button.
+router.get("/contact/config", async (req: Request, res: Response) => {
+  try {
+    const { contact } = await getContactInfo();
+    res.json({ contact });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load contact config");
+    res.status(500).json({ error: "Failed to load contact config" });
   }
 });
 

@@ -177,6 +177,66 @@ export interface PricingSettingUpdate {
   pricing: PricingMatrix;
 }
 
+/**
+ * Support contact details shown across the portal (footer, Contact page, FAQ, policy pages, WhatsApp link)
+ */
+export interface ContactInfo {
+  /**
+     * Display format, e.g. "+91 96359 60507" — also used for the WhatsApp link
+     * @minLength 8
+     * @maxLength 20
+     */
+  phone: string;
+  /**
+     * @minLength 6
+     * @maxLength 254
+     */
+  email: string;
+  /**
+     * Full single-line office address
+     * @minLength 5
+     * @maxLength 200
+     */
+  address: string;
+  /**
+     * City / region shown under the address
+     * @minLength 2
+     * @maxLength 100
+     */
+  city: string;
+  /**
+     * Business hours, e.g. "Monday – Saturday, 9:00 AM – 6:00 PM IST"
+     * @minLength 3
+     * @maxLength 120
+     */
+  hours: string;
+}
+
+export interface ContactConfig {
+  contact: ContactInfo;
+}
+
+/**
+ * custom = saved by admin in the settings table, default = built-in launch contact details
+ */
+export type ContactSettingSource = typeof ContactSettingSource[keyof typeof ContactSettingSource];
+
+
+export const ContactSettingSource = {
+  custom: 'custom',
+  default: 'default',
+} as const;
+
+export interface ContactSetting {
+  contact: ContactInfo;
+  /** custom = saved by admin in the settings table, default = built-in launch contact details */
+  source: ContactSettingSource;
+}
+
+export interface ContactSettingUpdate {
+  contact: ContactInfo;
+}
+
 export interface UpiSettingUpdate {
   /**
      * @minLength 3
@@ -208,6 +268,7 @@ export const SettingsChangeHistoryEntryField = {
   upi: 'upi',
   pricing: 'pricing',
   processing_password: 'processing_password',
+  contact: 'contact',
 } as const;
 
 export interface SettingsChangeHistoryEntry {
