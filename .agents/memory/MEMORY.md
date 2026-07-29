@@ -7,3 +7,4 @@
 - [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files vanish between ShellExec calls; create fixtures in the same command or use a workspace path
 - [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard
 - [Courier dashboard modals](courier-dashboard-modals.md) — scanner keydown + cached search can drift/stale; modals must re-fetch on open, freeze target order id, close on drift
+- [Preview down after merges](preview-port-conflict.md) — FAILED web workflow "Port in use": orphaned vite survives merge restarts; no ss/lsof, find via ps, kill -9, restart; user iframe needs manual ↻
