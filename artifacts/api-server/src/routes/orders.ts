@@ -413,8 +413,10 @@ router.get("/orders/track", async (req: Request, res: Response) => {
 // GET /orders/stats
 router.get("/orders/stats", async (req: Request, res: Response) => {
   try {
-    // Admin only — exposes revenue and order volume
-    if (!await parseStaffToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+    // Staff only. Revenue figures are for the owner's eyes: they are included
+    // in the response ONLY for the admin role, never for processing staff.
+    const staff = await parseStaffToken(req);
+    if (!staff) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -448,9 +450,14 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
       dispatchedOrders: Number(allStats.dispatchedOrders),
       deliveredOrders: Number(allStats.deliveredOrders),
       returnedOrders: Number(allStats.returnedOrders),
-      totalRevenue: Number(allStats.totalRevenue),
       todayOrders: Number(todayStats.todayOrders),
-      todayRevenue: Number(todayStats.todayRevenue),
+      // Money totals are admin-only — processing staff never receive them
+      ...(staff.role === "admin"
+        ? {
+            totalRevenue: Number(allStats.totalRevenue),
+            todayRevenue: Number(todayStats.todayRevenue),
+          }
+        : {}),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to get order stats");

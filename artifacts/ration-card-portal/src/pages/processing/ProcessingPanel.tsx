@@ -440,50 +440,29 @@ export default function ProcessingPanel() {
             </Link>
           </div>
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {/* Stat Cards — no revenue here: employees must not see money totals */}
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
             {[
-              { label: "Total Orders", value: stats?.totalOrders ?? 0, icon: Package, color: "text-slate-700", delay: 0 },
-              { label: "Pending Payment", value: stats?.pendingOrders ?? 0, icon: Clock, color: "text-amber-600", delay: 1 },
-              { label: "Pending Delivery", value: pendingDeliveries, icon: Truck, color: "text-blue-600", delay: 2 },
-              { label: "Delivered", value: stats?.deliveredOrders ?? 0, icon: CheckCircle, color: "text-emerald-600", delay: 3 },
+              { label: "Total Orders", value: stats?.totalOrders ?? 0, icon: Package, color: "text-slate-700", sub: null },
+              { label: "Pending Payment", value: stats?.pendingOrders ?? 0, icon: Clock, color: "text-amber-600", sub: null },
+              { label: "Pending Delivery", value: pendingDeliveries, icon: Truck, color: "text-blue-600", sub: null },
+              { label: "Delivered", value: stats?.deliveredOrders ?? 0, icon: CheckCircle, color: "text-emerald-600", sub: null },
               ...((stats?.returnedOrders ?? 0) > 0
-                ? [{ label: "Returned (RTO)", value: stats!.returnedOrders, icon: RotateCcw, color: "text-rose-600", delay: 4 }]
+                ? [{ label: "Returned (RTO)", value: stats!.returnedOrders, icon: RotateCcw, color: "text-rose-600", sub: null }]
                 : []),
-            ].map(({ label, value, icon: Icon, color, delay }) => (
-              <Card key={label} className="stat-card border-0 shadow-sm bg-white overflow-hidden" style={{ animationDelay: `${delay * 80}ms` }}>
+              { label: "Active Operators", value: operators?.length ?? 0, icon: Users, color: "text-primary", sub: "Registered printing partners" },
+            ].map(({ label, value, icon: Icon, color, sub }, i) => (
+              <Card key={label} className="stat-card border-0 shadow-sm bg-white overflow-hidden" style={{ animationDelay: `${i * 80}ms` }}>
                 <CardContent className="pt-5 pb-4">
                   <div className="flex justify-between items-start mb-3">
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</p>
                     <Icon className={`w-4 h-4 ${color}`} />
                   </div>
                   <p className={`text-3xl font-bold ${color}`}>{value}</p>
+                  {sub && <p className="text-xs text-slate-400 mt-1">{sub}</p>}
                 </CardContent>
               </Card>
             ))}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="stat-card border-0 shadow-sm bg-white" style={{ animationDelay: "320ms" }}>
-              <CardContent className="pt-5 pb-4">
-                <div className="flex justify-between items-start mb-3">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Revenue</p>
-                  <IndianRupee className="w-4 h-4 text-emerald-600" />
-                </div>
-                <p className="text-3xl font-bold text-emerald-600">₹{stats?.totalRevenue?.toLocaleString("en-IN") ?? 0}</p>
-                <p className="text-xs text-slate-400 mt-1">Today: ₹{stats?.todayRevenue ?? 0} · {stats?.todayOrders ?? 0} orders</p>
-              </CardContent>
-            </Card>
-            <Card className="stat-card border-0 shadow-sm bg-white" style={{ animationDelay: "400ms" }}>
-              <CardContent className="pt-5 pb-4">
-                <div className="flex justify-between items-start mb-3">
-                  <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">Active Operators</p>
-                  <Users className="w-4 h-4 text-primary" />
-                </div>
-                <p className="text-3xl font-bold text-primary">{operators?.length ?? 0}</p>
-                <p className="text-xs text-slate-400 mt-1">Registered printing partners</p>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Tabs */}

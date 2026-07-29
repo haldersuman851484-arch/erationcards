@@ -195,7 +195,7 @@ export const TrackOrderResponse = zod.object({
 
 
 /**
- * @summary Get order statistics summary
+ * @summary Get order statistics summary (staff; revenue fields are returned only for the admin role)
  */
 export const GetOrderStatsResponse = zod.object({
   "totalOrders": zod.number(),
@@ -205,9 +205,9 @@ export const GetOrderStatsResponse = zod.object({
   "dispatchedOrders": zod.number(),
   "deliveredOrders": zod.number(),
   "returnedOrders": zod.number(),
-  "totalRevenue": zod.number(),
+  "totalRevenue": zod.number().optional().describe('Admin role only — omitted for processing staff'),
   "todayOrders": zod.number(),
-  "todayRevenue": zod.number()
+  "todayRevenue": zod.number().optional().describe('Admin role only — omitted for processing staff')
 })
 
 

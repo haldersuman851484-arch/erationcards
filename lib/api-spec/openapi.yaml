@@ -119,7 +119,7 @@ paths:
     get:
       operationId: getOrderStats
       tags: [orders]
-      summary: Get order statistics summary
+      summary: Get order statistics summary (staff; revenue fields are returned only for the admin role)
       responses:
         "200":
           description: Order stats
@@ -1474,10 +1474,12 @@ components:
           type: integer
         totalRevenue:
           type: number
+          description: Admin role only — omitted for processing staff
         todayOrders:
           type: integer
         todayRevenue:
           type: number
+          description: Admin role only — omitted for processing staff
       required:
         - totalOrders
         - pendingOrders
@@ -1486,9 +1488,7 @@ components:
         - dispatchedOrders
         - deliveredOrders
         - returnedOrders
-        - totalRevenue
         - todayOrders
-        - todayRevenue
 
     # ── Operator Schemas ───────────────────────────────────────────────────────
     Operator:

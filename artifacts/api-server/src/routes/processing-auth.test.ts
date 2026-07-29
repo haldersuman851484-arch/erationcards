@@ -283,3 +283,63 @@ describe("GET /api/operators — staff-scoped roster", () => {
     expect(res.status).toBe(200);
   });
 });
+
+// ── Order stats (GET /api/orders/stats) — revenue is admin-only ─────────────
+// Both roles may read order counts, but the money totals (totalRevenue,
+// todayRevenue) must be omitted from the response for processing staff, so
+// they are invisible even in the browser's network inspector.
+
+describe("GET /api/orders/stats — revenue fields are admin-only", () => {
+  /** Temporarily make the mocked select-chain resolve to one stats row. */
+  async function withStatsRow<T>(fn: () => Promise<T>): Promise<T> {
+    const { db } = await import("@workspace/db");
+    const chain = (db.select as unknown as () => Record<string, unknown>)();
+    const origThen = chain["then"];
+    chain["then"] = (resolve: (v: unknown[]) => unknown, reject: (e: unknown) => unknown) =>
+      Promise.resolve([
+        {
+          totalOrders: 7,
+          pendingOrders: 1,
+          processingOrders: 1,
+          printedOrders: 1,
+          dispatchedOrders: 1,
+          deliveredOrders: 2,
+          returnedOrders: 1,
+          totalRevenue: 3500,
+          todayOrders: 2,
+          todayRevenue: 900,
+        },
+      ]).then(resolve, reject);
+    try {
+      return await fn();
+    } finally {
+      chain["then"] = origThen;
+    }
+  }
+
+  it("admin sees totalRevenue and todayRevenue", async () => {
+    await withStatsRow(async () => {
+      const res = await request(app).get("/api/orders/stats").set("Authorization", `Bearer ${adminToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body.totalRevenue).toBe(3500);
+      expect(res.body.todayRevenue).toBe(900);
+      expect(res.body.totalOrders).toBe(7);
+    });
+  });
+
+  it("processing staff get counts but NO revenue keys at all", async () => {
+    await withStatsRow(async () => {
+      const res = await request(app).get("/api/orders/stats").set("Authorization", `Bearer ${processingToken}`);
+      expect(res.status).toBe(200);
+      expect(res.body.totalOrders).toBe(7);
+      expect(res.body.todayOrders).toBe(2);
+      expect(res.body).not.toHaveProperty("totalRevenue");
+      expect(res.body).not.toHaveProperty("todayRevenue");
+    });
+  });
+
+  it("still rejects unauthenticated calls with 401", async () => {
+    const res = await request(app).get("/api/orders/stats");
+    expect(res.status).toBe(401);
+  });
+});

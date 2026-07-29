@@ -419,7 +419,7 @@ export const getGetOrderStatsUrl = () => {
 }
 
 /**
- * @summary Get order statistics summary
+ * @summary Get order statistics summary (staff; revenue fields are returned only for the admin role)
  */
 export const getOrderStats = async ( options?: RequestInit): Promise<OrderStats> => {
 
@@ -466,7 +466,7 @@ export type GetOrderStatsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get order statistics summary
+ * @summary Get order statistics summary (staff; revenue fields are returned only for the admin role)
  */
 
 export function useGetOrderStats<TData = Awaited<ReturnType<typeof getOrderStats>>, TError = ErrorType<unknown>>(

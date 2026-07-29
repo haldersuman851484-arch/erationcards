@@ -14,7 +14,9 @@ export interface OrderStats {
   dispatchedOrders: number;
   deliveredOrders: number;
   returnedOrders: number;
-  totalRevenue: number;
+  /** Admin role only — omitted for processing staff */
+  totalRevenue?: number;
   todayOrders: number;
-  todayRevenue: number;
+  /** Admin role only — omitted for processing staff */
+  todayRevenue?: number;
 }
