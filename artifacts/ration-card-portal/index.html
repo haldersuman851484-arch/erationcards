@@ -228,9 +228,50 @@
          Preload links for the above-the-fold woff2 files are injected by the
          font-preload plugin in vite.config.ts so the correct (hashed) asset
          paths are used in both dev and production builds. -->
+    <!-- Instant boot screen: inline-styled so it paints before any CSS/JS
+         downloads. React's first render replaces #root's children, which
+         removes the shell automatically — no handoff code needed. -->
+    <meta name="theme-color" content="#ffffff" />
+    <style>
+      html { background: #ffffff; }
+      #boot-shell {
+        position: fixed; inset: 0; z-index: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; background: #ffffff;
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      }
+      #boot-shell .boot-mark {
+        width: 44px; height: 44px; border-radius: 8px; background: #00a6c7;
+        color: #ffffff; font-weight: 700; font-size: 15px;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #boot-shell .boot-name { color: #020817; font-weight: 700; font-size: 17px; letter-spacing: -0.01em; }
+      #boot-shell .boot-bar {
+        width: 96px; height: 3px; border-radius: 99px; background: #e2e8f0;
+        overflow: hidden; position: relative;
+      }
+      #boot-shell .boot-bar::after {
+        content: ""; position: absolute; top: 0; left: -40%; width: 40%; height: 100%;
+        border-radius: 99px; background: #00a6c7;
+        animation: boot-slide 1.1s ease-in-out infinite;
+      }
+      @keyframes boot-slide { to { left: 100%; } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-shell .boot-bar::after { animation: none; left: 30%; }
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-shell" role="status" aria-label="Loading PVC Card Portal">
+        <div class="boot-mark">PVC</div>
+        <div class="boot-name">PVC Card Portal</div>
+        <div class="boot-bar"></div>
+        <noscript>
+          <p style="color:#475569;font-size:14px;margin:0">Please enable JavaScript to use this website.</p>
+        </noscript>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
