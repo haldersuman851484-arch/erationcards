@@ -144,7 +144,6 @@ export function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link href="/operator/register" className="hover:text-primary transition-colors">Register as Operator</Link></li>
             <li><Link href="/operator/login" className="hover:text-primary transition-colors">Operator Login</Link></li>
-            <li><Link href="/admin/login" className="hover:text-primary transition-colors">Admin Access</Link></li>
           </ul>
         </div>
       </div>
