@@ -182,7 +182,7 @@ export default function OrderUpload() {
           </div>
           <Link href={`/receipt/${orderNumber}`}>
             <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8" data-testid="button-download-receipt">
-              <Download className="w-3.5 h-3.5" /> Download Receipt
+              <Download className="w-3.5 h-3.5" /> Download Invoice
             </Button>
           </Link>
         </div>

@@ -18,7 +18,7 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CheckCircle2, Clock, Copy, Upload, Plus, Pencil, Trash2,
+  CheckCircle2, Clock, Copy, Download, Upload, Plus, Pencil, Trash2,
   User, MapPin, CreditCard, IndianRupee, ChevronRight, ChevronLeft,
   QrCode, ImageIcon, AlertTriangle, FileText, ExternalLink, Loader2, Mail,
 } from "lucide-react";
@@ -31,6 +31,7 @@ import {
   priceBreakdown,
   PRICING,
 } from "@workspace/pricing";
+import { downloadInvoicePdf } from "@/lib/invoicePdf";
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -166,6 +167,7 @@ export default function PlaceOrder() {
   const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
   const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -329,6 +331,27 @@ export default function PlaceOrder() {
     });
   }
 
+  // Fetch the authoritative order from the server (amount is recomputed
+  // there), then build and save the PDF — form state may already be stale.
+  async function handleDownloadInvoice() {
+    if (!success || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
+      if (!res.ok) throw new Error("order lookup failed");
+      const fullOrder = await res.json();
+      await downloadInvoicePdf(fullOrder);
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not create the invoice PDF. Try again — it is also available from Track Order.",
+        variant: "destructive",
+      });
+    } finally {
+      setInvoiceBusy(false);
+    }
+  }
+
   function resetOrder() {
     setSuccess(null); setStep(1); setFamilyCards([]); setScreenshotFile(null); setScreenshotPreview(null); setPaymentConfirmed(false);
     setCreatedOrder(null); setCardPdfs({}); setEmailSent(null);
@@ -368,6 +391,16 @@ export default function PlaceOrder() {
               <p className="text-xs text-amber-800 font-semibold flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> Payment NOT yet confirmed</p>
               <p className="text-xs text-amber-700 mt-1">Card will NOT be printed until admin verifies the payment screenshot.</p>
             </div>
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
+              onClick={handleDownloadInvoice}
+              disabled={invoiceBusy}
+              data-testid="button-download-invoice"
+            >
+              {invoiceBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {invoiceBusy ? "Preparing Invoice…" : "Download Invoice"}
+            </Button>
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" onClick={() => setLocation("/operator/track")}>Track Order</Button>
               <Button className="bg-primary hover:bg-primary/90" onClick={resetOrder}>New Order</Button>

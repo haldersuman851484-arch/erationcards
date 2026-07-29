@@ -1,77 +1,86 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "wouter";
 import { BRAND } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useTrackOrder, getTrackOrderQueryKey } from "@workspace/api-client-react";
-import { Download, ArrowLeft, CreditCard, AlertCircle, Loader2 } from "lucide-react";
-import { computeOrderAmount, perCardPrice } from "@workspace/pricing";
+import { useToast } from "@/hooks/use-toast";
+import { Download, ArrowLeft, CreditCard, AlertCircle, Loader2, Printer } from "lucide-react";
+import {
+  buildInvoiceModel,
+  fmtMoney,
+  formatInvoiceDate,
+  PAY_NOTE,
+  type PayKind,
+  type InvoiceOrder,
+} from "@/lib/invoice";
+import { downloadInvoicePdf } from "@/lib/invoicePdf";
 
 /**
- * Customer payment receipt — public page at /receipt/:orderNumber.
+ * Customer invoice — public page at /receipt/:orderNumber.
  *
- * Follows the shipping-label pattern: an on-screen A4-style sheet plus the
- * browser print dialog for "Download as PDF" (no PDF library in the project).
- * Data comes from the same public track-by-order-number endpoint the Track
- * page uses, so it exposes nothing beyond what /track already shows.
+ * "Download Invoice" saves a real PDF file (built client-side with jsPDF);
+ * the browser print dialog stays available as a fallback for paper copies
+ * and for names in scripts the PDF fonts can't render. Data comes from the
+ * same public track-by-order-number endpoint the Track page uses, so it
+ * exposes nothing beyond what /track already shows.
  */
 
-type FamilyCard = { customerName: string; rationCardNumber: string; cardType: string };
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
-}
-
-/**
- * The orders.payment_status DB enum allows pending/paid/failed/refunded/
- * confirmed/rejected — map every value (plus an unknown fallback) so a
- * receipt never mislabels a paid or refunded order as "pending".
- */
-type PayKind = "paid" | "pending" | "failed" | "refunded" | "unknown";
-
-const PAY_GROUP: Record<string, PayKind> = {
-  confirmed: "paid",
-  paid: "paid",
-  pending: "pending",
-  rejected: "failed",
-  failed: "failed",
-  refunded: "refunded",
+const PILL_STYLE: Record<PayKind, React.CSSProperties> = {
+  paid: { background: "#d1fae5", color: "#047857", border: "1px solid #6ee7b7" },
+  pending: { background: "#fef3c7", color: "#b45309", border: "1px solid #fcd34d" },
+  failed: { background: "#ffe4e6", color: "#be123c", border: "1px solid #fda4af" },
+  refunded: { background: "#e0f2fe", color: "#0369a1", border: "1px solid #7dd3fc" },
+  unknown: { background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" },
 };
 
-const PAYMENT_PILL: Record<PayKind, { label: string; style: React.CSSProperties }> = {
-  paid: { label: "PAID", style: { background: "#d1fae5", color: "#047857", border: "1px solid #6ee7b7" } },
-  pending: { label: "PAYMENT PENDING", style: { background: "#fef3c7", color: "#b45309", border: "1px solid #fcd34d" } },
-  failed: { label: "NOT VERIFIED", style: { background: "#ffe4e6", color: "#be123c", border: "1px solid #fda4af" } },
-  refunded: { label: "REFUNDED", style: { background: "#e0f2fe", color: "#0369a1", border: "1px solid #7dd3fc" } },
-  unknown: { label: "PAYMENT STATUS", style: { background: "#f1f5f9", color: "#475569", border: "1px solid #cbd5e1" } },
+const NOTE_CLASS: Record<PayKind, string> = {
+  paid: "text-emerald-700 bg-emerald-50 border-emerald-200",
+  pending: "text-amber-700 bg-amber-50 border-amber-200",
+  failed: "text-rose-700 bg-rose-50 border-rose-200",
+  refunded: "text-sky-700 bg-sky-50 border-sky-200",
+  unknown: "text-slate-600 bg-slate-50 border-slate-200",
 };
-
-/** ₹70 stays "70"; a hypothetical uneven split renders "23.33" instead of a rounded lie. */
-function fmtMoney(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(2);
-}
 
 export default function Receipt() {
   const params = useParams<{ orderNumber: string }>();
   const orderNumber = params.orderNumber ?? "";
+  const { toast } = useToast();
+  const [downloading, setDownloading] = useState(false);
 
   const { data: order, isLoading, error } = useTrackOrder(
     { orderNumber },
     { query: { enabled: !!orderNumber, queryKey: getTrackOrderQueryKey({ orderNumber }) } }
   );
 
-  // Sets the saved-PDF filename in the print dialog to "Receipt-<order no>".
+  // Sets the saved-PDF filename in the print dialog to "Invoice-<order no>".
   useEffect(() => {
     if (!order) return;
     const prev = document.title;
-    document.title = `Receipt-${order.orderNumber}`;
+    document.title = `Invoice-${order.orderNumber}`;
     return () => { document.title = prev; };
   }, [order]);
+
+  async function handleDownload() {
+    if (!order || downloading) return;
+    setDownloading(true);
+    try {
+      await downloadInvoicePdf(order as unknown as InvoiceOrder);
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not create the invoice PDF. Please try again, or use Print instead.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
         <div className="flex items-center gap-2 text-slate-500 text-sm">
-          <Loader2 className="w-4 h-4 animate-spin" /> Loading receipt…
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading invoice…
         </div>
       </div>
     );
@@ -92,37 +101,8 @@ export default function Receipt() {
     );
   }
 
-  const cards: FamilyCard[] = [
-    { customerName: order.customerName, rationCardNumber: order.rationCardNumber, cardType: order.cardType },
-    ...(((order as any).familyCards ?? []) as FamilyCard[]),
-  ];
-  const quantity = order.quantity || cards.length;
-  // Reconstruct per-card prices from the shared pricing rules. The public
-  // track endpoint doesn't say whether an operator placed the order, so try
-  // the public scheme first, then the operator scheme — whichever reproduces
-  // the stored total priced this order (when both match, the prices are
-  // identical anyway). Orders whose stored amount matches neither (e.g.
-  // legacy or manually adjusted) fall back to an even split across cards.
-  const cardTypes = cards.map((c) => c.cardType);
-  let unitPrices: number[] | null = null;
-  for (const isOperator of [false, true]) {
-    if (Math.abs(computeOrderAmount(cardTypes, isOperator) - order.amount) < 0.005) {
-      unitPrices = cardTypes.map((t) => perCardPrice(t, cardTypes.length, isOperator));
-      break;
-    }
-  }
-  const evenUnit = order.amount / Math.max(quantity, 1);
-  const rowPrice = (i: number) => (unitPrices ? unitPrices[i] : evenUnit);
-  const uniformUnit = cards.every((_, i) => rowPrice(i) === rowPrice(0)) ? rowPrice(0) : null;
-  const payKind: PayKind = PAY_GROUP[order.paymentStatus] ?? "unknown";
-  const pill = payKind === "unknown"
-    ? { label: String(order.paymentStatus || "UNKNOWN").toUpperCase(), style: PAYMENT_PILL.unknown.style }
-    : PAYMENT_PILL[payKind];
-  const isPaid = payKind === "paid";
-  const paymentMethod = (order as any).paymentMethod ? String((order as any).paymentMethod).toUpperCase() : "UPI";
-  const deliveryName = (order as any).deliveryName || order.customerName;
-  const postOffice = (order as any).postOffice;
-  const phone = order.customerPhone ? (String(order.customerPhone).startsWith("+") ? order.customerPhone : `+91 ${order.customerPhone}`) : "";
+  const m = buildInvoiceModel(order as unknown as InvoiceOrder);
+  const pillStyle = PILL_STYLE[m.payKind];
 
   return (
     <div className="min-h-screen bg-slate-100 pb-16" data-testid="page-receipt">
@@ -146,21 +126,31 @@ export default function Receipt() {
               <ArrowLeft className="w-4 h-4" /> Track Order
             </Button>
           </Link>
-          <Button
-            onClick={() => window.print()}
-            size="sm"
-            className="gap-1.5 bg-primary hover:bg-primary/90"
-            data-testid="button-download-receipt"
-          >
-            <Download className="w-4 h-4" /> Download PDF
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => window.print()}
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              data-testid="button-print-invoice"
+            >
+              <Printer className="w-4 h-4" /> Print
+            </Button>
+            <Button
+              onClick={handleDownload}
+              disabled={downloading}
+              size="sm"
+              className="gap-1.5 bg-primary hover:bg-primary/90"
+              data-testid="button-download-invoice"
+            >
+              {downloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+              {downloading ? "Preparing…" : "Download Invoice"}
+            </Button>
+          </div>
         </div>
       </div>
-      <p className="text-center text-xs text-slate-400 mt-3 print:hidden">
-        Choose “Save as PDF” in the print window to download your receipt.
-      </p>
 
-      {/* The receipt sheet — the only thing that prints */}
+      {/* The invoice sheet — the only thing that prints */}
       <div
         id="receipt-sheet"
         className="bg-white max-w-3xl mx-auto mt-4 rounded-xl shadow-sm px-6 py-8 sm:px-10 sm:py-10"
@@ -178,14 +168,14 @@ export default function Receipt() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-lg font-extrabold tracking-wide text-slate-900">PAYMENT RECEIPT</p>
+            <p className="text-lg font-extrabold tracking-wide text-slate-900">INVOICE</p>
             <p className="text-sm text-slate-500 font-mono" data-testid="text-receipt-order-num">#{order.orderNumber}</p>
             <span
               className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-bold tracking-wide"
-              style={pill.style}
+              style={pillStyle}
               data-testid="badge-payment-state"
             >
-              {pill.label}
+              {m.payLabel}
             </span>
           </div>
         </div>
@@ -195,24 +185,24 @@ export default function Receipt() {
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-1.5">Customer</p>
             <p className="font-bold text-slate-900">{order.customerName}</p>
-            {phone && <p className="text-slate-600 mt-0.5">{phone}</p>}
+            {m.phone && <p className="text-slate-600 mt-0.5">{m.phone}</p>}
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mt-4 mb-1.5">Delivery Address</p>
             <p className="text-slate-700 leading-snug">
-              {deliveryName !== order.customerName && <>{deliveryName}<br /></>}
+              {m.deliveryName !== order.customerName && <>{m.deliveryName}<br /></>}
               {order.address}
-              {postOffice && <><br />PO: {postOffice}</>}
+              {m.postOffice && <><br />PO: {m.postOffice}</>}
               <br />{order.district}, {order.state} – {order.pincode}
             </p>
           </div>
           <div className="sm:text-right">
             <div className="space-y-2">
               <div>
-                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Receipt / Order Date</p>
-                <p className="text-slate-800 font-medium">{formatDate(order.createdAt)}</p>
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Invoice / Order Date</p>
+                <p className="text-slate-800 font-medium">{formatInvoiceDate(order.createdAt)}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Payment Method</p>
-                <p className="text-slate-800 font-medium">{paymentMethod}</p>
+                <p className="text-slate-800 font-medium">{m.paymentMethod}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Order Status</p>
@@ -234,7 +224,7 @@ export default function Receipt() {
               </tr>
             </thead>
             <tbody>
-              {cards.map((card, i) => (
+              {m.cards.map((card, i) => (
                 <tr key={i} className="border-t border-slate-100" data-testid={`row-receipt-card-${i}`}>
                   <td className="py-2.5 text-slate-500">{i + 1}</td>
                   <td className="py-2.5">
@@ -242,49 +232,30 @@ export default function Receipt() {
                     <p className="text-xs text-slate-500 font-mono">{card.rationCardNumber}</p>
                   </td>
                   <td className="py-2.5 text-slate-600">{card.cardType}</td>
-                  <td className="py-2.5 text-right text-slate-800">₹{fmtMoney(rowPrice(i))}</td>
+                  <td className="py-2.5 text-right text-slate-800">₹{fmtMoney(m.rowPrice(i))}</td>
                 </tr>
               ))}
             </tbody>
             <tfoot>
               <tr className="border-t-2 border-slate-200">
-                <td colSpan={3} className="pt-3 text-right font-bold text-slate-900">Total {isPaid ? "Paid" : "Amount"}</td>
+                <td colSpan={3} className="pt-3 text-right font-bold text-slate-900">Total {m.isPaid ? "Paid" : "Amount"}</td>
                 <td className="pt-3 text-right font-extrabold text-slate-900 text-base" data-testid="text-receipt-total">₹{fmtMoney(order.amount)}</td>
               </tr>
             </tfoot>
           </table>
-          {quantity > 1 && uniformUnit !== null && (
-            <p className="text-xs text-slate-400 mt-2 text-right">{quantity} cards × ₹{fmtMoney(uniformUnit)} per card</p>
-          )}
+          <div className="flex items-center justify-between mt-2">
+            <p className="text-xs text-slate-400">Prices are inclusive of GST &amp; postage.</p>
+            {m.quantity > 1 && m.uniformUnit !== null && (
+              <p className="text-xs text-slate-400 text-right">{m.quantity} cards × ₹{fmtMoney(m.uniformUnit)} per card</p>
+            )}
+          </div>
         </div>
 
         {/* Payment note */}
         <div className="py-5">
-          {payKind === "paid" && (
-            <p className="text-sm font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5">
-              Payment received with thanks.
-            </p>
-          )}
-          {payKind === "pending" && (
-            <p className="text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
-              Payment verification is pending. This receipt confirms your order details and becomes a payment receipt once your payment is verified.
-            </p>
-          )}
-          {payKind === "failed" && (
-            <p className="text-sm font-medium text-rose-700 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2.5">
-              We could not verify this payment. Please contact {BRAND.email} for help.
-            </p>
-          )}
-          {payKind === "refunded" && (
-            <p className="text-sm font-medium text-sky-700 bg-sky-50 border border-sky-200 rounded-lg px-3 py-2.5">
-              This payment has been refunded. Contact {BRAND.email} if you have any questions.
-            </p>
-          )}
-          {payKind === "unknown" && (
-            <p className="text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
-              For questions about this payment, contact {BRAND.email}.
-            </p>
-          )}
+          <p className={`text-sm font-medium border rounded-lg px-3 py-2.5 ${NOTE_CLASS[m.payKind]}`}>
+            {PAY_NOTE[m.payKind]}
+          </p>
         </div>
 
         {/* Footer */}
@@ -293,7 +264,7 @@ export default function Receipt() {
             {BRAND.email} | {BRAND.phone} | erationcards.in
           </p>
           <p className="text-xs font-semibold text-slate-600">
-            This is a computer-generated receipt and does not require a signature.
+            This is a computer-generated invoice and does not require a signature.
           </p>
           <p className="text-[12px] italic text-slate-400">
             Notice: erationcards.in is not a government portal. It is a private PVC card printing service.

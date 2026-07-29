@@ -14,7 +14,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot, useSubmitOrder } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CheckCircle2, CreditCard, ExternalLink, FileText, Loader2, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
+import { CheckCircle, CheckCircle2, CreditCard, Download, ExternalLink, FileText, Loader2, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/hooks/use-seo";
 import {
@@ -25,6 +25,7 @@ import {
   computeOrderAmount,
   priceBreakdown,
 } from "@workspace/pricing";
+import { downloadInvoicePdf } from "@/lib/invoicePdf";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -108,6 +109,7 @@ export default function Order() {
   const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
   const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
+  const [invoiceBusy, setInvoiceBusy] = useState(false);
   const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
@@ -306,6 +308,27 @@ export default function Order() {
     );
   }
 
+  // Fetch the authoritative order from the server (amount is recomputed
+  // there), then build and save the PDF — form state may already be stale.
+  async function handleDownloadInvoice() {
+    if (!success || invoiceBusy) return;
+    setInvoiceBusy(true);
+    try {
+      const res = await fetch(`${BASE}/api/orders/track?orderNumber=${encodeURIComponent(success.orderNumber)}`);
+      if (!res.ok) throw new Error("order lookup failed");
+      const fullOrder = await res.json();
+      await downloadInvoicePdf(fullOrder);
+    } catch {
+      toast({
+        title: "Download failed",
+        description: "Could not create the invoice PDF. Please try again — you can also download it any time from Track Order.",
+        variant: "destructive",
+      });
+    } finally {
+      setInvoiceBusy(false);
+    }
+  }
+
   if (success) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
@@ -340,6 +363,16 @@ export default function Order() {
                 <p className="text-sm text-amber-800 font-medium mb-1">⏳ Payment NOT yet confirmed</p>
                 <p className="text-xs text-amber-700">Our team will manually check your payment screenshot. <strong>Your card will NOT be printed until we verify your payment.</strong> If your screenshot is invalid or fake, your order will be cancelled. Verified orders are delivered in 5–7 working days.</p>
               </div>
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
+                onClick={handleDownloadInvoice}
+                disabled={invoiceBusy}
+                data-testid="button-download-invoice"
+              >
+                {invoiceBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {invoiceBusy ? "Preparing Invoice…" : "Download Invoice"}
+              </Button>
               <div className="flex gap-3">
                 <Button variant="outline" className="flex-1" onClick={() => setLocation("/track")}>Track Order</Button>
                 <Button className="flex-1 bg-primary hover:bg-primary/90" onClick={() => {
