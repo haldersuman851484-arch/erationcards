@@ -1816,7 +1816,7 @@ export const getListOperatorsUrl = () => {
 }
 
 /**
- * @summary List all operators (admin)
+ * @summary List operators (staff only — processing role sees only active operators; non-active status filters require the admin role)
  */
 export const listOperators = async ( options?: RequestInit): Promise<Operator[]> => {
 
@@ -1863,7 +1863,7 @@ export type ListOperatorsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary List all operators (admin)
+ * @summary List operators (staff only — processing role sees only active operators; non-active status filters require the admin role)
  */
 
 export function useListOperators<TData = Awaited<ReturnType<typeof listOperators>>, TError = ErrorType<unknown>>(

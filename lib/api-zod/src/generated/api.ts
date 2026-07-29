@@ -810,7 +810,7 @@ export const VerifySettingsOtpResponse = zod.object({
 
 
 /**
- * @summary List all operators (admin)
+ * @summary List operators (staff only — processing role sees only active operators; non-active status filters require the admin role)
  */
 export const ListOperatorsResponseItem = zod.object({
   "id": zod.number(),

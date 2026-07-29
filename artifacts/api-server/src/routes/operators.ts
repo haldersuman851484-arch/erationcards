@@ -7,16 +7,31 @@ import {
   LoginOperatorBody,
   GetOperatorOrdersQueryParams,
 } from "@workspace/api-zod";
-import { parseOperatorToken, createOperatorToken, hashPassword } from "../lib/auth";
+import { parseOperatorToken, createOperatorToken, hashPassword, parseStaffToken } from "../lib/auth";
 
 const router = Router();
 
-// GET /operators
+// GET /operators — staff only (the roster carries emails, phones, addresses
+// and wallet balances). Admin may list everything and filter by any status
+// (e.g. pending applications); processing staff always get the ACTIVE roster
+// only — pending/suspended applications are admin territory.
 router.get("/operators", async (req: Request, res: Response) => {
   try {
+    const staff = parseStaffToken(req);
+    if (!staff) {
+      res.status(401).json({ error: "Not authenticated" });
+      return;
+    }
+
     const statusFilter = req.query.status as string | undefined;
-    const rows = statusFilter
-      ? await db.select().from(operatorsTable).where(eq(operatorsTable.status, statusFilter as any))
+    if (staff.role !== "admin" && statusFilter && statusFilter !== "active") {
+      res.status(403).json({ error: "Admin access required" });
+      return;
+    }
+    const effectiveStatus = staff.role === "admin" ? statusFilter : "active";
+
+    const rows = effectiveStatus
+      ? await db.select().from(operatorsTable).where(eq(operatorsTable.status, effectiveStatus as any))
       : await db.select().from(operatorsTable);
     res.json(rows.map(formatOperator));
   } catch (err) {

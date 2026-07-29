@@ -220,3 +220,66 @@ describe("admin-only endpoints — processing token is forbidden (403)", () => {
     return request(app).get("/api/admin/verifications").set("Authorization", `Bearer ${adminToken}`);
   }
 });
+
+// ── Operator roster (GET /api/operators) — staff-scoped ─────────────────────
+// The roster carries emails, phones, addresses and wallet balances, so it must
+// never be publicly readable. Processing staff may see only the active roster;
+// pending/suspended applications are admin-only.
+
+describe("GET /api/operators — staff-scoped roster", () => {
+  it("returns 401 with no token (roster is not public)", async () => {
+    const res = await request(app).get("/api/operators");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 401 with an operator token (operators cannot list each other)", async () => {
+    const res = await request(app)
+      .get("/api/operators")
+      .set("Authorization", `Bearer ${makeOperatorToken()}`);
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 200 for processing staff without a filter (active roster only)", async () => {
+    const res = await request(app)
+      .get("/api/operators")
+      .set("Authorization", `Bearer ${processingToken}`);
+    expect(res.status).toBe(200);
+    expect(Array.isArray(res.body)).toBe(true);
+  });
+
+  it("returns 200 for processing staff explicitly asking for status=active", async () => {
+    const res = await request(app)
+      .get("/api/operators?status=active")
+      .set("Authorization", `Bearer ${processingToken}`);
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 403 for processing staff asking for pending applications", async () => {
+    const res = await request(app)
+      .get("/api/operators?status=pending")
+      .set("Authorization", `Bearer ${processingToken}`);
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe("Admin access required");
+  });
+
+  it("returns 403 for processing staff asking for suspended operators", async () => {
+    const res = await request(app)
+      .get("/api/operators?status=suspended")
+      .set("Authorization", `Bearer ${processingToken}`);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 200 for admin asking for pending applications", async () => {
+    const res = await request(app)
+      .get("/api/operators?status=pending")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+  });
+
+  it("returns 200 for admin without a filter (full roster)", async () => {
+    const res = await request(app)
+      .get("/api/operators")
+      .set("Authorization", `Bearer ${adminToken}`);
+    expect(res.status).toBe(200);
+  });
+});
