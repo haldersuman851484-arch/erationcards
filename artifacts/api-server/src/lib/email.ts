@@ -80,6 +80,57 @@ function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
+export interface DispatchEmailData {
+  orderNumber: string;
+  customerName: string;
+  customerEmail: string;
+  courierName: string;
+  trackingNumber: string;
+}
+
+function buildDispatchHtml(data: DispatchEmailData): string {
+  return `
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
+  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
+  </div>
+  <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
+    <p style="margin: 0 0 12px;">Hello <strong>${escapeHtml(data.customerName)}</strong>,</p>
+    <p style="margin: 0 0 16px;">Good news &mdash; your PVC card is on the way! Your order has been handed over to the courier.</p>
+    <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 16px;">
+      <span style="font-family: monospace; font-size: 22px; font-weight: bold; color: #00afc8; letter-spacing: 1px;">${escapeHtml(data.orderNumber)}</span>
+    </div>
+    <table style="width: 100%; font-size: 14px; margin-bottom: 16px; border-collapse: collapse;">
+      <tr>
+        <td style="padding: 6px 0; color: #64748b;">Courier</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: bold;">${escapeHtml(data.courierName)}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px 0; color: #64748b; border-top: 1px solid #e2e8f0;">Tracking number (AWB)</td>
+        <td style="padding: 6px 0; text-align: right; font-weight: bold; border-top: 1px solid #e2e8f0;"><span style="font-family: monospace;">${escapeHtml(data.trackingNumber)}</span></td>
+      </tr>
+    </table>
+    <p style="margin: 0 0 6px; font-size: 14px;">Track your delivery anytime with your order number:</p>
+    <p style="margin: 0 0 16px;"><a href="${TRACK_URL}" style="color: #00afc8; font-weight: bold;">${TRACK_URL}</a></p>
+    <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automatic email from PVC Card Portal. Please do not reply.</p>
+  </div>
+</div>`.trim();
+}
+
+function buildDispatchText(data: DispatchEmailData): string {
+  return [
+    `Hello ${data.customerName},`,
+    ``,
+    `Good news - your PVC card is on the way! Your order has been handed over to the courier.`,
+    ``,
+    `Order number: ${data.orderNumber}`,
+    `Courier: ${data.courierName}`,
+    `Tracking number (AWB): ${data.trackingNumber}`,
+    ``,
+    `Track your delivery: ${TRACK_URL}`,
+  ].join("\n");
+}
+
 /**
  * Sends the email through Resend. Two transports:
  * - RESEND_API_KEY set (e.g. Hostinger production): call the Resend API
@@ -132,6 +183,38 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log
     return true;
   } catch (err) {
     log.error({ err, orderNumber: order.orderNumber }, "Order confirmation email errored");
+    return false;
+  }
+}
+
+/**
+ * Sends the "your card is on the way" email at dispatch time via Resend.
+ * Never throws — email failure must not block the dispatch (the shipment
+ * already exists), so all errors are logged and reported as `false`.
+ */
+export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log): Promise<boolean> {
+  try {
+    const res = await postToResend({
+      from: FROM_ADDRESS,
+      to: [data.customerEmail],
+      subject: `Order ${data.orderNumber} dispatched - your card is on the way`,
+      html: buildDispatchHtml(data),
+      text: buildDispatchText(data),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      log.error(
+        { status: res.status, body: errBody.slice(0, 500), orderNumber: data.orderNumber },
+        "Order dispatched email failed to send",
+      );
+      return false;
+    }
+
+    log.info({ orderNumber: data.orderNumber }, "Order dispatched email sent");
+    return true;
+  } catch (err) {
+    log.error({ err, orderNumber: data.orderNumber }, "Order dispatched email errored");
     return false;
   }
 }

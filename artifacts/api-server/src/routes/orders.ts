@@ -12,7 +12,7 @@ import {
 } from "@workspace/api-zod";
 import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
-import { sendOrderConfirmationEmail } from "../lib/email";
+import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from "../lib/email";
 
 // ── Delhivery tracking in-memory cache ──────────────────────────────────────
 interface DelhiveryScan {
@@ -792,6 +792,23 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
       status:         "dispatched" as any,
       updatedAt:      new Date(),
     }).where(eq(ordersTable.id, id));
+
+    // Notify the customer their card is on the way. Fail-soft: the shipment
+    // already exists, so an email failure must never fail the dispatch.
+    if (order.customerEmail) {
+      await sendOrderDispatchedEmail(
+        {
+          orderNumber: order.orderNumber,
+          customerName: order.customerName,
+          customerEmail: order.customerEmail,
+          courierName: "Delhivery",
+          trackingNumber: awb,
+        },
+        req.log,
+      );
+    } else {
+      req.log.warn({ orderNumber: order.orderNumber }, "Order dispatched without customerEmail; skipping email");
+    }
 
     const [updated] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     res.json({ awb, trackingNumber: awb, order: formatOrder(updated) });
