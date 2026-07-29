@@ -27,6 +27,9 @@ Updated: July 2026. Prices below are live values substituted by the server at re
 - Order a card: https://erationcards.in/order
 - Track an order: https://erationcards.in/track
 - Prices & FAQ (English + Bengali): https://erationcards.in/faq
+- Guide — download your e-Ration Card PDF free from food.wb.gov.in: https://erationcards.in/guides/download-e-ration-card
+- Guide — AAY / PHH / SPHH / RKSY-I / RKSY-II card types explained: https://erationcards.in/guides/ration-card-types-west-bengal
+- Guide — lost or damaged ration card, what to do (free recovery): https://erationcards.in/guides/lost-ration-card-west-bengal
 - Download your e-Ration Card / ABHA / e-Shram PDF (official government links): https://erationcards.in/download
 - District pages (all 23, e.g. Kolkata): https://erationcards.in/pvc-ration-card/kolkata
 - About the service: https://erationcards.in/about

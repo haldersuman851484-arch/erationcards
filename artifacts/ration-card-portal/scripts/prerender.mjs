@@ -51,6 +51,9 @@ const STATIC_ROUTES = [
   "/terms",
   "/refund",
   "/shipping",
+  "/guides/download-e-ration-card",
+  "/guides/ration-card-types-west-bengal",
+  "/guides/lost-ration-card-west-bengal",
 ];
 const districtSrc = readFileSync(path.join(portalDir, "src", "pages", "DistrictPage.tsx"), "utf8");
 const districtSlugs = [...districtSrc.matchAll(/^\s+slug: "([a-z0-9-]+)",$/gm)].map((m) => m[1]);
@@ -86,7 +89,13 @@ if (missingSnapshots.length > 0 || missingSitemap.length > 0) {
 // Routes whose copy includes prices — their snapshots MUST contain %%PRICE_*%%
 // tokens. A missing token means a refactor baked literal numbers in and the
 // live-price substitution silently died, so we fail the build.
-const MUST_HAVE_TOKENS = new Set(["/", "/faq", ...districtSlugs.map((s) => `/pvc-ration-card/${s}`)]);
+const MUST_HAVE_TOKENS = new Set([
+  "/",
+  "/faq",
+  // Guides quote the print price in their intros/FAQs/CTAs.
+  ...STATIC_ROUTES.filter((r) => r.startsWith("/guides/")),
+  ...districtSlugs.map((s) => `/pvc-ration-card/${s}`),
+]);
 
 // ── Tiny static server for the built SPA (no API — react-query falls back) ─
 const MIME = {
@@ -183,6 +192,10 @@ for (const route of ROUTES) {
     if (route.startsWith("/pvc-ration-card/")) {
       if (!html.includes('"FAQPage"')) problems.push("district FAQPage JSON-LD missing");
       if (!html.includes('"BreadcrumbList"')) problems.push("district BreadcrumbList JSON-LD missing");
+    }
+    if (route.startsWith("/guides/")) {
+      if (!html.includes('"FAQPage"')) problems.push("guide FAQPage JSON-LD missing");
+      if (!html.includes('"BreadcrumbList"')) problems.push("guide BreadcrumbList JSON-LD missing");
     }
     // Canonical + og:url must point at the route itself — a page that kept
     // index.html's default "/" canonical would tell crawlers it is a duplicate

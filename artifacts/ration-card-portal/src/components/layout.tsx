@@ -132,6 +132,9 @@ export function Footer() {
           <ul className="space-y-2 text-sm">
             <li><Link href="/about" className="hover:text-primary transition-colors">About Us</Link></li>
             <li><Link href="/faq" className="hover:text-primary transition-colors">FAQ</Link></li>
+            <li><Link href="/guides/download-e-ration-card" className="hover:text-primary transition-colors">Guide: Download e-Ration Card</Link></li>
+            <li><Link href="/guides/ration-card-types-west-bengal" className="hover:text-primary transition-colors">Guide: Ration Card Types</Link></li>
+            <li><Link href="/guides/lost-ration-card-west-bengal" className="hover:text-primary transition-colors">Guide: Lost Ration Card</Link></li>
             <li><Link href="/contact" className="hover:text-primary transition-colors">Contact Support</Link></li>
             <li><Link href="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
             <li><Link href="/terms" className="hover:text-primary transition-colors">Terms &amp; Conditions</Link></li>

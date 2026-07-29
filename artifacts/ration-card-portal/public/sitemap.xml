@@ -85,6 +85,28 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- Guides (GEO/AI-search content) -->
+  <url>
+    <loc>https://erationcards.in/guides/download-e-ration-card</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://erationcards.in/guides/ration-card-types-west-bengal</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://erationcards.in/guides/lost-ration-card-west-bengal</loc>
+    <lastmod>2026-07-29</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
   <!-- District SEO landing pages -->
   <url>
     <loc>https://erationcards.in/pvc-ration-card/kolkata</loc>

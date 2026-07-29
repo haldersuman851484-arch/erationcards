@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Navbar, Footer } from "@/components/layout";
 import { useSeo } from "@/hooks/use-seo";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,12 @@ export default function DownloadCard() {
         <div className="container mx-auto px-4 max-w-2xl text-center">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Download Your Ration Card</h1>
           <p className="text-slate-600">Download your official digital e-Ration card, ABHA health card and e-Shram card from the government portals.</p>
+          <p className="text-sm text-slate-500 mt-3">
+            First time?{" "}
+            <Link href="/guides/download-e-ration-card" className="text-primary hover:underline" data-testid="link-download-guide">
+              Read the step-by-step e-Ration Card download guide
+            </Link>
+          </p>
         </div>
       </div>
 

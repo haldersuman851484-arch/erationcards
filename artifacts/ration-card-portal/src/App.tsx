@@ -19,6 +19,9 @@ const Terms = lazy(() => import("./pages/Terms"));
 const Refund = lazy(() => import("./pages/Refund"));
 const Shipping = lazy(() => import("./pages/Shipping"));
 const DistrictPage = lazy(() => import("./pages/DistrictPage"));
+const GuideDownloadERationCard = lazy(() => import("./pages/guides/DownloadERationCard"));
+const GuideRationCardTypes = lazy(() => import("./pages/guides/RationCardTypes"));
+const GuideLostRationCard = lazy(() => import("./pages/guides/LostRationCard"));
 
 const OrderUpload = lazy(() => import("./pages/OrderUpload"));
 const Receipt = lazy(() => import("./pages/Receipt"));
@@ -99,6 +102,9 @@ function Router() {
       <Route path="/refund" component={Refund} />
       <Route path="/shipping" component={Shipping} />
       <Route path="/pvc-ration-card/:district" component={DistrictPage} />
+      <Route path="/guides/download-e-ration-card" component={GuideDownloadERationCard} />
+      <Route path="/guides/ration-card-types-west-bengal" component={GuideRationCardTypes} />
+      <Route path="/guides/lost-ration-card-west-bengal" component={GuideLostRationCard} />
 
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />

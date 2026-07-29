@@ -185,6 +185,27 @@ export default function FAQ() {
             ))}
           </div>
 
+          <div className="mt-10 bg-white border border-slate-200 rounded-xl p-5 shadow-sm" data-testid="text-faq-guides">
+            <h3 className="text-base font-bold text-slate-900 mb-2">Step-by-step guides</h3>
+            <ul className="list-disc pl-5 space-y-1.5 text-sm">
+              <li>
+                <Link href="/guides/download-e-ration-card" className="text-primary hover:underline">
+                  How to download your e-Ration Card PDF free (food.wb.gov.in)
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides/ration-card-types-west-bengal" className="text-primary hover:underline">
+                  AAY, PHH, SPHH, RKSY-I &amp; RKSY-II — card types explained
+                </Link>
+              </li>
+              <li>
+                <Link href="/guides/lost-ration-card-west-bengal" className="text-primary hover:underline">
+                  Lost or damaged ration card? What to do
+                </Link>
+              </li>
+            </ul>
+          </div>
+
           <div className="mt-12 bg-primary/5 rounded-2xl p-8 text-center border border-primary/20">
             <h3 className="text-xl font-bold text-slate-900 mb-2">Still have questions?</h3>
             <p className="text-slate-600 text-sm mb-5">Our support team is happy to help you with any other queries.</p>

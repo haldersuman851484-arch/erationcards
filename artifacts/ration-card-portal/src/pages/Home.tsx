@@ -492,6 +492,21 @@ export default function Home() {
             </div>
           </div>
 
+          <p className="mt-6 text-sm text-slate-600" data-testid="text-guide-links">
+            <strong className="text-slate-900">Helpful guides:</strong>{" "}
+            <Link href="/guides/download-e-ration-card" className="text-primary hover:underline">
+              How to download your e-Ration Card PDF (free)
+            </Link>
+            {" · "}
+            <Link href="/guides/ration-card-types-west-bengal" className="text-primary hover:underline">
+              AAY, PHH, SPHH &amp; RKSY card types explained
+            </Link>
+            {" · "}
+            <Link href="/guides/lost-ration-card-west-bengal" className="text-primary hover:underline">
+              Lost your ration card?
+            </Link>
+          </p>
+
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
             {[
               ["Card size", "85.6 × 54 mm (CR80, bank-card size)"],
