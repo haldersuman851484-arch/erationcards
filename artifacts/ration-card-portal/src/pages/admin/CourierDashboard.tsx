@@ -1,3 +1,4 @@
+import { staffFetch } from "@/lib/staffSession";
 import { useState, useEffect, useRef } from "react";
 import { buildLabelAddressLines } from "@/lib/labelAddress";
 import JsBarcode from "jsbarcode";
@@ -376,7 +377,7 @@ function DownloadView({
       if (cardType && cardType !== "all") params.set("cardType", cardType);
       if (debouncedSearch) params.set("rationCardSearch", debouncedSearch);
 
-      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      const r = await staffFetch(`/api/orders?${params}`, { headers: getAuthHeader() });
       if (!r.ok) throw new Error("Failed to fetch orders");
       return r.json();
     },
@@ -412,7 +413,7 @@ function DownloadView({
 
       // Persist the download record to the DB — non-blocking, silent on failure
       // (the file is already on disk; this just updates the badge on next scan)
-      fetch(`/api/orders/${orderId}/pdfs/${cardIndex}/downloaded`, {
+      staffFetch(`/api/orders/${orderId}/pdfs/${cardIndex}/downloaded`, {
         method: "PATCH",
         headers: getAuthHeader(),
       }).catch(() => {});
@@ -421,7 +422,7 @@ function DownloadView({
       if (!patchedOrders.has(orderId)) {
         setPatchedOrders(prev => { const s = new Set(prev); s.add(orderId); return s; });
         try {
-          const pr = await fetch(`/api/orders/${orderId}`, {
+          const pr = await staffFetch(`/api/orders/${orderId}`, {
             method: "PATCH",
             headers: { ...getAuthHeader(), "Content-Type": "application/json" },
             body: JSON.stringify({ status: "processing" }),
@@ -448,7 +449,7 @@ function DownloadView({
 
   async function retrySyncPatch(orderId: number) {
     try {
-      const pr = await fetch(`/api/orders/${orderId}`, {
+      const pr = await staffFetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { ...getAuthHeader(), "Content-Type": "application/json" },
         body: JSON.stringify({ status: "processing" }),
@@ -698,7 +699,7 @@ function PrintStatusView({
         quickSearch: debouncedSearch,
         limit: "5",
       });
-      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      const r = await staffFetch(`/api/orders?${params}`, { headers: getAuthHeader() });
       if (!r.ok) throw new Error("Failed to fetch");
       return r.json();
     },
@@ -713,7 +714,7 @@ function PrintStatusView({
     }
     closeUndoWindow();
     try {
-      const r = await fetch(`/api/orders/${orderId}`, {
+      const r = await staffFetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { ...getAuthHeader(), "Content-Type": "application/json" },
         body: JSON.stringify({ status: "processing" }),
@@ -731,7 +732,7 @@ function PrintStatusView({
   async function markAsPrinted(orderId: number, opts?: { auto?: boolean }) {
     setMarkingId(orderId);
     try {
-      const r = await fetch(`/api/orders/${orderId}`, {
+      const r = await staffFetch(`/api/orders/${orderId}`, {
         method: "PATCH",
         headers: { ...getAuthHeader(), "Content-Type": "application/json" },
         body: JSON.stringify({ status: "printed" }),
@@ -846,7 +847,7 @@ function PrintStatusView({
     queryFn: async () => {
       if (!activePhone) return { orders: [] };
       const params = new URLSearchParams({ phoneSearch: activePhone, limit: "10" });
-      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      const r = await staffFetch(`/api/orders?${params}`, { headers: getAuthHeader() });
       if (!r.ok) throw new Error("Failed");
       return r.json();
     },
@@ -897,7 +898,7 @@ function PrintStatusView({
     const targetId: number = order.id;
     let src: any = order;
     try {
-      const r = await fetch(`/api/orders/${targetId}`, { headers: getAuthHeader() });
+      const r = await staffFetch(`/api/orders/${targetId}`, { headers: getAuthHeader() });
       if (r.ok) src = await r.json();
     } catch { /* network hiccup — fall back to the on-screen values */ }
     setEditingOrderId(targetId);
@@ -938,7 +939,7 @@ function PrintStatusView({
     setSavingCustomer(true);
     setCustomerFormError(null);
     try {
-      const r = await fetch(`/api/orders/${editingOrderId}/customer-info`, {
+      const r = await staffFetch(`/api/orders/${editingOrderId}/customer-info`, {
         method: "PATCH",
         headers: { ...getAuthHeader(), "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1231,7 +1232,7 @@ function PrintStatusView({
 
     setCreatingShipment(true);
     try {
-      const r = await fetch(`/api/orders/${order.id}/dispatch`, {
+      const r = await staffFetch(`/api/orders/${order.id}/dispatch`, {
         method: "POST",
         headers: getAuthHeader(),
       });
@@ -1280,7 +1281,7 @@ function PrintStatusView({
 
     setCancellingShipment(true);
     try {
-      const r = await fetch(`/api/orders/${order.id}/dispatch`, {
+      const r = await staffFetch(`/api/orders/${order.id}/dispatch`, {
         method: "DELETE",
         headers: getAuthHeader(),
       });

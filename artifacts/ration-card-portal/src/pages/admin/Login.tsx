@@ -8,7 +8,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useLoginAdmin } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
-import { Shield, Home } from "lucide-react";
+import { Shield, Home, Clock } from "lucide-react";
+import { SESSION_EXPIRED_PARAM } from "@/lib/staffSession";
 
 const schema = z.object({
   email: z.string().email("Invalid email address"),
@@ -21,6 +22,9 @@ export default function AdminLogin() {
   const loginAdmin = useLoginAdmin();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const sessionExpired =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get(SESSION_EXPIRED_PARAM) === "1";
 
   const form = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -63,6 +67,15 @@ export default function AdminLogin() {
           <CardDescription className="text-slate-400">Secure access for authorized personnel only</CardDescription>
         </CardHeader>
         <CardContent className="pt-2">
+          {sessionExpired && (
+            <div
+              data-testid="notice-session-expired"
+              className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-300"
+            >
+              <Clock className="w-4 h-4 shrink-0" />
+              <span>Your session has expired — please log in again.</span>
+            </div>
+          )}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField control={form.control} name="email" render={({ field }) => (

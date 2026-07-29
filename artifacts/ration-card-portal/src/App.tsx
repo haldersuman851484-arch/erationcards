@@ -1,6 +1,7 @@
 import React, { useEffect, lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
+import { handleStaffAuthError } from "./lib/staffSession";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -51,7 +52,14 @@ function PageLoader() {
   );
 }
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  queryCache: new QueryCache({
+    onError: handleStaffAuthError,
+  }),
+  mutationCache: new MutationCache({
+    onError: handleStaffAuthError,
+  }),
+});
 
 function ScrollToTop() {
   const [location] = useLocation();

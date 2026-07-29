@@ -1,3 +1,4 @@
+import { staffFetch } from "@/lib/staffSession";
 import { useEffect, useRef } from "react";
 import { buildLabelAddressLines } from "@/lib/labelAddress";
 import JsBarcode from "jsbarcode";
@@ -62,7 +63,7 @@ export default function ShippingLabel() {
     queryKey: ["shipping-label-order", orderNumber],
     queryFn: async () => {
       const params = new URLSearchParams({ quickSearch: String(orderNumber), limit: "5" });
-      const r = await fetch(`/api/orders?${params}`, { headers: getAuthHeader() });
+      const r = await staffFetch(`/api/orders?${params}`, { headers: getAuthHeader() });
       if (r.status === 401 || r.status === 403) throw new Error("unauthorized");
       if (!r.ok) throw new Error("failed");
       return r.json();

@@ -1,3 +1,4 @@
+import { staffFetch } from "@/lib/staffSession";
 import { useEffect, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -158,7 +159,7 @@ export default function AdminDashboard() {
     enabled: !!admin && activeTab === "applications",
     refetchInterval: activeTab === "applications" ? 15000 : false,
     queryFn: async () => {
-      const r = await fetch("/api/operators?status=pending", { headers: getAuthHeader() as Record<string, string> });
+      const r = await staffFetch("/api/operators?status=pending", { headers: getAuthHeader() as Record<string, string> });
       if (!r.ok) throw new Error("Failed to fetch applications");
       return r.json();
     },
@@ -185,7 +186,7 @@ export default function AdminDashboard() {
     enabled: !!admin && activeTab === "reviews",
     refetchInterval: activeTab === "reviews" ? 15000 : false,
     queryFn: async () => {
-      const r = await fetch("/api/admin/reviews", { headers: getAuthHeader() as Record<string, string> });
+      const r = await staffFetch("/api/admin/reviews", { headers: getAuthHeader() as Record<string, string> });
       if (!r.ok) throw new Error("Failed to fetch reviews");
       return r.json();
     },
