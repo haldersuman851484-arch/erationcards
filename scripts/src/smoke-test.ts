@@ -249,6 +249,32 @@ async function run() {
     }
   }
 
+  // ── 16. IndexNow key file (Bing ownership proof) ─────────────────────────
+  // IndexNow silently ignores every ping unless the key file is reachable at
+  // the site root and its body equals the key exactly.
+  {
+    const INDEXNOW_KEY = "752cb444e5d015f3e8ec9d4cf01e0dbb";
+    const homeBase = BASE.replace(/\/api\/?$/, "") || BASE;
+    if (!process.env["API_BASE_URL"]) {
+      console.log("  ⚠️  IndexNow key file check skipped — set API_BASE_URL to run it against a deployed server");
+    } else {
+      const keyUrl = `${homeBase}/${INDEXNOW_KEY}.txt`;
+      const res = await fetch(keyUrl);
+      assert.equal(
+        res.status,
+        200,
+        `IndexNow key file: expected 200 at ${keyUrl}, got ${res.status} — Bing/IndexNow is silently IGNORING all pings until this file is reachable on the live site`
+      );
+      const body = (await res.text()).trim();
+      assert.equal(
+        body,
+        INDEXNOW_KEY,
+        `IndexNow key file: body at ${keyUrl} does not equal the key (got "${body.slice(0, 60)}") — Bing/IndexNow is silently IGNORING all pings until the file serves exactly the key`
+      );
+      pass(`GET /${INDEXNOW_KEY}.txt → 200 (body matches key — IndexNow ownership proven)`);
+    }
+  }
+
   console.log("\n🎉 All MySQL smoke tests passed!\n");
 }
 
