@@ -51,6 +51,10 @@ import type {
   Review,
   ReviewInput,
   ReviewStatusUpdate,
+  SettingsOtpConfig,
+  SettingsOtpSendResponse,
+  SettingsOtpVerifyBody,
+  SettingsOtpVerifyResponse,
   SuccessResponse,
   TrackOrderParams,
   UpdateOperatorStatusInput,
@@ -1506,6 +1510,223 @@ export const useUpdateUpiSetting = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdateUpiSettingMutationOptions(options));
+    }
+
+export const getGetSettingsOtpConfigUrl = () => {
+
+
+
+
+  return `/api/admin/settings/otp/config`
+}
+
+/**
+ * @summary Get the settings unlock gate status (admin)
+ */
+export const getSettingsOtpConfig = async ( options?: RequestInit): Promise<SettingsOtpConfig> => {
+
+  return customFetch<SettingsOtpConfig>(getGetSettingsOtpConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSettingsOtpConfigQueryKey = () => {
+    return [
+    `/api/admin/settings/otp/config`
+    ] as const;
+    }
+
+
+export const getGetSettingsOtpConfigQueryOptions = <TData = Awaited<ReturnType<typeof getSettingsOtpConfig>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettingsOtpConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSettingsOtpConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSettingsOtpConfig>>> = ({ signal }) => getSettingsOtpConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSettingsOtpConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSettingsOtpConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getSettingsOtpConfig>>>
+export type GetSettingsOtpConfigQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the settings unlock gate status (admin)
+ */
+
+export function useGetSettingsOtpConfig<TData = Awaited<ReturnType<typeof getSettingsOtpConfig>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSettingsOtpConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSettingsOtpConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSendSettingsOtpUrl = () => {
+
+
+
+
+  return `/api/admin/settings/otp/send`
+}
+
+/**
+ * @summary Email a one-time code to every partner (admin)
+ */
+export const sendSettingsOtp = async ( options?: RequestInit): Promise<SettingsOtpSendResponse> => {
+
+  return customFetch<SettingsOtpSendResponse>(getSendSettingsOtpUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSendSettingsOtpMutationOptions = <TError = ErrorType<void | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendSettingsOtp>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof sendSettingsOtp>>, TError,void, TContext> => {
+
+const mutationKey = ['sendSettingsOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof sendSettingsOtp>>, void> = () => {
+
+
+          return  sendSettingsOtp(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SendSettingsOtpMutationResult = NonNullable<Awaited<ReturnType<typeof sendSettingsOtp>>>
+
+    export type SendSettingsOtpMutationError = ErrorType<void | ErrorResponse>
+
+    /**
+ * @summary Email a one-time code to every partner (admin)
+ */
+export const useSendSettingsOtp = <TError = ErrorType<void | ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof sendSettingsOtp>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof sendSettingsOtp>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getSendSettingsOtpMutationOptions(options));
+    }
+
+export const getVerifySettingsOtpUrl = () => {
+
+
+
+
+  return `/api/admin/settings/otp/verify`
+}
+
+/**
+ * @summary Verify both partners' codes and unlock settings (admin)
+ */
+export const verifySettingsOtp = async (settingsOtpVerifyBody: SettingsOtpVerifyBody, options?: RequestInit): Promise<SettingsOtpVerifyResponse> => {
+
+  return customFetch<SettingsOtpVerifyResponse>(getVerifySettingsOtpUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(settingsOtpVerifyBody)
+  }
+);}
+
+
+
+
+export const getVerifySettingsOtpMutationOptions = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySettingsOtp>>, TError,{data: BodyType<SettingsOtpVerifyBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifySettingsOtp>>, TError,{data: BodyType<SettingsOtpVerifyBody>}, TContext> => {
+
+const mutationKey = ['verifySettingsOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifySettingsOtp>>, {data: BodyType<SettingsOtpVerifyBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifySettingsOtp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifySettingsOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifySettingsOtp>>>
+    export type VerifySettingsOtpMutationBody = BodyType<SettingsOtpVerifyBody>
+    export type VerifySettingsOtpMutationError = ErrorType<ErrorResponse | void>
+
+    /**
+ * @summary Verify both partners' codes and unlock settings (admin)
+ */
+export const useVerifySettingsOtp = <TError = ErrorType<ErrorResponse | void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifySettingsOtp>>, TError,{data: BodyType<SettingsOtpVerifyBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifySettingsOtp>>,
+        TError,
+        {data: BodyType<SettingsOtpVerifyBody>},
+        TContext
+      > => {
+      return useMutation(getVerifySettingsOtpMutationOptions(options));
     }
 
 export const getListOperatorsUrl = () => {

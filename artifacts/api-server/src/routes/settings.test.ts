@@ -62,6 +62,14 @@ function makeOperatorToken(operatorId = 99): string {
   return jwt.sign({ operatorId }, TEST_SECRET, { expiresIn: "1h" });
 }
 
+// Settings endpoints additionally require a two-partner OTP unlock token
+// (see settingsOtp.test.ts for the flow that earns one).
+const UNLOCK_HEADER = "x-settings-unlock";
+
+function makeUnlockToken(): string {
+  return jwt.sign({ scope: "settings_unlock", email: "admin@test.com" }, TEST_SECRET, { expiresIn: "15m" });
+}
+
 /** The shared select chain from the mock factory (same object every call). */
 function selectChain() {
   return (db as any).select() as { limit: ReturnType<typeof vi.fn> };
@@ -120,7 +128,8 @@ describe("GET /api/admin/settings/upi — behavior", () => {
   it("reports source=default when nothing is saved", async () => {
     const res = await request(app)
       .get("/api/admin/settings/upi")
-      .set("Authorization", `Bearer ${makeAdminToken()}`);
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken());
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ merchantUpiId: "envdefault@okbank", source: "default" });
   });
@@ -129,7 +138,8 @@ describe("GET /api/admin/settings/upi — behavior", () => {
     selectChain().limit.mockResolvedValueOnce([SAVED_ROW]);
     const res = await request(app)
       .get("/api/admin/settings/upi")
-      .set("Authorization", `Bearer ${makeAdminToken()}`);
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken());
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ merchantUpiId: "saved@upi", source: "custom" });
   });
@@ -169,6 +179,7 @@ describe("PUT /api/admin/settings/upi — validation", () => {
     const res = await request(app)
       .put("/api/admin/settings/upi")
       .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
       .send({ merchantUpiId: bad });
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/valid UPI ID/i);
@@ -179,6 +190,7 @@ describe("PUT /api/admin/settings/upi — validation", () => {
     const res = await request(app)
       .put("/api/admin/settings/upi")
       .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
       .send({});
     expect(res.status).toBe(400);
   });
@@ -191,6 +203,7 @@ describe("PUT /api/admin/settings/upi — happy path", () => {
     const res = await request(app)
       .put("/api/admin/settings/upi")
       .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
       .send({ merchantUpiId: "newstore@okaxis" });
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ merchantUpiId: "newstore@okaxis", source: "custom" });
@@ -205,11 +218,59 @@ describe("PUT /api/admin/settings/upi — happy path", () => {
     const res = await request(app)
       .put("/api/admin/settings/upi")
       .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, makeUnlockToken())
       .send({ merchantUpiId: "  9876543210@ybl  " });
     expect(res.status).toBe(200);
     expect(res.body.merchantUpiId).toBe("9876543210@ybl");
     expect(valuesFn).toHaveBeenCalledWith(
       expect.objectContaining({ value: "9876543210@ybl" })
     );
+  });
+});
+
+describe("settings lock — OTP unlock header required", () => {
+  it("GET upi returns 403 SETTINGS_LOCKED for an admin without the unlock header", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+
+  it("PUT upi returns 403 without the unlock header and does not write", async () => {
+    const { onDupFn } = upsertMocks();
+    vi.clearAllMocks();
+    const res = await request(app)
+      .put("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .send({ merchantUpiId: "newstore@okaxis" });
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+    expect(onDupFn).not.toHaveBeenCalled();
+  });
+
+  it("rejects a garbage unlock token", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/upi")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .set(UNLOCK_HEADER, "not-a-jwt");
+    expect(res.status).toBe(403);
+  });
+
+  it("GET pricing is also locked without the unlock header", async () => {
+    const res = await request(app)
+      .get("/api/admin/settings/pricing")
+      .set("Authorization", `Bearer ${makeAdminToken()}`);
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
+  });
+
+  it("PUT pricing is also locked without the unlock header", async () => {
+    const res = await request(app)
+      .put("/api/admin/settings/pricing")
+      .set("Authorization", `Bearer ${makeAdminToken()}`)
+      .send({});
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe("SETTINGS_LOCKED");
   });
 });

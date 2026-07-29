@@ -185,6 +185,45 @@ export interface UpiSettingUpdate {
   merchantUpiId: string;
 }
 
+export interface SettingsOtpConfig {
+  /** Every partner address that must verify a code */
+  partnerEmails: string[];
+  /** Codes were already sent and are still usable (not expired / not locked out) */
+  otpPending: boolean;
+  /** Seconds until codes may be sent again (0 = allowed now) */
+  cooldownRemainingSeconds: number;
+}
+
+export interface SettingsOtpSendResponse {
+  sent: boolean;
+  partnerEmails: string[];
+  expiresInSeconds: number;
+  cooldownSeconds: number;
+}
+
+export interface SettingsOtpVerifyEntry {
+  email: string;
+  /**
+     * @minLength 6
+     * @maxLength 6
+     */
+  code: string;
+}
+
+export interface SettingsOtpVerifyBody {
+  /**
+     * One entry per partner email with the code that partner received
+     * @minItems 1
+     */
+  codes: SettingsOtpVerifyEntry[];
+}
+
+export interface SettingsOtpVerifyResponse {
+  /** Send as the x-settings-unlock header on settings endpoints */
+  unlockToken: string;
+  expiresInSeconds: number;
+}
+
 export interface PaymentScreenshotUploadResponse {
   url: string;
 }

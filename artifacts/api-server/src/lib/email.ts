@@ -218,3 +218,64 @@ export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log
     return false;
   }
 }
+
+export interface SettingsOtpEmailData {
+  to: string;
+  code: string;
+}
+
+function buildOtpHtml(code: string): string {
+  return `
+<div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
+  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
+  </div>
+  <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
+    <p style="margin: 0 0 12px;">Someone is opening the <strong>admin Settings</strong> (payment UPI ID &amp; card prices).</p>
+    <p style="margin: 0 0 16px;">Your one-time code is:</p>
+    <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; text-align: center; margin-bottom: 16px;">
+      <span style="font-family: monospace; font-size: 28px; font-weight: bold; color: #00afc8; letter-spacing: 6px;">${escapeHtml(code)}</span>
+    </div>
+    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
+      Settings open only when <strong>both partners'</strong> codes are entered. The code expires in 10 minutes.
+    </div>
+    <p style="margin: 0; font-size: 12px; color: #94a3b8;">If you did not expect this, ignore this email — nothing changes without both codes.</p>
+  </div>
+</div>`.trim();
+}
+
+/**
+ * Sends a settings-unlock one-time code to a partner via Resend.
+ * Never throws — the route decides how to react to a failed send, so all
+ * errors are logged and reported as `false`. The code itself is never logged.
+ */
+export async function sendSettingsOtpEmail(data: SettingsOtpEmailData, log: Log): Promise<boolean> {
+  try {
+    const res = await postToResend({
+      from: FROM_ADDRESS,
+      to: [data.to],
+      subject: `${data.code} is your Settings access code - PVC Card Portal`,
+      html: buildOtpHtml(data.code),
+      text: [
+        `Someone is opening the admin Settings (payment UPI ID & card prices).`,
+        ``,
+        `Your one-time code: ${data.code}`,
+        ``,
+        `Settings open only when both partners' codes are entered. The code expires in 10 minutes.`,
+        `If you did not expect this, ignore this email - nothing changes without both codes.`,
+      ].join("\n"),
+    });
+
+    if (!res.ok) {
+      const errBody = await res.text().catch(() => "");
+      log.error({ status: res.status, body: errBody.slice(0, 500), to: data.to }, "Settings OTP email failed to send");
+      return false;
+    }
+
+    log.info({ to: data.to }, "Settings OTP email sent");
+    return true;
+  } catch (err) {
+    log.error({ err, to: data.to }, "Settings OTP email errored");
+    return false;
+  }
+}

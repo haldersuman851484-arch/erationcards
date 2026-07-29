@@ -39,6 +39,10 @@ import {
   getGetPricingSettingQueryKey,
   useUpdatePricingSetting,
   getGetPricingConfigQueryKey,
+  useGetSettingsOtpConfig,
+  getGetSettingsOtpConfigQueryKey,
+  useSendSettingsOtp,
+  useVerifySettingsOtp,
 } from "@workspace/api-client-react";
 import { PRICE_MIN, PRICE_MAX, type PricingMatrix } from "@workspace/pricing";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
@@ -50,6 +54,7 @@ import {
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
   Star, MessageSquare, RotateCcw, Trash2, Settings, IndianRupee as RupeeIcon,
+  Lock, Mail,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -72,6 +77,23 @@ const PAYMENT_STATUS_BADGE: Record<string, string> = {
 function getAuthHeader() {
   const token = localStorage.getItem("adminToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// Settings stay unlocked for ~15 min after both partners' codes are verified.
+// sessionStorage so a page refresh keeps the unlock but closing the tab drops it.
+const UNLOCK_STORAGE_KEY = "settingsUnlock";
+
+function readStoredUnlock(): { token: string; expiresAt: number } | null {
+  try {
+    const raw = sessionStorage.getItem(UNLOCK_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { token?: unknown; expiresAt?: unknown };
+    if (typeof parsed?.token !== "string" || typeof parsed?.expiresAt !== "number") return null;
+    if (parsed.expiresAt <= Date.now()) return null;
+    return { token: parsed.token, expiresAt: parsed.expiresAt };
+  } catch {
+    return null;
+  }
 }
 
 // Mirrors UPI_ID_REGEX on the server: handle@psp, e.g. mystore@okaxis
@@ -237,12 +259,128 @@ export default function AdminDashboard() {
     setDetailOpen(true);
   }, []);
 
-  // ── Payment settings (merchant UPI ID) ──
-  const upiSettingQuery = useGetUpiSetting({
+  // ── Settings unlock gate (two-partner email OTP) ──
+  const [settingsUnlock, setSettingsUnlock] = useState<{ token: string; expiresAt: number } | null>(readStoredUnlock);
+  const settingsUnlocked = !!settingsUnlock;
+
+  const relockSettings = useCallback((notify: boolean) => {
+    setSettingsUnlock(null);
+    try { sessionStorage.removeItem(UNLOCK_STORAGE_KEY); } catch { /* ignore */ }
+    if (notify) {
+      toast({ title: "Settings locked again", description: "The unlock time ended. Send new codes to reopen." });
+    }
+  }, [toast]);
+
+  // Auto-relock exactly when the unlock token expires.
+  useEffect(() => {
+    if (!settingsUnlock) return;
+    const ms = settingsUnlock.expiresAt - Date.now();
+    if (ms <= 0) { relockSettings(false); return; }
+    const t = setTimeout(() => relockSettings(true), ms);
+    return () => clearTimeout(t);
+  }, [settingsUnlock, relockSettings]);
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpInputs, setOtpInputs] = useState<Record<string, string>>({});
+  const [otpError, setOtpError] = useState<string | null>(null);
+  const [cooldownLeft, setCooldownLeft] = useState(0);
+
+  useEffect(() => {
+    if (cooldownLeft <= 0) return;
+    const t = setTimeout(() => setCooldownLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearTimeout(t);
+  }, [cooldownLeft]);
+
+  const otpConfigQuery = useGetSettingsOtpConfig({
+    query: {
+      queryKey: getGetSettingsOtpConfigQueryKey(),
+      enabled: activeTab === "settings" && !settingsUnlocked,
+    },
     request: { headers: getAuthHeader() },
   } as any);
-  const updateUpiMutation = useUpdateUpiSetting({
+  const partnerEmails: string[] = otpConfigQuery.data?.partnerEmails ?? [];
+  // Codes may already be in the partners' inboxes from an earlier attempt.
+  const showCodeInputs = otpSent || !!otpConfigQuery.data?.otpPending;
+
+  useEffect(() => {
+    const c = otpConfigQuery.data?.cooldownRemainingSeconds ?? 0;
+    if (c > 0) setCooldownLeft(c);
+  }, [otpConfigQuery.data]);
+
+  const sendOtpMutation = useSendSettingsOtp({
     request: { headers: getAuthHeader() },
+  } as any);
+  const verifyOtpMutation = useVerifySettingsOtp({
+    request: { headers: getAuthHeader() },
+  } as any);
+
+  function handleSendCodes() {
+    setOtpError(null);
+    sendOtpMutation.mutate(undefined as any, {
+      onSuccess: (data: any) => {
+        setOtpSent(true);
+        setOtpInputs({});
+        setCooldownLeft(data?.cooldownSeconds ?? 60);
+        toast({ title: "Codes sent!", description: "Each partner got a 6-digit code by email. Codes work for 10 minutes." });
+      },
+      onError: (err: unknown) => {
+        const e = err as { data?: { error?: string; secondsRemaining?: number } };
+        if (typeof e?.data?.secondsRemaining === "number") setCooldownLeft(e.data.secondsRemaining);
+        setOtpError(e?.data?.error || "Could not send the codes. Try again.");
+      },
+    });
+  }
+
+  function handleVerifyCodes() {
+    const entries = partnerEmails.map((email) => ({ email, code: (otpInputs[email] ?? "").trim() }));
+    if (entries.length === 0 || entries.some((e) => !/^\d{6}$/.test(e.code))) {
+      setOtpError("Enter the 6-digit code from each email.");
+      return;
+    }
+    setOtpError(null);
+    verifyOtpMutation.mutate({ data: { codes: entries } } as any, {
+      onSuccess: (data: any) => {
+        const unlock = {
+          token: data.unlockToken as string,
+          expiresAt: Date.now() + ((data?.expiresInSeconds ?? 900) as number) * 1000,
+        };
+        try { sessionStorage.setItem(UNLOCK_STORAGE_KEY, JSON.stringify(unlock)); } catch { /* ignore */ }
+        setSettingsUnlock(unlock);
+        setOtpSent(false);
+        setOtpInputs({});
+        queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
+        queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
+        toast({ title: "Settings unlocked!", description: "Both codes matched. Settings stay open for 15 minutes." });
+      },
+      onError: (err: unknown) => {
+        const e = err as { data?: { error?: string } };
+        setOtpError(e?.data?.error || "Could not verify the codes. Try again.");
+      },
+    });
+  }
+
+  /** 403 SETTINGS_LOCKED from the server → drop the stale unlock and show the gate again. */
+  function handleSettingsAuthError(err: unknown): boolean {
+    const e = err as { data?: { code?: string } };
+    if (e?.data?.code === "SETTINGS_LOCKED") {
+      relockSettings(true);
+      return true;
+    }
+    return false;
+  }
+
+  const settingsHeaders = {
+    ...getAuthHeader(),
+    ...(settingsUnlock ? { "x-settings-unlock": settingsUnlock.token } : {}),
+  };
+
+  // ── Payment settings (merchant UPI ID) ──
+  const upiSettingQuery = useGetUpiSetting({
+    query: { queryKey: getGetUpiSettingQueryKey(), enabled: settingsUnlocked },
+    request: { headers: settingsHeaders },
+  } as any);
+  const updateUpiMutation = useUpdateUpiSetting({
+    request: { headers: settingsHeaders },
   } as any);
   const [upiInput, setUpiInput] = useState("");
   const [upiInputInvalid, setUpiInputInvalid] = useState(false);
@@ -267,6 +405,7 @@ export default function AdminDashboard() {
           queryClient.invalidateQueries({ queryKey: getGetUpiConfigQueryKey() });
         },
         onError: (err: unknown) => {
+          if (handleSettingsAuthError(err)) return;
           const serverMsg = (err as { data?: { error?: string } })?.data?.error;
           toast({
             title: "Could not save UPI ID",
@@ -280,11 +419,22 @@ export default function AdminDashboard() {
 
   // ── Pricing settings (card price matrix) ──
   const pricingSettingQuery = useGetPricingSetting({
-    request: { headers: getAuthHeader() },
+    query: { queryKey: getGetPricingSettingQueryKey(), enabled: settingsUnlocked },
+    request: { headers: settingsHeaders },
   } as any);
   const updatePricingMutation = useUpdatePricingSetting({
-    request: { headers: getAuthHeader() },
+    request: { headers: settingsHeaders },
   } as any);
+
+  // A stale/invalid unlock token makes the settings GET queries themselves come
+  // back 403 SETTINGS_LOCKED — treat that exactly like a mutation relock so the
+  // gate reappears instead of a dead "unlocked" screen with load errors.
+  useEffect(() => {
+    const errors: unknown[] = [upiSettingQuery.error, pricingSettingQuery.error];
+    if (errors.some((e) => (e as { data?: { code?: string } } | null)?.data?.code === "SETTINGS_LOCKED")) {
+      relockSettings(true);
+    }
+  }, [upiSettingQuery.error, pricingSettingQuery.error, relockSettings]);
   // Flat string inputs keyed "group.tier.audience" so partial typing never crashes
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [priceErrors, setPriceErrors] = useState<Record<string, boolean>>({});
@@ -334,6 +484,7 @@ export default function AdminDashboard() {
           queryClient.invalidateQueries({ queryKey: getGetPricingConfigQueryKey() });
         },
         onError: (err: unknown) => {
+          if (handleSettingsAuthError(err)) return;
           const serverMsg = (err as { data?: { error?: string } })?.data?.error;
           toast({
             title: "Could not save prices",
@@ -1247,6 +1398,116 @@ export default function AdminDashboard() {
 
             {/* ── Settings Tab ── */}
             <TabsContent value="settings" className="tab-panel mt-4 space-y-6">
+              {!settingsUnlocked ? (
+              <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-settings-locked">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Lock className="w-5 h-5 text-primary" /> Settings are locked
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    The payment UPI ID and card prices are protected. One-time codes are emailed to
+                    both partners — settings open only after both codes are entered.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {otpConfigQuery.isLoading ? (
+                    <p className="text-sm text-slate-500">Loading…</p>
+                  ) : otpConfigQuery.isError ? (
+                    <p className="text-sm text-red-600" data-testid="text-otp-config-error">
+                      Could not load the unlock status. Refresh the page to try again.
+                    </p>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {partnerEmails.map((email, i) => (
+                          <div key={email} className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                            <Mail className="w-4 h-4 text-slate-400 shrink-0" />
+                            <span className="font-mono text-sm text-slate-900" data-testid={`text-partner-email-${i}`}>{email}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {!showCodeInputs ? (
+                        <Button
+                          onClick={handleSendCodes}
+                          disabled={sendOtpMutation.isPending || cooldownLeft > 0}
+                          data-testid="button-send-codes"
+                        >
+                          <Send className="w-4 h-4 mr-2" />
+                          {sendOtpMutation.isPending
+                            ? "Sending codes…"
+                            : cooldownLeft > 0
+                              ? `Wait ${cooldownLeft}s to send again`
+                              : "Email codes to both partners"}
+                        </Button>
+                      ) : (
+                        <div className="space-y-3">
+                          {partnerEmails.map((email, i) => (
+                            <div key={email}>
+                              <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">
+                                Code emailed to {email}
+                              </p>
+                              <Input
+                                inputMode="numeric"
+                                maxLength={6}
+                                placeholder="6-digit code"
+                                className="font-mono max-w-[200px] tracking-widest"
+                                value={otpInputs[email] ?? ""}
+                                onChange={(e) => {
+                                  const digits = e.target.value.replace(/\D/g, "").slice(0, 6);
+                                  setOtpInputs((p) => ({ ...p, [email]: digits }));
+                                  setOtpError(null);
+                                }}
+                                data-testid={`input-otp-${i}`}
+                              />
+                            </div>
+                          ))}
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <Button
+                              onClick={handleVerifyCodes}
+                              disabled={verifyOtpMutation.isPending}
+                              data-testid="button-verify-codes"
+                            >
+                              <ShieldCheck className="w-4 h-4 mr-2" />
+                              {verifyOtpMutation.isPending ? "Checking…" : "Verify & open settings"}
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={handleSendCodes}
+                              disabled={sendOtpMutation.isPending || cooldownLeft > 0}
+                              data-testid="button-resend-codes"
+                            >
+                              {sendOtpMutation.isPending
+                                ? "Sending…"
+                                : cooldownLeft > 0
+                                  ? `Resend in ${cooldownLeft}s`
+                                  : "Resend codes"}
+                            </Button>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            Codes work for 10 minutes. After 5 wrong tries you must send new codes.
+                          </p>
+                        </div>
+                      )}
+
+                      {otpError && (
+                        <p className="text-sm text-red-600" data-testid="text-otp-error">{otpError}</p>
+                      )}
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+              ) : (
+              <>
+              <div>
+                <Badge
+                  variant="outline"
+                  className="bg-emerald-50 text-emerald-700 border-emerald-200"
+                  data-testid="badge-settings-unlocked"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Unlocked by both partners — locks again automatically after 15 minutes
+                </Badge>
+              </div>
               <Card className="border-slate-200 shadow-sm max-w-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -1416,6 +1677,8 @@ export default function AdminDashboard() {
                   )}
                 </CardContent>
               </Card>
+              </>
+              )}
             </TabsContent>
           </Tabs>
         </main>

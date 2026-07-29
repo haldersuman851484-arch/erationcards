@@ -752,6 +752,49 @@ export const UpdateUpiSettingResponse = zod.object({
 
 
 /**
+ * @summary Get the settings unlock gate status (admin)
+ */
+export const GetSettingsOtpConfigResponse = zod.object({
+  "partnerEmails": zod.array(zod.string()).describe('Every partner address that must verify a code'),
+  "otpPending": zod.boolean().describe('Codes were already sent and are still usable (not expired \/ not locked out)'),
+  "cooldownRemainingSeconds": zod.number().describe('Seconds until codes may be sent again (0 = allowed now)')
+})
+
+
+/**
+ * @summary Email a one-time code to every partner (admin)
+ */
+export const SendSettingsOtpResponse = zod.object({
+  "sent": zod.boolean(),
+  "partnerEmails": zod.array(zod.string()),
+  "expiresInSeconds": zod.number(),
+  "cooldownSeconds": zod.number()
+})
+
+
+/**
+ * @summary Verify both partners' codes and unlock settings (admin)
+ */
+export const verifySettingsOtpBodyCodesItemCodeMin = 6;
+export const verifySettingsOtpBodyCodesItemCodeMax = 6;
+
+
+
+
+export const VerifySettingsOtpBody = zod.object({
+  "codes": zod.array(zod.object({
+  "email": zod.string(),
+  "code": zod.string().min(verifySettingsOtpBodyCodesItemCodeMin).max(verifySettingsOtpBodyCodesItemCodeMax)
+})).min(1).describe('One entry per partner email with the code that partner received')
+})
+
+export const VerifySettingsOtpResponse = zod.object({
+  "unlockToken": zod.string().describe('Send as the x-settings-unlock header on settings endpoints'),
+  "expiresInSeconds": zod.number()
+})
+
+
+/**
  * @summary List all operators (admin)
  */
 export const ListOperatorsResponseItem = zod.object({

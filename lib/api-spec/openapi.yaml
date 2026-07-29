@@ -380,6 +380,8 @@ paths:
                 $ref: "#/components/schemas/PricingSetting"
         "401":
           description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
     put:
       operationId: updatePricingSetting
       tags: [dashboard]
@@ -401,6 +403,8 @@ paths:
           description: Invalid prices (must be whole rupees between 1 and 10000)
         "401":
           description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
 
   /admin/settings/upi:
     get:
@@ -416,6 +420,8 @@ paths:
                 $ref: "#/components/schemas/UpiSetting"
         "401":
           description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
     put:
       operationId: updateUpiSetting
       tags: [dashboard]
@@ -435,6 +441,77 @@ paths:
                 $ref: "#/components/schemas/UpiSetting"
         "400":
           description: Invalid UPI ID format
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked — both partners' emailed codes must be verified first
+
+  /admin/settings/otp/config:
+    get:
+      operationId: getSettingsOtpConfig
+      tags: [dashboard]
+      summary: Get the settings unlock gate status (admin)
+      responses:
+        "200":
+          description: Partner emails plus pending-code and cooldown status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsOtpConfig"
+        "401":
+          description: Not authenticated
+
+  /admin/settings/otp/send:
+    post:
+      operationId: sendSettingsOtp
+      tags: [dashboard]
+      summary: Email a one-time code to every partner (admin)
+      responses:
+        "200":
+          description: Codes generated and emailed to every partner address
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsOtpSendResponse"
+        "401":
+          description: Not authenticated
+        "429":
+          description: Resend requested during the cooldown window
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: One or more code emails could not be sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /admin/settings/otp/verify:
+    post:
+      operationId: verifySettingsOtp
+      tags: [dashboard]
+      summary: Verify both partners' codes and unlock settings (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SettingsOtpVerifyBody"
+      responses:
+        "200":
+          description: All codes correct — returns a short-lived settings unlock token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SettingsOtpVerifyResponse"
+        "400":
+          description: Wrong, expired, or missing codes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
         "401":
           description: Not authenticated
 
@@ -1093,6 +1170,81 @@ components:
           maxLength: 120
       required:
         - merchantUpiId
+
+    SettingsOtpConfig:
+      type: object
+      properties:
+        partnerEmails:
+          type: array
+          items:
+            type: string
+          description: Every partner address that must verify a code
+        otpPending:
+          type: boolean
+          description: Codes were already sent and are still usable (not expired / not locked out)
+        cooldownRemainingSeconds:
+          type: integer
+          description: Seconds until codes may be sent again (0 = allowed now)
+      required:
+        - partnerEmails
+        - otpPending
+        - cooldownRemainingSeconds
+
+    SettingsOtpSendResponse:
+      type: object
+      properties:
+        sent:
+          type: boolean
+        partnerEmails:
+          type: array
+          items:
+            type: string
+        expiresInSeconds:
+          type: integer
+        cooldownSeconds:
+          type: integer
+      required:
+        - sent
+        - partnerEmails
+        - expiresInSeconds
+        - cooldownSeconds
+
+    SettingsOtpVerifyEntry:
+      type: object
+      properties:
+        email:
+          type: string
+        code:
+          type: string
+          minLength: 6
+          maxLength: 6
+      required:
+        - email
+        - code
+
+    SettingsOtpVerifyBody:
+      type: object
+      properties:
+        codes:
+          type: array
+          description: One entry per partner email with the code that partner received
+          items:
+            $ref: "#/components/schemas/SettingsOtpVerifyEntry"
+          minItems: 1
+      required:
+        - codes
+
+    SettingsOtpVerifyResponse:
+      type: object
+      properties:
+        unlockToken:
+          type: string
+          description: Send as the x-settings-unlock header on settings endpoints
+        expiresInSeconds:
+          type: integer
+      required:
+        - unlockToken
+        - expiresInSeconds
 
     PaymentScreenshotUploadResponse:
       type: object
