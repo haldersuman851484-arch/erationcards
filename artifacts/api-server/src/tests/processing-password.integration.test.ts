@@ -16,10 +16,11 @@ vi.mock("../lib/email", () => ({
   sendSettingsChangedEmail: vi.fn(async () => true),
 }));
 
+import jwt from "jsonwebtoken";
 import app from "../app";
-import { createAdminToken } from "../lib/auth";
+import { createAdminToken, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import { createSettingsUnlockToken } from "../lib/settingsOtp";
-import { PROCESSING_PASSWORD_SETTING_KEY } from "../lib/settings";
+import { PROCESSING_PASSWORD_SETTING_KEY, PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY } from "../lib/settings";
 import { db, settingsTable, settingsChangeHistoryTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
@@ -36,6 +37,17 @@ let prevPassword: string | undefined;
 
 async function clearSavedPassword() {
   await db.delete(settingsTable).where(eq(settingsTable.key, PROCESSING_PASSWORD_SETTING_KEY));
+  await db.delete(settingsTable).where(eq(settingsTable.key, PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY));
+  invalidateProcessingPasswordChangedAtCache();
+}
+
+/** Staff token whose iat is backdated, like a session from before a rotation. */
+function backdatedToken(email: string, role: string, secondsAgo: number): string {
+  return jwt.sign(
+    { email, role, iat: Math.floor(Date.now() / 1000) - secondsAgo },
+    process.env.SESSION_SECRET!,
+    { expiresIn: "7d" },
+  );
 }
 
 beforeAll(async () => {
@@ -112,6 +124,34 @@ describe("employee password rotation", () => {
       .post("/api/admin/login")
       .send({ email: PROCESSING_EMAIL, password: ENV_PASSWORD });
     expect(oldLogin.status).toBe(401);
+  });
+
+  it("invalidates processing sessions issued before the rotation, but not admin sessions", async () => {
+    // Sessions from 60s before the rotation recorded in the previous test.
+    const oldProcessing = backdatedToken(PROCESSING_EMAIL, "processing", 60);
+    const oldAdmin = backdatedToken(ADMIN_EMAIL, "admin", 60);
+
+    const bounced = await request(app)
+      .get("/api/admin/me")
+      .set("Authorization", `Bearer ${oldProcessing}`);
+    expect(bounced.status).toBe(401);
+
+    const adminStill = await request(app)
+      .get("/api/admin/me")
+      .set("Authorization", `Bearer ${oldAdmin}`);
+    expect(adminStill.status).toBe(200);
+    expect(adminStill.body.role).toBe("admin");
+
+    // A fresh login with the new password works — its token postdates the change.
+    const fresh = await request(app)
+      .post("/api/admin/login")
+      .send({ email: PROCESSING_EMAIL, password: NEW_PASSWORD });
+    expect(fresh.status).toBe(200);
+    const freshMe = await request(app)
+      .get("/api/admin/me")
+      .set("Authorization", `Bearer ${fresh.body.token}`);
+    expect(freshMe.status).toBe(200);
+    expect(freshMe.body.role).toBe("processing");
   });
 
   it("records the change in the audit trail without the plaintext password", async () => {

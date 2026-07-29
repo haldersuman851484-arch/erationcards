@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody } from "@workspace/api-zod";
-import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword } from "../lib/auth";
+import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import {
   getOtpGateStatus,
   createOtpCodes,
@@ -22,6 +22,7 @@ import {
   MERCHANT_UPI_SETTING_KEY,
   PRICING_SETTING_KEY,
   PROCESSING_PASSWORD_SETTING_KEY,
+  PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY,
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { db } from "@workspace/db";
@@ -48,7 +49,7 @@ function formatPricingForEmail(pricing: {
 // GET /admin/verifications
 router.get("/admin/verifications", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const page = Math.max(1, parseInt(String(req.query.page)) || 1);
@@ -80,7 +81,7 @@ router.get("/admin/verifications", async (req: Request, res: Response) => {
 // PATCH /admin/operators/:id/status
 router.patch("/admin/operators/:id/status", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const id = parseInt(String(req.params.id));
@@ -144,7 +145,7 @@ router.post("/admin/login", async (req: Request, res: Response) => {
 // GET /admin/me
 router.get("/admin/me", async (req: Request, res: Response) => {
   try {
-    const staff = parseStaffToken(req);
+    const staff = await parseStaffToken(req);
     if (!staff) { res.status(401).json({ error: "Not authenticated" }); return; }
     res.json({ role: staff.role, email: staff.email });
   } catch (err) {
@@ -163,7 +164,7 @@ router.post("/admin/logout", (_req: Request, res: Response) => {
 // GET /admin/settings/upi — current UPI ID + whether it's admin-saved or the env default
 router.get("/admin/settings/upi", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -180,7 +181,7 @@ router.get("/admin/settings/upi", async (req: Request, res: Response) => {
 // PUT /admin/settings/upi — save a new merchant UPI ID (shown to customers immediately)
 router.put("/admin/settings/upi", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -229,7 +230,7 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
 // GET /admin/settings/pricing — current price matrix + whether it's admin-saved or the built-in default
 router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -245,7 +246,7 @@ router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
 // PUT /admin/settings/pricing — save new card prices (used by forms & server amounts immediately)
 router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -294,7 +295,7 @@ router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
 // PUT /admin/settings/processing-password — change the employee login password (takes effect immediately)
 router.put("/admin/settings/processing-password", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -310,6 +311,11 @@ router.put("/admin/settings/processing-password", async (req: Request, res: Resp
 
     const hadCustom = !!(await getSettingValue(PROCESSING_PASSWORD_SETTING_KEY));
     await setSettingValue(PROCESSING_PASSWORD_SETTING_KEY, hashPassword(candidate));
+
+    // Invalidate every existing processing session: tokens issued before this
+    // moment are rejected by parseStaffToken, bouncing ex-employees to login.
+    await setSettingValue(PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY, String(Date.now()));
+    invalidateProcessingPasswordChangedAtCache();
 
     // Audit trail — never store the password itself, only that it changed.
     const oldLabel = hadCustom ? "(previous saved password)" : "(server default password)";
@@ -345,7 +351,7 @@ router.put("/admin/settings/processing-password", async (req: Request, res: Resp
 // GET /admin/settings/history — read-only audit trail of UPI/price changes
 router.get("/admin/settings/history", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
@@ -382,7 +388,7 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
 // GET /admin/settings/otp/config — partner emails + pending/cooldown status
 router.get("/admin/settings/otp/config", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
     res.json(await getOtpGateStatus());
   } catch (err) {
@@ -394,7 +400,7 @@ router.get("/admin/settings/otp/config", async (req: Request, res: Response) => 
 // POST /admin/settings/otp/send — email a fresh code to every partner
 router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const created = await createOtpCodes();
@@ -437,7 +443,7 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
 // POST /admin/settings/otp/verify — both codes right → short-lived unlock token
 router.post("/admin/settings/otp/verify", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const parsed = VerifySettingsOtpBody.safeParse(req.body);

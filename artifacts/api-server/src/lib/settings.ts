@@ -5,6 +5,7 @@ import { DEFAULT_PRICING, isValidPricingMatrix, type PricingMatrix } from "@work
 export const MERCHANT_UPI_SETTING_KEY = "merchant_upi_id";
 export const PRICING_SETTING_KEY = "pricing_matrix";
 export const PROCESSING_PASSWORD_SETTING_KEY = "processing_password_hash";
+export const PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY = "processing_password_changed_at";
 
 /**
  * UPI VPA format: handle@psp — e.g. mystore@okaxis, 9876543210@ybl.

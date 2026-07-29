@@ -75,7 +75,7 @@ router.post(
 );
 
 router.patch("/orders/:id/payment-status", async (req: Request, res: Response) => {
-  const admin = parseStaffToken(req);
+  const admin = await parseStaffToken(req);
   if (!admin) {
     res.status(401).json({ error: "Admin authentication required" });
     return;

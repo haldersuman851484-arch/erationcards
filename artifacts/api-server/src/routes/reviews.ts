@@ -103,7 +103,7 @@ router.post("/reviews", async (req: Request, res: Response) => {
 // GET /admin/reviews — admin list all reviews with optional status filter
 router.get("/admin/reviews", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const statusParam = req.query.status as string | undefined;
@@ -124,7 +124,7 @@ router.get("/admin/reviews", async (req: Request, res: Response) => {
 // DELETE /admin/reviews/:id — permanently delete a review
 router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const id = parseInt(String(req.params.id));
@@ -145,7 +145,7 @@ router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
 // PATCH /admin/reviews/:id — approve or reject a review
 router.patch("/admin/reviews/:id", async (req: Request, res: Response) => {
   try {
-    const admin = requireAdmin(req, res);
+    const admin = await requireAdmin(req, res);
     if (!admin) return;
 
     const id = parseInt(String(req.params.id));

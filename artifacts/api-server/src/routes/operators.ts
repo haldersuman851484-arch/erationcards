@@ -17,7 +17,7 @@ const router = Router();
 // only — pending/suspended applications are admin territory.
 router.get("/operators", async (req: Request, res: Response) => {
   try {
-    const staff = parseStaffToken(req);
+    const staff = await parseStaffToken(req);
     if (!staff) {
       res.status(401).json({ error: "Not authenticated" });
       return;

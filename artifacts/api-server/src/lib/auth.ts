@@ -66,19 +66,54 @@ export function parseAdminToken(req: Request): { email: string; role: string } |
   }
 }
 
+// Short-lived cache of the "password changed at" timestamp so shared staff
+// endpoints don't hit the DB on every request. Invalidated in-process when
+// the admin rotates the password; other instances pick it up within the TTL.
+const PW_CHANGED_AT_CACHE_TTL_MS = 15_000;
+let pwChangedAtCache: { value: number | null; fetchedAt: number } | null = null;
+
+export function invalidateProcessingPasswordChangedAtCache(): void {
+  pwChangedAtCache = null;
+}
+
+async function getProcessingPasswordChangedAtMs(): Promise<number | null> {
+  const now = Date.now();
+  if (pwChangedAtCache && now - pwChangedAtCache.fetchedAt < PW_CHANGED_AT_CACHE_TTL_MS) {
+    return pwChangedAtCache.value;
+  }
+  // Lazy import so this auth module stays usable in contexts without a DB.
+  const { getSettingValue, PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY } = await import("./settings");
+  const raw = await getSettingValue(PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY);
+  const value = raw && /^\d+$/.test(raw) ? Number(raw) : null;
+  pwChangedAtCache = { value, fetchedAt: now };
+  return value;
+}
+
 /**
  * Accepts both admin and processing-staff tokens. Use for the order/courier
  * endpoints both panels share; use requireAdmin for admin-only routes.
+ *
+ * Processing tokens issued before the last employee-password rotation are
+ * rejected, so an ex-employee is logged out as soon as the password changes.
+ * Admin tokens are unaffected.
  */
-export function parseStaffToken(req: Request): { email: string; role: StaffRole } | null {
+export async function parseStaffToken(req: Request): Promise<{ email: string; role: StaffRole } | null> {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as { email?: string; role?: string };
+    const decoded = jwt.verify(token, getJwtSecret()) as { email?: string; role?: string; iat?: number };
     const role: StaffRole | null =
       decoded.role === "admin" || decoded.role === "processing" ? decoded.role : null;
     if (!decoded.email || !role) return null;
+    if (role === "processing") {
+      const changedAtMs = await getProcessingPasswordChangedAtMs();
+      // iat has second precision; only reject tokens whose whole issue-second
+      // is before the rotation, so logins right after the change stay valid.
+      if (changedAtMs !== null && typeof decoded.iat === "number" && decoded.iat * 1000 + 999 < changedAtMs) {
+        return null;
+      }
+    }
     return { email: decoded.email, role };
   } catch {
     return null;
@@ -90,8 +125,8 @@ export function parseStaffToken(req: Request): { email: string; role: StaffRole 
  * processing staff (valid token, insufficient role). Writes the error
  * response itself so callers just `return` on null.
  */
-export function requireAdmin(req: Request, res: Response): { email: string; role: StaffRole } | null {
-  const staff = parseStaffToken(req);
+export async function requireAdmin(req: Request, res: Response): Promise<{ email: string; role: StaffRole } | null> {
+  const staff = await parseStaffToken(req);
   if (!staff) { res.status(401).json({ error: "Not authenticated" }); return null; }
   if (staff.role !== "admin") { res.status(403).json({ error: "Admin access required" }); return null; }
   return staff;
