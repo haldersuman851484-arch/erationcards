@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
+import { applySeoPriceTokens, DEFAULT_PRICING } from "@workspace/pricing";
 
 const isBuild = process.argv.includes("build");
 
@@ -77,10 +78,32 @@ function fontPreloadPlugin(): Plugin {
   };
 }
 
+/**
+ * index.html states prices in meta tags and JSON-LD via %%PRICE_*%% tokens
+ * (see @workspace/pricing seoPriceValues). In dev the tokens are substituted
+ * here with the launch defaults so the page is always valid HTML. In a
+ * production build the tokens are left in place ON PURPOSE: the API server
+ * substitutes the live admin-edited prices every time it serves index.html,
+ * so Google search snippets always match the current prices.
+ */
+function seoPriceTokensPlugin(): Plugin {
+  return {
+    name: "seo-price-tokens",
+    transformIndexHtml: {
+      order: "pre",
+      handler(html, ctx) {
+        if (ctx.bundle) return html; // production build: keep tokens for the server
+        return applySeoPriceTokens(html, DEFAULT_PRICING);
+      },
+    },
+  };
+}
+
 export default defineConfig({
   base: basePath,
   plugins: [
     react(),
+    seoPriceTokensPlugin(),
     tailwindcss(),
     runtimeErrorOverlay(),
     fontPreloadPlugin(),

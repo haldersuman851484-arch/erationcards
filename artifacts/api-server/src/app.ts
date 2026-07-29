@@ -6,6 +6,9 @@ import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
 import { serveFromStorage } from "./lib/storage";
+import { readFile } from "fs/promises";
+import { applySeoPriceTokens } from "@workspace/pricing";
+import { getPricingMatrix } from "./lib/settings";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -93,12 +96,54 @@ app.get("/api/uploads/:filename", async (req: Request, res: Response) => {
 
 app.use("/api", router);
 
-// Serve React frontend static files in production
+// Serve React frontend static files in production.
+// index:false so "/" falls through to the SPA handler below, which injects
+// the LIVE prices into index.html's %%PRICE_*%% SEO tokens (meta description,
+// Open Graph, JSON-LD). This keeps Google search snippet prices in sync with
+// the admin-edited pricing without a rebuild.
 const publicDir = path.resolve(__dirname, "../public");
-app.use(express.static(publicDir));
-// SPA fallback — send index.html for all non-API routes
-app.get("/{*path}", (_req, res) => {
-  res.sendFile(path.join(publicDir, "index.html"));
+app.use(express.static(publicDir, { index: false }));
+
+let rawIndexHtml: string | null = null;
+let renderedIndexHtml: { key: string; html: string } | null = null;
+
+async function renderIndexHtml(): Promise<string | null> {
+  if (rawIndexHtml === null) {
+    try {
+      rawIndexHtml = await readFile(path.join(publicDir, "index.html"), "utf8");
+    } catch {
+      return null; // no built frontend (dev API server) — behave like before (404)
+    }
+  }
+  const { pricing } = await getPricingMatrix();
+  const key = JSON.stringify(pricing);
+  if (!renderedIndexHtml || renderedIndexHtml.key !== key) {
+    renderedIndexHtml = { key, html: applySeoPriceTokens(rawIndexHtml, pricing) };
+  }
+  return renderedIndexHtml.html;
+}
+
+// SPA fallback — send index.html (with live prices injected) for all non-API routes
+app.get("/{*path}", async (_req, res) => {
+  try {
+    const html = await renderIndexHtml();
+    if (html === null) {
+      res.status(404).json({ error: "Frontend build not found" });
+      return;
+    }
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache");
+    res.send(html);
+  } catch {
+    // Never let a pricing/database hiccup take down the homepage: fall back
+    // to the default launch prices if we have the file, else the raw file.
+    if (rawIndexHtml !== null) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.send(applySeoPriceTokens(rawIndexHtml));
+      return;
+    }
+    res.sendFile(path.join(publicDir, "index.html"));
+  }
 });
 
 export default app;

@@ -329,7 +329,7 @@ export default function AdminDashboard() {
       { data: { pricing: matrix } },
       {
         onSuccess: () => {
-          toast({ title: "Prices updated!", description: "Order forms and new orders use the new prices immediately." });
+          toast({ title: "Prices updated!", description: "Order forms, new orders and Google search snippet prices all follow the new prices immediately." });
           queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
           queryClient.invalidateQueries({ queryKey: getGetPricingConfigQueryKey() });
         },
@@ -1328,7 +1328,9 @@ export default function AdminDashboard() {
                   <p className="text-sm text-slate-500">
                     Per-card prices in ₹. "1 card" applies when the order has a single card; "2+ cards"
                     is the per-card rate when the order has two or more. Changes apply immediately to
-                    the order forms and to new orders — no restart needed.
+                    the order forms and to new orders — no restart needed. The prices shown in
+                    Google search snippets (page description &amp; FAQ) update automatically too;
+                    Google refreshes them the next time it re-crawls the site.
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-5">

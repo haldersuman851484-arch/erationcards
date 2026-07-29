@@ -120,6 +120,57 @@ export function computeOrderAmount(
   return cardTypes.reduce((sum, t) => sum + perCardPrice(t, cardTypes.length, isOperator, pricing), 0);
 }
 
+/**
+ * SEO price tokens — used by ration-card-portal/index.html so the prices
+ * Google shows in search snippets (meta description, Open Graph, JSON-LD
+ * FAQ/offers, priceRange) always follow the live admin-edited prices.
+ *
+ * index.html contains placeholders like %%PRICE_RATION_SINGLE%%; in dev the
+ * Vite plugin substitutes DEFAULT_PRICING, and in production the API server
+ * substitutes the live matrix every time it serves index.html.
+ */
+export type SeoPriceTokenKey =
+  | "RATION_SINGLE"
+  | "RATION_MULTI"
+  | "SPECIAL_SINGLE"
+  | "SPECIAL_MULTI"
+  | "RATION_LOW"
+  | "RATION_HIGH"
+  | "PUBLIC_MIN"
+  | "PUBLIC_MAX";
+
+/** Public-audience price values for each SEO token. */
+export function seoPriceValues(pricing: PricingMatrix): Record<SeoPriceTokenKey, number> {
+  const rationSingle = pricing.ration.single.public;
+  const rationMulti = pricing.ration.multi.public;
+  const specialSingle = pricing.special.single.public;
+  const specialMulti = pricing.special.multi.public;
+  const all = [rationSingle, rationMulti, specialSingle, specialMulti];
+  return {
+    RATION_SINGLE: rationSingle,
+    RATION_MULTI: rationMulti,
+    SPECIAL_SINGLE: specialSingle,
+    SPECIAL_MULTI: specialMulti,
+    RATION_LOW: Math.min(rationSingle, rationMulti),
+    RATION_HIGH: Math.max(rationSingle, rationMulti),
+    PUBLIC_MIN: Math.min(...all),
+    PUBLIC_MAX: Math.max(...all),
+  };
+}
+
+/**
+ * Replaces every %%PRICE_<KEY>%% placeholder in the given HTML with the
+ * corresponding public price from the matrix. Unknown placeholders are left
+ * untouched (and can be asserted against in tests).
+ */
+export function applySeoPriceTokens(html: string, pricing: PricingMatrix = DEFAULT_PRICING): string {
+  const values = seoPriceValues(pricing);
+  return html.replace(/%%PRICE_([A-Z_]+)%%/g, (match, key: string) => {
+    const v = values[key as SeoPriceTokenKey];
+    return v === undefined ? match : String(v);
+  });
+}
+
 export interface PriceLine {
   group: PriceGroup;
   /** e.g. "Ration Card" or "ABHA / E-SHRAM / GENERAL" */
