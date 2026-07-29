@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { parseAdminToken } from "../lib/auth";
 import { uploadToStorage } from "../lib/storage";
+import { getMerchantUpiId } from "../lib/settings";
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const MIME_TO_EXT: Record<string, string> = {
@@ -30,9 +31,14 @@ const PaymentStatusUpdateBody = z.object({
 
 const router = Router();
 
-router.get("/payments/upi-config", (_req: Request, res: Response) => {
-  const merchantUpiId = process.env.MERCHANT_UPI_ID || "";
-  res.json({ merchantUpiId });
+router.get("/payments/upi-config", async (req: Request, res: Response) => {
+  try {
+    const { merchantUpiId } = await getMerchantUpiId();
+    res.json({ merchantUpiId });
+  } catch (err) {
+    req.log.error({ err }, "Failed to load UPI config");
+    res.status(500).json({ error: "Failed to load UPI config" });
+  }
 });
 
 router.post(

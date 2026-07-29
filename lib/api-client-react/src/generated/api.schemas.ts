@@ -109,6 +109,31 @@ export interface UpiConfig {
   merchantUpiId: string;
 }
 
+/**
+ * custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback
+ */
+export type UpiSettingSource = typeof UpiSettingSource[keyof typeof UpiSettingSource];
+
+
+export const UpiSettingSource = {
+  custom: 'custom',
+  default: 'default',
+} as const;
+
+export interface UpiSetting {
+  merchantUpiId: string;
+  /** custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback */
+  source: UpiSettingSource;
+}
+
+export interface UpiSettingUpdate {
+  /**
+     * @minLength 3
+     * @maxLength 120
+     */
+  merchantUpiId: string;
+}
+
 export interface PaymentScreenshotUploadResponse {
   url: string;
 }

@@ -52,6 +52,8 @@ import type {
   TrackOrderParams,
   UpdateOperatorStatusInput,
   UpiConfig,
+  UpiSetting,
+  UpiSettingUpdate,
   UploadPaymentScreenshotBody
 } from './api.schemas';
 
@@ -1131,6 +1133,153 @@ export function useGetUpiConfig<TData = Awaited<ReturnType<typeof getUpiConfig>>
 
 
 
+
+export const getGetUpiSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/upi`
+}
+
+/**
+ * @summary Get the merchant UPI ID setting (admin)
+ */
+export const getUpiSetting = async ( options?: RequestInit): Promise<UpiSetting> => {
+
+  return customFetch<UpiSetting>(getGetUpiSettingUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetUpiSettingQueryKey = () => {
+    return [
+    `/api/admin/settings/upi`
+    ] as const;
+    }
+
+
+export const getGetUpiSettingQueryOptions = <TData = Awaited<ReturnType<typeof getUpiSetting>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetUpiSettingQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUpiSetting>>> = ({ signal }) => getUpiSetting({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetUpiSettingQueryResult = NonNullable<Awaited<ReturnType<typeof getUpiSetting>>>
+export type GetUpiSettingQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get the merchant UPI ID setting (admin)
+ */
+
+export function useGetUpiSetting<TData = Awaited<ReturnType<typeof getUpiSetting>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetUpiSettingQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateUpiSettingUrl = () => {
+
+
+
+
+  return `/api/admin/settings/upi`
+}
+
+/**
+ * @summary Update the merchant UPI ID (admin)
+ */
+export const updateUpiSetting = async (upiSettingUpdate: UpiSettingUpdate, options?: RequestInit): Promise<UpiSetting> => {
+
+  return customFetch<UpiSetting>(getUpdateUpiSettingUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(upiSettingUpdate)
+  }
+);}
+
+
+
+
+export const getUpdateUpiSettingMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext> => {
+
+const mutationKey = ['updateUpiSetting'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUpiSetting>>, {data: BodyType<UpiSettingUpdate>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateUpiSetting(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateUpiSettingMutationResult = NonNullable<Awaited<ReturnType<typeof updateUpiSetting>>>
+    export type UpdateUpiSettingMutationBody = BodyType<UpiSettingUpdate>
+    export type UpdateUpiSettingMutationError = ErrorType<void>
+
+    /**
+ * @summary Update the merchant UPI ID (admin)
+ */
+export const useUpdateUpiSetting = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateUpiSetting>>,
+        TError,
+        {data: BodyType<UpiSettingUpdate>},
+        TContext
+      > => {
+      return useMutation(getUpdateUpiSettingMutationOptions(options));
+    }
 
 export const getListOperatorsUrl = () => {
 

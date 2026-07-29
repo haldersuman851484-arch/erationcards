@@ -31,6 +31,10 @@ import {
   getListPaymentVerificationsQueryKey,
   useUpdateReviewStatus,
   useDeleteReview,
+  useGetUpiSetting,
+  getGetUpiSettingQueryKey,
+  useUpdateUpiSetting,
+  getGetUpiConfigQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -40,7 +44,7 @@ import {
   ImageIcon, LogOut, IndianRupee, Users, Shield, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, FileText, Download, Send,
-  Star, MessageSquare, RotateCcw, Trash2,
+  Star, MessageSquare, RotateCcw, Trash2, Settings, IndianRupee as RupeeIcon,
 } from "lucide-react";
 
 const STATUS_BADGE: Record<string, string> = {
@@ -64,6 +68,9 @@ function getAuthHeader() {
   const token = localStorage.getItem("adminToken");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
+
+// Mirrors UPI_ID_REGEX on the server: handle@psp, e.g. mystore@okaxis
+const UPI_INPUT_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,49}@[a-zA-Z][a-zA-Z0-9]{1,63}$/;
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value);
@@ -224,6 +231,47 @@ export default function AdminDashboard() {
     setSelectedOrderId(orderId);
     setDetailOpen(true);
   }, []);
+
+  // ── Payment settings (merchant UPI ID) ──
+  const upiSettingQuery = useGetUpiSetting({
+    request: { headers: getAuthHeader() },
+  } as any);
+  const updateUpiMutation = useUpdateUpiSetting({
+    request: { headers: getAuthHeader() },
+  } as any);
+  const [upiInput, setUpiInput] = useState("");
+  const [upiInputInvalid, setUpiInputInvalid] = useState(false);
+
+  useEffect(() => {
+    if (upiSettingQuery.data) setUpiInput(upiSettingQuery.data.merchantUpiId);
+  }, [upiSettingQuery.data]);
+
+  function handleSaveUpi() {
+    const candidate = upiInput.trim();
+    if (!UPI_INPUT_REGEX.test(candidate)) {
+      setUpiInputInvalid(true);
+      return;
+    }
+    setUpiInputInvalid(false);
+    updateUpiMutation.mutate(
+      { data: { merchantUpiId: candidate } },
+      {
+        onSuccess: () => {
+          toast({ title: "UPI ID updated!", description: "Customers now see the new UPI ID and QR code." });
+          queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetUpiConfigQueryKey() });
+        },
+        onError: (err: unknown) => {
+          const serverMsg = (err as { data?: { error?: string } })?.data?.error;
+          toast({
+            title: "Could not save UPI ID",
+            description: serverMsg || "Check the format (yourname@bank) and try again.",
+            variant: "destructive",
+          });
+        },
+      }
+    );
+  }
 
   function handlePaymentStatus(orderId: number, paymentStatus: "confirmed" | "rejected" | "pending") {
     const successMsg =
@@ -458,6 +506,9 @@ export default function AdminDashboard() {
                     {(reviewsData as any[]).filter((r: any) => r.status === "pending").length}
                   </span>
                 )}
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-settings">
+                <Settings className="w-4 h-4" /> Settings
               </TabsTrigger>
             </TabsList>
 
@@ -1117,6 +1168,81 @@ export default function AdminDashboard() {
                         </TableBody>
                       </Table>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* ── Settings Tab ── */}
+            <TabsContent value="settings" className="tab-panel mt-4">
+              <Card className="border-slate-200 shadow-sm max-w-2xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <RupeeIcon className="w-5 h-5 text-primary" /> Payment UPI ID
+                  </CardTitle>
+                  <p className="text-sm text-slate-500">
+                    Customers pay to this UPI ID on the order page — the QR code and the copy button both use it.
+                    A change applies to the very next order, no restart needed.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  {upiSettingQuery.isLoading ? (
+                    <p className="text-sm text-slate-500">Loading current UPI ID…</p>
+                  ) : upiSettingQuery.isError ? (
+                    <p className="text-sm text-red-600" data-testid="text-upi-load-error">
+                      Could not load the current UPI ID. Refresh the page to try again.
+                    </p>
+                  ) : (
+                    <>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">Currently in use</p>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm text-slate-900" data-testid="text-current-upi-id">
+                            {upiSettingQuery.data?.merchantUpiId || "— not set —"}
+                          </div>
+                          <Badge
+                            variant="outline"
+                            className={upiSettingQuery.data?.source === "custom"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-slate-100 text-slate-600 border-slate-200"}
+                            data-testid="badge-upi-source"
+                          >
+                            {upiSettingQuery.data?.source === "custom" ? "Saved by you" : "Default (server setting)"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">Change UPI ID</p>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={upiInput}
+                            onChange={(e) => { setUpiInput(e.target.value); setUpiInputInvalid(false); }}
+                            placeholder="yourname@bank"
+                            className="font-mono max-w-sm"
+                            data-testid="input-upi-id"
+                          />
+                          <Button
+                            onClick={handleSaveUpi}
+                            disabled={
+                              updateUpiMutation.isPending ||
+                              !upiInput.trim() ||
+                              upiInput.trim() === upiSettingQuery.data?.merchantUpiId
+                            }
+                            data-testid="button-save-upi"
+                          >
+                            {updateUpiMutation.isPending ? "Saving…" : "Save"}
+                          </Button>
+                        </div>
+                        {upiInputInvalid && (
+                          <p className="text-xs text-red-600 mt-1.5" data-testid="text-upi-format-error">
+                            Enter a valid UPI ID like yourname@bank
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-400 mt-1.5">
+                          Example: 9876543210@ybl or mystore@okaxis. Double-check before saving — customers will pay to this ID.
+                        </p>
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>

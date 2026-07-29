@@ -353,6 +353,42 @@ paths:
               schema:
                 $ref: "#/components/schemas/UpiConfig"
 
+  /admin/settings/upi:
+    get:
+      operationId: getUpiSetting
+      tags: [dashboard]
+      summary: Get the merchant UPI ID setting (admin)
+      responses:
+        "200":
+          description: Current merchant UPI ID and whether it is admin-saved or the server default
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpiSetting"
+        "401":
+          description: Not authenticated
+    put:
+      operationId: updateUpiSetting
+      tags: [dashboard]
+      summary: Update the merchant UPI ID (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpiSettingUpdate"
+      responses:
+        "200":
+          description: Setting saved; customers see the new UPI ID immediately
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UpiSetting"
+        "400":
+          description: Invalid UPI ID format
+        "401":
+          description: Not authenticated
+
   # ── Operators ────────────────────────────────────────────────────────────────
   /operators:
     get:
@@ -916,6 +952,29 @@ components:
       properties:
         merchantUpiId:
           type: string
+      required:
+        - merchantUpiId
+
+    UpiSetting:
+      type: object
+      properties:
+        merchantUpiId:
+          type: string
+        source:
+          type: string
+          enum: [custom, default]
+          description: custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback
+      required:
+        - merchantUpiId
+        - source
+
+    UpiSettingUpdate:
+      type: object
+      properties:
+        merchantUpiId:
+          type: string
+          minLength: 3
+          maxLength: 120
       required:
         - merchantUpiId
 

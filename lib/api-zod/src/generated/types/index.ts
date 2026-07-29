@@ -47,4 +47,7 @@ export * from './trackOrderParams';
 export * from './updateOperatorStatusInput';
 export * from './updateOperatorStatusInputStatus';
 export * from './upiConfig';
+export * from './upiSetting';
+export * from './upiSettingSource';
+export * from './upiSettingUpdate';
 export * from './uploadPaymentScreenshotBody';

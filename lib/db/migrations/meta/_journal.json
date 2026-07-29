@@ -29,6 +29,13 @@
       "when": 1784721160000,
       "tag": "0004_order_returned_status",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1785307205616,
+      "tag": "0006_settings_table",
+      "breakpoints": true
     }
   ]
 }

@@ -539,6 +539,33 @@ export const GetUpiConfigResponse = zod.object({
 
 
 /**
+ * @summary Get the merchant UPI ID setting (admin)
+ */
+export const GetUpiSettingResponse = zod.object({
+  "merchantUpiId": zod.string(),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback')
+})
+
+
+/**
+ * @summary Update the merchant UPI ID (admin)
+ */
+export const updateUpiSettingBodyMerchantUpiIdMin = 3;
+export const updateUpiSettingBodyMerchantUpiIdMax = 120;
+
+
+
+export const UpdateUpiSettingBody = zod.object({
+  "merchantUpiId": zod.string().min(updateUpiSettingBodyMerchantUpiIdMin).max(updateUpiSettingBodyMerchantUpiIdMax)
+})
+
+export const UpdateUpiSettingResponse = zod.object({
+  "merchantUpiId": zod.string(),
+  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback')
+})
+
+
+/**
  * @summary List all operators (admin)
  */
 export const ListOperatorsResponseItem = zod.object({

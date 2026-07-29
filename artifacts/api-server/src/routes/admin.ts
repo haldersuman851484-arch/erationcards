@@ -1,6 +1,12 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody } from "@workspace/api-zod";
+import { LoginAdminBody, UpdateUpiSettingBody } from "@workspace/api-zod";
 import { getAdminCredentials, createAdminToken, parseAdminToken } from "../lib/auth";
+import {
+  getMerchantUpiId,
+  setSettingValue,
+  MERCHANT_UPI_SETTING_KEY,
+  UPI_ID_REGEX,
+} from "../lib/settings";
 import { db } from "@workspace/db";
 import { paymentVerificationsTable, operatorsTable } from "@workspace/db";
 import { desc, sql, eq } from "drizzle-orm";
@@ -109,6 +115,43 @@ router.get("/admin/me", async (req: Request, res: Response) => {
 // POST /admin/logout
 router.post("/admin/logout", (_req: Request, res: Response) => {
   res.json({ success: true, message: "Logged out" });
+});
+
+// ── Payment settings (merchant UPI ID) ──────────────────────────────────────
+
+// GET /admin/settings/upi — current UPI ID + whether it's admin-saved or the env default
+router.get("/admin/settings/upi", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    res.json(await getMerchantUpiId());
+  } catch (err) {
+    req.log.error({ err }, "Failed to load UPI setting");
+    res.status(500).json({ error: "Failed to load UPI setting" });
+  }
+});
+
+// PUT /admin/settings/upi — save a new merchant UPI ID (shown to customers immediately)
+router.put("/admin/settings/upi", async (req: Request, res: Response) => {
+  try {
+    const admin = parseAdminToken(req);
+    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+
+    const parsed = UpdateUpiSettingBody.safeParse(req.body);
+    const candidate = parsed.success ? parsed.data.merchantUpiId.trim() : "";
+    if (!candidate || !UPI_ID_REGEX.test(candidate)) {
+      res.status(400).json({ error: "Enter a valid UPI ID like yourname@bank" });
+      return;
+    }
+
+    await setSettingValue(MERCHANT_UPI_SETTING_KEY, candidate);
+    req.log.info({ adminEmail: admin.email, merchantUpiId: candidate }, "Merchant UPI ID updated");
+    res.json({ merchantUpiId: candidate, source: "custom" as const });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update UPI setting");
+    res.status(500).json({ error: "Failed to update UPI setting" });
+  }
 });
 
 export default router;
