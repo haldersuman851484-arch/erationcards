@@ -25,6 +25,28 @@ if (missingDelhivery.length > 0) {
   console.warn(`[Delhivery] Missing secrets: ${missingDelhivery.join(", ")}. Dispatch endpoint will return 503 until configured. See DELHIVERY_SETUP.md.`);
 }
 
+// ── Canonical host redirect (production only) ─────────────────────────────
+// Every canonical tag and the sitemap use https://erationcards.in, so any
+// request that reaches the app via www.erationcards.in (or plain http, if
+// Hostinger's edge ever forwards it) gets a permanent redirect to the one
+// canonical address. This keeps search engines from splitting ranking
+// signals across host/scheme variants. NODE_ENV is read per-request so
+// tests can exercise the guard.
+const CANONICAL_ORIGIN = "https://erationcards.in";
+app.use((req: Request, res: Response, next) => {
+  if (process.env.NODE_ENV !== "production") return next();
+  const host = (req.headers.host ?? "").toLowerCase();
+  const proto = String(req.headers["x-forwarded-proto"] ?? "https")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (host === "www.erationcards.in" || (host === "erationcards.in" && proto === "http")) {
+    res.redirect(301, `${CANONICAL_ORIGIN}${req.originalUrl}`);
+    return;
+  }
+  next();
+});
+
 app.use(
   pinoHttp({
     logger,

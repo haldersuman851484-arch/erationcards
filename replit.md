@@ -112,6 +112,11 @@ cd <app-root> && npm install
 pnpm --filter @workspace/scripts run build-for-hostinger
 ```
 
+### Canonical host redirect (www / http → https://erationcards.in)
+
+- **App layer** — in production (`NODE_ENV=production`), early middleware in `artifacts/api-server/src/app.ts` 301-redirects any request with Host `www.erationcards.in` (or `x-forwarded-proto: http` on the bare host) to `https://erationcards.in` + same path/query. This matches every canonical tag and the sitemap. Tests: `artifacts/api-server/src/tests/canonical-redirect.test.ts`.
+- **Hostinger edge (verified with curl, July 29 2026)** — `http://erationcards.in/` already gets a 301 to `https://erationcards.in/` at Hostinger's layer; `http://www.erationcards.in/` gets a 301 only to `https://www.erationcards.in/`, and `https://www.erationcards.in/` serves a 200 with no redirect — so the www→non-www hop depends on the app middleware. **Live verification pending:** as of that date the domain still serves Hostinger's PHP "Default page" (the Node app is not deployed yet). After the first deploy, verify with: `curl -sI https://www.erationcards.in/faq` → expect `301` + `location: https://erationcards.in/faq` (also check `/` and a district page).
+
 ## User preferences
 
 _Populate as you build — explicit user instructions worth remembering across sessions._
