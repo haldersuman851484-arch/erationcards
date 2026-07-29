@@ -1,5 +1,5 @@
 import React, { useEffect, lazy, Suspense } from "react";
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -34,6 +34,7 @@ const OperatorDownloadCard = lazy(
 
 const AdminLogin = lazy(() => import("./pages/admin/Login"));
 const AdminDashboard = lazy(() => import("./pages/admin/Dashboard"));
+const ProcessingPanel = lazy(() => import("./pages/processing/ProcessingPanel"));
 const PublicCourierDashboard = lazy(
   () => import("./pages/admin/PublicCourierDashboard"),
 );
@@ -100,9 +101,18 @@ function Router() {
 
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/courier/public" component={PublicCourierDashboard} />
-      <Route path="/admin/courier/operator" component={OperatorCourierDashboard} />
-      <Route path="/admin/shipping-label/:orderNumber" component={ShippingLabel} />
+
+      <Route path="/processing" component={ProcessingPanel} />
+      <Route path="/processing/courier/public" component={PublicCourierDashboard} />
+      <Route path="/processing/courier/operator" component={OperatorCourierDashboard} />
+      <Route path="/processing/shipping-label/:orderNumber" component={ShippingLabel} />
+
+      {/* Old bookmarked mPanel URLs → new processing paths */}
+      <Route path="/admin/courier/public">{() => <Redirect to="/processing/courier/public" />}</Route>
+      <Route path="/admin/courier/operator">{() => <Redirect to="/processing/courier/operator" />}</Route>
+      <Route path="/admin/shipping-label/:orderNumber">
+        {(params) => <Redirect to={`/processing/shipping-label/${params.orderNumber}`} />}
+      </Route>
       
       <Route component={NotFound} />
     </Switch>

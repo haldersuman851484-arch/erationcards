@@ -3,7 +3,7 @@ import { db } from "@workspace/db";
 import { reviewsTable, ordersTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { z } from "zod/v4";
-import { parseAdminToken } from "../lib/auth";
+import { requireAdmin } from "../lib/auth";
 
 const router = Router();
 
@@ -103,8 +103,8 @@ router.post("/reviews", async (req: Request, res: Response) => {
 // GET /admin/reviews — admin list all reviews with optional status filter
 router.get("/admin/reviews", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const statusParam = req.query.status as string | undefined;
     const validStatuses = ["pending", "approved", "rejected"];
@@ -124,8 +124,8 @@ router.get("/admin/reviews", async (req: Request, res: Response) => {
 // DELETE /admin/reviews/:id — permanently delete a review
 router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid review ID" }); return; }
@@ -145,8 +145,8 @@ router.delete("/admin/reviews/:id", async (req: Request, res: Response) => {
 // PATCH /admin/reviews/:id — approve or reject a review
 router.patch("/admin/reviews/:id", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid review ID" }); return; }

@@ -2868,7 +2868,7 @@ export const getLoginAdminUrl = () => {
 }
 
 /**
- * @summary Admin login
+ * @summary Staff login (admin or processing role, decided by password)
  */
 export const loginAdmin = async (loginInput: LoginInput, options?: RequestInit): Promise<AdminAuthResponse> => {
 
@@ -2916,7 +2916,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type LoginAdminMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Admin login
+ * @summary Staff login (admin or processing role, decided by password)
  */
 export const useLoginAdmin = <TError = ErrorType<ErrorResponse>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginAdmin>>, TError,{data: BodyType<LoginInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
@@ -2938,7 +2938,7 @@ export const getGetCurrentAdminUrl = () => {
 }
 
 /**
- * @summary Get currently logged-in admin session
+ * @summary Get currently logged-in staff session (admin or processing)
  */
 export const getCurrentAdmin = async ( options?: RequestInit): Promise<AdminAuthResponse> => {
 
@@ -2985,7 +2985,7 @@ export type GetCurrentAdminQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get currently logged-in admin session
+ * @summary Get currently logged-in staff session (admin or processing)
  */
 
 export function useGetCurrentAdmin<TData = Awaited<ReturnType<typeof getCurrentAdmin>>, TError = ErrorType<unknown>>(

@@ -6,7 +6,11 @@
  * OpenAPI spec version: 0.1.0
  */
 
+/**
+ * Staff session. `role` is `admin` (partners) or `processing` (employee panel). `token` is only present in the login response.
+ */
 export interface AdminAuthResponse {
   role: string;
   email: string;
+  token?: string;
 }

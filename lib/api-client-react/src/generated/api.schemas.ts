@@ -386,9 +386,13 @@ export interface LoginInput {
   password: string;
 }
 
+/**
+ * Staff session. `role` is `admin` (partners) or `processing` (employee panel). `token` is only present in the login response.
+ */
 export interface AdminAuthResponse {
   role: string;
   email: string;
+  token?: string;
 }
 
 export type UpdateOperatorStatusInputStatus = typeof UpdateOperatorStatusInputStatus[keyof typeof UpdateOperatorStatusInputStatus];

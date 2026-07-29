@@ -4,7 +4,7 @@ import { db } from "@workspace/db";
 import { ordersTable, paymentVerificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
-import { parseAdminToken } from "../lib/auth";
+import { parseStaffToken } from "../lib/auth";
 import { uploadToStorage } from "../lib/storage";
 import { getMerchantUpiId, getPricingMatrix } from "../lib/settings";
 
@@ -75,7 +75,7 @@ router.post(
 );
 
 router.patch("/orders/:id/payment-status", async (req: Request, res: Response) => {
-  const admin = parseAdminToken(req);
+  const admin = parseStaffToken(req);
   if (!admin) {
     res.status(401).json({ error: "Admin authentication required" });
     return;

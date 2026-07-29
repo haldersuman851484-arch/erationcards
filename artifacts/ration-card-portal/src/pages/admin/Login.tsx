@@ -32,12 +32,17 @@ export default function AdminLogin() {
       { data },
       {
         onSuccess: (response) => {
-          localStorage.setItem("adminToken", (response as any).token || "");
-          toast({ title: "Welcome, Admin!" });
-          setLocation("/admin/dashboard");
+          localStorage.setItem("adminToken", response.token || "");
+          if (response.role === "processing") {
+            toast({ title: "Welcome!", description: "Opening the processing panel." });
+            setLocation("/processing");
+          } else {
+            toast({ title: "Welcome, Admin!" });
+            setLocation("/admin/dashboard");
+          }
         },
         onError: () => {
-          toast({ title: "Login failed", description: "Invalid admin credentials.", variant: "destructive" });
+          toast({ title: "Login failed", description: "Invalid credentials.", variant: "destructive" });
         },
       }
     );
@@ -54,7 +59,7 @@ export default function AdminLogin() {
           <div className="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center mx-auto mb-4">
             <Shield className="w-7 h-7 text-primary" />
           </div>
-          <CardTitle className="text-white text-xl">Admin Portal</CardTitle>
+          <CardTitle className="text-white text-xl">Staff Login</CardTitle>
           <CardDescription className="text-slate-400">Secure access for authorized personnel only</CardDescription>
         </CardHeader>
         <CardContent className="pt-2">
@@ -67,7 +72,7 @@ export default function AdminLogin() {
                     <Input
                       data-testid="input-admin-email"
                       type="email"
-                      placeholder="admin@rationcard.in"
+                      placeholder="Your email address"
                       className="bg-slate-700 border-slate-600 text-white placeholder:text-slate-500 focus:border-primary"
                       {...field}
                     />
@@ -91,13 +96,10 @@ export default function AdminLogin() {
                 </FormItem>
               )} />
               <Button type="submit" data-testid="button-admin-login" className="w-full bg-primary hover:bg-primary/90 h-11 mt-2" disabled={loginAdmin.isPending}>
-                {loginAdmin.isPending ? "Authenticating..." : "Access Admin Panel"}
+                {loginAdmin.isPending ? "Authenticating..." : "Sign In"}
               </Button>
             </form>
           </Form>
-          <p className="text-xs text-slate-500 text-center mt-4">
-            Default: admin@rationcard.in / Admin@1234
-          </p>
         </CardContent>
       </Card>
     </div>

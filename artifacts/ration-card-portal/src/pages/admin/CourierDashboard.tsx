@@ -144,7 +144,7 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
               </div>
             ) : (
               <Link
-                href="/admin/dashboard"
+                href="/processing"
                 className="flex items-center gap-1.5 hover:opacity-70 transition-opacity shrink-0"
               >
                 <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-[12px]">C</div>
@@ -1213,7 +1213,7 @@ function PrintStatusView({
    * (reference-portal style: label shown on its own light-grey page).
    */
   function openShippingLabelPage(o: any) {
-    setLocation(`/admin/shipping-label/${encodeURIComponent(String(o.orderNumber || ""))}`);
+    setLocation(`/processing/shipping-label/${encodeURIComponent(String(o.orderNumber || ""))}`);
   }
 
   /**

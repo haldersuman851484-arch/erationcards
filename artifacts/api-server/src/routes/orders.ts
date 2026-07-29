@@ -10,7 +10,7 @@ import {
   ListOrdersQueryParams,
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
-import { generateOrderNumber, parseOperatorToken, parseAdminToken } from "../lib/auth";
+import { generateOrderNumber, parseOperatorToken, parseStaffToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
 import { getPricingMatrix } from "../lib/settings";
 import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from "../lib/email";
@@ -132,7 +132,7 @@ const router = Router();
 // address, ration-card number), so unauthenticated access would leak PII.
 router.get("/orders", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const params = ListOrdersQueryParams.parse(req.query);
@@ -414,7 +414,7 @@ router.get("/orders/track", async (req: Request, res: Response) => {
 router.get("/orders/stats", async (req: Request, res: Response) => {
   try {
     // Admin only — exposes revenue and order volume
-    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+    if (!parseStaffToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -462,7 +462,7 @@ router.get("/orders/stats", async (req: Request, res: Response) => {
 router.get("/orders/recent", async (req: Request, res: Response) => {
   try {
     // Admin only — rows carry full customer contact details
-    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+    if (!parseStaffToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const orders = await db
       .select()
@@ -483,7 +483,7 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
     // Admin, or the operator the order is assigned to — full customer PII
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     const operatorId = parseOperatorToken(req);
     if (!admin && operatorId === null) { res.status(401).json({ error: "Not authenticated" }); return; }
 
@@ -511,7 +511,7 @@ router.patch("/orders/:id", async (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const [existing] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
@@ -563,7 +563,7 @@ router.patch("/orders/:id/customer-info", async (req: Request, res: Response) =>
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     // Trim before validation so "   " fails the same way "" does.
@@ -612,7 +612,7 @@ router.patch("/orders/:id/customer-info", async (req: Request, res: Response) =>
 // Requires a valid admin token (couriers log in as admin via the same auth flow).
 router.patch("/orders/:id/pdfs/:cardIndex/downloaded", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const id        = parseInt(String(req.params.id));
@@ -650,7 +650,7 @@ router.patch("/orders/:id/pdfs/:cardIndex/downloaded", async (req: Request, res:
 // POST /orders/:id/dispatch  — admin only, creates Delhivery shipment
 router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const id = parseInt(String(req.params.id));
@@ -826,7 +826,7 @@ router.post("/orders/:id/dispatch", async (req: Request, res: Response) => {
 // resets the order back to 'printed' so it can be re-dispatched.
 router.delete("/orders/:id/dispatch", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
+    const admin = parseStaffToken(req);
     if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const id = parseInt(String(req.params.id));
@@ -1058,7 +1058,7 @@ router.get("/orders/:id/tracking", async (req: Request, res: Response) => {
 router.patch("/orders/:id/assign", async (req: Request, res: Response) => {
   try {
     // Admin only
-    if (!parseAdminToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
+    if (!parseStaffToken(req)) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }

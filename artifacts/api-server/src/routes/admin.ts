@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, VerifySettingsOtpBody } from "@workspace/api-zod";
-import { getAdminCredentials, createAdminToken, parseAdminToken } from "../lib/auth";
+import { getAdminCredentials, getProcessingCredentials, createAdminToken, parseStaffToken, requireAdmin } from "../lib/auth";
 import {
   getOtpGateStatus,
   createOtpCodes,
@@ -46,8 +46,8 @@ function formatPricingForEmail(pricing: {
 // GET /admin/verifications
 router.get("/admin/verifications", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const page = Math.max(1, parseInt(String(req.query.page)) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit)) || 20));
@@ -78,8 +78,8 @@ router.get("/admin/verifications", async (req: Request, res: Response) => {
 // PATCH /admin/operators/:id/status
 router.patch("/admin/operators/:id/status", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid operator ID" }); return; }
@@ -116,14 +116,23 @@ router.post("/admin/login", async (req: Request, res: Response) => {
   try {
     const body = LoginAdminBody.parse(req.body);
 
+    // Admin credentials first, then processing-staff credentials. The same
+    // email may serve both roles — the password decides which panel you get.
     const { email: adminEmail, password: adminPassword } = getAdminCredentials();
-    if (body.email !== adminEmail || body.password !== adminPassword) {
-      res.status(401).json({ error: "Invalid admin credentials" });
+    if (body.email === adminEmail && body.password === adminPassword) {
+      const token = createAdminToken(body.email, "admin");
+      res.json({ role: "admin", email: body.email, token });
       return;
     }
 
-    const token = createAdminToken(body.email, "admin");
-    res.json({ role: "admin", email: body.email, token });
+    const processing = getProcessingCredentials();
+    if (processing && body.email === processing.email && body.password === processing.password) {
+      const token = createAdminToken(body.email, "processing");
+      res.json({ role: "processing", email: body.email, token });
+      return;
+    }
+
+    res.status(401).json({ error: "Invalid admin credentials" });
   } catch (err) {
     req.log.error({ err }, "Admin login failed");
     res.status(400).json({ error: "Login failed" });
@@ -133,9 +142,9 @@ router.post("/admin/login", async (req: Request, res: Response) => {
 // GET /admin/me
 router.get("/admin/me", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
-    res.json({ role: admin.role, email: admin.email });
+    const staff = parseStaffToken(req);
+    if (!staff) { res.status(401).json({ error: "Not authenticated" }); return; }
+    res.json({ role: staff.role, email: staff.email });
   } catch (err) {
     req.log.error({ err }, "Failed to get admin session");
     res.status(500).json({ error: "Failed to get session" });
@@ -152,8 +161,8 @@ router.post("/admin/logout", (_req: Request, res: Response) => {
 // GET /admin/settings/upi — current UPI ID + whether it's admin-saved or the env default
 router.get("/admin/settings/upi", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
       return;
@@ -169,8 +178,8 @@ router.get("/admin/settings/upi", async (req: Request, res: Response) => {
 // PUT /admin/settings/upi — save a new merchant UPI ID (shown to customers immediately)
 router.put("/admin/settings/upi", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
       return;
@@ -218,8 +227,8 @@ router.put("/admin/settings/upi", async (req: Request, res: Response) => {
 // GET /admin/settings/pricing — current price matrix + whether it's admin-saved or the built-in default
 router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
       return;
@@ -234,8 +243,8 @@ router.get("/admin/settings/pricing", async (req: Request, res: Response) => {
 // PUT /admin/settings/pricing — save new card prices (used by forms & server amounts immediately)
 router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
       return;
@@ -283,8 +292,8 @@ router.put("/admin/settings/pricing", async (req: Request, res: Response) => {
 // GET /admin/settings/history — read-only audit trail of UPI/price changes
 router.get("/admin/settings/history", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     if (!hasSettingsUnlock(req)) {
       res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
       return;
@@ -317,8 +326,8 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
 // GET /admin/settings/otp/config — partner emails + pending/cooldown status
 router.get("/admin/settings/otp/config", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
     res.json(await getOtpGateStatus());
   } catch (err) {
     req.log.error({ err }, "Failed to load settings OTP status");
@@ -329,8 +338,8 @@ router.get("/admin/settings/otp/config", async (req: Request, res: Response) => 
 // POST /admin/settings/otp/send — email a fresh code to every partner
 router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const created = await createOtpCodes();
     if (!created.ok) {
@@ -372,8 +381,8 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
 // POST /admin/settings/otp/verify — both codes right → short-lived unlock token
 router.post("/admin/settings/otp/verify", async (req: Request, res: Response) => {
   try {
-    const admin = parseAdminToken(req);
-    if (!admin) { res.status(401).json({ error: "Not authenticated" }); return; }
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
 
     const parsed = VerifySettingsOtpBody.safeParse(req.body);
     if (!parsed.success) {

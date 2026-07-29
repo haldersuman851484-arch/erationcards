@@ -829,7 +829,7 @@ paths:
     post:
       operationId: loginAdmin
       tags: [auth]
-      summary: Admin login
+      summary: Staff login (admin or processing role, decided by password)
       requestBody:
         required: true
         content:
@@ -854,7 +854,7 @@ paths:
     get:
       operationId: getCurrentAdmin
       tags: [auth]
-      summary: Get currently logged-in admin session
+      summary: Get currently logged-in staff session (admin or processing)
       responses:
         "200":
           description: Admin session
@@ -1573,10 +1573,15 @@ components:
 
     AdminAuthResponse:
       type: object
+      description: >-
+        Staff session. `role` is `admin` (partners) or `processing`
+        (employee panel). `token` is only present in the login response.
       properties:
         role:
           type: string
         email:
+          type: string
+        token:
           type: string
       required:
         - role

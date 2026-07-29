@@ -1142,7 +1142,7 @@ export const DeleteReviewResponse = zod.object({
 
 
 /**
- * @summary Admin login
+ * @summary Staff login (admin or processing role, decided by password)
  */
 export const LoginAdminBody = zod.object({
   "email": zod.string(),
@@ -1151,17 +1151,19 @@ export const LoginAdminBody = zod.object({
 
 export const LoginAdminResponse = zod.object({
   "role": zod.string(),
-  "email": zod.string()
-})
+  "email": zod.string(),
+  "token": zod.string().optional()
+}).describe('Staff session. `role` is `admin` (partners) or `processing` (employee panel). `token` is only present in the login response.')
 
 
 /**
- * @summary Get currently logged-in admin session
+ * @summary Get currently logged-in staff session (admin or processing)
  */
 export const GetCurrentAdminResponse = zod.object({
   "role": zod.string(),
-  "email": zod.string()
-})
+  "email": zod.string(),
+  "token": zod.string().optional()
+}).describe('Staff session. `role` is `admin` (partners) or `processing` (employee panel). `token` is only present in the login response.')
 
 
 /**
