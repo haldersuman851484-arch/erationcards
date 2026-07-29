@@ -4,6 +4,7 @@
  */
 import { Storage } from "@google-cloud/storage";
 import type { Response } from "express";
+import type { Readable } from "stream";
 
 const SIDECAR = "http://127.0.0.1:1106";
 
@@ -45,6 +46,57 @@ export async function uploadToStorage(
   const { bucketName, prefix } = parsePath(dir);
   const file = gcs.bucket(bucketName).file(gcsObjectName(prefix, filename));
   await file.save(buffer, { contentType, resumable: false });
+}
+
+/**
+ * Delete an object. Returns "deleted" when removed, "missing" when it was
+ * already gone (treated as success by callers freeing space). Any other
+ * storage error is thrown so callers can decide what to do.
+ */
+export async function deleteFromStorage(filename: string): Promise<"deleted" | "missing"> {
+  const dir = process.env.PRIVATE_OBJECT_DIR;
+  if (!dir) throw new Error("PRIVATE_OBJECT_DIR not set — bucket not provisioned");
+  const { bucketName, prefix } = parsePath(dir);
+  try {
+    await gcs.bucket(bucketName).file(gcsObjectName(prefix, filename)).delete();
+    return "deleted";
+  } catch (err) {
+    if ((err as { code?: number })?.code === 404) return "missing";
+    throw err;
+  }
+}
+
+/**
+ * List every uploaded object once: storage key (the part after the uploads/
+ * prefix, e.g. "screenshot-1.jpg" or "card-pdfs/ORD1/0/card.pdf") → size in
+ * bytes. One listing call replaces thousands of per-file existence checks
+ * when building an archive or estimating freed space.
+ */
+export async function listStorageFileSizes(): Promise<Map<string, number>> {
+  const sizes = new Map<string, number>();
+  const dir = process.env.PRIVATE_OBJECT_DIR;
+  if (!dir) return sizes;
+  const { bucketName, prefix } = parsePath(dir);
+  const listPrefix = prefix ? `${prefix}/uploads/` : "uploads/";
+  const [files] = await gcs.bucket(bucketName).getFiles({ prefix: listPrefix });
+  for (const f of files) {
+    const key = f.name.slice(listPrefix.length);
+    if (key) sizes.set(key, Number(f.metadata?.size ?? 0));
+  }
+  return sizes;
+}
+
+/**
+ * Read stream for a stored object WITHOUT an existence pre-check — callers
+ * must have confirmed the key exists (e.g. via listStorageFileSizes). GCS
+ * defers the actual request until the stream is first read, so creating many
+ * of these up-front (for a ZIP queue) does not open many connections.
+ */
+export function storageReadStream(filename: string): Readable {
+  const dir = process.env.PRIVATE_OBJECT_DIR;
+  if (!dir) throw new Error("PRIVATE_OBJECT_DIR not set — bucket not provisioned");
+  const { bucketName, prefix } = parsePath(dir);
+  return gcs.bucket(bucketName).file(gcsObjectName(prefix, filename)).createReadStream();
 }
 
 /** RFC 5987 percent-encoding for Content-Disposition filename* values. */

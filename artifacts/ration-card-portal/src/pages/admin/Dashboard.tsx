@@ -54,8 +54,9 @@ import {
   Phone, CreditCard, Calendar, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, Send,
   Star, MessageSquare, RotateCcw, Trash2, Settings, IndianRupee as RupeeIcon,
-  Lock, Mail,
+  Lock, Mail, HardDrive,
 } from "lucide-react";
+import DataStorageTab from "./DataStorageTab";
 
 function getAuthHeader() {
   const token = localStorage.getItem("adminToken");
@@ -84,9 +85,11 @@ function readStoredUnlock(): { token: string; expiresAt: number } | null {
  * directly; pricing changes are JSON matrices, so show only the cells that
  * actually differ (e.g. "Ration · 1 card · Customer: ₹100 → ₹120").
  */
-function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_password" | "contact"; oldValue: string; newValue: string }): string {
+function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_password" | "contact" | "orders_cleanup"; oldValue: string; newValue: string }): string {
   if (entry.field === "upi") return `${entry.oldValue || "— not set —"} → ${entry.newValue}`;
   if (entry.field === "processing_password") return "Employee password changed (hidden for security)";
+  // Clean-up rows already store human-readable summaries ("before → after").
+  if (entry.field === "orders_cleanup") return `${entry.oldValue} → ${entry.newValue}`;
   if (entry.field === "contact") {
     try {
       const before = JSON.parse(entry.oldValue) as Partial<ContactInfo>;
@@ -747,6 +750,9 @@ export default function AdminDashboard() {
               </TabsTrigger>
               <TabsTrigger value="settings" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-settings">
                 <Settings className="w-4 h-4" /> Settings
+              </TabsTrigger>
+              <TabsTrigger value="storage" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-storage">
+                <HardDrive className="w-4 h-4" /> Data &amp; Storage
               </TabsTrigger>
             </TabsList>
 
@@ -1548,7 +1554,9 @@ export default function AdminDashboard() {
                                   ? "bg-amber-50 text-amber-700 border-amber-200"
                                   : entry.field === "contact"
                                     ? "bg-teal-50 text-teal-700 border-teal-200"
-                                    : "bg-purple-50 text-purple-700 border-purple-200"}
+                                    : entry.field === "orders_cleanup"
+                                      ? "bg-rose-50 text-rose-700 border-rose-200"
+                                      : "bg-purple-50 text-purple-700 border-purple-200"}
                             >
                               {entry.field === "upi"
                                 ? "UPI ID"
@@ -1556,7 +1564,9 @@ export default function AdminDashboard() {
                                   ? "Employee password"
                                   : entry.field === "contact"
                                     ? "Contact details"
-                                    : "Card prices"}
+                                    : entry.field === "orders_cleanup"
+                                      ? "Order clean-up"
+                                      : "Card prices"}
                             </Badge>
                             <span className="text-xs text-slate-500">
                               {new Date(entry.changedAt).toLocaleString("en-IN", {
@@ -1577,6 +1587,17 @@ export default function AdminDashboard() {
               </Card>
               </>
               )}
+            </TabsContent>
+
+            {/* ── Data & Storage Tab ── */}
+            <TabsContent value="storage" className="tab-panel mt-4">
+              <DataStorageTab
+                authHeaders={getAuthHeader() as Record<string, string>}
+                settingsUnlocked={settingsUnlocked}
+                settingsHeaders={settingsHeaders as Record<string, string>}
+                goToSettings={() => setActiveTab("settings")}
+                onSettingsAuthError={handleSettingsAuthError}
+              />
             </TabsContent>
           </Tabs>
         </main>

@@ -15,9 +15,10 @@
     "@google-cloud/storage": "^7.21.0",
     "@replit/connectors-sdk": "^0.4.1",
     "@workspace/api-zod": "workspace:*",
-    "@workspace/db": "workspace:*",
     "@workspace/contact": "workspace:*",
+    "@workspace/db": "workspace:*",
     "@workspace/pricing": "workspace:*",
+    "archiver": "^8.0.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "drizzle-orm": "catalog:",
@@ -30,6 +31,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@types/archiver": "^8.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",

@@ -9,7 +9,7 @@ import type { SettingsChangeHistoryEntryField } from './settingsChangeHistoryEnt
 
 export interface SettingsChangeHistoryEntry {
   id: number;
-  /** Which protected setting changed */
+  /** Which protected setting changed (orders_cleanup rows record archive deletions) */
   field: SettingsChangeHistoryEntryField;
   /** Effective value before the save (pricing is a JSON matrix string) */
   oldValue: string;

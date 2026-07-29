@@ -259,7 +259,7 @@ export interface ProcessingPasswordUpdateResponse {
 }
 
 /**
- * Which protected setting changed
+ * Which protected setting changed (orders_cleanup rows record archive deletions)
  */
 export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryField[keyof typeof SettingsChangeHistoryEntryField];
 
@@ -269,11 +269,12 @@ export const SettingsChangeHistoryEntryField = {
   pricing: 'pricing',
   processing_password: 'processing_password',
   contact: 'contact',
+  orders_cleanup: 'orders_cleanup',
 } as const;
 
 export interface SettingsChangeHistoryEntry {
   id: number;
-  /** Which protected setting changed */
+  /** Which protected setting changed (orders_cleanup rows record archive deletions) */
   field: SettingsChangeHistoryEntryField;
   /** Effective value before the save (pricing is a JSON matrix string) */
   oldValue: string;
@@ -560,6 +561,107 @@ export interface PaymentVerificationListResponse {
   limit: number;
 }
 
+export type OrdersArchiveFilterSource = typeof OrdersArchiveFilterSource[keyof typeof OrdersArchiveFilterSource];
+
+
+export const OrdersArchiveFilterSource = {
+  both: 'both',
+  public: 'public',
+  operator: 'operator',
+} as const;
+
+export interface OrdersArchiveFilter {
+  /** Inclusive start date (YYYY-MM-DD) */
+  fromDate: string;
+  /** Inclusive end date (YYYY-MM-DD) */
+  toDate: string;
+  source: OrdersArchiveFilterSource;
+}
+
+export type OrdersArchivePreviewByStatus = {[key: string]: number};
+
+/**
+ * Finished orders (delivered/returned/cancelled) that a delete would remove
+ */
+export type OrdersArchivePreviewDeletable = {
+  count: number;
+  files: number;
+  bytes: number;
+};
+
+export type OrdersArchivePreviewSkippedByStatus = {[key: string]: number};
+
+/**
+ * Orders in range that are still in progress and would never be deleted
+ */
+export type OrdersArchivePreviewSkipped = {
+  count: number;
+  byStatus: OrdersArchivePreviewSkippedByStatus;
+};
+
+/**
+ * Every uploaded file the ZIP download would include
+ */
+export type OrdersArchivePreviewArchive = {
+  files: number;
+  bytes: number;
+};
+
+export interface OrdersArchivePreview {
+  filter: OrdersArchiveFilter;
+  /** Orders matching the filter */
+  total: number;
+  byStatus: OrdersArchivePreviewByStatus;
+  /** Finished orders (delivered/returned/cancelled) that a delete would remove */
+  deletable: OrdersArchivePreviewDeletable;
+  /** Orders in range that are still in progress and would never be deleted */
+  skipped: OrdersArchivePreviewSkipped;
+  /** Every uploaded file the ZIP download would include */
+  archive: OrdersArchivePreviewArchive;
+  /** False when storage sizes could not be listed; counts still valid */
+  sizesKnown: boolean;
+}
+
+export type OrdersArchiveDeleteRequestSource = typeof OrdersArchiveDeleteRequestSource[keyof typeof OrdersArchiveDeleteRequestSource];
+
+
+export const OrdersArchiveDeleteRequestSource = {
+  both: 'both',
+  public: 'public',
+  operator: 'operator',
+} as const;
+
+export interface OrdersArchiveDeleteRequest {
+  fromDate: string;
+  toDate: string;
+  source?: OrdersArchiveDeleteRequestSource;
+  /** X-Archive-Receipt value from the matching export download */
+  receipt: string;
+  /** Must be exactly DELETE */
+  confirmText: string;
+}
+
+export type OrdersArchiveDeleteResponseSkippedByStatus = {[key: string]: number};
+
+export type OrdersArchiveDeleteResponseSkipped = {
+  count: number;
+  byStatus: OrdersArchiveDeleteResponseSkippedByStatus;
+};
+
+export type OrdersArchiveDeleteResponseFailedOrdersItem = {
+  orderNumber: string;
+  error: string;
+};
+
+export interface OrdersArchiveDeleteResponse {
+  deletedOrders: number;
+  deletedFiles: number;
+  freedBytes: number;
+  skipped: OrdersArchiveDeleteResponseSkipped;
+  /** Orders whose files could not be deleted; their rows were kept */
+  failedOrders: OrdersArchiveDeleteResponseFailedOrdersItem[];
+}
+
 export type ListOrdersParams = {
 status?: string;
 /**
@@ -582,6 +684,45 @@ rationCardNumber?: string;
 export type UploadPaymentScreenshotBody = {
   screenshot: Blob;
 };
+
+export type GetOrdersArchivePreviewParams = {
+/**
+ * Inclusive start date (YYYY-MM-DD, order creation date)
+ */
+fromDate: string;
+/**
+ * Inclusive end date (YYYY-MM-DD, order creation date)
+ */
+toDate: string;
+/**
+ * Which orders to include (default both)
+ */
+source?: GetOrdersArchivePreviewSource;
+};
+
+export type GetOrdersArchivePreviewSource = typeof GetOrdersArchivePreviewSource[keyof typeof GetOrdersArchivePreviewSource];
+
+
+export const GetOrdersArchivePreviewSource = {
+  both: 'both',
+  public: 'public',
+  operator: 'operator',
+} as const;
+
+export type ExportOrdersArchiveParams = {
+fromDate: string;
+toDate: string;
+source?: ExportOrdersArchiveSource;
+};
+
+export type ExportOrdersArchiveSource = typeof ExportOrdersArchiveSource[keyof typeof ExportOrdersArchiveSource];
+
+
+export const ExportOrdersArchiveSource = {
+  both: 'both',
+  public: 'public',
+  operator: 'operator',
+} as const;
 
 export type GetOperatorOrdersParams = {
 status?: string;

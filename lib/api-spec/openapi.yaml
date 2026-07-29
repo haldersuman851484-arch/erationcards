@@ -541,6 +541,130 @@ paths:
         "403":
           description: Settings locked — both partners' emailed codes must be verified first
 
+  /admin/orders/archive/preview:
+    get:
+      operationId: getOrdersArchivePreview
+      tags: [dashboard]
+      summary: Preview which orders a date-range archive would cover (admin)
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Inclusive start date (YYYY-MM-DD, order creation date)
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Inclusive end date (YYYY-MM-DD, order creation date)
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [both, public, operator]
+          description: Which orders to include (default both)
+      responses:
+        "200":
+          description: Counts by status, deletable vs skipped breakdown, and uploaded-file size estimates
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrdersArchivePreview"
+        "400":
+          description: Invalid date range or source
+        "401":
+          description: Not authenticated
+        "403":
+          description: Admin role required
+
+  /admin/orders/archive/export:
+    get:
+      operationId: exportOrdersArchive
+      tags: [dashboard]
+      summary: Download a ZIP archive of all orders in a date range (admin)
+      description: >-
+        Streams one ZIP containing order/family-card/payment-verification
+        spreadsheets plus every uploaded file (payment screenshots, card PDFs)
+        organised per order. The X-Archive-Receipt response header carries a
+        short-lived token that unlocks the delete step for this exact filter.
+      parameters:
+        - name: fromDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: toDate
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: source
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [both, public, operator]
+      responses:
+        "200":
+          description: ZIP archive stream
+          headers:
+            X-Archive-Receipt:
+              description: Token proving this exact selection was downloaded; required by the delete endpoint.
+              schema:
+                type: string
+            X-Archive-Deletable:
+              description: How many of the archived orders are finished and therefore deletable.
+              schema:
+                type: string
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Invalid date range or source
+        "401":
+          description: Not authenticated
+        "403":
+          description: Admin role required
+        "404":
+          description: No orders in this date range
+        "503":
+          description: >-
+            File storage unreachable while the range contains uploaded files —
+            no receipt is issued so an incomplete archive can never unlock
+            deletion (code STORAGE_UNAVAILABLE).
+
+  /admin/orders/archive/delete:
+    post:
+      operationId: deleteArchivedOrders
+      tags: [dashboard]
+      summary: Delete finished orders that were just archived (admin; settings unlock + export receipt required)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrdersArchiveDeleteRequest"
+      responses:
+        "200":
+          description: Deletion results (orders and files removed, space freed, what was skipped)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrdersArchiveDeleteResponse"
+        "400":
+          description: Invalid filter, missing DELETE confirmation, missing/expired receipt, or nothing deletable
+        "401":
+          description: Not authenticated
+        "403":
+          description: Settings locked (two-partner codes not verified) or admin role required
+        "409":
+          description: Orders changed since the download (stale receipt) or the receipt covers a different selection
+
   /admin/settings/otp/config:
     get:
       operationId: getSettingsOtpConfig
@@ -1356,8 +1480,8 @@ components:
           type: integer
         field:
           type: string
-          enum: [upi, pricing, processing_password, contact]
-          description: Which protected setting changed
+          enum: [upi, pricing, processing_password, contact, orders_cleanup]
+          description: Which protected setting changed (orders_cleanup rows record archive deletions)
         oldValue:
           type: string
           description: Effective value before the save (pricing is a JSON matrix string)
@@ -1888,3 +2012,145 @@ components:
         - total
         - page
         - limit
+
+    OrdersArchiveFilter:
+      type: object
+      properties:
+        fromDate:
+          type: string
+          description: Inclusive start date (YYYY-MM-DD)
+        toDate:
+          type: string
+          description: Inclusive end date (YYYY-MM-DD)
+        source:
+          type: string
+          enum: [both, public, operator]
+      required:
+        - fromDate
+        - toDate
+        - source
+
+    OrdersArchivePreview:
+      type: object
+      properties:
+        filter:
+          $ref: "#/components/schemas/OrdersArchiveFilter"
+        total:
+          type: integer
+          description: Orders matching the filter
+        byStatus:
+          type: object
+          additionalProperties:
+            type: integer
+        deletable:
+          type: object
+          description: Finished orders (delivered/returned/cancelled) that a delete would remove
+          properties:
+            count:
+              type: integer
+            files:
+              type: integer
+            bytes:
+              type: integer
+          required:
+            - count
+            - files
+            - bytes
+        skipped:
+          type: object
+          description: Orders in range that are still in progress and would never be deleted
+          properties:
+            count:
+              type: integer
+            byStatus:
+              type: object
+              additionalProperties:
+                type: integer
+          required:
+            - count
+            - byStatus
+        archive:
+          type: object
+          description: Every uploaded file the ZIP download would include
+          properties:
+            files:
+              type: integer
+            bytes:
+              type: integer
+          required:
+            - files
+            - bytes
+        sizesKnown:
+          type: boolean
+          description: False when storage sizes could not be listed; counts still valid
+      required:
+        - filter
+        - total
+        - byStatus
+        - deletable
+        - skipped
+        - archive
+        - sizesKnown
+
+    OrdersArchiveDeleteRequest:
+      type: object
+      properties:
+        fromDate:
+          type: string
+        toDate:
+          type: string
+        source:
+          type: string
+          enum: [both, public, operator]
+        receipt:
+          type: string
+          description: X-Archive-Receipt value from the matching export download
+        confirmText:
+          type: string
+          description: Must be exactly DELETE
+      required:
+        - fromDate
+        - toDate
+        - receipt
+        - confirmText
+
+    OrdersArchiveDeleteResponse:
+      type: object
+      properties:
+        deletedOrders:
+          type: integer
+        deletedFiles:
+          type: integer
+        freedBytes:
+          type: integer
+        skipped:
+          type: object
+          properties:
+            count:
+              type: integer
+            byStatus:
+              type: object
+              additionalProperties:
+                type: integer
+          required:
+            - count
+            - byStatus
+        failedOrders:
+          type: array
+          description: Orders whose files could not be deleted; their rows were kept
+          items:
+            type: object
+            properties:
+              orderNumber:
+                type: string
+              error:
+                type: string
+            required:
+              - orderNumber
+              - error
+      required:
+        - deletedOrders
+        - deletedFiles
+        - freedBytes
+        - skipped
+        - failedOrders

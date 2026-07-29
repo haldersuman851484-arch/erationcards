@@ -7,7 +7,7 @@
  */
 
 /**
- * Which protected setting changed
+ * Which protected setting changed (orders_cleanup rows record archive deletions)
  */
 export type SettingsChangeHistoryEntryField = typeof SettingsChangeHistoryEntryField[keyof typeof SettingsChangeHistoryEntryField];
 
@@ -17,4 +17,5 @@ export const SettingsChangeHistoryEntryField = {
   pricing: 'pricing',
   processing_password: 'processing_password',
   contact: 'contact',
+  orders_cleanup: 'orders_cleanup',
 } as const;

@@ -28,6 +28,7 @@ import {
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, contactFieldError, type ContactInfo } from "@workspace/contact";
+import { ORDERS_CLEANUP_HISTORY_FIELD } from "../lib/orderArchive";
 
 /** Multi-line readable form of the contact details for change-alert emails. */
 function formatContactForEmail(c: ContactInfo): string {
@@ -459,6 +460,7 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
           r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) :
           r.field === PROCESSING_PASSWORD_SETTING_KEY ? ("processing_password" as const) :
           r.field === CONTACT_SETTING_KEY ? ("contact" as const) :
+          r.field === ORDERS_CLEANUP_HISTORY_FIELD ? ("orders_cleanup" as const) :
           ("pricing" as const),
         oldValue: r.oldValue,
         newValue: r.newValue,

@@ -26,7 +26,9 @@ import type {
   ContactSettingUpdate,
   CustomerInfoUpdate,
   ErrorResponse,
+  ExportOrdersArchiveParams,
   GetOperatorOrdersParams,
+  GetOrdersArchivePreviewParams,
   HealthStatus,
   ListAdminReviewsParams,
   ListOrdersParams,
@@ -44,6 +46,9 @@ import type {
   OrderStats,
   OrderStatusUpdate,
   OrderSubmitResponse,
+  OrdersArchiveDeleteRequest,
+  OrdersArchiveDeleteResponse,
+  OrdersArchivePreview,
   PaymentScreenshotUploadResponse,
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
@@ -1888,6 +1893,245 @@ export function useListSettingsChangeHistory<TData = Awaited<ReturnType<typeof l
 
 
 
+
+export const getGetOrdersArchivePreviewUrl = (params: GetOrdersArchivePreviewParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/orders/archive/preview?${stringifiedParams}` : `/api/admin/orders/archive/preview`
+}
+
+/**
+ * @summary Preview which orders a date-range archive would cover (admin)
+ */
+export const getOrdersArchivePreview = async (params: GetOrdersArchivePreviewParams, options?: RequestInit): Promise<OrdersArchivePreview> => {
+
+  return customFetch<OrdersArchivePreview>(getGetOrdersArchivePreviewUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrdersArchivePreviewQueryKey = (params?: GetOrdersArchivePreviewParams,) => {
+    return [
+    `/api/admin/orders/archive/preview`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetOrdersArchivePreviewQueryOptions = <TData = Awaited<ReturnType<typeof getOrdersArchivePreview>>, TError = ErrorType<void>>(params: GetOrdersArchivePreviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrdersArchivePreview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrdersArchivePreviewQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrdersArchivePreview>>> = ({ signal }) => getOrdersArchivePreview(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrdersArchivePreview>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetOrdersArchivePreviewQueryResult = NonNullable<Awaited<ReturnType<typeof getOrdersArchivePreview>>>
+export type GetOrdersArchivePreviewQueryError = ErrorType<void>
+
+
+/**
+ * @summary Preview which orders a date-range archive would cover (admin)
+ */
+
+export function useGetOrdersArchivePreview<TData = Awaited<ReturnType<typeof getOrdersArchivePreview>>, TError = ErrorType<void>>(
+ params: GetOrdersArchivePreviewParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrdersArchivePreview>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetOrdersArchivePreviewQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportOrdersArchiveUrl = (params: ExportOrdersArchiveParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/admin/orders/archive/export?${stringifiedParams}` : `/api/admin/orders/archive/export`
+}
+
+/**
+ * Streams one ZIP containing order/family-card/payment-verification spreadsheets plus every uploaded file (payment screenshots, card PDFs) organised per order. The X-Archive-Receipt response header carries a short-lived token that unlocks the delete step for this exact filter.
+ * @summary Download a ZIP archive of all orders in a date range (admin)
+ */
+export const exportOrdersArchive = async (params: ExportOrdersArchiveParams, options?: RequestInit): Promise<Blob> => {
+
+  return customFetch<Blob>(getExportOrdersArchiveUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportOrdersArchiveQueryKey = (params?: ExportOrdersArchiveParams,) => {
+    return [
+    `/api/admin/orders/archive/export`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportOrdersArchiveQueryOptions = <TData = Awaited<ReturnType<typeof exportOrdersArchive>>, TError = ErrorType<void>>(params: ExportOrdersArchiveParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportOrdersArchive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportOrdersArchiveQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportOrdersArchive>>> = ({ signal }) => exportOrdersArchive(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportOrdersArchive>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportOrdersArchiveQueryResult = NonNullable<Awaited<ReturnType<typeof exportOrdersArchive>>>
+export type ExportOrdersArchiveQueryError = ErrorType<void>
+
+
+/**
+ * @summary Download a ZIP archive of all orders in a date range (admin)
+ */
+
+export function useExportOrdersArchive<TData = Awaited<ReturnType<typeof exportOrdersArchive>>, TError = ErrorType<void>>(
+ params: ExportOrdersArchiveParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportOrdersArchive>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportOrdersArchiveQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getDeleteArchivedOrdersUrl = () => {
+
+
+
+
+  return `/api/admin/orders/archive/delete`
+}
+
+/**
+ * @summary Delete finished orders that were just archived (admin; settings unlock + export receipt required)
+ */
+export const deleteArchivedOrders = async (ordersArchiveDeleteRequest: OrdersArchiveDeleteRequest, options?: RequestInit): Promise<OrdersArchiveDeleteResponse> => {
+
+  return customFetch<OrdersArchiveDeleteResponse>(getDeleteArchivedOrdersUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(ordersArchiveDeleteRequest)
+  }
+);}
+
+
+
+
+export const getDeleteArchivedOrdersMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteArchivedOrders>>, TError,{data: BodyType<OrdersArchiveDeleteRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteArchivedOrders>>, TError,{data: BodyType<OrdersArchiveDeleteRequest>}, TContext> => {
+
+const mutationKey = ['deleteArchivedOrders'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteArchivedOrders>>, {data: BodyType<OrdersArchiveDeleteRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  deleteArchivedOrders(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteArchivedOrdersMutationResult = NonNullable<Awaited<ReturnType<typeof deleteArchivedOrders>>>
+    export type DeleteArchivedOrdersMutationBody = BodyType<OrdersArchiveDeleteRequest>
+    export type DeleteArchivedOrdersMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete finished orders that were just archived (admin; settings unlock + export receipt required)
+ */
+export const useDeleteArchivedOrders = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteArchivedOrders>>, TError,{data: BodyType<OrdersArchiveDeleteRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteArchivedOrders>>,
+        TError,
+        {data: BodyType<OrdersArchiveDeleteRequest>},
+        TContext
+      > => {
+      return useMutation(getDeleteArchivedOrdersMutationOptions(options));
+    }
 
 export const getGetSettingsOtpConfigUrl = () => {
 

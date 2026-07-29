@@ -896,12 +896,85 @@ export const UpdateProcessingPasswordResponse = zod.object({
 export const ListSettingsChangeHistoryResponse = zod.object({
   "changes": zod.array(zod.object({
   "id": zod.number(),
-  "field": zod.enum(['upi', 'pricing', 'processing_password', 'contact']).describe('Which protected setting changed'),
+  "field": zod.enum(['upi', 'pricing', 'processing_password', 'contact', 'orders_cleanup']).describe('Which protected setting changed (orders_cleanup rows record archive deletions)'),
   "oldValue": zod.string().describe('Effective value before the save (pricing is a JSON matrix string)'),
   "newValue": zod.string().describe('Value after the save (pricing is a JSON matrix string)'),
   "changedBy": zod.string().describe('Admin email from the unlock session that made the change'),
   "changedAt": zod.coerce.date()
 })).describe('Newest first')
+})
+
+
+/**
+ * @summary Preview which orders a date-range archive would cover (admin)
+ */
+export const GetOrdersArchivePreviewQueryParams = zod.object({
+  "fromDate": zod.coerce.string().describe('Inclusive start date (YYYY-MM-DD, order creation date)'),
+  "toDate": zod.coerce.string().describe('Inclusive end date (YYYY-MM-DD, order creation date)'),
+  "source": zod.enum(['both', 'public', 'operator']).optional().describe('Which orders to include (default both)')
+})
+
+export const GetOrdersArchivePreviewResponse = zod.object({
+  "filter": zod.object({
+  "fromDate": zod.string().describe('Inclusive start date (YYYY-MM-DD)'),
+  "toDate": zod.string().describe('Inclusive end date (YYYY-MM-DD)'),
+  "source": zod.enum(['both', 'public', 'operator'])
+}),
+  "total": zod.number().describe('Orders matching the filter'),
+  "byStatus": zod.record(zod.string(), zod.number()),
+  "deletable": zod.object({
+  "count": zod.number(),
+  "files": zod.number(),
+  "bytes": zod.number()
+}).describe('Finished orders (delivered\/returned\/cancelled) that a delete would remove'),
+  "skipped": zod.object({
+  "count": zod.number(),
+  "byStatus": zod.record(zod.string(), zod.number())
+}).describe('Orders in range that are still in progress and would never be deleted'),
+  "archive": zod.object({
+  "files": zod.number(),
+  "bytes": zod.number()
+}).describe('Every uploaded file the ZIP download would include'),
+  "sizesKnown": zod.boolean().describe('False when storage sizes could not be listed; counts still valid')
+})
+
+
+/**
+ * Streams one ZIP containing order/family-card/payment-verification spreadsheets plus every uploaded file (payment screenshots, card PDFs) organised per order. The X-Archive-Receipt response header carries a short-lived token that unlocks the delete step for this exact filter.
+ * @summary Download a ZIP archive of all orders in a date range (admin)
+ */
+export const ExportOrdersArchiveQueryParams = zod.object({
+  "fromDate": zod.coerce.string(),
+  "toDate": zod.coerce.string(),
+  "source": zod.enum(['both', 'public', 'operator']).optional()
+})
+
+export const ExportOrdersArchiveResponse = zod.unknown()
+
+
+/**
+ * @summary Delete finished orders that were just archived (admin; settings unlock + export receipt required)
+ */
+export const DeleteArchivedOrdersBody = zod.object({
+  "fromDate": zod.string(),
+  "toDate": zod.string(),
+  "source": zod.enum(['both', 'public', 'operator']).optional(),
+  "receipt": zod.string().describe('X-Archive-Receipt value from the matching export download'),
+  "confirmText": zod.string().describe('Must be exactly DELETE')
+})
+
+export const DeleteArchivedOrdersResponse = zod.object({
+  "deletedOrders": zod.number(),
+  "deletedFiles": zod.number(),
+  "freedBytes": zod.number(),
+  "skipped": zod.object({
+  "count": zod.number(),
+  "byStatus": zod.record(zod.string(), zod.number())
+}),
+  "failedOrders": zod.array(zod.object({
+  "orderNumber": zod.string(),
+  "error": zod.string()
+})).describe('Orders whose files could not be deleted; their rows were kept')
 })
 
 
