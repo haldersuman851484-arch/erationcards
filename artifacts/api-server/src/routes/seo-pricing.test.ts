@@ -1,8 +1,11 @@
 /**
  * Guards that the portal's index.html SEO price mentions (meta description,
- * Open Graph, JSON-LD FAQ/offers, priceRange) stay in sync with the live
- * pricing matrix: all price mentions must be %%PRICE_*%% tokens that
+ * Open Graph, JSON-LD offers, priceRange) stay in sync with the live pricing
+ * matrix: all price mentions must be %%PRICE_*%% tokens that
  * applySeoPriceTokens can substitute, with no literal prices left behind.
+ * (FAQPage/HowTo JSON-LD is page-level — injected by /faq and / at runtime
+ * and captured into the prerendered snapshots — so index.html must NOT
+ * contain a FAQPage block; that would duplicate it on every route.)
  */
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "fs";
@@ -56,6 +59,10 @@ describe("index.html SEO price tokens", () => {
     expect(indexHtml).toContain("%%PRICE_SPECIAL_MULTI%%");
     // priceRange must be tokenised
     expect(indexHtml).toContain('"priceRange": "₹%%PRICE_PUBLIC_MIN%%–₹%%PRICE_PUBLIC_MAX%%"');
+    // FAQPage schema moved to the /faq page (prerendered) — a global copy here
+    // would be duplicated on every prerendered route.
+    expect(indexHtml).not.toContain('"FAQPage"');
+    expect(indexHtml).not.toContain('"BreadcrumbList"');
   });
 
   it("substitutes every token — no %%PRICE_ leftovers with any valid matrix", () => {
@@ -73,10 +80,9 @@ describe("index.html SEO price tokens", () => {
     expect(rendered).toContain('"priceRange": "₹61–₹121"');
     expect(rendered).toContain('"lowPrice": "61"');
     expect(rendered).toContain('"highPrice": "91"');
-    expect(rendered).toContain("costs Rs 91 (inclusive of printing and delivery)");
     // every JSON-LD block must still be valid JSON after substitution
     const blocks = rendered.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g) ?? [];
-    expect(blocks.length).toBeGreaterThanOrEqual(4);
+    expect(blocks.length).toBeGreaterThanOrEqual(3);
     for (const block of blocks) {
       const json = block.replace(/<\/?script[^>]*>/g, "");
       expect(() => JSON.parse(json)).not.toThrow();

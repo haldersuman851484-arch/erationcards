@@ -259,6 +259,12 @@ mkdirSync(path.join(DEPLOY_DIR, "uploads"), { recursive: true });
 // BASE_PATH is intentionally not set → Vite defaults to "/" (root domain).
 run("pnpm --filter @workspace/ration-card-portal run build");
 
+// ── 2b. Prerender public routes for AI crawlers (GEO) ─────────────────────
+// Captures fully rendered HTML snapshots into dist/public/prerendered/ so
+// GPTBot / PerplexityBot / ClaudeBot (which do not run JavaScript) can read
+// the site. The API server substitutes live %%PRICE_*%% tokens per request.
+run("pnpm --filter @workspace/ration-card-portal run prerender");
+
 // ── 3. Build the API server bundle ────────────────────────────────────────
 run("pnpm --filter @workspace/api-server run build");
 

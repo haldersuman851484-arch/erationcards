@@ -1,10 +1,10 @@
-import { useEffect } from "react";
 import { Link, useParams } from "wouter";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useSeo } from "@/hooks/use-seo";
 import { MapPin, CreditCard, Truck, CheckCircle, Clock, Shield } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
+import { useJsonLd } from "@/lib/jsonld";
 
 const SITE_URL = "https://erationcards.in";
 
@@ -204,21 +204,6 @@ export const DISTRICTS: Record<string, DistrictInfo> = {
   },
 };
 
-function injectJsonLd(id: string, data: object) {
-  let el = document.getElementById(id) as HTMLScriptElement | null;
-  if (!el) {
-    el = document.createElement("script");
-    el.type = "application/ld+json";
-    el.id = id;
-    document.head.appendChild(el);
-  }
-  el.textContent = JSON.stringify(data);
-}
-
-function removeJsonLd(id: string) {
-  document.getElementById(id)?.remove();
-}
-
 export default function DistrictPage() {
   const PRICING = usePricing();
   const params = useParams<{ district: string }>();
@@ -226,19 +211,24 @@ export default function DistrictPage() {
   const info = DISTRICTS[district];
 
   const title = info
-    ? `PVC Ration Card ${info.name} | Order Online From ₹50`
+    ? `PVC Ration Card ${info.name} | Order Online From ₹${PRICING.ration.multi.public}`
     : "PVC Ration Card West Bengal | Order Online";
   const description = info
-    ? `Order a durable PVC printed ration card in ${info.name} (${info.bengali}), ${info.landmark}. Wallet-size, waterproof, doorstep delivery in 3–7 days. From ₹50 per card. AAY, PHH, SPHH, RKSY supported.`
-    : "Order a PVC printed ration card online for West Bengal. Delivered to your doorstep. From ₹50 per card.";
+    ? `Order a durable PVC printed ration card in ${info.name} (${info.bengali}), ${info.landmark}. Wallet-size, waterproof, doorstep delivery in 3–7 days. From ₹${PRICING.ration.multi.public} per card. AAY, PHH, SPHH, RKSY supported.`
+    : `Order a PVC printed ration card online for West Bengal. Delivered to your doorstep. From ₹${PRICING.ration.multi.public} per card.`;
   const canonical = info ? `${SITE_URL}/pvc-ration-card/${district}` : undefined;
 
   useSeo({ title, description, canonical });
 
-  useEffect(() => {
-    if (!info) return;
-
-    injectJsonLd("district-faq-ld", {
+  // useJsonLd re-injects whenever the serialized data changes, so these
+  // blocks pick up live admin pricing the moment it loads — including after
+  // hydrating over a prerendered snapshot (where the server already
+  // substituted live prices; a plain [info]-dep effect would overwrite them
+  // with defaults and never refresh).
+  useJsonLd(
+    "district-faq-ld",
+    info
+      ? {
       "@context": "https://schema.org",
       "@type": "FAQPage",
       mainEntity: [
@@ -247,7 +237,7 @@ export default function DistrictPage() {
           name: `How do I order a PVC ration card in ${info.name}?`,
           acceptedAnswer: {
             "@type": "Answer",
-            text: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay \u20b950 via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24\u201348 hours of confirmation.`,
+            text: `Visit erationcards.in, click "Order PVC Card", fill in your details and ${info.name} delivery address, pay ₹${PRICING.ration.single.public} (₹${PRICING.ration.multi.public} per card for 2 or more) via UPI, and upload your e-Ration Card PDF. Your card will be dispatched by Speed Post within 24\u201348 hours of confirmation.`,
           },
         },
         {
@@ -283,27 +273,28 @@ export default function DistrictPage() {
           },
         },
       ],
-    });
+        }
+      : null
+  );
 
-    injectJsonLd("district-breadcrumb-ld", {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: `PVC Ration Card ${info.name}`,
-          item: `${SITE_URL}/pvc-ration-card/${info.slug}`,
-        },
-      ],
-    });
-
-    return () => {
-      removeJsonLd("district-faq-ld");
-      removeJsonLd("district-breadcrumb-ld");
-    };
-  }, [info]);
+  useJsonLd(
+    "district-breadcrumb-ld",
+    info
+      ? {
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            { "@type": "ListItem", position: 1, name: "Home", item: `${SITE_URL}/` },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: `PVC Ration Card ${info.name}`,
+              item: `${SITE_URL}/pvc-ration-card/${info.slug}`,
+            },
+          ],
+        }
+      : null
+  );
 
   if (!info) {
     return (
@@ -363,7 +354,7 @@ export default function DistrictPage() {
             </h1>
             <p className="text-slate-300 text-lg mb-8 max-w-xl mx-auto">
               Order a durable, wallet-size PVC printed ration card delivered to your doorstep in {info.name},{" "}
-              {info.landmark}. From ₹50 per card — all card types supported.
+              {info.landmark}. From ₹{PRICING.ration.multi.public} per card — all card types supported.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link href="/order">
@@ -504,7 +495,7 @@ export default function DistrictPage() {
               Order your PVC Ration Card in {info.name} today
             </h2>
             <p className="text-blue-100 mb-8 text-sm">
-              Fast, secure, and delivered to your door. From ₹50 per card.
+              Fast, secure, and delivered to your door. From ₹{PRICING.ration.multi.public} per card.
             </p>
             <Link href="/order">
               <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50 font-semibold">

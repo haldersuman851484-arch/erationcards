@@ -1,3 +1,6 @@
+# robots.txt — erationcards.in (PVC Card Portal)
+# Machine-readable site summary for AI assistants: https://erationcards.in/llms.txt
+
 User-agent: *
 Allow: /
 
@@ -12,18 +15,29 @@ Disallow: /receipt/
 
 # Block staff-only login pages
 Disallow: /operator/login
+Disallow: /prerendered/
 
-# Allow key public pages
-Allow: /order
-Allow: /track
-Allow: /download
-Allow: /about
-Allow: /faq
-Allow: /contact
-Allow: /privacy
-Allow: /terms
-Allow: /refund
-Allow: /shipping
-Allow: /pvc-ration-card/
+# ── AI search & assistant crawlers — explicitly welcome ──
+# Same private-page rules as everyone else; all public content is open.
+User-agent: GPTBot
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: ClaudeBot
+User-agent: Claude-User
+User-agent: Claude-SearchBot
+User-agent: Google-Extended
+User-agent: CCBot
+User-agent: Bingbot
+User-agent: meta-externalagent
+Allow: /
+Disallow: /admin/
+Disallow: /operator/dashboard
+Disallow: /order-upload/
+Disallow: /processing
+Disallow: /receipt/
+Disallow: /operator/login
+Disallow: /prerendered/
 
 Sitemap: https://erationcards.in/sitemap.xml

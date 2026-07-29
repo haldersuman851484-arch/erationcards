@@ -10,6 +10,8 @@ import { useSeo } from "@/hooks/use-seo";
 import { useEffect, useRef, useState } from "react";
 import { useListApprovedReviews } from "@workspace/api-client-react";
 import { DISTRICTS } from "@/pages/DistrictPage";
+import { usePricing } from "@/hooks/use-pricing";
+import { useJsonLd } from "@/lib/jsonld";
 
 function HeroPVCCard() {
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
@@ -326,10 +328,27 @@ function formatReviewDate(iso: string): string {
 }
 
 export default function Home() {
+  const PRICING = usePricing();
   useSeo({
     title: "Order PVC Ration Card Online | West Bengal",
-    description: "Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. From ₹50 per card.",
+    description: `Order a durable, wallet-size PVC printed ration card online for West Bengal. Fast doorstep delivery across all 23 districts. From ₹${PRICING.ration.multi.public} per card.`,
     canonical: "https://erationcards.in/",
+  });
+
+  // HowTo structured data — captured into the prerendered snapshot for AI crawlers.
+  useJsonLd("howto-order-ld", {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "How to order a PVC ration card online in West Bengal",
+    description: `Order a wallet-size PVC print of your West Bengal e-Ration Card for doorstep delivery. Total cost from ₹${PRICING.ration.multi.public} per card including delivery.`,
+    totalTime: "P5D",
+    estimatedCost: { "@type": "MonetaryAmount", currency: "INR", value: String(PRICING.ration.single.public) },
+    step: [
+      { "@type": "HowToStep", position: 1, name: "Fill the order form", text: "Go to erationcards.in/order and enter your name, mobile number and delivery address.", url: "https://erationcards.in/order" },
+      { "@type": "HowToStep", position: 2, name: "Pay by UPI", text: "Pay using Google Pay, PhonePe, Paytm or any UPI app and upload the payment screenshot." },
+      { "@type": "HowToStep", position: 3, name: "Upload your e-Ration Card PDF", text: "Upload each family member's e-Ration Card PDF downloaded from food.wb.gov.in — one PVC card is printed per PDF." },
+      { "@type": "HowToStep", position: 4, name: "Receive your card", text: "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days anywhere in West Bengal." },
+    ],
   });
 
   const { data: liveReviews } = useListApprovedReviews();
@@ -395,6 +414,97 @@ export default function Home() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+      {/* Quick Answers — direct, fact-dense GEO block for AI search engines */}
+      <section className="py-20 bg-slate-50 border-b border-slate-200">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">PVC Ration Card West Bengal — Quick Answers</h2>
+            <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed" data-testid="text-quick-answer">
+              <strong>PVC Card Portal (erationcards.in)</strong> is a private online service that prints your existing
+              government-issued West Bengal e-Ration Card onto a wallet-size, waterproof PVC card and delivers it to
+              your doorstep in all 23 districts. Prices start at ₹{PRICING.ration.multi.public} per card, dispatch is
+              within 24–48 hours, and delivery takes 3–5 working days. We are not a government website — official
+              ration card services are free at food.wb.gov.in.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">How much does a PVC ration card cost in West Bengal?</h3>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full text-sm" data-testid="table-price">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700">
+                      <th className="text-left font-semibold px-4 py-3">Card type</th>
+                      <th className="text-right font-semibold px-4 py-3">1 card</th>
+                      <th className="text-right font-semibold px-4 py-3">2+ cards (each)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-slate-100">
+                      <td className="px-4 py-3 text-slate-700">Ration card (AAY, PHH, SPHH, RKSY-I, RKSY-II)</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.single.public}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.multi.public}</td>
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td className="px-4 py-3 text-slate-700">ABHA / E-SHRAM / GENERAL card</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.single.public}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.multi.public}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                Prices as of July 2026 — printing, packaging and Speed Post doorstep delivery included. Payment by UPI
+                (Google Pay, PhonePe, Paytm).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">How do I order a PVC ration card online?</h3>
+              <ol className="space-y-3">
+                {[
+                  "Fill in your name, mobile number and delivery address on the order form.",
+                  "Pay by UPI (Google Pay, PhonePe, Paytm) and upload the payment screenshot.",
+                  "Upload each family member's e-Ration Card PDF — one PVC card is printed per PDF.",
+                  "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days.",
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3 bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm text-slate-700 leading-relaxed">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <div className="flex gap-3 mt-5">
+                <Link href="/order">
+                  <Button className="bg-primary hover:bg-primary/90">Start Your Order</Button>
+                </Link>
+                <Link href="/faq">
+                  <Button variant="outline" className="border-slate-300">
+                    Read All FAQs
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+            {[
+              ["Card size", "85.6 × 54 mm (CR80, bank-card size)"],
+              ["Material", "Waterproof PVC, ~760 microns"],
+              ["Dispatch time", "Within 24–48 hours of confirmation"],
+              ["Coverage", "All 23 districts of West Bengal"],
+            ].map(([dt, dd]) => (
+              <div key={dt} className="bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
+                <dt className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{dt}</dt>
+                <dd className="text-sm text-slate-900 font-medium mt-1">{dd}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
       {/* Sample Card Gallery */}

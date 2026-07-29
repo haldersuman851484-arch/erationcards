@@ -171,6 +171,28 @@ export function applySeoPriceTokens(html: string, pricing: PricingMatrix = DEFAU
   });
 }
 
+/**
+ * Prerender-only pricing "matrix" whose PUBLIC values are %%PRICE_*%% SEO
+ * tokens instead of numbers. The build-time prerenderer
+ * (ration-card-portal/scripts/prerender.mjs) renders the public pages with
+ * this matrix so every price in the captured HTML is a token; the API server
+ * then substitutes the LIVE admin-edited prices via applySeoPriceTokens on
+ * every request — prerendered pages can never show stale prices.
+ *
+ * Operator prices never appear on prerendered public pages, so those slots
+ * keep the launch-default numbers. Never use this matrix for arithmetic.
+ */
+export const TOKEN_PRICING = {
+  ration: {
+    single: { public: "%%PRICE_RATION_SINGLE%%", operator: DEFAULT_PRICING.ration.single.operator },
+    multi: { public: "%%PRICE_RATION_MULTI%%", operator: DEFAULT_PRICING.ration.multi.operator },
+  },
+  special: {
+    single: { public: "%%PRICE_SPECIAL_SINGLE%%", operator: DEFAULT_PRICING.special.single.operator },
+    multi: { public: "%%PRICE_SPECIAL_MULTI%%", operator: DEFAULT_PRICING.special.multi.operator },
+  },
+} as unknown as PricingMatrix;
+
 export interface PriceLine {
   group: PriceGroup;
   /** e.g. "Ration Card" or "ABHA / E-SHRAM / GENERAL" */

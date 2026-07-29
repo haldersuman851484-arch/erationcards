@@ -101,7 +101,42 @@ app.use("/api", router);
 // the LIVE prices into index.html's %%PRICE_*%% SEO tokens (meta description,
 // Open Graph, JSON-LD). This keeps Google search snippet prices in sync with
 // the admin-edited pricing without a rebuild.
+import { buildPrerenderMap, normalizeRoutePath } from "./lib/prerendered";
+
 const publicDir = path.resolve(__dirname, "../public");
+
+// ── /llms.txt — plain-text service summary for AI assistants ──────────────
+// Served BEFORE express.static (with live price-token substitution) so the
+// raw tokened file in public/ never reaches a crawler.
+let rawLlmsTxt: string | null | undefined;
+app.get("/llms.txt", async (_req, res) => {
+  if (rawLlmsTxt === undefined) {
+    try {
+      rawLlmsTxt = await readFile(path.join(publicDir, "llms.txt"), "utf8");
+    } catch {
+      rawLlmsTxt = null;
+    }
+  }
+  if (rawLlmsTxt === null) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  res.setHeader("Content-Type", "text/plain; charset=utf-8");
+  res.setHeader("Cache-Control", "no-cache");
+  try {
+    const { pricing } = await getPricingMatrix();
+    res.send(applySeoPriceTokens(rawLlmsTxt, pricing));
+  } catch {
+    res.send(applySeoPriceTokens(rawLlmsTxt)); // default prices beat a 500
+  }
+});
+// Raw snapshots contain unsubstituted %%PRICE_*%% tokens — they are only
+// ever served through the SPA fallback below (which injects live prices),
+// never directly as static files.
+app.use("/prerendered", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
 app.use(
   express.static(publicDir, {
     index: false,
@@ -136,9 +171,45 @@ async function renderIndexHtml(): Promise<string | null> {
   return renderedIndexHtml.html;
 }
 
-// SPA fallback — send index.html (with live prices injected) for all non-API routes
-app.get("/{*path}", async (_req, res) => {
+// ── Prerendered snapshots (GEO) ────────────────────────────────────────────
+// scripts/prerender.mjs captures the fully rendered HTML of every public
+// route into public/prerendered/ at build time. AI crawlers (GPTBot,
+// PerplexityBot, ClaudeBot) do not execute JavaScript, so these snapshots are
+// what they read instead of the empty SPA shell; humans get the same HTML and
+// React mounts on top of it. Prices inside are %%PRICE_*%% tokens substituted
+// with the live matrix per request — snapshots never go stale.
+let prerenderMapPromise: Promise<Map<string, string>> | null = null;
+const renderedSnapshots = new Map<string, { key: string; html: string }>();
+
+async function renderSnapshot(file: string): Promise<string> {
+  let pricing: Awaited<ReturnType<typeof getPricingMatrix>>["pricing"] | undefined;
   try {
+    ({ pricing } = await getPricingMatrix());
+  } catch {
+    pricing = undefined; // default prices beat a 500
+  }
+  const key = pricing ? JSON.stringify(pricing) : "__default__";
+  const hit = renderedSnapshots.get(file);
+  if (hit && hit.key === key) return hit.html;
+  const raw = await readFile(file, "utf8");
+  const html = applySeoPriceTokens(raw, pricing);
+  renderedSnapshots.set(file, { key, html });
+  return html;
+}
+
+// SPA fallback — prerendered snapshot when one exists for the route,
+// otherwise index.html (both with live prices injected).
+app.get("/{*path}", async (req, res) => {
+  try {
+    if (!prerenderMapPromise) prerenderMapPromise = buildPrerenderMap(publicDir);
+    const route = normalizeRoutePath(req.path);
+    const snapshotFile = route === null ? undefined : (await prerenderMapPromise).get(route);
+    if (snapshotFile !== undefined) {
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache");
+      res.send(await renderSnapshot(snapshotFile));
+      return;
+    }
     const html = await renderIndexHtml();
     if (html === null) {
       res.status(404).json({ error: "Frontend build not found" });

@@ -2,7 +2,7 @@ import { useEffect } from "react";
 
 const SITE_NAME = "PVC Card Portal";
 const DEFAULT_DESC =
-  "Order a durable PVC printed ration card online for West Bengal. Wallet-size, waterproof, fast doorstep delivery. From ₹50 per card. Non-government printing service.";
+  "Order a durable PVC printed ration card online for West Bengal. Wallet-size, waterproof, fast doorstep delivery. Non-government printing service.";
 
 interface SeoOptions {
   title?: string;
@@ -23,6 +23,12 @@ export function useSeo({ title, description, canonical }: SeoOptions = {}) {
 
     if (canonical) {
       setLink("canonical", canonical);
+      setMeta("property", "og:url", canonical);
+      // index.html ships hreflang alternates pointing at the homepage; keep
+      // them in sync with the page actually being viewed.
+      document
+        .querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')
+        .forEach((el) => el.setAttribute("href", canonical));
     }
 
     return () => {
