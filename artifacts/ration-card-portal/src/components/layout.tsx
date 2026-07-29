@@ -102,7 +102,7 @@ export function Navbar() {
 export function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
@@ -125,6 +125,19 @@ export function Footer() {
             <li><Link href="/order" className="hover:text-primary transition-colors">Order PVC Card</Link></li>
             <li><Link href="/track" className="hover:text-primary transition-colors">Track Status</Link></li>
             <li><Link href="/download" className="hover:text-primary transition-colors">Download Digital Copy</Link></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="text-white font-semibold mb-4">Card Types</h3>
+          <ul className="space-y-2 text-sm">
+            <li><Link href="/pvc-card/aay" className="hover:text-primary transition-colors">AAY Ration Card</Link></li>
+            <li><Link href="/pvc-card/phh" className="hover:text-primary transition-colors">PHH Ration Card</Link></li>
+            <li><Link href="/pvc-card/sphh" className="hover:text-primary transition-colors">SPHH Ration Card</Link></li>
+            <li><Link href="/pvc-card/rksy-1" className="hover:text-primary transition-colors">RKSY-I Ration Card</Link></li>
+            <li><Link href="/pvc-card/rksy-2" className="hover:text-primary transition-colors">RKSY-II Ration Card</Link></li>
+            <li><Link href="/pvc-card/abha" className="hover:text-primary transition-colors">ABHA Health Card</Link></li>
+            <li><Link href="/pvc-card/e-shram" className="hover:text-primary transition-colors">E-SHRAM Card</Link></li>
+            <li><Link href="/pvc-card/general" className="hover:text-primary transition-colors">General PVC Card</Link></li>
           </ul>
         </div>
         <div>

@@ -135,6 +135,25 @@ export default function DownloadCard() {
             </CardContent>
           </Card>
 
+          <p className="text-center text-sm text-slate-500" data-testid="text-download-cardtypes">
+            Learn about each card &amp; PVC pricing:{" "}
+            <Link href="/pvc-card/aay" className="text-primary hover:underline">AAY</Link>
+            {" · "}
+            <Link href="/pvc-card/phh" className="text-primary hover:underline">PHH</Link>
+            {" · "}
+            <Link href="/pvc-card/sphh" className="text-primary hover:underline">SPHH</Link>
+            {" · "}
+            <Link href="/pvc-card/rksy-1" className="text-primary hover:underline">RKSY-I</Link>
+            {" · "}
+            <Link href="/pvc-card/rksy-2" className="text-primary hover:underline">RKSY-II</Link>
+            {" · "}
+            <Link href="/pvc-card/abha" className="text-primary hover:underline">ABHA</Link>
+            {" · "}
+            <Link href="/pvc-card/e-shram" className="text-primary hover:underline">E-SHRAM</Link>
+            {" · "}
+            <Link href="/pvc-card/general" className="text-primary hover:underline">General</Link>
+          </p>
+
         </div>
       </main>
       <Footer />

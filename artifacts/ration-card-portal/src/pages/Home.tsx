@@ -232,6 +232,18 @@ const SPECIAL_CARD_PRODUCTS = [
   },
 ];
 
+/** Per-type landing pages (see CardTypePage.tsx) — keyed by display code. */
+const CARD_TYPE_HREFS: Record<string, string> = {
+  AAY: "/pvc-card/aay",
+  PHH: "/pvc-card/phh",
+  SPHH: "/pvc-card/sphh",
+  "RKSY-I": "/pvc-card/rksy-1",
+  "RKSY-II": "/pvc-card/rksy-2",
+  ABHA: "/pvc-card/abha",
+  "E-SHRAM": "/pvc-card/e-shram",
+  GENERAL: "/pvc-card/general",
+};
+
 const STATS = [
   { value: "10,000+", label: "Cards Delivered", icon: Award },
   { value: "8,500+", label: "Happy Customers", icon: Star },
@@ -740,6 +752,13 @@ export default function Home() {
                 <span className={`self-start text-xs font-bold px-2 py-0.5 rounded-full ${ct.badge}`}>{ct.code}</span>
                 <h3 className="font-semibold text-sm leading-snug">{ct.name}</h3>
                 <p className="text-xs leading-relaxed opacity-80">{ct.desc}</p>
+                <Link
+                  href={CARD_TYPE_HREFS[ct.code]}
+                  className="text-xs font-semibold underline underline-offset-2 opacity-90 hover:opacity-100 mt-auto pt-1"
+                  data-testid={`link-cardtype-${ct.code}`}
+                >
+                  Price &amp; details →
+                </Link>
               </div>
             ))}
           </div>
@@ -768,6 +787,13 @@ export default function Home() {
                 <span className={`self-start text-xs font-bold px-2 py-0.5 rounded-full ${ct.badge}`}>{ct.code}</span>
                 <h3 className="font-semibold text-sm leading-snug">{ct.name}</h3>
                 <p className="text-xs leading-relaxed opacity-80">{ct.desc}</p>
+                <Link
+                  href={CARD_TYPE_HREFS[ct.code]}
+                  className="text-xs font-semibold underline underline-offset-2 opacity-90 hover:opacity-100 mt-auto pt-1"
+                  data-testid={`link-cardtype-${ct.code}`}
+                >
+                  Price &amp; details →
+                </Link>
               </div>
             ))}
           </div>

@@ -32,6 +32,8 @@ Updated: July 2026. Prices below are live values substituted by the server at re
 - Guide — lost or damaged ration card, what to do (free recovery): https://erationcards.in/guides/lost-ration-card-west-bengal
 - Download your e-Ration Card / ABHA / e-Shram PDF (official government links): https://erationcards.in/download
 - District pages (all 23, e.g. Kolkata): https://erationcards.in/pvc-ration-card/kolkata
+- Card-type pages — ration categories: https://erationcards.in/pvc-card/aay, https://erationcards.in/pvc-card/phh, https://erationcards.in/pvc-card/sphh, https://erationcards.in/pvc-card/rksy-1, https://erationcards.in/pvc-card/rksy-2
+- Card-type pages — other PVC prints: https://erationcards.in/pvc-card/abha, https://erationcards.in/pvc-card/e-shram, https://erationcards.in/pvc-card/general
 - About the service: https://erationcards.in/about
 - Contact: https://erationcards.in/contact — help@erationcards.in, +91 96359 60507
 - Policies: https://erationcards.in/privacy, https://erationcards.in/terms, https://erationcards.in/refund, https://erationcards.in/shipping

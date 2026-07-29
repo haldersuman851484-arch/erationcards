@@ -60,7 +60,16 @@ const districtSlugs = [...districtSrc.matchAll(/^\s+slug: "([a-z0-9-]+)",$/gm)].
 if (districtSlugs.length < 20) {
   throw new Error(`district slug parser found only ${districtSlugs.length} slugs — DistrictPage.tsx format changed?`);
 }
-const ROUTES = [...STATIC_ROUTES, ...districtSlugs.map((s) => `/pvc-ration-card/${s}`)];
+const cardTypeSrc = readFileSync(path.join(portalDir, "src", "pages", "CardTypePage.tsx"), "utf8");
+const cardTypeSlugs = [...cardTypeSrc.matchAll(/^\s+slug: "([a-z0-9-]+)",$/gm)].map((m) => m[1]);
+if (cardTypeSlugs.length < 8) {
+  throw new Error(`card-type slug parser found only ${cardTypeSlugs.length} slugs — CardTypePage.tsx format changed?`);
+}
+const ROUTES = [
+  ...STATIC_ROUTES,
+  ...districtSlugs.map((s) => `/pvc-ration-card/${s}`),
+  ...cardTypeSlugs.map((s) => `/pvc-card/${s}`),
+];
 
 // ── Route inventory guard: the sitemap is the public-page source of truth ──
 // Every sitemap URL must have a snapshot (or be knowingly excluded), and every
@@ -95,6 +104,8 @@ const MUST_HAVE_TOKENS = new Set([
   // Guides quote the print price in their intros/FAQs/CTAs.
   ...STATIC_ROUTES.filter((r) => r.startsWith("/guides/")),
   ...districtSlugs.map((s) => `/pvc-ration-card/${s}`),
+  // Card-type landing pages quote type-specific prices throughout.
+  ...cardTypeSlugs.map((s) => `/pvc-card/${s}`),
 ]);
 
 // ── Tiny static server for the built SPA (no API — react-query falls back) ─
@@ -196,6 +207,17 @@ for (const route of ROUTES) {
     if (route.startsWith("/guides/")) {
       if (!html.includes('"FAQPage"')) problems.push("guide FAQPage JSON-LD missing");
       if (!html.includes('"BreadcrumbList"')) problems.push("guide BreadcrumbList JSON-LD missing");
+    }
+    if (route.startsWith("/pvc-card/")) {
+      if (!html.includes('"FAQPage"')) problems.push("card-type FAQPage JSON-LD missing");
+      if (!html.includes('"BreadcrumbList"')) problems.push("card-type BreadcrumbList JSON-LD missing");
+    }
+    if (route === "/pvc-card/general") {
+      // GENERAL prints have no government-issued source — the customer uploads
+      // their own file, so the page must never claim a free official card exists.
+      if (/issued free by the government|official card is free|card services are free/i.test(html)) {
+        problems.push("GENERAL page contains free-government-card phrasing — keep copy conditional on officialUrl");
+      }
     }
     // Canonical + og:url must point at the route itself — a page that kept
     // index.html's default "/" canonical would tell crawlers it is a duplicate

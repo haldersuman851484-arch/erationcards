@@ -204,6 +204,24 @@ export default function FAQ() {
                 </Link>
               </li>
             </ul>
+            <h3 className="text-base font-bold text-slate-900 mt-5 mb-2">Card-type pages — price &amp; details</h3>
+            <p className="text-sm leading-relaxed" data-testid="text-faq-cardtypes">
+              <Link href="/pvc-card/aay" className="text-primary hover:underline">AAY</Link>
+              {" · "}
+              <Link href="/pvc-card/phh" className="text-primary hover:underline">PHH</Link>
+              {" · "}
+              <Link href="/pvc-card/sphh" className="text-primary hover:underline">SPHH</Link>
+              {" · "}
+              <Link href="/pvc-card/rksy-1" className="text-primary hover:underline">RKSY-I</Link>
+              {" · "}
+              <Link href="/pvc-card/rksy-2" className="text-primary hover:underline">RKSY-II</Link>
+              {" · "}
+              <Link href="/pvc-card/abha" className="text-primary hover:underline">ABHA</Link>
+              {" · "}
+              <Link href="/pvc-card/e-shram" className="text-primary hover:underline">E-SHRAM</Link>
+              {" · "}
+              <Link href="/pvc-card/general" className="text-primary hover:underline">General</Link>
+            </p>
           </div>
 
           <div className="mt-12 bg-primary/5 rounded-2xl p-8 text-center border border-primary/20">
