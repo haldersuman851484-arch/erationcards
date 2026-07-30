@@ -156,6 +156,24 @@ export function describeFetchError(err: unknown): string {
   return parts.join(" — ");
 }
 
+/**
+ * True when real emails must NOT leave the building: development runs (dev
+ * server, Playwright e2e, manual testing) share the SAME Resend account as
+ * production, and Resend's free tier allows only 100 sends per UTC day. On
+ * launch day (30 Jul 2026) test orders exhausted the quota by 04:29 UTC and
+ * every PRODUCTION send for the rest of the day was rejected with
+ * 429 daily_quota_exceeded. Suppressed sends are logged and reported as
+ * success so dev flows behave as if the email went out.
+ *
+ * Gated on === "development" (the dev workflow always sets it) so a
+ * production host that forgets NODE_ENV still sends. Set
+ * SETTINGS_OTP_SEND_EMAILS=true to opt back in to real sends during
+ * development (same flag the settings OTP/change emails already use).
+ */
+function suppressRealEmailsInDev(): boolean {
+  return process.env.NODE_ENV === "development" && process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true";
+}
+
 async function postToResend(body: Record<string, unknown>): Promise<globalThis.Response> {
   const apiKey = process.env["RESEND_API_KEY"];
   if (apiKey) {
@@ -201,6 +219,13 @@ async function postToResend(body: Record<string, unknown>): Promise<globalThis.R
  * errors are logged and reported as `false`.
  */
 export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log): Promise<boolean> {
+  if (suppressRealEmailsInDev()) {
+    log.info(
+      { orderNumber: order.orderNumber, to: order.customerEmail },
+      "DEV ONLY — order confirmation email suppressed (not sent, quota protection)",
+    );
+    return true;
+  }
   try {
     const res = await postToResend({
       from: FROM_ADDRESS,
@@ -234,6 +259,13 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log
  * already exists), so all errors are logged and reported as `false`.
  */
 export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log): Promise<boolean> {
+  if (suppressRealEmailsInDev()) {
+    log.info(
+      { orderNumber: data.orderNumber, to: data.customerEmail },
+      "DEV ONLY — order dispatched email suppressed (not sent, quota protection)",
+    );
+    return true;
+  }
   try {
     const res = await postToResend({
       from: FROM_ADDRESS,
@@ -339,9 +371,7 @@ export async function sendSettingsChangedEmail(
 ): Promise<boolean> {
   // In development the real partners must never be emailed (same rule as the
   // settings OTP codes). Set SETTINGS_OTP_SEND_EMAILS=true to opt back in.
-  // Gated on === "development" so a production host that forgets to set
-  // NODE_ENV still sends this security notification.
-  if (process.env.NODE_ENV === "development" && process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true") {
+  if (suppressRealEmailsInDev()) {
     log.info(
       { recipients, field: data.fieldLabel },
       "DEV ONLY — settings change email suppressed (not sent to partners)",
