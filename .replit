@@ -75,7 +75,6 @@ channel = "stable-25_05"
 [userenv]
 
 [userenv.shared]
-DELHIVERY_ENV = "production"
 EMAIL_FROM = "PVC Card Portal <orders@erationcards.in>"
 PROCESSING_EMAIL = "help@erationcards.in"
 
