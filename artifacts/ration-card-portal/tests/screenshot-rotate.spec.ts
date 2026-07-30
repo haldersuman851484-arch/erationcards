@@ -176,7 +176,12 @@ test.describe("Screenshot viewer rotation — processing panel", () => {
       const focused = await page.evaluate(
         () => document.activeElement?.getAttribute("data-testid") ?? document.activeElement?.tagName ?? null
       );
-      expect(["button-rotate-screenshot", "button-close-screenshot"]).toContain(focused);
+      expect([
+        "button-rotate-screenshot",
+        "button-zoom-in-screenshot",
+        "button-zoom-out-screenshot",
+        "button-close-screenshot",
+      ]).toContain(focused);
     }
 
     // Close and confirm the dialog is intact with no payment action fired.
@@ -184,6 +189,107 @@ test.describe("Screenshot viewer rotation — processing panel", () => {
     await expect(page.getByTestId("img-screenshot-preview")).not.toBeVisible();
     await expect(page.getByTestId("button-dialog-confirm-payment")).toBeVisible();
     await expect(page.getByTestId("button-dialog-reject-payment")).toBeVisible();
+  });
+});
+
+test.describe("Screenshot viewer zoom & pan — processing panel", () => {
+  test("zoom buttons scale the image, pan only works while zoomed, everything resets on reopen", async ({ page }) => {
+    await setupProcessingMocks(page, { orders: [makeOrder()] });
+
+    await page.goto("/processing");
+    await expect(page.getByTestId("button-view-screenshot-42")).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("button-view-screenshot-42").click();
+
+    const img = page.getByTestId("img-screenshot-preview");
+    await expect(img).toBeVisible();
+    await expect(img).toHaveAttribute("data-zoom", "1");
+    await expect(page.getByTestId("text-zoom-level")).toHaveText("100%");
+    // Zoom out is disabled at minimum zoom.
+    await expect(page.getByTestId("button-zoom-out-screenshot")).toBeDisabled();
+
+    // Not zoomed: dragging must not pan.
+    const area = page.getByTestId("screenshot-pan-area");
+    const wrapper = page.getByTestId("screenshot-pan-wrapper");
+    const box = (await area.boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 60, cy + 40);
+    await page.mouse.up();
+    await expect(wrapper).toHaveAttribute("data-pan-x", "0");
+    await expect(wrapper).toHaveAttribute("data-pan-y", "0");
+
+    // Zoom in twice → 200%.
+    const zoomIn = page.getByTestId("button-zoom-in-screenshot");
+    await zoomIn.click();
+    await expect(img).toHaveAttribute("data-zoom", "1.5");
+    await zoomIn.click();
+    await expect(img).toHaveAttribute("data-zoom", "2");
+    await expect(page.getByTestId("text-zoom-level")).toHaveText("200%");
+    // Scale is applied visually alongside rotation (rotate 0, scale 2).
+    await expect(img).toHaveCSS("transform", "matrix(2, 0, 0, 2, 0, 0)");
+
+    // Zoomed: drag pans the image.
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    await page.mouse.move(cx + 60, cy + 40, { steps: 3 });
+    await page.mouse.up();
+    await expect(wrapper).toHaveAttribute("data-pan-x", "60");
+    await expect(wrapper).toHaveAttribute("data-pan-y", "40");
+
+    // Zoom works together with rotation.
+    await page.getByTestId("button-rotate-screenshot").click();
+    await expect(img).toHaveAttribute("data-rotation", "90");
+    await expect(img).toHaveAttribute("data-zoom", "2");
+    await expect(img).toHaveCSS("transform", "matrix(0, 2, -2, 0, 0, 0)");
+
+    // Zooming back out to 100% recenters the pan and disables zoom-out.
+    const zoomOut = page.getByTestId("button-zoom-out-screenshot");
+    await zoomOut.click();
+    await zoomOut.click();
+    await expect(img).toHaveAttribute("data-zoom", "1");
+    await expect(wrapper).toHaveAttribute("data-pan-x", "0");
+    await expect(wrapper).toHaveAttribute("data-pan-y", "0");
+    await expect(zoomOut).toBeDisabled();
+
+    // Zoom in, close, reopen — starts at 100% and upright again.
+    await zoomIn.click();
+    await expect(img).toHaveAttribute("data-zoom", "1.5");
+    await page.getByTestId("button-close-screenshot").click();
+    await expect(img).not.toBeVisible();
+    await page.getByTestId("button-view-screenshot-42").click();
+    await expect(img).toBeVisible();
+    await expect(img).toHaveAttribute("data-zoom", "1");
+    await expect(img).toHaveAttribute("data-rotation", "0");
+  });
+
+  test("scroll wheel zooms in and out and respects the max limit", async ({ page }) => {
+    await setupProcessingMocks(page, { orders: [makeOrder()] });
+
+    await page.goto("/processing");
+    await expect(page.getByTestId("button-view-screenshot-42")).toBeVisible({ timeout: 10000 });
+    await page.getByTestId("button-view-screenshot-42").click();
+
+    const img = page.getByTestId("img-screenshot-preview");
+    await expect(img).toBeVisible();
+
+    const area = page.getByTestId("screenshot-pan-area");
+    const box = (await area.boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+
+    // Wheel up zooms in.
+    await page.mouse.wheel(0, -100);
+    await expect(img).toHaveAttribute("data-zoom", "1.5");
+
+    // Zoom is clamped at the maximum.
+    for (let i = 0; i < 12; i++) await page.mouse.wheel(0, -100);
+    await expect(img).toHaveAttribute("data-zoom", "5");
+    await expect(page.getByTestId("button-zoom-in-screenshot")).toBeDisabled();
+
+    // Wheel down zooms back out, clamped at 100%.
+    for (let i = 0; i < 12; i++) await page.mouse.wheel(0, 100);
+    await expect(img).toHaveAttribute("data-zoom", "1");
   });
 });
 
