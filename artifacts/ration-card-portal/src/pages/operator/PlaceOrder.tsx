@@ -33,7 +33,7 @@ import {
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
-import { applyServerFieldErrors, scrollToField } from "@/lib/serverFieldErrors";
+import { applyServerFieldErrors, extractFamilyCardIssues, scrollToFamilyCard, scrollToField } from "@/lib/serverFieldErrors";
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -177,6 +177,8 @@ export default function PlaceOrder() {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [subCard, setSubCard] = useState<FamilyCard>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
   const [subError, setSubError] = useState("");
+  // Server-rejected family-card entries: index in familyCards → message.
+  const [familyCardErrors, setFamilyCardErrors] = useState<Record<number, string>>({});
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -304,6 +306,8 @@ export default function PlaceOrder() {
       if (editIdx !== null) next[editIdx] = entry; else next.push(entry);
       return next;
     });
+    // Entries changed — stale server errors no longer match; re-validate on submit.
+    setFamilyCardErrors({});
     setFamilyDialog(false);
   }
 
@@ -346,11 +350,26 @@ export default function PlaceOrder() {
           // Field-level 400: highlight the offending input(s) inline, jump to
           // the wizard step that contains the first one, and scroll to it.
           const firstField = applyServerFieldErrors(form, err?.data?.details);
-          if (firstField) {
-            setStep(ORDER_FIELD_STEPS[firstField] ?? 1);
-            scrollToField(form, firstField);
+          // Issues inside the familyCards array: highlight the exact family
+          // card row(s) in the step-1 list and name the bad field.
+          const familyIssues = extractFamilyCardIssues(err?.data?.details);
+          if (familyIssues.length > 0) {
+            const map: Record<number, string> = {};
+            for (const fi of familyIssues) if (!(fi.index in map)) map[fi.index] = fi.message;
+            setFamilyCardErrors(map);
+          }
+          if (firstField || familyIssues.length > 0) {
+            if (firstField) {
+              setStep(ORDER_FIELD_STEPS[firstField] ?? 1);
+              scrollToField(form, firstField);
+            } else {
+              setStep(1);
+              scrollToFamilyCard(familyIssues[0].index);
+            }
             toast({
-              title: "Please fix the highlighted field",
+              title: familyIssues.length > 0 && !firstField
+                ? `Please fix family member card ${familyIssues[0].index + 1}`
+                : "Please fix the highlighted field",
               description: serverMessage ?? "Check the fields marked in red and try again.",
               variant: "destructive",
             });
@@ -390,7 +409,7 @@ export default function PlaceOrder() {
   }
 
   function resetOrder() {
-    setSuccess(null); setStep(1); setFamilyCards([]); setScreenshotFile(null); setScreenshotPreview(null); setPaymentConfirmed(false);
+    setSuccess(null); setStep(1); setFamilyCards([]); setFamilyCardErrors({}); setScreenshotFile(null); setScreenshotPreview(null); setPaymentConfirmed(false);
     setCreatedOrder(null); setCardPdfs({}); setEmailSent(null);
     form.reset();
   }
@@ -512,13 +531,18 @@ export default function PlaceOrder() {
                     {familyCards.length > 0 && (
                       <div className="space-y-2">
                         {familyCards.map((fc, i) => (
-                          <div key={i} className="flex items-center gap-3 bg-white rounded-lg p-2.5 border border-slate-200">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">{fc.customerName}</p>
-                              <p className="text-xs text-slate-500 font-mono">{fc.rationCardNumber} · {fc.cardType}</p>
+                          <div key={i} data-family-card-row={i} className={`bg-white rounded-lg p-2.5 border ${familyCardErrors[i] ? "border-red-500 bg-red-50" : "border-slate-200"}`} data-testid={`family-card-${i}`}>
+                            <div className="flex items-center gap-3">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-slate-800 truncate">{fc.customerName}</p>
+                                <p className="text-xs text-slate-500 font-mono">{fc.rationCardNumber} · {fc.cardType}</p>
+                              </div>
+                              <button type="button" onClick={() => openAddFamily(i)} className="text-slate-400 hover:text-primary"><Pencil className="w-3.5 h-3.5" /></button>
+                              <button type="button" onClick={() => { setFamilyCards(p => p.filter((_, j) => j !== i)); setFamilyCardErrors({}); }} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
                             </div>
-                            <button type="button" onClick={() => openAddFamily(i)} className="text-slate-400 hover:text-primary"><Pencil className="w-3.5 h-3.5" /></button>
-                            <button type="button" onClick={() => setFamilyCards(p => p.filter((_, j) => j !== i))} className="text-slate-400 hover:text-red-500"><Trash2 className="w-3.5 h-3.5" /></button>
+                            {familyCardErrors[i] && (
+                              <p className="text-xs font-medium text-red-600 mt-1" data-testid={`family-card-error-${i}`}>{familyCardErrors[i]}</p>
+                            )}
                           </div>
                         ))}
                       </div>

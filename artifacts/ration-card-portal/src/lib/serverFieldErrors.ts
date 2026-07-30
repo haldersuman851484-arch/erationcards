@@ -28,6 +28,13 @@ const FIELD_MESSAGES: Record<string, string> = {
   pincode: "PIN code must be exactly 6 digits",
 };
 
+// Labels for the fields inside a family-card entry.
+const FAMILY_FIELD_LABELS: Record<string, string> = {
+  customerName: "Card holder name",
+  rationCardNumber: "Ration card number",
+  cardType: "Card type",
+};
+
 function messageForIssue(field: string, issue: ServerIssue): string {
   const label = FIELD_LABELS[field] ?? field;
   const override = FIELD_MESSAGES[field];
@@ -66,6 +73,63 @@ export function applyServerFieldErrors<T extends FieldValues>(
     if (!firstField) firstField = field;
   }
   return firstField;
+}
+
+export type FamilyCardIssue = { index: number; field: string; message: string };
+
+/**
+ * Extracts validation issues that point into the familyCards array. Handles
+ * both shapes the server produces:
+ *  - CreateOrderBody ZodError issues: path ["familyCards", 1, "customerName"]
+ *  - FamilyCardsSchema.safeParse issues ("Invalid familyCards" response):
+ *    path [1, "customerName"] (relative to the array itself)
+ */
+export function extractFamilyCardIssues(details: unknown): FamilyCardIssue[] {
+  if (!Array.isArray(details)) return [];
+  const out: FamilyCardIssue[] = [];
+  for (const issue of details as ServerIssue[]) {
+    const path = issue?.path ?? [];
+    let index: number | undefined;
+    let field: string | undefined;
+    if (path[0] === "familyCards" && typeof path[1] === "number") {
+      index = path[1];
+      field = typeof path[2] === "string" ? path[2] : undefined;
+    } else if (typeof path[0] === "number" && typeof path[1] === "string") {
+      index = path[0];
+      field = path[1];
+    }
+    if (index === undefined || !field) continue;
+    const label = FAMILY_FIELD_LABELS[field] ?? field;
+    let message: string;
+    switch (issue.code) {
+      case "invalid_type":
+        message = `${label} is required`;
+        break;
+      case "too_small":
+        message = `${label} is missing or too short`;
+        break;
+      case "too_big":
+        message = `${label} is too long`;
+        break;
+      default:
+        message = issue.message || `${label} is invalid`;
+    }
+    out.push({ index, field, message });
+  }
+  return out;
+}
+
+/**
+ * Scrolls to a family-card row in the list. Rows must carry a
+ * `data-family-card-row={index}` attribute. Deferred like scrollToField so it
+ * works right after a wizard step change.
+ */
+export function scrollToFamilyCard(index: number): void {
+  setTimeout(() => {
+    document
+      .querySelector<HTMLElement>(`[data-family-card-row="${index}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 80);
 }
 
 /**

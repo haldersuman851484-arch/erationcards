@@ -27,7 +27,7 @@ import {
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
-import { applyServerFieldErrors, scrollToField } from "@/lib/serverFieldErrors";
+import { applyServerFieldErrors, extractFamilyCardIssues, scrollToFamilyCard, scrollToField } from "@/lib/serverFieldErrors";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -120,6 +120,8 @@ export default function Order() {
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [subCard, setSubCard] = useState<FamilyCardEntry>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
   const [subError, setSubError] = useState("");
+  // Server-rejected family-card entries: index in familyCards → message.
+  const [familyCardErrors, setFamilyCardErrors] = useState<Record<number, string>>({});
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -166,11 +168,15 @@ export default function Order() {
       else next.push(entry);
       return next;
     });
+    // Entries changed — stale server errors no longer match; re-validate on submit.
+    setFamilyCardErrors({});
     setAddCardView(false);
   }
 
   function removeFamilyCard(index: number) {
     setFamilyCards((prev) => prev.filter((_, i) => i !== index));
+    // Indexes shift after removal, so drop all server errors.
+    setFamilyCardErrors({});
   }
 
   const form = useForm<OrderForm>({
@@ -326,11 +332,27 @@ export default function Order() {
           // Field-level 400: highlight the offending input(s) inline, jump to
           // the wizard step that contains the first one, and scroll to it.
           const firstField = applyServerFieldErrors(form, err?.data?.details);
-          if (firstField) {
-            setStep(ORDER_FIELD_STEPS[firstField] ?? 1);
-            scrollToField(form, firstField);
+          // Issues inside the familyCards array: highlight the exact family
+          // card row(s) in the step-1 list and name the bad field.
+          const familyIssues = extractFamilyCardIssues(err?.data?.details);
+          if (familyIssues.length > 0) {
+            const map: Record<number, string> = {};
+            for (const fi of familyIssues) if (!(fi.index in map)) map[fi.index] = fi.message;
+            setFamilyCardErrors(map);
+          }
+          if (firstField || familyIssues.length > 0) {
+            if (firstField) {
+              setStep(ORDER_FIELD_STEPS[firstField] ?? 1);
+              scrollToField(form, firstField);
+            } else {
+              setStep(1);
+              setAddCardView(false);
+              scrollToFamilyCard(familyIssues[0].index);
+            }
             toast({
-              title: "Please fix the highlighted field",
+              title: familyIssues.length > 0 && !firstField
+                ? `Please fix family member card ${familyIssues[0].index + 1}`
+                : "Please fix the highlighted field",
               description: serverMessage ?? "Check the fields marked in red and try again.",
               variant: "destructive",
             });
@@ -418,6 +440,7 @@ export default function Order() {
                   setEditIndex(null);
                   setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
                   setSubError("");
+                  setFamilyCardErrors({});
                   setShowFamilyDialog(false);
                   setScreenshotFile(null);
                   setScreenshotPreview(null);
@@ -559,18 +582,23 @@ export default function Order() {
                           </div>
                           <div className="space-y-2">
                             {familyCards.map((fc, idx) => (
-                              <div key={idx} className="flex items-center justify-between bg-white rounded-md border border-slate-200 px-3 py-2" data-testid={`family-card-${idx}`}>
-                                <span className="text-sm text-slate-700 truncate">
-                                  <span className="font-medium">{fc.customerName}</span> • {fc.rationCardNumber} • {fc.cardType}
-                                </span>
-                                <div className="flex items-center gap-2 shrink-0 ml-3">
-                                  <button type="button" aria-label="Edit card" data-testid={`button-edit-family-${idx}`} className="text-slate-500 hover:text-primary" onClick={() => openAddCard(idx)}>
-                                    <Pencil className="w-4 h-4" />
-                                  </button>
-                                  <button type="button" aria-label="Delete card" data-testid={`button-delete-family-${idx}`} className="text-slate-500 hover:text-red-600" onClick={() => removeFamilyCard(idx)}>
-                                    <Trash2 className="w-4 h-4" />
-                                  </button>
+                              <div key={idx} data-family-card-row={idx} className={`bg-white rounded-md border px-3 py-2 ${familyCardErrors[idx] ? "border-red-500 bg-red-50" : "border-slate-200"}`} data-testid={`family-card-${idx}`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm text-slate-700 truncate">
+                                    <span className="font-medium">{fc.customerName}</span> • {fc.rationCardNumber} • {fc.cardType}
+                                  </span>
+                                  <div className="flex items-center gap-2 shrink-0 ml-3">
+                                    <button type="button" aria-label="Edit card" data-testid={`button-edit-family-${idx}`} className="text-slate-500 hover:text-primary" onClick={() => openAddCard(idx)}>
+                                      <Pencil className="w-4 h-4" />
+                                    </button>
+                                    <button type="button" aria-label="Delete card" data-testid={`button-delete-family-${idx}`} className="text-slate-500 hover:text-red-600" onClick={() => removeFamilyCard(idx)}>
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
                                 </div>
+                                {familyCardErrors[idx] && (
+                                  <p className="text-xs font-medium text-red-600 mt-1" data-testid={`family-card-error-${idx}`}>{familyCardErrors[idx]}</p>
+                                )}
                               </div>
                             ))}
                           </div>
