@@ -394,7 +394,7 @@ export default function Home() {
               <span className="text-primary font-extrabold"> Ration Card</span> Today
             </h1>
             <p className="text-lg text-slate-600 max-w-xl leading-relaxed">
-              Order a durable, high-quality PVC printed ration card — wallet-size, waterproof — delivered straight to your doorstep across all 23 districts of West Bengal.
+              We print your existing West Bengal e-Ration Card onto a durable, wallet-size, waterproof PVC card — delivered straight to your doorstep across all 23 districts of West Bengal.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
               <Link href="/order">
@@ -901,7 +901,11 @@ export default function Home() {
             <img
               src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=2000&auto=format&fit=crop"
               alt="Quality PVC card printing service West Bengal"
-              className="rounded-2xl shadow-xl w-full"
+              className="rounded-2xl shadow-xl w-full h-auto"
+              width={2000}
+              height={1333}
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>

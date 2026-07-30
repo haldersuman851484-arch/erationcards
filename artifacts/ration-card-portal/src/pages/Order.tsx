@@ -108,7 +108,7 @@ export default function Order() {
   const PRICING = usePricing();
   const CONTACT = useContact();
   useSeo({
-    title: "Apply for PVC Ration Card | From ₹50 Per Card | Fast Delivery West Bengal",
+    title: `Apply for PVC Ration Card Online | From ₹${PRICING.ration.multi.public} Per Card`,
     description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM or GENERAL card printed and delivered to your door. All West Bengal districts served.",
     canonical: "https://erationcards.in/order",
   });

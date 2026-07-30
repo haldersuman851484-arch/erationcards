@@ -100,6 +100,8 @@ if (missingSnapshots.length > 0 || missingSitemap.length > 0) {
 // live-price substitution silently died, so we fail the build.
 const MUST_HAVE_TOKENS = new Set([
   "/",
+  // /order quotes the per-card price in its <title> (via usePricing).
+  "/order",
   "/faq",
   // Guides quote the print price in their intros/FAQs/CTAs.
   ...STATIC_ROUTES.filter((r) => r.startsWith("/guides/")),
