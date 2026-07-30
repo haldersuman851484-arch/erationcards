@@ -15,6 +15,8 @@ description: Rules for producing a working self-hosted (Hostinger) zip of the ap
 
 **Rule 4 — zip layout.** Zip the CONTENTS of `hostinger/` (`cd hostinger && zip -r ../x.zip .`) so `package.json` sits at the zip root — Hostinger's Node.js app detection needs that; a nested top-level folder breaks it.
 
+**Zip hand-off to the user:** the chat asset card confused them; what works is copying the zip into `artifacts/ration-card-portal/public/`, sending `https://$REPLIT_DEV_DOMAIN/<file>.zip` as a plain link, then deleting it from public/ right after download (anything left there is baked into the next build).
+
 ## Hostinger live-launch operational notes (learned walking the user through hPanel, July 2026)
 - "Deployment failed" with a clean npm-install log = app crashed at start. No env vars → boot crash (reproduced locally with `env -i`). With the SEVEN required vars (NODE_ENV, MYSQL_DATABASE_URL, SESSION_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, MERCHANT_UPI_ID, PORT) the app boots and serves prerendered pages even when the DB is unreachable — mysql2 pool is lazy — so deploy goes green before DB setup. Delhivery/Resend/staff vars are optional at boot (dispatch 503s until configured).
 - **hPanel does NOT inject PORT** for zip-uploaded Node apps, despite its Express doc claiming "Hostinger assigns a port at runtime" — the app crash-looped on the PORT guard while the deployment showed green "Completed". Fix: user-set env var `PORT=3000` (matches Hostinger's own Express example fallback `process.env.PORT ?? 3000`). Green deploy ≠ running app: 503 with `server: hcdn` header = app down behind the edge; the Runtime logs page (left menu) shows the real boot stack trace.
