@@ -129,7 +129,7 @@ test.describe("Payment confirmation", () => {
       onPaymentUpdate: (_id, body) => { Object.assign(orders[0], body); },
     });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-confirm-payment-42")).toBeVisible({ timeout: 10000 });
     await expect(page.getByTestId("button-reject-payment-42")).toBeVisible();
 
@@ -149,7 +149,7 @@ test.describe("Payment confirmation", () => {
       onPaymentUpdate: (_id, body) => { Object.assign(orders[0], body); },
     });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-reject-payment-42")).toBeVisible({ timeout: 10000 });
 
     await page.getByTestId("button-reject-payment-42").click();
@@ -165,7 +165,7 @@ test.describe("Payment confirmation", () => {
 
     await setupMocks(page, { orders });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.locator("text=PVCPAY001")).toBeVisible({ timeout: 10000 });
 
     await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible();

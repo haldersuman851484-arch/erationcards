@@ -81,6 +81,7 @@ async function fillStep2(page: import("@playwright/test").Page) {
   await kolkataOption.click();
   await page.getByTestId("input-pincode").fill("700001");
   await page.getByTestId("input-phone").fill("9876543210");
+  await page.getByTestId("input-email").fill("rajesh@example.com");
   await expect(page.getByTestId("button-next-step2")).toBeEnabled({ timeout: 3000 });
   await page.getByTestId("button-next-step2").click();
 }
@@ -142,9 +143,12 @@ test.describe("Order form", () => {
     await expect(submitButton).toBeEnabled({ timeout: 3000 });
     await submitButton.click();
 
-    await expect(page).toHaveURL(/\/order-upload\/PVCTEST001/, {
+    // Success no longer navigates away — the form advances to the in-page
+    // step 4 (card PDF upload) showing the created order number.
+    await expect(page.getByTestId("card-step4-upload")).toBeVisible({
       timeout: 10000,
     });
+    await expect(page.getByText("Order created — PVCTEST001")).toBeVisible();
   });
 
   test("shows a validation error when customerName is empty and stays on step 1", async ({

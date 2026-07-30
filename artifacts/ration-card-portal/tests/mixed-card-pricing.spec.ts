@@ -123,6 +123,7 @@ test.describe("Public order form — mixed card pricing", () => {
     await kolkata.click();
     await page.getByTestId("input-pincode").fill("700001");
     await page.getByTestId("input-phone").fill("9876543210");
+    await page.getByTestId("input-email").fill("rajesh@example.com");
     await page.getByTestId("button-next-step2").click();
 
     // Step 3: price breakdown — the money path customers actually see
@@ -146,7 +147,9 @@ test.describe("Public order form — mixed card pricing", () => {
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    await expect(page).toHaveURL(/\/order-upload\/PVCMIX001/, { timeout: 10000 });
+    // Success advances to the in-page step 4 (card PDF upload)
+    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Order created — PVCMIX001")).toBeVisible();
 
     // The submitted amount matches the on-screen total
     expect(captured.body).not.toBeNull();
@@ -203,6 +206,7 @@ test.describe("Operator order form — mixed card pricing", () => {
     await expect(kolkata).toBeVisible({ timeout: 5000 });
     await kolkata.click();
     await page.getByPlaceholder("6-digit PIN").fill("700001");
+    await page.getByPlaceholder("customer@example.com").fill("rajesh@example.com");
     await page.getByRole("button", { name: /Next: Payment/ }).click();
 
     // Step 3: payment shows the same operator total & breakdown
@@ -214,11 +218,14 @@ test.describe("Operator order form — mixed card pricing", () => {
       mimeType: "image/jpeg",
       buffer: Buffer.from("fake-image-data"),
     });
+    await page.getByTestId("checkbox-payment-confirmed").click();
     const submit = page.getByRole("button", { name: "Place Order" });
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    await expect(page).toHaveURL(/\/order-upload\/PVCMIX001/, { timeout: 10000 });
+    // Success advances to the in-page step 4 (card PDF upload)
+    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText("Order created — PVCMIX001")).toBeVisible();
 
     expect(captured.body).not.toBeNull();
     expect(Number(captured.body.amount)).toBe(110);

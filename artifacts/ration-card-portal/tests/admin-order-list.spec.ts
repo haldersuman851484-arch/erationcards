@@ -128,7 +128,7 @@ async function setupMocks(
 test.describe("Admin order list", () => {
   test("renders several seeded orders and shows their statuses", async ({ page }) => {
     await setupMocks(page);
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
 
     await expect(page.locator("text=PVC001")).toBeVisible({ timeout: 10000 });
 
@@ -146,7 +146,7 @@ test.describe("Admin order list", () => {
 
   test("status filter shows only orders matching the selected status", async ({ page }) => {
     await setupMocks(page);
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
 
     await expect(page.locator("text=PVC001")).toBeVisible({ timeout: 10000 });
 
@@ -171,7 +171,7 @@ test.describe("Admin order list", () => {
       },
     });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-view-order-1")).toBeVisible({ timeout: 10000 });
 
     await expect(page.getByTestId("badge-order-status-1")).toContainText("pending");

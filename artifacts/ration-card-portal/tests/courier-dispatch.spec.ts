@@ -123,7 +123,7 @@ test.describe("Courier dispatch form", () => {
     const orders = [makeOrder()];
     await setupMocks(page, { orders });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-view-order-7")).toBeVisible({ timeout: 10000 });
     await page.getByTestId("button-view-order-7").click();
 
@@ -142,7 +142,7 @@ test.describe("Courier dispatch form", () => {
     const orders = [makeOrder()];
     await setupMocks(page, { orders });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-view-order-7")).toBeVisible({ timeout: 10000 });
     await page.getByTestId("button-view-order-7").click();
 
@@ -170,7 +170,7 @@ test.describe("Courier dispatch form", () => {
       },
     });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-view-order-7")).toBeVisible({ timeout: 10000 });
     await page.getByTestId("button-view-order-7").click();
 
@@ -202,7 +202,7 @@ test.describe("Courier dispatch form", () => {
       onStatusUpdate: () => { patchCalled = true; },
     });
 
-    await page.goto("/admin/dashboard");
+    await page.goto("/processing");
     await expect(page.getByTestId("button-view-order-7")).toBeVisible({ timeout: 10000 });
     await page.getByTestId("button-view-order-7").click();
 
