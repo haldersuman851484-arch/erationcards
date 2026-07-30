@@ -2,6 +2,15 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { syncDeliveredOrders } from "./routes/orders";
 
+// A production host (e.g. Hostinger hPanel launching dist/index.mjs
+// directly) can start the server with NODE_ENV unset. Several behaviors
+// assume an explicit value — make the misconfiguration loud in the logs.
+if (!process.env.NODE_ENV) {
+  logger.warn(
+    "NODE_ENV is not set. If this is the live site, set NODE_ENV=production in the host's environment variables — otherwise the canonical-host redirect stays off and logs use the dev format. See hostinger/.env.example.",
+  );
+}
+
 const rawPort = process.env["PORT"];
 
 if (!rawPort) {

@@ -296,7 +296,12 @@ const pkg = {
   type: "module",
   engines: { node: ">=20" },
   scripts: {
-    start: "node dist/index.mjs",
+    // NODE_ENV=production is forced here because production mode gates
+    // security-sensitive behavior (no dev OTP-code logging, canonical
+    // redirect on, JSON logs). hPanel may bypass npm scripts and run the
+    // startup file directly — set NODE_ENV=production in hPanel env vars
+    // too (see .env.example).
+    start: "NODE_ENV=production node dist/index.mjs",
   },
   dependencies: {
     mysql2: "^3.14.1",
@@ -309,7 +314,14 @@ writeFileSync(
 );
 
 // ── 6. Write a .env.example ───────────────────────────────────────────────
-const envExample = `# Required – Hostinger MySQL connection string
+const envExample = `# Required – MUST be "production" on the live site.
+# hPanel often launches the startup file directly (bypassing npm scripts),
+# so set this explicitly in hPanel's environment variables. Without it the
+# server logs plaintext settings unlock codes and disables the canonical
+# www→erationcards.in redirect.
+NODE_ENV=production
+
+# Required – Hostinger MySQL connection string
 # Format: mysql://USER:PASSWORD@HOST:3306/DATABASE
 MYSQL_DATABASE_URL=mysql://db_user:db_pass@localhost:3306/db_name
 

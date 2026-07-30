@@ -512,7 +512,10 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
       process.env.NODE_ENV === "development" &&
       process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true";
 
-    if (process.env.NODE_ENV !== "production") {
+    // Fail-safe gate: codes are logged ONLY when NODE_ENV is explicitly
+    // "development" (the dev workflow always sets it). A production host
+    // that forgets to set NODE_ENV must never print plaintext unlock codes.
+    if (process.env.NODE_ENV === "development") {
       // Dev-only testing aid: lets the flow be tested without inbox access.
       req.log.info({ codes: created.codes, emailsSuppressed: suppressEmails }, "DEV ONLY — settings OTP codes");
     }
