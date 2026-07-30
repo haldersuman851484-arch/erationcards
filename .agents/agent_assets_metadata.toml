@@ -1,3 +1,8 @@
 uploads = []
 generated = []
-outputs = []
+
+[[outputs]]
+id = "NztUK_LQz9UTODg2dwtLL"
+uri = "file://erationcards-hostinger.zip"
+type = "unspecified"
+title = "Hostinger upload package (erationcards.in)"

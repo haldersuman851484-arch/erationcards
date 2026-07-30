@@ -10,6 +10,7 @@
  */
 
 import { execSync } from "node:child_process";
+import { builtinModules } from "node:module";
 import {
   cpSync,
   existsSync,
@@ -304,10 +305,52 @@ const pkg = {
     start: "NODE_ENV=production node dist/index.mjs",
   },
   dependencies: {
+    // Externalized from the esbuild bundle (see api-server/build.mjs) — every
+    // runtime-imported external MUST be listed here or the server crashes at
+    // boot with ERR_MODULE_NOT_FOUND on Hostinger.
+    "@google-cloud/storage": "^7.21.0",
     mysql2: "^3.14.1",
     "pino-pretty": "^13.1.3",
   },
 };
+// ── 5b. Guard: every externalized runtime import must be a declared dep ───
+// esbuild leaves externalized packages behind as real top-level
+// `import ... from "pkg"` statements in the bundle. Any of those missing from
+// the generated dependencies crashes the server at boot on Hostinger with
+// ERR_MODULE_NOT_FOUND (this happened with @google-cloud/storage).
+const builtinSet = new Set(builtinModules);
+const bundleImports = new Set();
+for (const file of readdirSync(path.join(DEPLOY_DIR, "dist"))) {
+  if (!file.endsWith(".mjs")) continue;
+  const src = readFileSync(path.join(DEPLOY_DIR, "dist", file), "utf8");
+  for (const m of src.matchAll(
+    /^\s*(?:import|export)\s+(?:[^"']+?\s+from\s+)?["']([^"'./][^"']*)["']/gm
+  )) {
+    const spec = m[1];
+    if (spec.startsWith("node:")) continue;
+    const pkgName = spec.startsWith("@")
+      ? spec.split("/").slice(0, 2).join("/")
+      : spec.split("/")[0];
+    if (!builtinSet.has(pkgName)) bundleImports.add(pkgName);
+  }
+}
+const missingDeps = [...bundleImports].filter((p) => !pkg.dependencies[p]);
+if (missingDeps.length > 0) {
+  console.error(`
+╔══════════════════════════════════════════════════════════════════════╗
+║  ERROR: Bundle imports packages missing from deploy dependencies.   ║
+║  The server would crash at boot on Hostinger (ERR_MODULE_NOT_FOUND).║
+║                                                                      ║
+║  Missing: ${missingDeps.join(", ").padEnd(59)}║
+║  Fix: add them to the dependencies in build-for-hostinger.mjs.      ║
+╚══════════════════════════════════════════════════════════════════════╝
+`);
+  process.exit(1);
+}
+console.log(
+  `  ✅  Bundle externals check: ${[...bundleImports].sort().join(", ") || "none"} — all declared in package.json.`
+);
+
 writeFileSync(
   path.join(DEPLOY_DIR, "package.json"),
   JSON.stringify(pkg, null, 2) + "\n"
@@ -338,8 +381,8 @@ MERCHANT_UPI_ID=your-upi-id@bank
 # Required – port Hostinger binds the Node.js app to (set automatically by hPanel)
 PORT=3000
 
-# Optional – absolute path where payment screenshots are stored
-# Defaults to <deploy-root>/uploads/ if not set.
+# Optional – absolute path where uploaded files (payment screenshots and
+# card PDFs) are stored. Defaults to <deploy-root>/uploads/ if not set.
 # Set this to an absolute path on your Hostinger server, e.g.:
 # UPLOADS_DIR=/home/<your-user>/domains/erationcards.in/uploads
 UPLOADS_DIR=

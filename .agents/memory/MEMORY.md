@@ -14,3 +14,4 @@
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
 - [archiver v8 is pure ESM](archiver-v8-esm.md) — no default/callable export; use named ZipArchive + @types/archiver@8; "broken" @types on a major usually means the API shape changed
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
+- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — esbuild externals must be in generated package.json; storage falls back to disk off-Replit; boot-test zip with Replit env unset
