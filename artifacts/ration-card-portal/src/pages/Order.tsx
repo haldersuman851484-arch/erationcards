@@ -27,6 +27,7 @@ import {
 import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
+import { applyServerFieldErrors, scrollToField } from "@/lib/serverFieldErrors";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -55,6 +56,22 @@ const orderSchema = z.object({
 });
 
 type OrderForm = z.infer<typeof orderSchema>;
+
+// Which wizard step renders each form field — used to navigate back to the
+// right step when the server rejects a field after submission.
+const ORDER_FIELD_STEPS: Record<string, number> = {
+  customerName: 1,
+  rationCardNumber: 1,
+  cardType: 1,
+  deliveryName: 2,
+  address: 2,
+  postOffice: 2,
+  state: 2,
+  district: 2,
+  pincode: 2,
+  customerPhone: 2,
+  customerEmail: 2,
+};
 
 const WB_DISTRICTS = [
   "Alipurduar", "Bankura", "Birbhum", "Cooch Behar", "Dakshin Dinajpur",
@@ -306,6 +323,19 @@ export default function Order() {
         onError: (err: any) => {
           setIsUploading(false);
           const serverMessage = typeof err?.data?.error === "string" ? err.data.error : null;
+          // Field-level 400: highlight the offending input(s) inline, jump to
+          // the wizard step that contains the first one, and scroll to it.
+          const firstField = applyServerFieldErrors(form, err?.data?.details);
+          if (firstField) {
+            setStep(ORDER_FIELD_STEPS[firstField] ?? 1);
+            scrollToField(form, firstField);
+            toast({
+              title: "Please fix the highlighted field",
+              description: serverMessage ?? "Check the fields marked in red and try again.",
+              variant: "destructive",
+            });
+            return;
+          }
           toast({ title: "Failed to place order", description: serverMessage ?? "Please try again.", variant: "destructive" });
         },
       }
