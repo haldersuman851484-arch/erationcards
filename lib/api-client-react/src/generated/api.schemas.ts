@@ -86,16 +86,41 @@ export type OrderInputFamilyCardsItem = {
 };
 
 export interface OrderInput {
+  /**
+     * @minLength 1
+     * @maxLength 200
+     */
   customerName: string;
+  /** @pattern ^[0-9]{10}$ */
   customerPhone: string;
   customerEmail?: string;
+  /**
+     * @minLength 1
+     * @maxLength 50
+     */
   rationCardNumber: string;
+  /** @maxLength 200 */
   deliveryName?: string;
+  /**
+     * @minLength 1
+     * @maxLength 500
+     */
   address: string;
+  /** @maxLength 200 */
   postOffice?: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   state: string;
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
   district: string;
+  /** @pattern ^[0-9]{6}$ */
   pincode: string;
+  /** @minLength 1 */
   cardType: string;
   familyCards?: OrderInputFamilyCardsItem[];
   quantity: number;

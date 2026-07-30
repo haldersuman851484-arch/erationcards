@@ -78,18 +78,37 @@ export const ListOrdersResponse = zod.object({
 /**
  * @summary Place a new PVC card print order
  */
+export const createOrderBodyCustomerNameMax = 200;
+
+export const createOrderBodyCustomerPhoneRegExp = new RegExp('^[0-9]{10}$');
+export const createOrderBodyRationCardNumberMax = 50;
+
+export const createOrderBodyDeliveryNameMax = 200;
+
+export const createOrderBodyAddressMax = 500;
+
+export const createOrderBodyPostOfficeMax = 200;
+
+export const createOrderBodyStateMax = 100;
+
+export const createOrderBodyDistrictMax = 100;
+
+export const createOrderBodyPincodeRegExp = new RegExp('^[0-9]{6}$');
+
+
+
 export const CreateOrderBody = zod.object({
-  "customerName": zod.string(),
-  "customerPhone": zod.string(),
+  "customerName": zod.string().min(1).max(createOrderBodyCustomerNameMax),
+  "customerPhone": zod.string().regex(createOrderBodyCustomerPhoneRegExp),
   "customerEmail": zod.string().optional(),
-  "rationCardNumber": zod.string(),
-  "deliveryName": zod.string().optional(),
-  "address": zod.string(),
-  "postOffice": zod.string().optional(),
-  "state": zod.string(),
-  "district": zod.string(),
-  "pincode": zod.string(),
-  "cardType": zod.string(),
+  "rationCardNumber": zod.string().min(1).max(createOrderBodyRationCardNumberMax),
+  "deliveryName": zod.string().max(createOrderBodyDeliveryNameMax).optional(),
+  "address": zod.string().min(1).max(createOrderBodyAddressMax),
+  "postOffice": zod.string().max(createOrderBodyPostOfficeMax).optional(),
+  "state": zod.string().min(1).max(createOrderBodyStateMax),
+  "district": zod.string().min(1).max(createOrderBodyDistrictMax),
+  "pincode": zod.string().regex(createOrderBodyPincodeRegExp),
+  "cardType": zod.string().min(1),
   "familyCards": zod.array(zod.object({
   "customerName": zod.string(),
   "rationCardNumber": zod.string(),

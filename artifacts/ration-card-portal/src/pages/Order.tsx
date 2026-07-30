@@ -303,9 +303,10 @@ export default function Order() {
           setStep(4);
           window.scrollTo(0, 0);
         },
-        onError: () => {
+        onError: (err: any) => {
           setIsUploading(false);
-          toast({ title: "Failed to place order", description: "Please try again.", variant: "destructive" });
+          const serverMessage = typeof err?.data?.error === "string" ? err.data.error : null;
+          toast({ title: "Failed to place order", description: serverMessage ?? "Please try again.", variant: "destructive" });
         },
       }
     );

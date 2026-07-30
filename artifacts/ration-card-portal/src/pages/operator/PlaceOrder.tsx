@@ -324,7 +324,7 @@ export default function PlaceOrder() {
       { data: { customerName: data.customerName, customerPhone: data.customerPhone, customerEmail: data.customerEmail, rationCardNumber: data.rationCardNumber, deliveryName: data.deliveryName, address: data.address, postOffice: data.postOffice, state: "West Bengal", district: data.district, pincode: data.pincode, cardType: data.cardType, familyCards, quantity: totalCards, amount, paymentStatus: "pending", paymentMethod: "upi", paymentScreenshotUrl: screenshotUrl } },
       {
         onSuccess: (order) => { setIsUploading(false); setCreatedOrder({ orderNumber: order.orderNumber }); setCardPdfs({}); setStep(4); window.scrollTo(0, 0); },
-        onError: () => { setIsUploading(false); toast({ title: "Failed to place order", variant: "destructive" }); },
+        onError: (err: any) => { setIsUploading(false); toast({ title: "Failed to place order", description: typeof err?.data?.error === "string" ? err.data.error : "Please try again.", variant: "destructive" }); },
       }
     );
   }

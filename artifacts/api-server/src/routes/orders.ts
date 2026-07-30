@@ -10,6 +10,7 @@ import {
   ListOrdersQueryParams,
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
+import { ZodError } from "zod";
 import { generateOrderNumber, parseOperatorToken, parseStaffToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
 import { getPricingMatrix } from "../lib/settings";
@@ -237,6 +238,55 @@ router.get("/orders", async (req: Request, res: Response) => {
   }
 });
 
+// Human-readable labels for the order form fields, used to turn Zod issues
+// into messages a customer can act on ("Phone number must be 10 digits"
+// instead of "Invalid order data").
+const ORDER_FIELD_LABELS: Record<string, string> = {
+  customerName: "Name",
+  customerPhone: "Phone number",
+  customerEmail: "Email",
+  rationCardNumber: "Ration card number",
+  deliveryName: "Delivery name",
+  address: "Address",
+  postOffice: "Post office",
+  state: "State",
+  district: "District",
+  pincode: "PIN code",
+  cardType: "Card type",
+  familyCards: "Family member cards",
+  quantity: "Quantity",
+  amount: "Amount",
+};
+
+// Field-specific overrides where the generic Zod wording would be unhelpful.
+const ORDER_FIELD_MESSAGES: Record<string, string> = {
+  customerPhone: "Phone number must be exactly 10 digits",
+  pincode: "PIN code must be exactly 6 digits",
+};
+
+// Builds a customer-facing message from a Zod validation error. Exported for tests.
+export function formatOrderValidationError(err: ZodError): string {
+  const messages = err.issues.slice(0, 3).map((issue) => {
+    const field = String(issue.path[0] ?? "");
+    const label = ORDER_FIELD_LABELS[field] ?? (field || "Form");
+    const override = ORDER_FIELD_MESSAGES[field];
+    if (override && issue.code !== "invalid_type") return override;
+    switch (issue.code) {
+      case "invalid_type":
+        return (issue as any).received === "undefined"
+          ? `${label} is required`
+          : `${label} has an invalid value`;
+      case "too_small":
+        return `${label} is required`;
+      case "too_big":
+        return `${label} is too long`;
+      default:
+        return override ?? `${label} is invalid`;
+    }
+  });
+  return messages.join("; ");
+}
+
 // POST /orders - create order
 router.post("/orders", async (req: Request, res: Response) => {
   try {
@@ -323,8 +373,14 @@ router.post("/orders", async (req: Request, res: Response) => {
 
     res.status(201).json(formatOrder(order));
   } catch (err) {
+    if (err instanceof ZodError) {
+      const message = formatOrderValidationError(err);
+      req.log.warn({ issues: err.issues }, "Order validation failed");
+      res.status(400).json({ error: message, details: err.issues });
+      return;
+    }
     req.log.error({ err }, "Failed to create order");
-    res.status(400).json({ error: "Invalid order data" });
+    res.status(500).json({ error: "Something went wrong while placing your order. Please try again." });
   }
 });
 
