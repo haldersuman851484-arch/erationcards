@@ -48,6 +48,25 @@ app.use((req: Request, res: Response, next) => {
   next();
 });
 
+// ── Canonical path redirect ───────────────────────────────────────────────
+// The SPA fallback serves real client routes case-insensitively and with
+// trailing slashes (/FAQ, /faq/ both render the FAQ page). To keep crawlers
+// from indexing those as duplicates, any non-canonical casing/trailing-slash
+// variant of a known client route 301-redirects to the lowercase,
+// no-trailing-slash form (query string preserved). API routes and static
+// assets never match a client route, so they pass through untouched.
+app.use((req: Request, res: Response, next) => {
+  if (req.method !== "GET" && req.method !== "HEAD") return next();
+  const canonical = canonicalClientPath(req.path);
+  if (canonical !== null && canonical !== req.path) {
+    const qIndex = req.originalUrl.indexOf("?");
+    const search = qIndex === -1 ? "" : req.originalUrl.slice(qIndex);
+    res.redirect(301, `${canonical}${search}`);
+    return;
+  }
+  next();
+});
+
 app.use(
   pinoHttp({
     logger,
@@ -125,7 +144,7 @@ app.use("/api", router);
 // Open Graph, JSON-LD). This keeps Google search snippet prices in sync with
 // the admin-edited pricing without a rebuild.
 import { buildPrerenderMap, normalizeRoutePath } from "./lib/prerendered";
-import { isClientRoute } from "./lib/clientRoutes";
+import { isClientRoute, canonicalClientPath } from "./lib/clientRoutes";
 
 const publicDir = path.resolve(__dirname, "../public");
 

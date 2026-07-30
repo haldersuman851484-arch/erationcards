@@ -68,22 +68,38 @@ const PARAM_ROUTES = CLIENT_ROUTE_PATTERNS.filter((p) => p.includes(":")).map(se
  * any non-empty value — order numbers, district slugs, etc.
  */
 export function isClientRoute(reqPath: string): boolean {
-  if (!reqPath.startsWith("/")) return false;
+  return canonicalClientPath(reqPath) !== null;
+}
+
+/**
+ * Returns the canonical form of a client-route path — lowercase static
+ * segments, original param values, no trailing slash — or null when the path
+ * is not a client route at all. `/FAQ` and `/faq/` both canonicalize to
+ * `/faq`; `/receipt/ORD-123/` canonicalizes to `/receipt/ORD-123` (the order
+ * number's casing is preserved). Callers 301-redirect when the result differs
+ * from the request path, so crawlers never index casing/slash duplicates.
+ */
+export function canonicalClientPath(reqPath: string): string | null {
+  if (!reqPath.startsWith("/")) return null;
   let p = reqPath.replace(/\/+$/, "");
   if (p.length === 0) p = "/";
-  if (p.includes("//")) return false;
-  if (STATIC_ROUTES.has(p.toLowerCase())) return true;
+  if (p.includes("//")) return null;
+  if (STATIC_ROUTES.has(p.toLowerCase())) return p.toLowerCase();
   const segs = segmentsOf(p);
   outer: for (const pattern of PARAM_ROUTES) {
     if (pattern.length !== segs.length) continue;
+    const canonical: string[] = [];
     for (let i = 0; i < pattern.length; i++) {
       if (pattern[i].startsWith(":")) {
         if (segs[i].length === 0) continue outer;
+        canonical.push(segs[i]); // param value keeps its casing
       } else if (pattern[i].toLowerCase() !== segs[i].toLowerCase()) {
         continue outer;
+      } else {
+        canonical.push(pattern[i].toLowerCase());
       }
     }
-    return true;
+    return `/${canonical.join("/")}`;
   }
-  return false;
+  return null;
 }
