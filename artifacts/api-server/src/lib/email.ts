@@ -137,14 +137,41 @@ function buildDispatchText(data: DispatchEmailData): string {
  *   directly — the Replit connector proxy is not reachable outside Replit.
  * - Otherwise (Replit dev/deploy): use the Replit-managed Resend connector.
  */
+/**
+ * Human-readable one-liner for a failed fetch: undici wraps the real cause
+ * (ENOTFOUND, ECONNREFUSED, timeouts, …) in err.cause, sometimes as an
+ * AggregateError. Used for stderr mirrors that must be readable in hosting
+ * panels without JSON tooling.
+ */
+export function describeFetchError(err: unknown): string {
+  const e = err as {
+    message?: string;
+    cause?: { code?: string; message?: string; errors?: { code?: string; message?: string }[] };
+  };
+  const parts: string[] = [e?.message ?? String(err)];
+  const cause = e?.cause;
+  if (cause?.code) parts.push(cause.code);
+  else if (cause?.errors?.length) parts.push(cause.errors.map((x) => x.code ?? x.message ?? "?").join("+"));
+  else if (cause?.message) parts.push(cause.message);
+  return parts.join(" — ");
+}
+
 async function postToResend(body: Record<string, unknown>): Promise<globalThis.Response> {
   const apiKey = process.env["RESEND_API_KEY"];
   if (apiKey) {
-    return fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+    try {
+      return await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+    } catch (err) {
+      // Mirror to stderr: Hostinger's Runtime Logs reliably surface stderr,
+      // while pino's stdout JSON has proven invisible there. Rethrow so the
+      // callers' fail-soft handling stays unchanged.
+      console.error(`[Email] Resend API unreachable: ${describeFetchError(err)}`);
+      throw err;
+    }
   }
   // New client per call — connector tokens expire and must not be cached.
   const connectors = new ReplitConnectors();
@@ -176,6 +203,7 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log
         { status: res.status, body: errBody.slice(0, 500), orderNumber: order.orderNumber },
         "Order confirmation email failed to send",
       );
+      console.error(`[Email] Resend rejected order confirmation (HTTP ${res.status}): ${errBody.slice(0, 300)}`);
       return false;
     }
 
@@ -208,6 +236,7 @@ export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log
         { status: res.status, body: errBody.slice(0, 500), orderNumber: data.orderNumber },
         "Order dispatched email failed to send",
       );
+      console.error(`[Email] Resend rejected dispatch email (HTTP ${res.status}): ${errBody.slice(0, 300)}`);
       return false;
     }
 
@@ -322,6 +351,7 @@ export async function sendSettingsChangedEmail(
             { status: res.status, body: errBody.slice(0, 500), to, field: data.fieldLabel },
             "Settings change email failed to send",
           );
+          console.error(`[Email] Resend rejected settings-change email (HTTP ${res.status}): ${errBody.slice(0, 300)}`);
           return false;
         }
         log.info({ to, field: data.fieldLabel }, "Settings change email sent");
@@ -385,6 +415,7 @@ export async function sendSettingsOtpEmail(data: SettingsOtpEmailData, log: Log)
     if (!res.ok) {
       const errBody = await res.text().catch(() => "");
       log.error({ status: res.status, body: errBody.slice(0, 500), to: data.to }, "Settings OTP email failed to send");
+      console.error(`[Email] Resend rejected settings-OTP email (HTTP ${res.status}): ${errBody.slice(0, 300)}`);
       return false;
     }
 

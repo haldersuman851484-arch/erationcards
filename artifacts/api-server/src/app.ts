@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import router from "./routes";
 import { logger } from "./lib/logger";
+import { describeFetchError } from "./lib/email";
 import { serveFromStorage } from "./lib/storage";
 import { readFile } from "fs/promises";
 import { applySeoPriceTokens } from "@workspace/pricing";
@@ -24,6 +25,27 @@ const DELHIVERY_REQUIRED = [
 const missingDelhivery = DELHIVERY_REQUIRED.filter(k => !process.env[k]);
 if (missingDelhivery.length > 0) {
   console.warn(`[Delhivery] Missing secrets: ${missingDelhivery.join(", ")}. Dispatch endpoint will return 503 until configured. See DELHIVERY_SETUP.md.`);
+}
+
+// ── Boot-time outbound reachability check (production only) ───────────────
+// Emails and courier booking both require outbound HTTPS. On Hostinger only
+// stderr is reliably visible in Runtime Logs (pino's stdout JSON never
+// surfaces there), so print one warn/error line per dependency at boot:
+// "[NetCheck] …: reachable" or "[NetCheck] …: FAILED — <reason>". A failure
+// here names the exact network error without needing SSH access. Responses
+// like HTTP 401 still count as reachable — the probes carry no credentials
+// on purpose; only the network path is being tested.
+if (process.env.NODE_ENV === "production") {
+  const netCheck = async (label: string, url: string): Promise<void> => {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      console.warn(`[NetCheck] ${label}: reachable (HTTP ${res.status})`);
+    } catch (err) {
+      console.error(`[NetCheck] ${label}: FAILED — ${describeFetchError(err)}`);
+    }
+  };
+  void netCheck("Resend email API", "https://api.resend.com/domains");
+  void netCheck("Delhivery courier API", "https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=700001");
 }
 
 // ── Canonical host redirect (production only) ─────────────────────────────
