@@ -503,22 +503,38 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
       return;
     }
 
+    // In development the real partners must never be emailed: the codes go to
+    // the server log only (below). Set SETTINGS_OTP_SEND_EMAILS=true to opt
+    // back in to real sends during development. Gated on === "development"
+    // (which the dev workflow always sets) rather than !== "production" so a
+    // production host that forgets to set NODE_ENV still emails the partners.
+    const suppressEmails =
+      process.env.NODE_ENV === "development" &&
+      process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true";
+
     if (process.env.NODE_ENV !== "production") {
       // Dev-only testing aid: lets the flow be tested without inbox access.
-      req.log.info({ codes: created.codes }, "DEV ONLY — settings OTP codes");
+      req.log.info({ codes: created.codes, emailsSuppressed: suppressEmails }, "DEV ONLY — settings OTP codes");
     }
 
-    const results = await Promise.all(
-      created.codes.map(({ email, code }) => sendSettingsOtpEmail({ to: email, code }, req.log)),
+    if (!suppressEmails) {
+      const results = await Promise.all(
+        created.codes.map(({ email, code }) => sendSettingsOtpEmail({ to: email, code }, req.log)),
+      );
+      if (results.some((ok) => !ok)) {
+        // A half-delivered pair can never verify — clear so retry is allowed immediately.
+        await clearOtpState();
+        res.status(502).json({ error: "Could not send the code emails. Please try again in a moment." });
+        return;
+      }
+    }
+
+    req.log.info(
+      { adminEmail: admin.email, emailsSuppressed: suppressEmails },
+      suppressEmails
+        ? "Settings OTP codes generated (dev: emails suppressed, codes in log only)"
+        : "Settings OTP codes sent to partners",
     );
-    if (results.some((ok) => !ok)) {
-      // A half-delivered pair can never verify — clear so retry is allowed immediately.
-      await clearOtpState();
-      res.status(502).json({ error: "Could not send the code emails. Please try again in a moment." });
-      return;
-    }
-
-    req.log.info({ adminEmail: admin.email }, "Settings OTP codes sent to partners");
     res.json({
       sent: true,
       partnerEmails: created.codes.map((c) => c.email),

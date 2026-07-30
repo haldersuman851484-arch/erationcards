@@ -295,6 +295,17 @@ export async function sendSettingsChangedEmail(
   data: SettingsChangeEmailData,
   log: Log,
 ): Promise<boolean> {
+  // In development the real partners must never be emailed (same rule as the
+  // settings OTP codes). Set SETTINGS_OTP_SEND_EMAILS=true to opt back in.
+  // Gated on === "development" so a production host that forgets to set
+  // NODE_ENV still sends this security notification.
+  if (process.env.NODE_ENV === "development" && process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true") {
+    log.info(
+      { recipients, field: data.fieldLabel },
+      "DEV ONLY — settings change email suppressed (not sent to partners)",
+    );
+    return true;
+  }
   const results = await Promise.all(
     recipients.map(async (to) => {
       try {

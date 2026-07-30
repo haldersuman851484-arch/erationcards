@@ -4,11 +4,11 @@
 - [Browser-safe shared code](browser-safe-shared-code.md) — portal-visible constants live in zero-dep libs (e.g. @workspace/pricing), never lib/db (exports mysql2 client)
 - [Playwright on NixOS](playwright-nixos-chromium.md) — bundled chromium can't load shared libs; use Nix chromium via launchOptions.executablePath; some older specs are stale
 - [Resend order emails](resend-order-emails.md) — erationcards.in verified; full-access RESEND_API_KEY + EMAIL_FROM set → direct API everywhere; connector key is send-only, sandbox withholds it
-- [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files vanish between ShellExec calls; create fixtures in the same command or use a workspace path
+- [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files AND background (nohup) processes die between calls; long e2e runs need one foreground command, fixtures pre-staged in workspace
 - [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard
 - [Courier dashboard modals](courier-dashboard-modals.md) — scanner keydown + cached search can drift/stale; modals must re-fetch on open, freeze target order id, close on drift
 - [Preview down after merges](preview-port-conflict.md) — FAILED web workflow "Port in use": orphaned vite survives merge restarts; no ss/lsof, find via ps, kill -9, restart; user iframe needs manual ↻
-- [Settings OTP gate](settings-otp-gate.md) — admin settings endpoints 403 without x-settings-unlock JWT; new settings routes need guard + header in tests; dev OTP sends email the real partners
+- [Settings OTP gate](settings-otp-gate.md) — settings endpoints 403 without x-settings-unlock JWT; NODE_ENV=development suppresses partner emails (codes log-only; SETTINGS_OTP_SEND_EMAILS=true opts in)
 - [Staff-login e2e creds](testing-agent-env-credentials.md) — pass env var NAMES to the testing subagent (it reads them via shell, never prints them); staff roles share one email, password picks role
 - [Prod static serving test](prod-static-serving-test.md) — stage portal build into api-server/public, curl :8080; server memory-caches index.html, so restart after cleanup
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
