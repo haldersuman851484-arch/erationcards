@@ -16,6 +16,13 @@ import fs from "node:fs";
 const CODES_FILE = "/home/runner/workspace/.e2e-otp-codes.json";
 const OUT = "/home/runner/workspace/.e2e-delete-flow";
 fs.mkdirSync(OUT, { recursive: true });
+
+// Safety rail: this run DELETES every finished order in today's range on the
+// target. Local dev targets only, unless very explicitly overridden.
+const BASE = process.env.BASE ?? "http://localhost:80";
+if (!["localhost", "127.0.0.1"].includes(new URL(BASE).hostname) && process.env.ALLOW_REMOTE_TARGET !== "true") {
+  throw new Error(`Refusing to run the delete flow against non-local target ${BASE}. Set ALLOW_REMOTE_TARGET=true only for a disposable environment.`);
+}
 const log = (m) => {
   fs.appendFileSync(`${OUT}/progress.log`, `${new Date().toISOString()} ${m}\n`);
   console.log(m);
@@ -29,7 +36,7 @@ page.setDefaultTimeout(30000);
 
 try {
   // ── Admin login ──
-  await page.goto("http://localhost:80/admin/login");
+  await page.goto(`${BASE}/admin/login`);
   await page.getByTestId("input-admin-email").fill(process.env.ADMIN_EMAIL);
   await page.getByTestId("input-admin-password").fill(process.env.ADMIN_PASSWORD);
   await page.getByTestId("button-admin-login").click();
@@ -65,12 +72,18 @@ try {
   log("deletable: " + (await page.getByTestId("text-archive-deletable").innerText()));
 
   // ── Download (creates the receipt) ──
-  const dl = page.waitForEvent("download");
+  // The download event only fires after the whole ZIP is fetched into the
+  // page (staffFetch → blob → object URL), so give it volume-sized headroom.
+  const dl = page.waitForEvent("download", { timeout: 300_000 });
+  const dlStart = Date.now();
   await page.getByTestId("button-archive-download").click();
   const download = await dl;
   await download.saveAs(`${OUT}/archive.zip`);
+  const zipBytes = fs.statSync(`${OUT}/archive.zip`).size;
   await page.getByTestId("text-archive-receipt-ok").waitFor();
-  log("archive downloaded, receipt active");
+  const dlSecs = (Date.now() - dlStart) / 1000;
+  log(`archive downloaded in ${dlSecs.toFixed(1)}s (${(zipBytes / 1024 / 1024).toFixed(1)} MB), receipt active`);
+  if (dlSecs > 60) log(`WARNING: download took ${dlSecs.toFixed(0)}s — investigate before shrugging this off as "volume"`);
 
   // ── Typed DELETE + confirmation dialog ──
   await page.getByTestId("input-archive-confirm").fill("DELETE");
@@ -82,7 +95,10 @@ try {
     .getByRole("alertdialog")
     .getByRole("button", { name: /delete|yes/i })
     .click();
-  await page.getByTestId("card-archive-result").waitFor({ timeout: 60000 });
+  // Deleting hundreds of stored files takes a while — wait generously.
+  const delStart = Date.now();
+  await page.getByTestId("card-archive-result").waitFor({ timeout: 300_000 });
+  log(`delete completed in ${((Date.now() - delStart) / 1000).toFixed(1)}s`);
   log("result: " + (await page.getByTestId("text-result-orders").innerText()));
   log("files:  " + (await page.getByTestId("text-result-files").innerText()));
   await page.screenshot({ path: `${OUT}/result-summary.png` });

@@ -8,7 +8,7 @@
 - [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard
 - [Courier dashboard modals](courier-dashboard-modals.md) — scanner keydown + cached search can drift/stale; modals must re-fetch on open, freeze target order id, close on drift
 - [Preview down after merges](preview-port-conflict.md) — FAILED web workflow "Port in use": orphaned vite survives merge restarts; no ss/lsof, find via ps, kill -9, restart; user iframe needs manual ↻
-- [Settings OTP gate](settings-otp-gate.md) — settings endpoints 403 without x-settings-unlock JWT; NODE_ENV=development suppresses partner emails (codes log-only; SETTINGS_OTP_SEND_EMAILS=true opts in)
+- [Settings OTP gate](settings-otp-gate.md) — 403 without x-settings-unlock JWT; dev logs codes & suppresses emails; log-drain code capture is flaky → run 2nd instance with own stdout file
 - [Staff-login e2e creds](testing-agent-env-credentials.md) — pass env var NAMES to the testing subagent (it reads them via shell, never prints them); staff roles share one email, password picks role
 - [Prod static serving test](prod-static-serving-test.md) — stage portal build into api-server/public, curl :8080; server memory-caches index.html, so restart after cleanup
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard

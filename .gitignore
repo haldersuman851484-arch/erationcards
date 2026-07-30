@@ -50,3 +50,7 @@ Thumbs.db
 
 # Hostinger deployment build output
 hostinger/
+
+# E2E throwaway artifacts (seeded-data summaries, ZIPs, OTP codes)
+.e2e-delete-flow/
+.e2e-otp-codes.json
