@@ -140,8 +140,20 @@ export function createAdminToken(email: string, role: string): string {
   return jwt.sign({ email, role }, getJwtSecret(), { expiresIn: "7d" });
 }
 
+/**
+ * Generates a customer-friendly, digits-only 10-character order number.
+ *
+ * Layout: last 7 digits of the millisecond timestamp + 3 random digits.
+ * The old scheme (`Date.now().slice(-10)`) collided whenever two orders
+ * arrived in the same millisecond; the random suffix makes same-ms
+ * collisions a 1-in-1000 event per pair, and the POST /orders handler
+ * retries with a fresh number if the DB's unique constraint still fires.
+ */
 export function generateOrderNumber(): string {
-  return Date.now().toString().slice(-10);
+  const crypto = require("crypto") as typeof import("crypto");
+  const timePart = Date.now().toString().slice(-7);
+  const randomPart = crypto.randomInt(0, 1000).toString().padStart(3, "0");
+  return timePart + randomPart;
 }
 
 export function hashPassword(password: string): string {

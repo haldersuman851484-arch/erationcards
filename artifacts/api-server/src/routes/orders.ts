@@ -127,6 +127,15 @@ type Log = {
 
 const router = Router();
 
+// MySQL duplicate-key error (ER_DUP_ENTRY, errno 1062). Drivers wrap the
+// error differently, so check code/errno on the error and its cause.
+export function isDuplicateKeyError(err: unknown): boolean {
+  for (let e: any = err; e; e = e.cause) {
+    if (e.code === "ER_DUP_ENTRY" || e.errno === 1062) return true;
+  }
+  return false;
+}
+
 // GET /orders - list all orders
 // Courier/admin only — rows carry full customer contact details (name, phone,
 // address, ration-card number), so unauthenticated access would leak PII.
@@ -232,7 +241,6 @@ router.get("/orders", async (req: Request, res: Response) => {
 router.post("/orders", async (req: Request, res: Response) => {
   try {
     const body = CreateOrderBody.parse(req.body);
-    const orderNumber = generateOrderNumber();
 
     if (!(ALLOWED_CARD_TYPES as readonly string[]).includes(body.cardType)) {
       res.status(400).json({ error: `Invalid card category. Must be one of: ${ALLOWED_CARD_TYPES.join(", ")}` });
@@ -264,7 +272,28 @@ router.post("/orders", async (req: Request, res: Response) => {
       pricing,
     );
 
-    await db
+    // Insert with a freshly generated order number; on the (rare) chance two
+    // concurrent orders draw the same number, the unique constraint rejects
+    // the second insert and we retry with a new number instead of failing
+    // the customer's submission with a 400.
+    const MAX_ATTEMPTS = 5;
+    let orderNumber = "";
+    for (let attempt = 1; ; attempt++) {
+      orderNumber = generateOrderNumber();
+      try {
+        await insertOrder(orderNumber);
+        break;
+      } catch (err) {
+        if (isDuplicateKeyError(err) && attempt < MAX_ATTEMPTS) {
+          req.log.warn({ orderNumber, attempt }, "Order number collision; retrying with a fresh number");
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    async function insertOrder(orderNumber: string) {
+      await db
       .insert(ordersTable)
       .values({
         orderNumber,
@@ -287,6 +316,7 @@ router.post("/orders", async (req: Request, res: Response) => {
         paymentScreenshotUrl: body.paymentScreenshotUrl ?? null,
         operatorId: operatorId ?? null,
       });
+    }
 
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.orderNumber, orderNumber)).limit(1);
     if (!order) { res.status(500).json({ error: "Failed to create order" }); return; }
