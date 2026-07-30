@@ -15,6 +15,8 @@ description: Lessons from migrating drizzle-orm from PostgreSQL to MySQL for Hos
 
 4. **Schema changes** — `pgTable/pgEnum/serial/numeric/jsonb` → `mysqlTable/mysqlEnum (inline on column)/int().autoincrement()/decimal/json`. `timestamp({ withTimezone: true })` → `timestamp()` (MySQL always UTC).
 
+5. **Raw-SQL-only DDL drifts** — drizzle-orm has no `fulltext()` builder for MySQL, so FULLTEXT indexes live only in raw migration SQL (0002); `drizzle-kit push` and schema dumps silently skip them, and `MATCH…AGAINST` then throws error 1191 at runtime (bit the live launch DB). api-server's boot `ensureSearchIndexes.ts` self-heals the known orders indexes — extend it whenever adding another raw-SQL index.
+
 **Why:** Hostinger hPanel only supports MySQL; production deploy required full dialect switch.
 
 **How to apply:** Any new schema file must use mysql-core imports. Any new route doing insert/update must fetch the result with a follow-up select, not .returning().

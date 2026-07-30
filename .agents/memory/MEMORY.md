@@ -1,9 +1,9 @@
-- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning()
+- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning(); raw-SQL FULLTEXT skipped by push → boot self-heal
 - [Typecheck & stale references](typecheck-stale-references.md) — tsc -p reads stale lib dist d.ts; validation rebuilds lib references first
 - [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — seed via real endpoints (printed + PDFs downloaded); dev dispatch hits Delhivery STAGING unless DELHIVERY_ENV=production
 - [Browser-safe shared code](browser-safe-shared-code.md) — portal-visible constants live in zero-dep libs (e.g. @workspace/pricing), never lib/db (exports mysql2 client)
 - [Playwright on NixOS](playwright-nixos-chromium.md) — bundled chromium can't load shared libs; use Nix chromium via launchOptions.executablePath; some older specs are stale
-- [Resend order emails](resend-order-emails.md) — erationcards.in verified; full-access RESEND_API_KEY + EMAIL_FROM set → direct API everywhere; connector key is send-only, sandbox withholds it
+- [Resend order emails](resend-order-emails.md) — verified domain, direct API everywhere; free tier 100/day UTC — 429 quota mimics an outage (history shows nothing); dev suppresses real sends
 - [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files AND background (nohup) processes die between calls; long e2e runs need one foreground command, fixtures pre-staged in workspace
 - [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard
 - [Courier dashboard modals](courier-dashboard-modals.md) — scanner keydown + cached search can drift/stale; modals must re-fetch on open, freeze target order id, close on drift
@@ -14,4 +14,4 @@
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
 - [archiver v8 is pure ESM](archiver-v8-esm.md) — no default/callable export; use named ZipArchive + @types/archiver@8; "broken" @types on a major usually means the API shape changed
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
-- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — esbuild externals must be in generated package.json; storage falls back to disk off-Replit; boot-test zip with Replit env unset
+- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated package.json; boot-test with env unset; hPanel Runtime Logs useless → admin net-check endpoint + boot index self-heal

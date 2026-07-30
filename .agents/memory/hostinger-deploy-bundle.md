@@ -28,3 +28,8 @@ description: Rules for producing a working self-hosted (Hostinger) zip of the ap
 - ZIP-based site: "Source files → Use previous files" is pre-selected — no re-upload needed for var-only changes.
 - Re-check the entry file (`dist/index.mjs`) whenever passing through Settings & Redeploy — defaults can regress to server.js.
 - Remote verification trick: staff login probe (`POST /api/admin/login` with $PROCESSING_PASSWORD) proves new vars are live; boot log absence of "[Delhivery] Missing secrets" proves the courier set exists. Dispatch 503-check can't be probed with a bogus order id (order lookup runs before the secrets check).
+
+### Live diagnostics & DB drift (v3/v4 bundles, 2026-07-30)
+- **hPanel Runtime Logs can show "No logs found" even for stderr** — with no SSH, the app itself must be the diagnostic instrument. v3 added admin-JWT-gated `GET /api/admin/net-check`: env-var PRESENCE booleans (+ lengths, never values) plus credentialed reachability probes for Resend/Delhivery. Hit it FIRST whenever "works on Replit, fails on live".
+- **Live DB drifts from migrations:** raw-SQL-only DDL (FULLTEXT `orders_search_ft` from 0002) was missing on the Hostinger DB → any admin search of 3+ chars 500'd (MySQL error 1191 on MATCH…AGAINST). v4 boot self-heal (`ensureSearchIndexes.ts`) checks information_schema and creates missing orders indexes; fail-soft, stderr-mirrored. Expect this gap class whenever a DB was built by push/dump instead of the migration files.
+- Boot-test gotcha: killing the test server with `pkill -f "node dist/index.mjs"` matches the ShellExec wrapper's own command line and kills the whole command mid-run; anchor the pattern instead (`pkill -f 'dist/index\.mjs$'`).
