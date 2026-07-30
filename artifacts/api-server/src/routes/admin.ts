@@ -13,7 +13,7 @@ import {
   UNLOCK_TTL_SECONDS,
   getPartnerEmails,
 } from "../lib/settingsOtp";
-import { sendSettingsOtpEmail, sendSettingsChangedEmail } from "../lib/email";
+import { sendSettingsOtpEmail, sendSettingsChangedEmail, describeFetchError } from "../lib/email";
 import {
   getMerchantUpiId,
   getPricingMatrix,
@@ -471,6 +471,97 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to load settings change history");
     res.status(500).json({ error: "Failed to load change history" });
+  }
+});
+
+// ── Production self-test (admin-only, read-only) ────────────────────────────
+// GET /admin/net-check — live outbound-connectivity + credential check.
+// Built for hosts without SSH or reliable log access (Hostinger): reports
+// presence (never values) of email/courier env vars plus real probe results
+// against Resend and Delhivery, so production failures can be diagnosed over
+// HTTP with an admin token. All probes are read-only GETs with an 8s timeout.
+
+const NET_CHECK_ENV_KEYS = [
+  "RESEND_API_KEY", "EMAIL_FROM", "PROCESSING_EMAIL", "REPLIT_CONNECTORS_HOSTNAME",
+  "DELHIVERY_API_TOKEN", "DELHIVERY_ENV", "DELHIVERY_PICKUP_LOCATION",
+  "DELHIVERY_RETURN_NAME", "DELHIVERY_RETURN_PHONE", "DELHIVERY_RETURN_ADD",
+  "DELHIVERY_RETURN_PIN", "DELHIVERY_RETURN_CITY", "DELHIVERY_RETURN_STATE",
+  "MYSQL_DATABASE_URL", "SESSION_SECRET", "ADMIN_EMAIL", "ADMIN_PASSWORD",
+  "MERCHANT_UPI_ID", "PORT", "UPLOADS_DIR", "NODE_ENV",
+] as const;
+
+type ProbeResult =
+  | { reachable: true; httpStatus: number; ms: number }
+  | { reachable: false; error: string; ms: number };
+
+/** Read-only GET with a hard timeout; never throws. */
+async function probeUrl(url: string, headers?: Record<string, string>): Promise<ProbeResult> {
+  const started = Date.now();
+  try {
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    await res.arrayBuffer().catch(() => undefined); // drain the socket
+    return { reachable: true, httpStatus: res.status, ms: Date.now() - started };
+  } catch (err) {
+    return { reachable: false, error: describeFetchError(err), ms: Date.now() - started };
+  }
+}
+
+router.get("/admin/net-check", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+
+    // Presence + length only — never the values themselves.
+    const env = Object.fromEntries(
+      NET_CHECK_ENV_KEYS.map((k) => {
+        const v = process.env[k];
+        return [k, { present: typeof v === "string" && v.length > 0, length: v?.length ?? 0 }];
+      }),
+    );
+
+    // Same base selection as the dispatch endpoint (routes/orders.ts).
+    const delhiveryBase =
+      (process.env["DELHIVERY_ENV"] ?? "staging") === "production"
+        ? "https://track.delhivery.com"
+        : "https://staging-express.delhivery.com";
+    const delhiveryPinUrl = `${delhiveryBase}/c/api/pin-codes/json/?filter_codes=700001`;
+    const resendKey = process.env["RESEND_API_KEY"];
+    const delhiveryToken = process.env["DELHIVERY_API_TOKEN"];
+
+    const [resendReachable, delhiveryReachable, resendKeyCheck, delhiveryTokenCheck] =
+      await Promise.all([
+        probeUrl("https://api.resend.com/domains"),
+        probeUrl(delhiveryPinUrl),
+        resendKey
+          ? probeUrl("https://api.resend.com/domains", { Authorization: `Bearer ${resendKey}` })
+          : Promise.resolve(null),
+        delhiveryToken
+          ? probeUrl(delhiveryPinUrl, { Authorization: `Token ${delhiveryToken}` })
+          : Promise.resolve(null),
+      ]);
+
+    req.log.info({ adminEmail: admin.email }, "net-check diagnostics run");
+    res.json({
+      now: new Date().toISOString(),
+      values: {
+        NODE_ENV: process.env.NODE_ENV ?? null,
+        DELHIVERY_ENV: process.env["DELHIVERY_ENV"] ?? null,
+        delhiveryBase,
+      },
+      env,
+      probes: {
+        // reachable=true means the network round-trip completed; httpStatus
+        // then tells whether the credential was accepted (200) or rejected
+        // (401/403). null = credential not set, check skipped.
+        resendReachable,
+        resendKeyCheck,
+        delhiveryReachable,
+        delhiveryTokenCheck,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "net-check failed");
+    res.status(500).json({ error: "Self-test failed" });
   }
 });
 
