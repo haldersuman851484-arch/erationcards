@@ -174,12 +174,25 @@ async function postToResend(body: Record<string, unknown>): Promise<globalThis.R
     }
   }
   // New client per call — connector tokens expire and must not be cached.
+  // Off-Replit (e.g. Hostinger) this branch can never work: it exists only as
+  // the dev fallback. Print the smoking-gun line to stderr so a missing
+  // RESEND_API_KEY at runtime is immediately visible in hosting panels.
+  if (!process.env["REPLIT_CONNECTORS_HOSTNAME"]) {
+    console.error(
+      "[Email] RESEND_API_KEY is missing from the runtime environment and no Replit connector is available — email cannot be sent. Check the hosting panel's environment variables.",
+    );
+  }
   const connectors = new ReplitConnectors();
-  return connectors.proxy("resend", "/emails", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body,
-  });
+  try {
+    return await connectors.proxy("resend", "/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    });
+  } catch (err) {
+    console.error(`[Email] Resend connector send failed: ${describeFetchError(err)}`);
+    throw err;
+  }
 }
 
 /**
