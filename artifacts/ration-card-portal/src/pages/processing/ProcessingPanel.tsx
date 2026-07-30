@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import ScreenshotViewer from "@/components/ScreenshotViewer";
 import {
   useGetCurrentAdmin,
   getGetCurrentAdminQueryKey,
@@ -330,7 +331,7 @@ export default function ProcessingPanel() {
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1.5 min-w-[130px]">
                           {order.paymentScreenshotUrl && (
-                            <button onClick={() => setPreviewImg(order.paymentScreenshotUrl!)} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                            <button onClick={() => setPreviewImg(order.paymentScreenshotUrl!)} className="flex items-center gap-1 text-xs text-primary hover:underline" data-testid={`button-view-screenshot-${order.id}`}>
                               <ImageIcon className="w-3.5 h-3.5" /> Screenshot
                             </button>
                           )}
@@ -490,7 +491,11 @@ export default function ProcessingPanel() {
 
         {/* Order Detail Dialog */}
         <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="max-w-2xl max-h-[90vh] overflow-y-auto"
+            onInteractOutside={(e) => { if (previewImg) e.preventDefault(); }}
+            onEscapeKeyDown={(e) => { if (previewImg) e.preventDefault(); }}
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
                 <Hash className="w-4 h-4 text-primary" />
@@ -641,9 +646,9 @@ export default function ProcessingPanel() {
                     {selectedOrder.paymentScreenshotUrl && (
                       <div className="shrink-0">
                         <p className="text-xs text-slate-500 mb-1.5">Payment Screenshot</p>
-                        <a href={selectedOrder.paymentScreenshotUrl} target="_blank" rel="noopener noreferrer" className="block">
+                        <button type="button" onClick={() => setPreviewImg(selectedOrder.paymentScreenshotUrl!)} className="block" data-testid="button-dialog-screenshot">
                           <img src={selectedOrder.paymentScreenshotUrl} alt="Payment screenshot" className="w-28 h-28 object-cover rounded-lg border border-slate-200 shadow-sm hover:opacity-90 transition-opacity" />
-                        </a>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -779,26 +784,7 @@ export default function ProcessingPanel() {
         </Dialog>
 
         {/* Screenshot Lightbox */}
-        {previewImg && (
-          <div
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-            onClick={() => setPreviewImg(null)}
-          >
-            <div className="relative max-w-3xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
-              <button
-                className="absolute -top-10 right-0 text-white/80 hover:text-white text-sm flex items-center gap-1"
-                onClick={() => setPreviewImg(null)}
-              >
-                <X className="w-5 h-5" /> Close
-              </button>
-              <img
-                src={previewImg}
-                alt="Payment screenshot"
-                className="w-full max-h-[80vh] object-contain rounded-xl shadow-2xl"
-              />
-            </div>
-          </div>
-        )}
+        <ScreenshotViewer src={previewImg} onClose={() => setPreviewImg(null)} />
       </div>
     </>
   );

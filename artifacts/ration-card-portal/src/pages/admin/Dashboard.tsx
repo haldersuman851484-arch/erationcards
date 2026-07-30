@@ -57,6 +57,7 @@ import {
   Lock, Mail, HardDrive,
 } from "lucide-react";
 import DataStorageTab from "./DataStorageTab";
+import ScreenshotViewer from "@/components/ScreenshotViewer";
 
 function getAuthHeader() {
   const token = localStorage.getItem("adminToken");
@@ -161,6 +162,7 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState("applications");
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useGetCurrentAdmin({
     query: { queryKey: getGetCurrentAdminQueryKey() },
@@ -736,7 +738,7 @@ export default function AdminDashboard() {
                   <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">{(applicationsData as any[]).length}</span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+              <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-verifications">
                 <ShieldCheck className="w-4 h-4" /> Verification Log
                 {verificationsData && <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">{verificationsData.total}</span>}
               </TabsTrigger>
@@ -1076,14 +1078,19 @@ export default function AdminDashboard() {
                               </TableCell>
                               <TableCell>
                                 {v.screenshotUrl ? (
-                                  <a href={v.screenshotUrl} target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPreviewImg(v.screenshotUrl!)}
+                                    className="group flex items-center gap-1.5"
+                                    data-testid={`button-verification-screenshot-${v.id}`}
+                                  >
                                     <img
                                       src={v.screenshotUrl}
                                       alt="Payment screenshot"
                                       className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
                                     />
                                     <span className="text-xs text-primary group-hover:underline hidden sm:block">View</span>
-                                  </a>
+                                  </button>
                                 ) : (
                                   <span className="text-xs text-slate-400">—</span>
                                 )}
@@ -1624,6 +1631,8 @@ export default function AdminDashboard() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        <ScreenshotViewer src={previewImg} onClose={() => setPreviewImg(null)} />
       </div>
     </>
   );
