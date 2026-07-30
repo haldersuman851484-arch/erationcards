@@ -125,6 +125,7 @@ app.use("/api", router);
 // Open Graph, JSON-LD). This keeps Google search snippet prices in sync with
 // the admin-edited pricing without a rebuild.
 import { buildPrerenderMap, normalizeRoutePath } from "./lib/prerendered";
+import { isClientRoute } from "./lib/clientRoutes";
 
 const publicDir = path.resolve(__dirname, "../public");
 
@@ -239,6 +240,14 @@ app.get("/{*path}", async (req, res) => {
     if (html === null) {
       res.status(404).json({ error: "Frontend build not found" });
       return;
+    }
+    // Unknown path (no snapshot, not a real client route): answer HTTP 404 so
+    // non-JS crawlers know the page does not exist, but still send the SPA
+    // shell so humans get the friendly not-found page. X-Robots-Tag is belt
+    // and braces for anything that treats soft errors leniently.
+    if (!isClientRoute(req.path)) {
+      res.status(404);
+      res.setHeader("X-Robots-Tag", "noindex");
     }
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
