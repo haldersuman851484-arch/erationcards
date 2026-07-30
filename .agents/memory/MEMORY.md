@@ -14,4 +14,4 @@
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
 - [archiver v8 is pure ESM](archiver-v8-esm.md) — no default/callable export; use named ZipArchive + @types/archiver@8; "broken" @types on a major usually means the API shape changed
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
-- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated package.json; boot-test with env unset; hPanel Runtime Logs useless → admin net-check endpoint + boot index self-heal
+- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated package.json; boot-test with env unset; Runtime Logs flaky → admin net-check endpoint + boot index self-heal (proven live)
