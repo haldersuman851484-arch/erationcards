@@ -20,3 +20,4 @@
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch
 - [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse NO_FCP always; use portal measure-perf.mjs rAF probe; DejaVu-only skews CLS; live probes hit Hostinger bot interstitial
 - [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations, no font preloads, metric-matched Inter Fallback, main CSS inlined into HTML; don't reintroduce
+- [Account migration via GitHub](replit-account-migration.md) — gitPush needs the "GitHub Source Control" connection, not the API connector; in-frame OAuth dies; BRANCH_ALREADY_EXISTS ≈ already synced
