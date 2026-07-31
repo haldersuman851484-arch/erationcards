@@ -17,3 +17,5 @@
 - [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; boot-test: npm i + dummy unreachable DB URL, zip w/o node_modules; env-driven analytics; net-check + self-heal (proven live)
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file stays in portal public/ forever; IndexNow 1st submit 403s→retry; GSC sitemap box ≠ URL-inspect bar — verify user clicks via screenshot
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch
+- [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse always NO_FCP (even attached); use portal scripts/measure-perf.mjs rAF probe; DejaVu-only fonts skew CLS worst-case
+- [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations (SI killer), no font preloads, metric-matched Inter Fallback; don't reintroduce

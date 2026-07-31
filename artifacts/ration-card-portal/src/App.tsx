@@ -1,4 +1,4 @@
-import React, { useEffect, lazy, Suspense } from "react";
+import React, { useEffect, useRef, lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from "@tanstack/react-query";
 import { handleStaffAuthError } from "./lib/staffSession";
@@ -75,8 +75,16 @@ function ScrollToTop() {
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
+  // Animate in-app navigations only. On the very first render the visitor is
+  // already looking at the fully painted prerendered snapshot; running the
+  // fade here made the CSS animation start the page at opacity 0 (delaying
+  // first paint) and re-ran it when React mounted seconds later on slow
+  // mobiles — the main Speed Index penalty in PageSpeed's mobile test.
+  const firstLocation = useRef(location);
+  const hasNavigated = useRef(false);
+  if (location !== firstLocation.current) hasNavigated.current = true;
   return (
-    <div key={location} className="page-enter">
+    <div key={location} className={hasNavigated.current ? "page-enter" : undefined}>
       {children}
     </div>
   );

@@ -129,10 +129,11 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <!-- Fonts are self-hosted via @fontsource imports in src/index.css.
-         Preload links for the above-the-fold woff2 files are injected by the
-         font-preload plugin in vite.config.ts so the correct (hashed) asset
-         paths are used in both dev and production builds. -->
+    <!-- Fonts are self-hosted via @fontsource imports in src/index.css. They
+         are deliberately NOT preloaded: the metric-matched "Inter Fallback"
+         @font-face in index.css paints text instantly with identical layout,
+         and preload links were stealing first-paint bandwidth from the
+         stylesheet on slow mobile connections. -->
     <!-- Instant boot screen: inline-styled so it paints before any CSS/JS
          downloads. React's first render replaces #root's children, which
          removes the shell automatically — no handoff code needed. -->
