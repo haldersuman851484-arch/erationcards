@@ -12,7 +12,13 @@ interface SeoOptions {
 
 export function useSeo({ title, description, canonical }: SeoOptions = {}) {
   useEffect(() => {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} — Order PVC Ration Card Online`;
+    // Append the brand suffix only when the caller didn't already include it —
+    // otherwise pages that pass "… | PVC Card Portal" end up with it twice.
+    const fullTitle = title
+      ? title.endsWith(`| ${SITE_NAME}`)
+        ? title
+        : `${title} | ${SITE_NAME}`
+      : `${SITE_NAME} — Order PVC Ration Card Online`;
     document.title = fullTitle;
 
     setMeta("name", "description", description ?? DEFAULT_DESC);

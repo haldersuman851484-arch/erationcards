@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useRegisterOperator } from "@workspace/api-client-react";
+import { useSeo } from "@/hooks/use-seo";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { Users, Clock, CheckCircle2, Phone, Mail, Store } from "lucide-react";
@@ -107,6 +108,12 @@ function SubmittedScreen({ name, email }: { name: string; email: string }) {
 }
 
 export default function OperatorRegister() {
+  useSeo({
+    title: "Become a PVC Card Operator in West Bengal",
+    description:
+      "Register your shop as a PVC card printing operator in West Bengal. Print durable PVC ration cards for customers in your area. Applications reviewed by our admin team.",
+    canonical: "https://erationcards.in/operator/register",
+  });
   const registerOperator = useRegisterOperator();
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState<{ name: string; email: string } | null>(null);

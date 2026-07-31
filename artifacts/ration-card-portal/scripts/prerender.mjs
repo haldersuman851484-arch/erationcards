@@ -54,6 +54,10 @@ const STATIC_ROUTES = [
   "/guides/download-e-ration-card",
   "/guides/ration-card-types-west-bengal",
   "/guides/lost-ration-card-west-bengal",
+  // Operator recruitment signup. Static copy + form, no prices rendered —
+  // safe to snapshot. Without a snapshot the live page served the SPA shell
+  // whose canonical points at "/", telling Google it duplicates the homepage.
+  "/operator/register",
 ];
 const districtSrc = readFileSync(path.join(portalDir, "src", "pages", "DistrictPage.tsx"), "utf8");
 const districtSlugs = [...districtSrc.matchAll(/^\s+slug: "([a-z0-9-]+)",$/gm)].map((m) => m[1]);
@@ -76,12 +80,10 @@ const ROUTES = [
 // prerendered route must be in the sitemap. Catches "added a page but forgot
 // the other half" mistakes at build time instead of silently losing coverage.
 const SITE_ORIGIN = "https://erationcards.in";
-const SITEMAP_ONLY = new Set([
-  // Indexed for operator recruitment, but it is an interactive signup form and
-  // shows operator pricing (plain numbers in TOKEN_PRICING, not tokens) — a
-  // snapshot would bake stale prices. Googlebot renders it via JS anyway.
-  "/operator/register",
-]);
+// Sitemap URLs knowingly served as the plain SPA shell (no snapshot) — only
+// for pages that would bake stale non-tokenized values into a snapshot.
+// Currently empty: every sitemap URL is prerendered.
+const SITEMAP_ONLY = new Set([]);
 const sitemapXml = readFileSync(path.join(portalDir, "public", "sitemap.xml"), "utf8");
 const sitemapPaths = [...sitemapXml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1].trim()).pathname);
 const routeSet = new Set(ROUTES);
