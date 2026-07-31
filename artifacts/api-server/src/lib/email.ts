@@ -15,6 +15,20 @@ type Log = {
 // to send to all customers.
 const FROM_ADDRESS = process.env["EMAIL_FROM"] ?? "PVC Card Portal <onboarding@resend.dev>";
 const TRACK_URL = "https://erationcards.in/track";
+const SITE_URL = "https://erationcards.in";
+// Absolute URL — email clients cannot resolve relative paths. Ships in the v5 bundle.
+const LOGO_URL = "https://erationcards.in/favicon-192.png";
+
+/** Teal branded header with the card-stack logo, shared by all email templates. */
+function buildEmailHeader(): string {
+  return `
+  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
+    <a href="${SITE_URL}" style="text-decoration: none; color: #ffffff; display: inline-block;">
+      <img src="${LOGO_URL}" alt="PVC Card Portal" width="40" height="40" style="display: block; border: 0; margin-bottom: 8px; border-radius: 8px;" />
+      <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
+    </a>
+  </div>`;
+}
 
 export interface OrderEmailData {
   orderNumber: string;
@@ -27,9 +41,7 @@ export interface OrderEmailData {
 function buildHtml(order: OrderEmailData): string {
   return `
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
-  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
-    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
-  </div>
+${buildEmailHeader()}
   <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
     <p style="margin: 0 0 12px;">Hello <strong>${escapeHtml(order.customerName)}</strong>,</p>
     <p style="margin: 0 0 16px;">Thank you! We have received your PVC card order. Your order number is:</p>
@@ -91,9 +103,7 @@ export interface DispatchEmailData {
 function buildDispatchHtml(data: DispatchEmailData): string {
   return `
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
-  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
-    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
-  </div>
+${buildEmailHeader()}
   <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
     <p style="margin: 0 0 12px;">Hello <strong>${escapeHtml(data.customerName)}</strong>,</p>
     <p style="margin: 0 0 16px;">Good news &mdash; your PVC card is on the way! Your order has been handed over to the courier.</p>
@@ -315,9 +325,7 @@ function formatChangeTime(date: Date): string {
 function buildSettingsChangeHtml(data: SettingsChangeEmailData): string {
   return `
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
-  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
-    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
-  </div>
+${buildEmailHeader()}
   <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
     <p style="margin: 0 0 16px;">The <strong>${escapeHtml(data.fieldLabel)}</strong> setting was just changed in the admin dashboard.</p>
     <table style="width: 100%; font-size: 14px; margin-bottom: 16px; border-collapse: collapse;">
@@ -416,9 +424,7 @@ export interface SettingsOtpEmailData {
 function buildOtpHtml(code: string): string {
   return `
 <div style="font-family: Arial, Helvetica, sans-serif; max-width: 520px; margin: 0 auto; color: #0f172a;">
-  <div style="background: #00afc8; border-radius: 12px 12px 0 0; padding: 20px 24px;">
-    <h1 style="margin: 0; color: #ffffff; font-size: 18px;">PVC Card Portal</h1>
-  </div>
+${buildEmailHeader()}
   <div style="border: 1px solid #e2e8f0; border-top: 0; border-radius: 0 0 12px 12px; padding: 24px;">
     <p style="margin: 0 0 12px;">Someone is opening the <strong>admin Settings</strong> (payment UPI ID &amp; card prices).</p>
     <p style="margin: 0 0 16px;">Your one-time code is:</p>
