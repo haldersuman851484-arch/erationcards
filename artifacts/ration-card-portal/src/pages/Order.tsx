@@ -28,6 +28,7 @@ import { downloadInvoicePdf } from "@/lib/invoicePdf";
 import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
 import { applyServerFieldErrors, extractFamilyCardIssues, scrollToFamilyCard, scrollToField } from "@/lib/serverFieldErrors";
+import { trackEvent } from "@/lib/analytics";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -251,6 +252,13 @@ export default function Order() {
         onSuccess: (result) => {
           setEmailSent(result.emailSent);
           setSuccess({ orderNumber: createdOrder.orderNumber });
+          // GA4 conversion: silent no-op unless analytics is configured.
+          trackEvent("purchase", {
+            transaction_id: createdOrder.orderNumber,
+            value: amount,
+            currency: "INR",
+            items: [{ item_name: "PVC Card Print", quantity: totalCards }],
+          });
           window.scrollTo(0, 0);
         },
         onError: () => {
