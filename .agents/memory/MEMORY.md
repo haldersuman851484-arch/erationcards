@@ -16,3 +16,4 @@
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
 - [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated package.json; boot-test with env unset; Runtime Logs flaky → admin net-check endpoint + boot index self-heal (proven live)
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file stays in portal public/ forever; IndexNow 1st submit 403s→retry; GSC sitemap box ≠ URL-inspect bar — verify user clicks via screenshot
+- [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch

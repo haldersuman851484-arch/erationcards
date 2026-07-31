@@ -48,6 +48,8 @@
       "name": "PVC Card Portal",
       "description": "Private online PVC ration card printing and delivery service for West Bengal citizens. Not affiliated with the Government of West Bengal.",
       "url": "https://erationcards.in",
+      "logo": "https://erationcards.in/favicon-192.png",
+      "image": "https://erationcards.in/favicon-192.png",
       "telephone": "%%CONTACT_PHONE_E164%%",
       "email": "%%CONTACT_EMAIL%%",
       "address": {
@@ -131,7 +133,8 @@
          every route. District pages carry their own FAQPage + BreadcrumbList. -->
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- Fonts are self-hosted via @fontsource imports in src/index.css.
          Preload links for the above-the-fold woff2 files are injected by the
          font-preload plugin in vite.config.ts so the correct (hashed) asset
@@ -172,7 +175,7 @@
   <body>
     <div id="root">
       <div id="boot-shell" role="status" aria-label="Loading PVC Card Portal">
-        <div class="boot-mark">PVC</div>
+        <img src="/favicon.svg" alt="" style="width:54px;height:54px" />
         <div class="boot-name">PVC Card Portal</div>
         <div class="boot-bar"></div>
         <noscript>

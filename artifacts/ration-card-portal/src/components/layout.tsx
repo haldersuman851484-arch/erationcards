@@ -31,9 +31,13 @@ export function Navbar() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
-            PVC
-          </div>
+          <img
+            src={import.meta.env.BASE_URL + "favicon.svg"}
+            alt="PVC Card Portal logo"
+            width="40"
+            height="40"
+            className="w-10 h-10"
+          />
           <span className="font-bold text-lg text-slate-900 tracking-tight">{BRAND.name}</span>
         </Link>
 
@@ -105,9 +109,13 @@ export function Footer() {
       <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-8">
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">
-              PVC
-            </div>
+            <img
+              src={import.meta.env.BASE_URL + "favicon.svg"}
+              alt="PVC Card Portal logo"
+              width="40"
+              height="40"
+              className="w-10 h-10"
+            />
             <span className="font-bold text-lg text-white tracking-tight">
               {BRAND.name}
             </span>

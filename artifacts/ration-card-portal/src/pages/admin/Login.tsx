@@ -55,7 +55,7 @@ export default function AdminLogin() {
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center px-4 relative">
       <Link href="/" className="absolute top-4 left-4 flex items-center gap-2 hover:opacity-80 transition-opacity">
-        <div className="w-8 h-8 rounded bg-primary flex items-center justify-center text-white font-bold text-sm">PVC</div>
+        <img src={import.meta.env.BASE_URL + "favicon.svg"} alt="PVC Card Portal logo" width="32" height="32" className="w-8 h-8" />
         <span className="font-bold text-lg text-white tracking-tight">PVC Card Portal</span>
       </Link>
       <Card className="w-full max-w-sm border-slate-700 bg-slate-800 text-white shadow-2xl">
