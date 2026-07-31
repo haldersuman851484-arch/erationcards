@@ -1,0 +1,514 @@
+# Prompt for Replit AI
+
+You are an expert Senior Full-Stack Developer, Technical SEO Specialist, and Google Search Optimization Expert.
+
+Analyze my entire website and optimize it for maximum search engine visibility, AI search engines, and future-proof indexing.
+
+## Primary Goal
+
+Make the website fully optimized for:
+
+* Google Search
+* Bing
+* DuckDuckGo
+* Yahoo
+* ChatGPT Search
+* Gemini
+* Perplexity
+* Claude
+* Microsoft Copilot
+* AI Search Engines
+* Voice Search
+* Featured Snippets
+* Rich Results
+* Knowledge Graph eligibility
+
+The website should follow Google's latest SEO guidelines and best practices.
+
+---
+
+# Technical SEO
+
+Implement all technical SEO improvements.
+
+* XML Sitemap
+* Dynamic Sitemap
+* robots.txt
+* canonical URLs
+* hreflang (if multilingual)
+* Open Graph tags
+* Twitter/X Cards
+* Meta title optimization
+* Meta description optimization
+* Robots meta tags
+* Index/Noindex where appropriate
+* Structured heading hierarchy (H1-H6)
+* Breadcrumb navigation
+* Pagination optimization
+* Proper URL structure
+* Internal linking
+* External link best practices
+* Broken link detection
+* Redirect optimization
+* 404 page optimization
+* Custom 500 page
+* HTTPS enforcement
+* Security headers
+* GZIP/Brotli compression
+* Browser caching
+* Image optimization
+* Lazy loading
+* Modern image formats (WebP/AVIF)
+* Font optimization
+* CSS optimization
+* JavaScript optimization
+* Code splitting
+* Tree shaking
+* Minification
+* Bundle optimization
+
+---
+
+# Core Web Vitals
+
+Optimize for Google Page Experience.
+
+Target:
+
+LCP under 2.5s
+
+CLS under 0.1
+
+INP under 200ms
+
+TTFB under 800ms
+
+Remove render blocking resources.
+
+Preload important assets.
+
+Prefetch important routes.
+
+Optimize loading priority.
+
+---
+
+# Structured Data
+
+Implement JSON-LD schema.
+
+Include where applicable:
+
+Organization
+
+WebSite
+
+WebPage
+
+BreadcrumbList
+
+FAQ
+
+Product
+
+Service
+
+Person
+
+LocalBusiness
+
+Article
+
+BlogPosting
+
+Review
+
+AggregateRating
+
+ImageObject
+
+VideoObject
+
+SearchAction
+
+ContactPoint
+
+Offer
+
+PostalAddress
+
+Event
+
+SoftwareApplication
+
+CollectionPage
+
+ItemList
+
+---
+
+# Google Indexing
+
+Ensure every public page is indexable.
+
+No orphan pages.
+
+No duplicate pages.
+
+Correct canonical implementation.
+
+Generate dynamic sitemap.
+
+Reference sitemap inside robots.txt.
+
+Verify every page returns HTTP 200.
+
+Fix crawl issues.
+
+Optimize crawl budget.
+
+Prevent infinite crawl loops.
+
+Avoid duplicate URLs.
+
+Optimize parameter handling.
+
+---
+
+# Crawlability
+
+Ensure Googlebot can crawl every page.
+
+Check:
+
+Navigation
+
+Links
+
+Images
+
+CSS
+
+JavaScript
+
+API-rendered content
+
+SSR/SSG compatibility
+
+Hydration
+
+Prerendering
+
+---
+
+# GEO (Generative Engine Optimization)
+
+Optimize content for AI search engines.
+
+Each page should:
+
+Answer user intent clearly.
+
+Contain concise summaries.
+
+Have semantic HTML.
+
+Use descriptive headings.
+
+Include entity-based optimization.
+
+Improve topical authority.
+
+Create contextual relationships between pages.
+
+Implement semantic keywords naturally.
+
+---
+
+# AEO (Answer Engine Optimization)
+
+Optimize every page for featured snippets.
+
+Create:
+
+Question/Answer sections
+
+FAQ blocks
+
+Lists
+
+Tables where appropriate
+
+Definitions
+
+Step-by-step guides
+
+Clear summaries
+
+Short direct answers
+
+---
+
+# AI Optimization (AIO / LLMO)
+
+Optimize for AI systems.
+
+Improve:
+
+Content hierarchy
+
+Entity recognition
+
+Semantic relationships
+
+Topic clustering
+
+Natural language
+
+Context clarity
+
+Machine readability
+
+Structured information
+
+Avoid keyword stuffing.
+
+---
+
+# Content SEO
+
+Check every page.
+
+Generate:
+
+SEO title
+
+Meta description
+
+Canonical
+
+Keywords
+
+Open Graph
+
+Twitter tags
+
+JSON-LD
+
+Image alt text
+
+ARIA labels
+
+Semantic HTML
+
+Readable URLs
+
+Descriptive anchor text
+
+Proper heading structure
+
+---
+
+# Accessibility
+
+Achieve WCAG AA compliance.
+
+Fix:
+
+Missing alt text
+
+Label associations
+
+Contrast
+
+Keyboard navigation
+
+ARIA
+
+Screen reader support
+
+Focus indicators
+
+---
+
+# Mobile SEO
+
+Ensure perfect responsiveness.
+
+Mobile-first design.
+
+Touch optimization.
+
+Responsive images.
+
+Responsive typography.
+
+---
+
+# Performance
+
+Optimize:
+
+Images
+
+Fonts
+
+Scripts
+
+Stylesheets
+
+Animations
+
+Memory usage
+
+Network requests
+
+Caching
+
+Compression
+
+---
+
+# Security
+
+Add:
+
+Content Security Policy
+
+X-Frame-Options
+
+X-Content-Type-Options
+
+Referrer Policy
+
+Permissions Policy
+
+Strict Transport Security
+
+---
+
+# Analytics
+
+Integrate:
+
+Google Search Console verification
+
+Google Analytics 4
+
+Microsoft Clarity
+
+Bing Webmaster Tools verification
+
+Schema validation
+
+Sitemap generation
+
+---
+
+# Rich Results
+
+Ensure eligibility for:
+
+FAQ Rich Results
+
+Breadcrumbs
+
+Product Rich Results
+
+Review Snippets
+
+Organization
+
+Articles
+
+Services
+
+Videos
+
+Events
+
+---
+
+# Local SEO
+
+If applicable:
+
+LocalBusiness schema
+
+NAP consistency
+
+Google Business Profile support
+
+Maps integration
+
+Location pages
+
+---
+
+# International SEO
+
+Support:
+
+hreflang
+
+Canonical localization
+
+Language detection
+
+Country targeting
+
+---
+
+# Code Quality
+
+Refactor where needed.
+
+Remove unused code.
+
+Remove duplicate components.
+
+Fix warnings.
+
+Fix TypeScript/JavaScript errors.
+
+Fix ESLint issues.
+
+Optimize architecture.
+
+---
+
+# Final Audit
+
+After optimization, generate a complete report containing:
+
+1. SEO score
+
+2. Technical SEO score
+
+3. Core Web Vitals score
+
+4. Accessibility score
+
+5. Security score
+
+6. AI Search readiness score
+
+7. Google indexing readiness
+
+8. Crawlability score
+
+9. Structured data report
+
+10. Pages optimized
+
+11. Remaining issues
+
+12. Recommendations
+
+13. Files modified
+
+14. Lighthouse estimate
+
+15. Expected Google ranking improvements
+
+Do not merely explain what should be done—implement every improvement directly in the codebase wherever possible. At the end, provide a detailed changelog and identify any remaining items that require external services (such as Google Search Console verification or domain-level DNS configuration).
