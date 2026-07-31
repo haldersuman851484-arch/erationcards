@@ -266,6 +266,12 @@ run("pnpm --filter @workspace/ration-card-portal run build");
 // the site. The API server substitutes live %%PRICE_*%% tokens per request.
 run("pnpm --filter @workspace/ration-card-portal run prerender");
 
+// ── 2c. Inline the main stylesheet into every HTML file ──────────────────
+// Removes the render-blocking /assets/index-*.css request (PSI mobile charged
+// it ~2 slow-4G round trips before first paint → FCP/LCP 3.1s on v8). Must
+// run AFTER prerender so the snapshots are transformed too.
+run("pnpm --filter @workspace/ration-card-portal run inline-css");
+
 // ── 3. Build the API server bundle ────────────────────────────────────────
 run("pnpm --filter @workspace/api-server run build");
 

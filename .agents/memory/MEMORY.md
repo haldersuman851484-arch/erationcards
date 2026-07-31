@@ -1,4 +1,4 @@
-- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning(); raw-SQL FULLTEXT skipped by push → boot self-heal; Hostinger allowlist is per-IP — access-denied test storms = env, not code
+- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning(); raw-SQL FULLTEXT skipped by push → boot self-heal; Hostinger remote-MySQL allowlist: access-denied storms = env not code; hPanel rows can silently not take effect
 - [Typecheck & stale references](typecheck-stale-references.md) — tsc -p reads stale lib dist d.ts; validation rebuilds lib references first
 - [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — seed via real endpoints (printed + PDFs downloaded); dev dispatch hits Delhivery STAGING unless DELHIVERY_ENV=production
 - [Browser-safe shared code](browser-safe-shared-code.md) — portal-visible constants live in zero-dep libs (e.g. @workspace/pricing), never lib/db (exports mysql2 client)
@@ -17,5 +17,5 @@
 - [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; boot-test: npm i + dummy unreachable DB URL, zip w/o node_modules; env-driven analytics; net-check + self-heal (proven live)
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file stays in portal public/ forever; IndexNow 1st submit 403s→retry; GSC sitemap box ≠ URL-inspect bar — verify user clicks via screenshot
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch
-- [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse always NO_FCP (even attached); use portal scripts/measure-perf.mjs rAF probe; DejaVu-only fonts skew CLS worst-case
-- [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations (SI killer), no font preloads, metric-matched Inter Fallback; don't reintroduce
+- [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse NO_FCP always; use portal measure-perf.mjs rAF probe; DejaVu-only skews CLS; live probes hit Hostinger bot interstitial
+- [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations, no font preloads, metric-matched Inter Fallback, main CSS inlined into HTML; don't reintroduce

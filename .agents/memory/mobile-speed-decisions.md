@@ -38,3 +38,14 @@ visible on a snapshot-served first paint; navigation-only animation is fine
 slow 4G they *delay* LCP; the metric-matched fallback is what makes dropping
 them safe (CLS stays ~0 where local() resolves — see perf-measurement-nixos.md
 for why this box misreads that).
+
+**Main CSS is inlined into every HTML file** (index.html + all prerendered
+snapshots) by portal `scripts/inline-css.mjs`, run as a build-for-hostinger
+step after prerender. The render-blocking `/assets/index-*.css` request cost
+~2 slow-4G round trips before first paint (PSI v8: FCP/LCP 3.1s, score 86).
+Do not reintroduce a `<link rel="stylesheet">` into built HTML; lazy route
+chunks keep their own separate CSS files (untouched). Costs ~+22KB gz per
+page HTML; server-side %%TOKEN%% substitution and </head> analytics
+injection are unaffected.
+
+**Result:** PSI mobile 83 (v7 baseline) → 86 (v8 fonts/animations) → 90 (v9 CSS inlined). FCP was the last red metric; inlining removed it.

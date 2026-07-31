@@ -18,3 +18,15 @@ id = "meEWWiOmFT_fyqlCDwQpx"
 uri = "file://attached_assets/logo_options/realistic_sheet.png"
 type = "image"
 title = "Realistic card logo — two versions"
+
+[[outputs]]
+id = "419G1Adl7JkkVwHkvoWIt"
+uri = "file://artifacts/ration-card-portal/public/erationcards-hostinger-v8.zip"
+type = "unspecified"
+title = "erationcards-hostinger-v8.zip (speed update)"
+
+[[outputs]]
+id = "FtYiPUv_tmL0A4AzLxuxo"
+uri = "file://erationcards-hostinger-v9.zip"
+type = "unspecified"
+title = "erationcards-hostinger-v9.zip (CSS inlined — faster first paint)"

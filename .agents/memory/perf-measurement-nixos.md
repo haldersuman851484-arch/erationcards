@@ -41,3 +41,18 @@ probe gives trustworthy relative deltas for optimization work.
 **How to apply:** any "make the site faster" task — baseline with the probe
 BEFORE changing code, re-measure after, deploy, then have the user re-run the
 real-world test.
+
+**Live-site probe quirks (erationcards.in on Hostinger):**
+- Hostinger bot protection serves a "Checking your browser before accessing"
+  interstitial to this box's headless chromium — early screenshots may capture
+  it instead of the site. The challenge is its own document; the rAF probe's
+  metrics are measured from the REAL document's own nav start, so they stay
+  valid. curl is not challenged.
+- measure-perf.mjs's nav check needs ~5s mount wait on live (TTFB + challenge);
+  its default 2.5s reports a false "inconclusive (full reload)".
+- fc-list has ZERO Bengali fonts (`fc-list :lang=bn` empty) → Bengali text is
+  tofu in local screenshots. Expected; Android ships Noto Sans Bengali. Inter +
+  the local fallback faces lack Bengali glyphs, so Bengali always resolves via
+  per-glyph system fallback — font-stack changes don't affect it.
+- PSI anonymous API quota is hard-0 from here (429 per-day) — the user must run
+  pagespeed.web.dev in their own browser for ground truth.

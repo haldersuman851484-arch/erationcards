@@ -9,7 +9,8 @@
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -b tsconfig.json",
     "test:e2e": "PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS=1 playwright test --config playwright.config.ts",
-    "prerender": "node scripts/prerender.mjs"
+    "prerender": "node scripts/prerender.mjs",
+    "inline-css": "node scripts/inline-css.mjs"
   },
   "devDependencies": {
     "@hookform/resolvers": "^3.10.0",
