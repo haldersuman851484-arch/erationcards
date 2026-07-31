@@ -12,3 +12,9 @@ id = "dy3eizJf9_WYnofyRJkeF"
 uri = "file://attached_assets/logo_options/premium_sheet.png"
 type = "image"
 title = "Premium logo options — pick your favorite"
+
+[[outputs]]
+id = "meEWWiOmFT_fyqlCDwQpx"
+uri = "file://attached_assets/logo_options/realistic_sheet.png"
+type = "image"
+title = "Realistic card logo — two versions"
