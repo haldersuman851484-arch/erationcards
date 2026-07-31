@@ -1,6 +1,14 @@
 import { Link, useParams } from "wouter";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { useSeo } from "@/hooks/use-seo";
 import { CreditCard, Truck, Download, ExternalLink, Shield, FileText, BadgeCheck } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
@@ -429,6 +437,22 @@ export default function CardTypePage() {
         {/* Hero */}
         <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white py-16 px-4">
           <div className="max-w-3xl mx-auto text-center">
+            {/* Visible breadcrumb mirroring the BreadcrumbList JSON-LD (Home → this card type). */}
+            <Breadcrumb className="mb-5" data-testid="breadcrumb-cardtype">
+              <BreadcrumbList className="justify-center text-slate-400">
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/" className="hover:text-white">
+                      Home
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-slate-200">{info.titleName} PVC Print</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm mb-6">
               <Shield className="w-4 h-4 text-blue-300" />
               <span>Private printing service · Not a government website</span>

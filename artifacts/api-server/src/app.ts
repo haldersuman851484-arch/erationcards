@@ -1,4 +1,5 @@
-import express, { type Express, type Request, type Response } from "express";
+import express, { type Express, type NextFunction, type Request, type Response } from "express";
+import compression from "compression";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import path from "path";
@@ -11,6 +12,8 @@ import { readFile } from "fs/promises";
 import { applySeoPriceTokens } from "@workspace/pricing";
 import { applyContactTokens } from "@workspace/contact";
 import { getPricingMatrix, getContactInfo } from "./lib/settings";
+import { securityHeaders } from "./lib/securityHeaders";
+import { analyticsEnabled, analyticsLoaderJs, injectAnalytics } from "./lib/analytics";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +50,13 @@ if (process.env.NODE_ENV === "production") {
   void netCheck("Resend email API", "https://api.resend.com/domains");
   void netCheck("Delhivery courier API", "https://track.delhivery.com/c/api/pin-codes/json/?filter_codes=700001");
 }
+
+// ── Security headers & compression (every response) ───────────────────────
+// Headers first so even redirects carry them; gzip/brotli-negotiated
+// compression skips already-compressed payloads (images, PDFs, zips) via the
+// default content-type filter.
+app.use(securityHeaders);
+app.use(compression());
 
 // ── Canonical host redirect (production only) ─────────────────────────────
 // Every canonical tag and the sitemap use https://erationcards.in, so any
@@ -195,6 +205,23 @@ app.get("/llms.txt", async (_req, res) => {
     res.send(applyContactTokens(applySeoPriceTokens(rawLlmsTxt))); // defaults beat a 500
   }
 });
+// ── First-party analytics loader (optional) ───────────────────────────────
+// Exists only when GA4_MEASUREMENT_ID / CLARITY_PROJECT_ID are set on the
+// host (see lib/analytics.ts) — external script tags only, so the CSP never
+// needs 'unsafe-inline' for scripts.
+app.get("/__analytics.js", (_req, res) => {
+  if (!analyticsEnabled()) {
+    res.status(404).type("text/plain").send("analytics not configured");
+    return;
+  }
+  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  // no-cache (revalidate) rather than TTL: the loader is ~300 bytes and this
+  // keeps the documented promise that changing the IDs + restarting the app
+  // takes effect immediately for returning browsers too.
+  res.setHeader("Cache-Control", "no-cache");
+  res.send(analyticsLoaderJs());
+});
+
 // Raw snapshots contain unsubstituted %%PRICE_*%% tokens — they are only
 // ever served through the SPA fallback below (which injects live prices),
 // never directly as static files.
@@ -208,10 +235,13 @@ app.use(
     setHeaders: (res, filePath) => {
       // Vite fingerprints everything under /assets (JS, CSS, fonts), so those
       // files can be cached forever — a page refresh reuses them instantly.
-      // Root-level files (robots.txt, sitemap.xml, images) keep the default
-      // ETag revalidation since their names never change.
       if (filePath.includes(`${path.sep}assets${path.sep}`)) {
         res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      } else {
+        // Root-level files (favicons, robots.txt, sitemap.xml, opengraph.jpg)
+        // keep their names across deploys, so cache them for an hour: repeat
+        // visits skip the download, same-day changes still surface quickly.
+        res.setHeader("Cache-Control", "public, max-age=3600");
       }
     },
   }),
@@ -274,7 +304,7 @@ app.get("/{*path}", async (req, res) => {
     if (snapshotFile !== undefined) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("Cache-Control", "no-cache");
-      res.send(await renderSnapshot(snapshotFile));
+      res.send(injectAnalytics(await renderSnapshot(snapshotFile), req.path));
       return;
     }
     const html = await renderIndexHtml();
@@ -292,18 +322,87 @@ app.get("/{*path}", async (req, res) => {
     }
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");
-    res.send(html);
+    res.send(injectAnalytics(html, req.path));
   } catch {
     // Never let a pricing/database hiccup take down the homepage: fall back
     // to the default launch prices if we have the file, else the raw file.
+    // Unknown paths still answer 404 here — isClientRoute() needs no
+    // database, so an outage must not turn every mistyped URL into a
+    // soft-200 homepage copy in the index.
+    if (!isClientRoute(req.path)) {
+      res.status(404);
+      res.setHeader("X-Robots-Tag", "noindex");
+    }
     res.setHeader("Cache-Control", "no-cache");
     if (rawIndexHtml !== null) {
       res.setHeader("Content-Type", "text/html; charset=utf-8");
-      res.send(applyContactTokens(applySeoPriceTokens(rawIndexHtml)));
+      res.send(injectAnalytics(applyContactTokens(applySeoPriceTokens(rawIndexHtml)), req.path));
       return;
     }
     res.sendFile(path.join(publicDir, "index.html"));
   }
+});
+
+// ── Last-resort error handler ──────────────────────────────────────────────
+// Express 5 routes rejected promises here automatically. API paths answer
+// JSON; everything else gets a small self-contained branded page — no
+// database reads, no contact details (the broken dependency may be exactly
+// those) and no external assets, so it renders under any failure mode.
+const ERROR_PAGE_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Something went wrong · PVC Card Portal</title>
+<style>
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:#f8fafc;color:#0f172a;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:28rem;text-align:center}
+  .badge{width:56px;height:56px;border-radius:16px;background:#0d9488;color:#fff;font-weight:700;font-size:26px;line-height:56px;margin:0 auto 20px}
+  h1{font-size:1.35rem;margin:0 0 8px}
+  p{color:#475569;line-height:1.6;margin:0 0 12px;font-size:.95rem}
+  a.btn{display:inline-block;background:#0d9488;color:#fff;text-decoration:none;padding:10px 24px;border-radius:10px;font-weight:600;margin-top:8px}
+  .muted{font-size:.8rem;color:#94a3b8}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="badge">P</div>
+  <h1>Something went wrong on our side</h1>
+  <p>The page could not be loaded right now. Please try again in a few minutes — any order you already placed, and its payment details, are safe.</p>
+  <a class="btn" href="/">Back to home</a>
+  <p class="muted" style="margin-top:16px">If this keeps happening, reach us via the Contact page from the home screen.</p>
+</div>
+</body>
+</html>`;
+
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+  logger.error({ err, url: req.originalUrl }, "unhandled request error");
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+  // Respect statuses attached by middleware (body-parser malformed-JSON →
+  // 400, payload-too-large → 413, …) instead of flattening them to 500.
+  const raw =
+    (err as { status?: unknown })?.status ?? (err as { statusCode?: unknown })?.statusCode;
+  const status = typeof raw === "number" && raw >= 400 && raw < 600 ? raw : 500;
+  res.status(status);
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Robots-Tag", "noindex");
+  if (req.path === "/api" || req.path.startsWith("/api/")) {
+    res.json({
+      error:
+        status < 500 && err instanceof Error && err.message ? err.message : "Internal server error",
+    });
+    return;
+  }
+  if (status < 500) {
+    res.type("text/plain").send("The request could not be processed. Please go back and try again.");
+    return;
+  }
+  res.setHeader("Content-Type", "text/html; charset=utf-8");
+  res.send(ERROR_PAGE_HTML);
 });
 
 export default app;

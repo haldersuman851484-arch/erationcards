@@ -14,6 +14,6 @@
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
 - [archiver v8 is pure ESM](archiver-v8-esm.md) — no default/callable export; use named ZipArchive + @types/archiver@8; "broken" @types on a major usually means the API shape changed
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
-- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated package.json; boot-test with env unset; Runtime Logs flaky → admin net-check endpoint + boot index self-heal (proven live)
+- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; boot-test: npm i + dummy unreachable DB URL, zip w/o node_modules; env-driven analytics; net-check + self-heal (proven live)
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file stays in portal public/ forever; IndexNow 1st submit 403s→retry; GSC sitemap box ≠ URL-inspect bar — verify user clicks via screenshot
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch

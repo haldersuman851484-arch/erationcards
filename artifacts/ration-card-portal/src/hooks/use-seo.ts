@@ -24,11 +24,6 @@ export function useSeo({ title, description, canonical }: SeoOptions = {}) {
     if (canonical) {
       setLink("canonical", canonical);
       setMeta("property", "og:url", canonical);
-      // index.html ships hreflang alternates pointing at the homepage; keep
-      // them in sync with the page actually being viewed.
-      document
-        .querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')
-        .forEach((el) => el.setAttribute("href", canonical));
     }
 
     return () => {

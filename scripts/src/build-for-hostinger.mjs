@@ -386,6 +386,14 @@ PORT=3000
 # Set this to an absolute path on your Hostinger server, e.g.:
 # UPLOADS_DIR=/home/<your-user>/domains/erationcards.in/uploads
 UPLOADS_DIR=
+
+# Optional – web analytics. Leave empty to disable. Setting these needs NO
+# rebuild: the server injects the tags at serve time on public pages only
+# (admin/operator/processing/receipt pages are never tracked).
+# GA4_MEASUREMENT_ID: Google Analytics 4 "Measurement ID", looks like G-XXXXXXXXXX
+# CLARITY_PROJECT_ID: Microsoft Clarity project ID (free heatmaps + session replay)
+GA4_MEASUREMENT_ID=
+CLARITY_PROJECT_ID=
 `;
 writeFileSync(path.join(DEPLOY_DIR, ".env.example"), envExample);
 

@@ -3,6 +3,14 @@ import { Link } from "wouter";
 import { ChevronDown } from "lucide-react";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface RelatedLink {
   href: string;
@@ -41,13 +49,22 @@ export function GuideLayout({ title, intro, quickAnswer, related, children }: Gu
 
       <div className="bg-primary/5 border-b border-primary/10 py-12">
         <div className="container mx-auto px-4 max-w-3xl">
-          <p className="text-xs font-medium uppercase tracking-wide text-primary mb-3">
-            <Link href="/" className="hover:underline">
-              Home
-            </Link>
-            <span className="mx-1.5 text-slate-400">/</span>
-            Guide
-          </p>
+          {/* Visible breadcrumb mirroring the BreadcrumbList JSON-LD (Home → this guide). */}
+          <Breadcrumb className="mb-3" data-testid="breadcrumb-guide">
+            <BreadcrumbList className="text-xs text-slate-500">
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/" className="hover:text-primary">
+                    Home
+                  </Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="text-slate-700 font-medium">{title}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">{title}</h1>
           <p className="text-slate-600">{intro}</p>
         </div>

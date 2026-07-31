@@ -1,6 +1,14 @@
 import { Link, useParams } from "wouter";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { useSeo } from "@/hooks/use-seo";
 import { MapPin, CreditCard, Truck, CheckCircle, Clock, Shield } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
@@ -344,6 +352,22 @@ export default function DistrictPage() {
         {/* Hero */}
         <section className="bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 text-white py-16 px-4">
           <div className="max-w-3xl mx-auto text-center">
+            {/* Visible breadcrumb mirroring the BreadcrumbList JSON-LD (Home → this district). */}
+            <Breadcrumb className="mb-5" data-testid="breadcrumb-district">
+              <BreadcrumbList className="justify-center text-slate-400">
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/" className="hover:text-white">
+                      Home
+                    </Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage className="text-slate-200">PVC Ration Card {info.name}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
             <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 text-sm mb-6">
               <MapPin className="w-4 h-4 text-blue-300" />
               <span>Serving all 23 districts of West Bengal</span>

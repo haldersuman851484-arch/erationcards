@@ -80,6 +80,7 @@ A web application for ordering PVC ration cards online — customers fill in det
    - `UPLOADS_DIR` — absolute path for payment screenshot storage (e.g. `/home/<user>/uploads`)
    - `RESEND_API_KEY` — Resend API key for order confirmation emails (required on Hostinger; the Replit connector proxy is unreachable outside Replit). The same full-access key is already stored as a Replit secret — copy that value into hPanel.
    - `EMAIL_FROM` — set to `PVC Card Portal <orders@erationcards.in>` (domain verified in Resend since July 2026; defaults to `onboarding@resend.dev` if unset)
+   - `GA4_MEASUREMENT_ID` / `CLARITY_PROJECT_ID` — (optional) Google Analytics 4 + Microsoft Clarity. Injected server-side at serve time on public pages only (admin/operator/processing/receipt never tracked); adding or changing them needs only an app restart, no rebuild. Leave unset to disable.
 3. **Set Node.js startup file** in hPanel to `dist/index.mjs`.
 
 ### Deploying (first time & every update)

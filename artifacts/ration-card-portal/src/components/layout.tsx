@@ -114,6 +114,8 @@ export function Footer() {
               alt="PVC Card Portal logo"
               width="40"
               height="40"
+              loading="lazy"
+              decoding="async"
               className="w-10 h-10"
             />
             <span className="font-bold text-lg text-white tracking-tight">
