@@ -84,9 +84,6 @@ export default function OperatorLogin() {
                 <Link href="/operator/register" className="text-primary font-medium hover:underline">Register as Operator</Link>
               </p>
             </div>
-            <div className="mt-4 pt-4 border-t border-slate-100 text-center">
-              <p className="text-xs text-slate-400">Test credentials: <span className="font-mono">ramesh@printshop.com / Test@1234</span></p>
-            </div>
           </CardContent>
         </Card>
       </main>
