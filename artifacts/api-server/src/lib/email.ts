@@ -16,8 +16,11 @@ type Log = {
 const FROM_ADDRESS = process.env["EMAIL_FROM"] ?? "PVC Card Portal <onboarding@resend.dev>";
 const TRACK_URL = "https://erationcards.in/track";
 const SITE_URL = "https://erationcards.in";
-// Absolute URL — email clients cannot resolve relative paths. Ships in the v5 bundle.
-const LOGO_URL = "https://erationcards.in/favicon-192.png";
+// Absolute URL — email clients cannot resolve relative paths. Points at a
+// dedicated, stable /email-logo.png in the portal public assets (NOT the
+// favicon set) so favicon renames/regeneration can never break past or
+// future emails.
+const LOGO_URL = "https://erationcards.in/email-logo.png";
 
 /** Teal branded header with the card-stack logo, shared by all email templates. */
 function buildEmailHeader(): string {
