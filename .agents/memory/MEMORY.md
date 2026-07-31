@@ -1,4 +1,4 @@
-- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning(); raw-SQL FULLTEXT skipped by push → boot self-heal
+- [MySQL migration](mysql-migration.md) — full pg→mysql migration: schemas, routes, dual-instance fix, no returning(); raw-SQL FULLTEXT skipped by push → boot self-heal; Hostinger allowlist is per-IP — access-denied test storms = env, not code
 - [Typecheck & stale references](typecheck-stale-references.md) — tsc -p reads stale lib dist d.ts; validation rebuilds lib references first
 - [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — seed via real endpoints (printed + PDFs downloaded); dev dispatch hits Delhivery STAGING unless DELHIVERY_ENV=production
 - [Browser-safe shared code](browser-safe-shared-code.md) — portal-visible constants live in zero-dep libs (e.g. @workspace/pricing), never lib/db (exports mysql2 client)

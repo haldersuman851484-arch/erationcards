@@ -20,3 +20,6 @@ description: Lessons from migrating drizzle-orm from PostgreSQL to MySQL for Hos
 **Why:** Hostinger hPanel only supports MySQL; production deploy required full dialect switch.
 
 **How to apply:** Any new schema file must use mysql-core imports. Any new route doing insert/update must fetch the result with a follow-up select, not .returning().
+
+## External DB IP allowlist (July 31, 2026)
+Hostinger remote MySQL can reject the workspace with ER_ACCESS_DENIED_ERROR when the workspace's egress IP changes (remote-access allowlist is per-IP). When the whole API test suite fails with access denied on every query, verify with a bare mysql2 connection first — it's an environment issue, not a code regression.

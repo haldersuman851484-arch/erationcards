@@ -114,6 +114,19 @@ export default function Order() {
     canonical: "https://erationcards.in/order",
   });
   const [step, setStep] = useState(1);
+
+  // GA4 funnel: one event per forward wizard-step transition so drop-off is
+  // visible in Explorations. Silent no-op when analytics is off (dev/tests).
+  const FUNNEL_STEP_EVENTS: Record<number, string> = {
+    2: "begin_checkout",     // step 1 (card details) completed
+    3: "add_shipping_info",  // step 2 (address) completed
+    4: "add_payment_info",   // step 3 (payment screenshot) completed
+  };
+  function advanceToStep(next: number) {
+    const eventName = FUNNEL_STEP_EVENTS[next];
+    if (eventName) trackEvent(eventName, { checkout_step: next - 1 });
+    setStep(next);
+  }
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const [familyCards, setFamilyCards] = useState<FamilyCardEntry[]>([]);
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
@@ -331,7 +344,7 @@ export default function Order() {
           setIsUploading(false);
           setCreatedOrder({ orderNumber: order.orderNumber });
           setCardPdfs({});
-          setStep(4);
+          advanceToStep(4);
           window.scrollTo(0, 0);
         },
         onError: (err: any) => {
@@ -622,7 +635,7 @@ export default function Order() {
                         <Button type="button" data-testid="button-next-step1" className="bg-gradient-to-r from-primary to-cyan-400 hover:opacity-90 px-8" onClick={async () => {
                           const ok = await form.trigger(["customerName", "rationCardNumber", "cardType"]);
                           if (!ok) return;
-                          if (familyCards.length > 0) setStep(2);
+                          if (familyCards.length > 0) advanceToStep(2);
                           else setShowFamilyDialog(true);
                         }}>Next</Button>
                       </div>
@@ -755,7 +768,7 @@ export default function Order() {
                       <Button type="button" variant="outline" onClick={() => setStep(1)}>Back</Button>
                       <Button type="button" data-testid="button-next-step2" className="bg-primary hover:bg-primary/90 px-8" onClick={async () => {
                         const ok = await form.trigger(["deliveryName", "address", "postOffice", "state", "district", "pincode", "customerPhone", "customerEmail"]);
-                        if (ok) setStep(3);
+                        if (ok) advanceToStep(3);
                       }}>Continue</Button>
                     </div>
                   </CardContent>
@@ -1128,7 +1141,7 @@ export default function Order() {
             <DialogDescription>Do you want to order for any other family member's card?</DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex-row justify-end gap-3 sm:justify-end">
-            <Button type="button" variant="outline" data-testid="button-family-no" className="min-w-24" onClick={() => { setShowFamilyDialog(false); setStep(2); }}>No</Button>
+            <Button type="button" variant="outline" data-testid="button-family-no" className="min-w-24" onClick={() => { setShowFamilyDialog(false); advanceToStep(2); }}>No</Button>
             <Button type="button" data-testid="button-family-yes" className="min-w-24 bg-primary hover:bg-primary/90" onClick={() => { setShowFamilyDialog(false); openAddCard(); }}>Yes</Button>
           </DialogFooter>
         </DialogContent>
