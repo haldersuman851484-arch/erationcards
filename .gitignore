@@ -54,3 +54,6 @@ hostinger/
 # E2E throwaway artifacts (seeded-data summaries, ZIPs, OTP codes)
 .e2e-delete-flow/
 .e2e-otp-codes.json
+
+# Hostinger deploy zips must never ship inside the portal build or the repo
+artifacts/ration-card-portal/public/*.zip
