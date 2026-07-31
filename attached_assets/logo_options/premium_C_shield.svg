@@ -1,0 +1,22 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cTeal" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#00c9e3"/>
+      <stop offset="0.5" stop-color="#00a2ba"/>
+      <stop offset="1" stop-color="#005f6e"/>
+    </linearGradient>
+    <linearGradient id="cGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0d78c"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#b8912a"/>
+    </linearGradient>
+    <clipPath id="cClip"><path d="M90 14 L152 34 V86 C152 122 128 148 90 166 C52 148 28 122 28 86 V34 Z"/></clipPath>
+  </defs>
+  <path d="M90 14 L152 34 V86 C152 122 128 148 90 166 C52 148 28 122 28 86 V34 Z" fill="url(#cTeal)" stroke="url(#cGold)" stroke-width="4"/>
+  <polygon points="28,14 152,14 28,110" fill="#ffffff" opacity="0.10" clip-path="url(#cClip)"/>
+  <rect x="57" y="70" width="66" height="44" rx="8" fill="#ffffff"/>
+  <rect x="64" y="78" width="15" height="11" rx="2" fill="#00afc8"/>
+  <rect x="85" y="80" width="30" height="4.5" rx="2.25" fill="#94a3b8"/>
+  <rect x="85" y="89" width="22" height="4.5" rx="2.25" fill="#cbd5e1"/>
+  <rect x="64" y="97" width="51" height="4.5" rx="2.25" fill="#e2e8f0"/>
+</svg>

@@ -1,0 +1,20 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="aTeal" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#00c9e3"/>
+      <stop offset="0.45" stop-color="#00afc8"/>
+      <stop offset="1" stop-color="#005f6e"/>
+    </linearGradient>
+    <linearGradient id="aGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f0d78c"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#b8912a"/>
+    </linearGradient>
+    <clipPath id="aClip"><rect x="8" y="8" width="164" height="164" rx="36"/></clipPath>
+  </defs>
+  <rect x="8" y="8" width="164" height="164" rx="36" fill="url(#aTeal)"/>
+  <polygon points="8,8 172,8 8,124" fill="#ffffff" opacity="0.12" clip-path="url(#aClip)"/>
+  <rect x="16" y="16" width="148" height="148" rx="29" fill="none" stroke="url(#aGold)" stroke-width="3"/>
+  <text x="90" y="103" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="56" fill="#ffffff" text-anchor="middle" letter-spacing="1">PVC</text>
+  <rect x="58" y="119" width="64" height="5" rx="2.5" fill="url(#aGold)"/>
+</svg>

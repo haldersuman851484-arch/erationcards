@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 142.5">
+<!-- SVG created with Arrow, by QuiverAI (https://quiver.ai) -->
+  <style type="text/css">.cls-0 {fill:#0C606D;}
+.cls-1 {fill:url(#SVGID_1_);}
+.cls-2 {fill:url(#SVGID_2_);}
+.cls-3 {opacity:0.3;fill:url(#SVGID_3_);enable-background:new    ;}
+.cls-4 {fill:#FFFFFF;}</style>
+  <linearGradient id="SVGID_1_" x1="8.5" x2="131.6" y1="799" y2="799" gradientTransform="translate(0 -728)" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#CC9E4B" offset="0"/>
+    <stop stop-color="#EDD381" offset=".5"/>
+    <stop stop-color="#DBB65F" offset="1"/>
+  </linearGradient>
+  <path class="cls-1" d="m104 9.1h-67.9c-14.1 0-27.6 12.2-27.6 26.9v70c0 14.9 11.3 27.4 26.6 27.4h68.9c14.4 0 27.6-11.4 27.6-27.4v-69.9c0-13.9-12.5-27-27.6-27z"/>
+  <linearGradient id="SVGID_2_" x1="18.92" x2="121.3" y1="747.6" y2="849.9" gradientTransform="translate(0 -728)" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#1AA1A8" offset="0"/>
+    <stop stop-color="#0C6F7A" offset=".5"/>
+    <stop stop-color="#09505B" offset="1"/>
+  </linearGradient>
+  <path class="cls-2" d="m129.4 106.1c0 13.6-10.3 25.4-25.4 25.4h-67.9c-13.3 0-25.5-10.4-25.5-25.4v-69.6c0-13.8 11.8-25.4 25.5-25.4h67.9c12.9 0 25.4 10.7 25.4 25.4v69.6z"/>
+  <linearGradient id="SVGID_3_" x1="32.2" x2="108.2" y1="766.4" y2="766.4" gradientTransform="translate(0 -728)" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#44ABB2" offset="0"/>
+    <stop stop-color="#7DC3CA" offset="1"/>
+  </linearGradient>
+  <path class="cls-3" d="m108.2 11.4c-1.4-0.2-1.8-0.3-4.2-0.3h-67.9c-12.7 0-25.5 10.4-25.5 25.4v32.5l80-30.2 17.6-27.4z"/>
+  <path class="cls-4" d="m53 67.1c0 6.4-4.6 10.4-12.2 10.4h-7.3v8.5h-5.7v-29.4h12.5c8.1 0 12.7 4 12.7 10.5zm-5.6 0c0-3.6-2.3-6-6.9-6h-7v11.9h7c4.6 0 6.9-2 6.9-5.9z"/>
+  <path class="cls-4" d="m84.6 56.6-12.6 29.4h-5.2l-12.4-29.4h5.8l9.4 22.6 9.6-22.6h5.4z"/>
+  <path class="cls-4" d="m85.6 71.3c0-8.2 6.3-15.1 15.7-15.1 4.3 0 8.3 1.3 11.8 4.8l-3.1 3.6c-2-2.2-4.6-3.7-8.4-3.7-5.6 0-10.7 4-10.7 10.6s4.7 10.4 10.4 10.4c3.6 0 6.3-1.1 8.3-3.5l3.3 3.3c-2.4 2.5-5.5 4.8-11.4 4.8-8.9 0.1-15.9-5.9-15.9-15.2z"/>
+</svg>

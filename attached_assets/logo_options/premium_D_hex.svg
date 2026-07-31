@@ -1,0 +1,18 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="dTeal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#063845"/>
+      <stop offset="1" stop-color="#00758a"/>
+    </linearGradient>
+    <linearGradient id="dGold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4e0a0"/>
+      <stop offset="0.5" stop-color="#d4af37"/>
+      <stop offset="1" stop-color="#a8821f"/>
+    </linearGradient>
+    <clipPath id="dClip"><polygon points="90,10 159,50 159,130 90,170 21,130 21,50"/></clipPath>
+  </defs>
+  <polygon points="90,10 159,50 159,130 90,170 21,130 21,50" fill="url(#dTeal)" stroke="url(#dGold)" stroke-width="5"/>
+  <polygon points="21,10 159,10 21,105" fill="#ffffff" opacity="0.08" clip-path="url(#dClip)"/>
+  <text x="90" y="106" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="50" fill="url(#dGold)" text-anchor="middle" letter-spacing="1">PVC</text>
+  <rect x="60" y="121" width="60" height="4" rx="2" fill="url(#dGold)" opacity="0.9"/>
+</svg>

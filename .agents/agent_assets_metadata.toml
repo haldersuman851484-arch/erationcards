@@ -6,3 +6,9 @@ id = "NztUK_LQz9UTODg2dwtLL"
 uri = "file://erationcards-hostinger.zip"
 type = "unspecified"
 title = "Website package with Google verification file"
+
+[[outputs]]
+id = "dy3eizJf9_WYnofyRJkeF"
+uri = "file://attached_assets/logo_options/premium_sheet.png"
+type = "image"
+title = "Premium logo options — pick your favorite"
