@@ -60,6 +60,12 @@ export default function About() {
       bnA: `একটি রেশন কার্ড ₹${PRICING.ration.single.public}, একসাথে দুটি বা বেশি হলে প্রতিটি ₹${PRICING.ration.multi.public}। ABHA, E-SHRAM ও GENERAL কার্ড (ভোটার আইডি, ড্রাইভিং লাইসেন্স, PAN) একটি ₹${PRICING.special.single.public}, দুটি বা বেশি হলে প্রতিটি ₹${PRICING.special.multi.public}। প্রিন্টিং, প্যাকেজিং, বাড়িতে ডেলিভারি — সব দামের মধ্যেই, লুকানো খরচ নেই।`,
     },
     {
+      q: "Why should I choose PVC Card Portal for PVC card printing?",
+      a: `Because we combine quality with honesty: bank-card grade waterproof PVC (85.6mm × 54mm, about 760 micron), sharp scannable printing, transparent prices from ₹${PRICING.ration.multi.public} per card, live order tracking, and support in Bengali and English on ${contact.phone}. Over 2,00,000 cards delivered and 1,500+ registered operators trust us — and we always tell you when a government service is free (like new applications or corrections at food.wb.gov.in), because we are a private printing service, not a government website.`,
+      bnQ: "PVC কার্ড প্রিন্টের জন্য PVC Card Portal-ই কেন বেছে নেব?",
+      bnA: `কারণ মান আর সততা — দুটোই: ব্যাংক কার্ডের মানের ওয়াটারপ্রুফ PVC (85.6mm × 54mm, প্রায় 760 মাইক্রন), ঝকঝকে স্ক্যানযোগ্য প্রিন্ট, স্বচ্ছ দাম — প্রতি কার্ড ₹${PRICING.ration.multi.public} থেকে শুরু, লাইভ অর্ডার ট্র্যাকিং, আর বাংলা ও ইংরেজিতে সাপোর্ট (${contact.phone})। ২,০০,০০০+ কার্ড ডেলিভারি আর ১,৫০০+ রেজিস্টার্ড অপারেটরের ভরসা। কোন সরকারি পরিষেবা ফ্রি (যেমন food.wb.gov.in-এ নতুন আবেদন বা সংশোধন) — সেটা আমরা সবসময় আগে বলে দিই, কারণ আমরা বেসরকারি প্রিন্টিং পরিষেবা, সরকারি ওয়েবসাইট নই।`,
+    },
+    {
       q: "Do you deliver PVC cards near me?",
       a: "Yes — doorstep delivery in all 23 districts of West Bengal, including Kolkata, Howrah, Purba & Paschim Bardhaman, Hooghly, North & South 24 Parganas, Nadia and Murshidabad, and by courier across India. You order online and the card arrives at your letterbox — no shop visit needed.",
       bnQ: "আমার এলাকায় কি PVC কার্ড ডেলিভারি হয়?",

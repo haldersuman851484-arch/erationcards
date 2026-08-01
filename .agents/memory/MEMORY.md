@@ -22,3 +22,4 @@
 - [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations, no font preloads, metric-matched Inter Fallback, main CSS inlined into HTML; don't reintroduce
 - [Account migration via GitHub](replit-account-migration.md) — gitPush needs the "GitHub Source Control" connection, not the API connector; in-frame OAuth dies; BRANCH_ALREADY_EXISTS ≈ already synced
 - [Gov-link verification](gov-link-verification.md) — screenshot-verify pasted wbpds URLs before linking (user may paste the gov 404 "Temporarily stopped" page); curl/webFetch unreliable; retry blank shots
+- [Follow-up task cards](followup-task-preference.md) — user cancels every proposeFollowUpTasks card (4× by Aug 2026); never propose again on this project — offer next steps as chat prose
