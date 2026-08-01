@@ -14,6 +14,7 @@ export const BRAND = {
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
+  { href: "/services", label: "Services" },
   { href: "/order", label: "Order PVC" },
   { href: "/track", label: "Track Order" },
   { href: "/download", label: "Download e-Card" },
@@ -132,6 +133,7 @@ export function Footer() {
         <div>
           <h3 className="text-white font-semibold mb-4">Services</h3>
           <ul className="space-y-2 text-sm">
+            <li><Link href="/services" className="hover:text-primary transition-colors">All Services &amp; Guides</Link></li>
             <li><Link href="/order" className="hover:text-primary transition-colors">Order PVC Card</Link></li>
             <li><Link href="/track" className="hover:text-primary transition-colors">Track Status</Link></li>
             <li><Link href="/download" className="hover:text-primary transition-colors">Download Digital Copy</Link></li>

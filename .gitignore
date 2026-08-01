@@ -57,3 +57,6 @@ hostinger/
 
 # Hostinger deploy zips must never ship inside the portal build or the repo
 artifacts/ration-card-portal/public/*.zip
+
+# Hostinger deploy zips at repo root stay local-only
+/erationcards-hostinger-*.zip

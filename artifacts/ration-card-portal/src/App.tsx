@@ -22,6 +22,20 @@ const DistrictPage = lazy(() => import("./pages/DistrictPage"));
 const GuideDownloadERationCard = lazy(() => import("./pages/guides/DownloadERationCard"));
 const GuideRationCardTypes = lazy(() => import("./pages/guides/RationCardTypes"));
 const GuideLostRationCard = lazy(() => import("./pages/guides/LostRationCard"));
+const Services = lazy(() => import("./pages/Services"));
+const GuideRationCardCorrection = lazy(() => import("./pages/guides/RationCardCorrection"));
+const GuideVerifyRationCard = lazy(() => import("./pages/guides/VerifyRationCard"));
+const GuideApplyNewRationCard = lazy(() => import("./pages/guides/ApplyNewRationCard"));
+const GuideChangeRationShop = lazy(() => import("./pages/guides/ChangeRationShop"));
+const GuideSurrenderRationCard = lazy(() => import("./pages/guides/SurrenderRationCard"));
+const GuideCategoryChange = lazy(() => import("./pages/guides/CategoryChange"));
+const GuideDuplicateRationCard = lazy(() => import("./pages/guides/DuplicateRationCard"));
+const GuideNonSubsidisedCard = lazy(() => import("./pages/guides/NonSubsidisedCard"));
+const GuideLinkAadhaarEkyc = lazy(() => import("./pages/guides/LinkAadhaarEkyc"));
+const GuideReactivateCard = lazy(() => import("./pages/guides/ReactivateCard"));
+const GuideSplitFamilyCard = lazy(() => import("./pages/guides/SplitFamilyCard"));
+const GuideMemberTransfer = lazy(() => import("./pages/guides/MemberTransfer"));
+const GuideNominationForm = lazy(() => import("./pages/guides/NominationForm"));
 const CardTypePage = lazy(() => import("./pages/CardTypePage"));
 
 const OrderUpload = lazy(() => import("./pages/OrderUpload"));
@@ -115,6 +129,20 @@ function Router() {
       <Route path="/guides/download-e-ration-card" component={GuideDownloadERationCard} />
       <Route path="/guides/ration-card-types-west-bengal" component={GuideRationCardTypes} />
       <Route path="/guides/lost-ration-card-west-bengal" component={GuideLostRationCard} />
+      <Route path="/services" component={Services} />
+      <Route path="/guides/ration-card-correction-west-bengal" component={GuideRationCardCorrection} />
+      <Route path="/guides/verify-ration-card-west-bengal" component={GuideVerifyRationCard} />
+      <Route path="/guides/apply-new-ration-card-west-bengal" component={GuideApplyNewRationCard} />
+      <Route path="/guides/change-ration-shop-west-bengal" component={GuideChangeRationShop} />
+      <Route path="/guides/surrender-ration-card-west-bengal" component={GuideSurrenderRationCard} />
+      <Route path="/guides/ration-card-category-change-west-bengal" component={GuideCategoryChange} />
+      <Route path="/guides/duplicate-ration-card-west-bengal" component={GuideDuplicateRationCard} />
+      <Route path="/guides/non-subsidised-ration-card-west-bengal" component={GuideNonSubsidisedCard} />
+      <Route path="/guides/link-aadhaar-ration-card-west-bengal" component={GuideLinkAadhaarEkyc} />
+      <Route path="/guides/reactivate-ration-card-west-bengal" component={GuideReactivateCard} />
+      <Route path="/guides/split-ration-card-family-west-bengal" component={GuideSplitFamilyCard} />
+      <Route path="/guides/ration-card-member-transfer-west-bengal" component={GuideMemberTransfer} />
+      <Route path="/guides/ration-card-nomination-west-bengal" component={GuideNominationForm} />
 
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />

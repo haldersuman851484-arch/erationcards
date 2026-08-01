@@ -54,6 +54,21 @@ const STATIC_ROUTES = [
   "/guides/download-e-ration-card",
   "/guides/ration-card-types-west-bengal",
   "/guides/lost-ration-card-west-bengal",
+  // Services hub + the per-service guide articles (Forms 3–15, eKYC, etc.)
+  "/services",
+  "/guides/ration-card-correction-west-bengal",
+  "/guides/verify-ration-card-west-bengal",
+  "/guides/apply-new-ration-card-west-bengal",
+  "/guides/change-ration-shop-west-bengal",
+  "/guides/surrender-ration-card-west-bengal",
+  "/guides/ration-card-category-change-west-bengal",
+  "/guides/duplicate-ration-card-west-bengal",
+  "/guides/non-subsidised-ration-card-west-bengal",
+  "/guides/link-aadhaar-ration-card-west-bengal",
+  "/guides/reactivate-ration-card-west-bengal",
+  "/guides/split-ration-card-family-west-bengal",
+  "/guides/ration-card-member-transfer-west-bengal",
+  "/guides/ration-card-nomination-west-bengal",
   // Operator recruitment signup. Static copy + form, no prices rendered —
   // safe to snapshot. Without a snapshot the live page served the SPA shell
   // whose canonical points at "/", telling Google it duplicates the homepage.
@@ -105,6 +120,8 @@ const MUST_HAVE_TOKENS = new Set([
   // /order quotes the per-card price in its <title> (via usePricing).
   "/order",
   "/faq",
+  // The services hub quotes the print price in its meta description and CTA.
+  "/services",
   // Guides quote the print price in their intros/FAQs/CTAs.
   ...STATIC_ROUTES.filter((r) => r.startsWith("/guides/")),
   ...districtSlugs.map((s) => `/pvc-ration-card/${s}`),

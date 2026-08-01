@@ -12,3 +12,5 @@ description: Files written to /tmp in one ShellExec call are not visible in late
 **How to apply:** When scripting curl/e2e checks across multiple ShellExec calls, regenerate fixtures per call or use a workspace path (e.g. `/home/runner/workspace/.cache/`).
 
 **Background processes die too:** a `nohup node … &` launched in one ShellExec call is killed before the next call (a Playwright run waiting for an input file died silently mid-wait). Long-running scripted browser/e2e runs must complete inside a single foreground ShellExec command — pre-stage every input they need (e.g. OTP codes pulled from logs) *before* launching, instead of pausing the script mid-run.
+
+**`&` binds the whole `&&` chain:** `cd x && npm i && node server & PID=$!` backgrounds EVERYTHING including the install — foreground curls then hit nothing. Run setup as its own foreground command; start the server with `&` only as the first token's own simple command on a fresh line.

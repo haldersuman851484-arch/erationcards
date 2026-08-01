@@ -517,6 +517,10 @@ export default function Home() {
             <Link href="/guides/lost-ration-card-west-bengal" className="text-primary hover:underline">
               Lost your ration card?
             </Link>
+            {" · "}
+            <Link href="/services" className="text-primary hover:underline font-medium">
+              All ration card services &amp; guides →
+            </Link>
           </p>
 
           <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
