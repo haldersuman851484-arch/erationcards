@@ -87,6 +87,16 @@ export default function LostRationCard() {
           {PRICING.ration.single.public} single / ₹{PRICING.ration.multi.public} each for 2+).
         </>
       }
+      bnQuickAnswer={
+        <>
+          আপনার পশ্চিমবঙ্গ রেশন কার্ডের রেকর্ড সরকারের ডিজিটাল সিস্টেমে সুরক্ষিত থাকে, তাই কার্ড হারিয়ে বা ছিঁড়ে
+          গেলেও তা একেবারে হারায় না। <strong>food.wb.gov.in থেকে বিনামূল্যে e-Ration Card PDF</strong> আবার
+          ডাউনলোড করুন — কোনো ফি নেই, FIR লাগে না, নতুন আবেদনও লাগে না। কার্ড নম্বর মনে না থাকলে আপনার রেশন ডিলার বা
+          নিকটবর্তী খাদ্য ও সরবরাহ দফতর খুঁজে দিতে পারে। আবার যাতে এমন না হয়, তাই PDF-টি ওয়াটারপ্রুফ PVC কার্ডে
+          প্রিন্ট করান (একটি ₹{PRICING.ration.single.public} / ২টির বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/download-e-ration-card", label: "How to download your e-Ration Card PDF (free)" },
         { href: "/guides/ration-card-types-west-bengal", label: "AAY, PHH, SPHH, RKSY-I & RKSY-II — card types explained" },

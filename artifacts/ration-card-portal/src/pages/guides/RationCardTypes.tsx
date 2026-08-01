@@ -121,6 +121,16 @@ export default function RationCardTypes() {
           {PRICING.ration.single.public} (₹{PRICING.ration.multi.public} per card for 2+).
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গের রেশন কার্ড পাঁচটি ক্যাটাগরিতে হয়: কেন্দ্রীয় NFSA-র অধীনে{" "}
+          <strong>AAY</strong> (Antyodaya Anna Yojana — সবচেয়ে গরিব পরিবার), <strong>PHH</strong> (Priority
+          Household) ও <strong>SPHH</strong> (Special Priority Household), আর রাজ্যের রাজ্য খাদ্য সুরক্ষা যোজনার
+          অধীনে <strong>RKSY-I</strong> ও <strong>RKSY-II</strong>। আপনার ক্যাটাগরি কার্ডেই ছাপা থাকে — আপনি বেছে
+          নেন না, সরকারই ঠিক করে দেয়। পাঁচটির যেকোনোটিই ওয়াটারপ্রুফ PVC কার্ডে প্রিন্ট করা যায় ₹
+          {PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/download-e-ration-card", label: "How to download your e-Ration Card PDF (free)" },
         { href: "/guides/lost-ration-card-west-bengal", label: "Lost or damaged ration card? Here's what to do" },

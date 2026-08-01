@@ -112,6 +112,16 @@ export default function DuplicateRationCard() {
           door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গে আনুষ্ঠানিক ডুপ্লিকেট খুব কমই লাগে: কার্ড নম্বর ও ক্যাটাগরি দিয়ে{" "}
+          <strong>food.wb.gov.in থেকে আবার e-Ration Card PDF বিনামূল্যে ডাউনলোড করুন</strong> — সেই PDF-ই আপনার কার্ড।
+          আনুষ্ঠানিকভাবে নতুন করে ইস্যু করাতে হলে E-Citizen অংশে কারণ (হারানো/নষ্ট) ও OTP যাচাই সহ <strong>Form-9</strong>{" "}
+          (ফ্রি) জমা দিন। সাধারণ হারানোর ক্ষেত্রে পুলিশ রিপোর্ট লাগে না। PDF হাতে থাকলে erationcards.in সেটি ওয়াটারপ্রুফ
+          PVC-তে প্রিন্ট করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/lost-ration-card-west-bengal", label: "Lost card or number? Every free recovery route" },
         { href: "/guides/download-e-ration-card", label: "Download the e-Ration Card PDF (5 steps)" },

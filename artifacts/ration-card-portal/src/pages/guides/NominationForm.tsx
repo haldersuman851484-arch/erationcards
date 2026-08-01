@@ -117,6 +117,16 @@ export default function NominationForm() {
           door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পরিবারের কোনো সদস্যই যখন রেশন দোকানে আঙুলের ছাপ দিতে পারেন না, তখন <strong>food.wb.gov.in</strong>-এ
+          (সরকারি, ফ্রি) <strong>Form-15</strong> দিয়ে একজন বিশ্বস্ত ব্যক্তিকে মনোনীত করুন: আপনার কার্ড নম্বর,
+          মনোনীত ব্যক্তির নাম ও আধার, কারণ লিখে OTP দিয়ে নিশ্চিত করুন। অনুমোদনের পর মনোনীত ব্যক্তি রেশন দোকানে
+          যাচাই করে আপনার হয়ে পরিবারের প্রাপ্য রেশন তোলেন — তিনি কখনও আপনার কার্ডের সদস্য হন না। পরিবারের কার্ডের
+          টেকসই কপি চান? erationcards.in সেগুলি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public} (২টি
+          বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "eKYC basics — why authentication is needed" },
         { href: "/guides/verify-ration-card-west-bengal", label: "Check the family's cards are active" },

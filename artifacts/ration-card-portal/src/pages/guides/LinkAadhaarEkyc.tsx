@@ -123,6 +123,17 @@ export default function LinkAadhaarEkyc() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) E-Citizen অংশে{" "}
+          <strong>"Link Aadhaar with Ration Card"</strong> খুলুন, রেশন কার্ড নম্বর ও আধার নম্বর দিন, আর আধারের
+          সঙ্গে যুক্ত মোবাইলে আসা OTP দিয়ে নিশ্চিত করুন — এতেই eKYC শেষ হয় এবং মোবাইল নম্বরটি কার্ডের সঙ্গে রেকর্ড
+          হয়। OTP না এলে রেশন দোকানের e-PoS মেশিনে আঙুলের ছাপ দিয়ে ফ্রি-তে লিঙ্ক হয়। প্রত্যেক সদস্যের আলাদা eKYC
+          লাগে; লিঙ্ক না-করা কার্ড শেষমেশ বন্ধ হয়ে যায়। কার্ড লিঙ্ক ও চালু? erationcards.in সেটি ওয়াটারপ্রুফ
+          PVC-তে প্রিন্ট করে — একটি ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/reactivate-ration-card-west-bengal", label: "Card already deactivated? Reactivate it with eKYC" },
         { href: "/guides/verify-ration-card-west-bengal", label: "Check each member's eKYC status" },

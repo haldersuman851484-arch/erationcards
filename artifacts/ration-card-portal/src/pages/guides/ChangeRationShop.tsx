@@ -122,6 +122,16 @@ export default function ChangeRationShop() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          আপনার রেশন কার্ড অন্য একটি ফেয়ার-প্রাইস শপে সরাতে <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি){" "}
+          <strong>Form-6</strong> ব্যবহার করুন: কার্ড নম্বর দিন, OTP দিয়ে যাচাই করুন, এলাকা অনুযায়ী নতুন দোকান বেছে নিন,
+          কারণ জানান এবং জমা দিন। অনুমোদনের পর সাধারণত পরবর্তী বিতরণ চক্র থেকে পরিবর্তনটি কার্যকর হয়। মাঝেমধ্যের প্রয়োজনে
+          eKYC হয়ে যাওয়া কার্ড ONORC পোর্টেবিলিটিতে অন্য দোকান থেকেও রেশন তুলতে পারে। কার্ডের টেকসই প্লাস্টিক কপি চাই?
+          erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public}{" "}
+          (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-correction-west-bengal", label: "Fix the address on your card first (Form-5)" },
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "eKYC — needed for any-shop ONORC portability" },

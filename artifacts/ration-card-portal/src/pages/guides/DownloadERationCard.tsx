@@ -131,6 +131,15 @@ export default function DownloadERationCard() {
           card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) যান, E-Citizen বিভাগটি খুলুন, e-Ration Card (e-RC) ডাউনলোড
+          অপশনটি বেছে নিন, আপনার রেশন কার্ড নম্বর ও ক্যাটাগরি দিন এবং PDF সেভ করুন। পরিবারের প্রত্যেক সদস্যের নিজস্ব কার্ড আছে,
+          তাই প্রতি সদস্যের জন্য একবার করে করুন। PDF পেয়ে গেলে erationcards.in সেটি পকেট-সাইজের ওয়াটারপ্রুফ PVC কার্ডে প্রিন্ট
+          করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-types-west-bengal", label: "AAY, PHH, SPHH, RKSY-I & RKSY-II — card types explained" },
         { href: "/guides/lost-ration-card-west-bengal", label: "Lost or damaged ration card? Here's what to do" },

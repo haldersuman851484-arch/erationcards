@@ -122,6 +122,16 @@ export default function NonSubsidisedCard() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গের <strong>non-subsidised ration card</strong> একটি বৈধ সরকারি কার্ড, তবে এতে খাদ্যশস্যের কোনো
+          অধিকার থাকে না — পরিচয়পত্র ও পারিবারিক রেকর্ডের প্রমাণ হিসেবে কাজে লাগে। <strong>food.wb.gov.in</strong>-এর
+          E-Citizen অংশে <strong>Form-10</strong> দিয়ে বিনামূল্যে নতুন আবেদন করুন বা চালু কার্ড রূপান্তর করুন:
+          আধার অনুযায়ী তথ্য দিন, OTP দিয়ে যাচাই করুন, আবেদন ট্র্যাক করুন, তারপর প্রতি সদস্যের e-Ration Card PDF
+          ডাউনলোড করুন। erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public} (২টি বা
+          বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-types-west-bengal", label: "All WB card categories compared (AAY → RKSY-II)" },
         { href: "/guides/surrender-ration-card-west-bengal", label: "Surrendering entirely instead (Form-7)" },

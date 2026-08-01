@@ -127,6 +127,16 @@ export default function SplitFamilyCard() {
           to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          এক রেশন কার্ড পরিবারের সদস্যরা এখন আলাদা থাকলে ও আলাদা রান্না করলে, <strong>food.wb.gov.in</strong>-এ
+          (সরকারি, ফ্রি) <strong>Form-13</strong> দিয়ে পরিবারকে আলাদা ইউনিটে ভাগ করুন: কোন সদস্যরা নতুন ইউনিট তৈরি
+          করছেন বেছে নিন, নতুন ঠিকানা (ও আলাদা হলে দোকান) দিন, একটি ঠিকানার প্রমাণ আপলোড করুন, OTP দিয়ে যাচাই করে
+          আবেদন ট্র্যাক করুন। অনুমোদনের পর নতুন e-Ration Card PDF ডাউনলোড করুন — erationcards.in প্রতিটি ওয়াটারপ্রুফ
+          PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-member-transfer-west-bengal", label: "One person joining another family? Form-14 instead" },
         { href: "/guides/change-ration-shop-west-bengal", label: "Pick a nearer shop for the new unit (Form-6)" },

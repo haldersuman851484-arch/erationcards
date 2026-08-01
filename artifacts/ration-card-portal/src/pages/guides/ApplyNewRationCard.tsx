@@ -127,6 +127,16 @@ export default function ApplyNewRationCard() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (E-Citizen বিভাগে) বিনামূল্যে আবেদন করুন: পরিবারের কোনো রেশন কার্ড না থাকলে{" "}
+          <strong>Form-3</strong>, আর নবজাতক বা প্রথমবারের সদস্য পুরনো পরিবার কার্ডে যোগ করতে <strong>Form-4</strong>।
+          Aadhaar অনুযায়ী হুবহু তথ্য দিন, নথি আপলোড করুন, OTP দিয়ে যাচাই করুন এবং অনুমোদন না হওয়া পর্যন্ত অ্যাপ্লিকেশন নম্বর
+          দিয়ে ট্র্যাক করুন। অনুমোদিত প্রত্যেক সদস্য নিজস্ব e-Ration Card PDF পান — erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে
+          প্রিন্ট করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-member-transfer-west-bengal", label: "Moving an existing card holder into your family (Form-14)" },
         { href: "/guides/ration-card-types-west-bengal", label: "AAY, PHH, SPHH, RKSY-I & RKSY-II — which category means what" },

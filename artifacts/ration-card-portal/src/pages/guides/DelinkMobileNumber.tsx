@@ -123,6 +123,16 @@ export default function DelinkMobileNumber() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) Instant With Aadhaar পরিষেবায়{" "}
+          <strong>"Delink Mobile Number"</strong> খুলুন, আপনার মোবাইল নম্বর দিন এবং <strong>নিজের ফোনে</strong> আসা OTP
+          দিয়ে নিশ্চিত করুন — পোর্টাল সঙ্গে সঙ্গে অজানা রেশন কার্ড থেকে নম্বরটি মুক্ত করে দেয়। এরপর মুক্ত হওয়া নম্বরটি Update
+          Mobile Number পরিষেবা দিয়ে বা আধার eKYC-র সময় নিজের কার্ডে যোগ করুন। সাধারণত রিসাইকেল করা SIM-এর আগের মালিক এটি
+          নিবন্ধন করেছিলেন বলেই এমন হয়। কার্ড ঠিকঠাক সেট হয়ে গেছে? erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে বাড়িতে
+          পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/update-mobile-number-ration-card-west-bengal", label: "Next step: put the number on your own card" },
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "Aadhaar eKYC — link Aadhaar & mobile in 2 minutes" },

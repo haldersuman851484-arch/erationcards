@@ -30,6 +30,12 @@ interface GuideLayoutProps {
    * (live prices via usePricing in the page) and the official source.
    */
   quickAnswer: ReactNode;
+  /**
+   * Bengali version of the quick answer, rendered right under the English one
+   * with lang="bn". Prices must come from usePricing() in the page — never
+   * hardcoded ₹ amounts.
+   */
+  bnQuickAnswer: ReactNode;
   related?: RelatedLink[];
   children: ReactNode;
 }
@@ -44,7 +50,7 @@ interface GuideLayoutProps {
  * price shown must come from usePricing() so snapshots carry %%PRICE_*%%
  * tokens for live substitution.
  */
-export function GuideLayout({ title, intro, bnIntro, quickAnswer, related, children }: GuideLayoutProps) {
+export function GuideLayout({ title, intro, bnIntro, quickAnswer, bnQuickAnswer, related, children }: GuideLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
@@ -83,6 +89,9 @@ export function GuideLayout({ title, intro, bnIntro, quickAnswer, related, child
           >
             <p className="text-sm text-slate-700 leading-relaxed">
               <strong>Quick answer:</strong> {quickAnswer}
+            </p>
+            <p lang="bn" className="text-sm text-slate-700 leading-relaxed mt-2">
+              <strong>সংক্ষিপ্ত উত্তর:</strong> {bnQuickAnswer}
             </p>
             <p className="text-xs text-slate-400 mt-3">Last updated: July 2026 · Prices shown are current</p>
           </div>

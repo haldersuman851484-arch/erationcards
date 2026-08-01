@@ -116,6 +116,16 @@ export default function SurrenderRationCard() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গের রেশন কার্ড সারেন্ডার করতে <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি){" "}
+          <strong>Form-7</strong> ব্যবহার করুন: সদস্য(দের) বেছে নিন, কারণ দিন (মৃত্যু, স্থানান্তর, স্বেচ্ছায়), প্রযোজ্য
+          হলে ডেথ সার্টিফিকেট যুক্ত করুন, OTP দিয়ে যাচাই করে অ্যাকনলেজমেন্ট নম্বরটি রেখে দিন। শুধু ভর্তুকি বন্ধ করতে
+          চাইলে সারেন্ডার না করে Form-10 দিয়ে নন-সাবসিডাইজড কার্ডে বদলে নিন। বাকি যে কার্ডগুলি রাখছেন, সেগুলি
+          erationcards.in ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/non-subsidised-ration-card-west-bengal", label: "Keep the card, drop the subsidy — Form-10 explained" },
         { href: "/guides/apply-new-ration-card-west-bengal", label: "Re-applying later (Form-3 / Form-4)" },

@@ -128,6 +128,15 @@ export default function CategoryChange() {
           door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গে রেশন কার্ডের ক্যাটাগরি বদলাতে <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) <strong>Form-8</strong>{" "}
+          ব্যবহার করুন — যেমন RKSY-II থেকে PHH। কার্ড নম্বর দিন, OTP দিয়ে যাচাই করুন, কারণ জানান, সমর্থনকারী নথি (আয়ের
+          শংসাপত্র, প্রতিবন্ধকতার শংসাপত্র ইত্যাদি) আপলোড করুন এবং আবেদন ট্র্যাক করুন। অনুমোদনের আগে খাদ্য দফতর যোগ্যতা যাচাই
+          করে। অনুমোদনের পর নতুন e-Ration Card PDF ডাউনলোড করুন — erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে বাড়িতে
+          পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public})।
+        </>
+      }
       related={[
         { href: "/guides/ration-card-types-west-bengal", label: "AAY, PHH, SPHH, RKSY-I & RKSY-II — entitlements compared" },
         { href: "/guides/non-subsidised-ration-card-west-bengal", label: "Non-subsidised card (Form-10) — the no-subsidy option" },

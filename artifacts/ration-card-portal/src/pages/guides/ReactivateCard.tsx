@@ -123,6 +123,16 @@ export default function ReactivateCard() {
           door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          ডিঅ্যাক্টিভেট হওয়া পশ্চিমবঙ্গের রেশন কার্ড প্রায় সবসময়ই <strong>আধার eKYC</strong>-র অপেক্ষায় থাকে।{" "}
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) ডিঅ্যাক্টিভেটেড কার্ডের সঙ্গে মোবাইল OTP দিয়ে আধার লিঙ্ক
+          করার আলাদা অপশনটি ব্যবহার করুন — কার্ড নম্বর ও আধার দিন, OTP নিশ্চিত করুন, যাচাইয়ের পর কার্ড আবার Active
+          হয় (রেশন ডিলারের আঙুলের ছাপেও হয়)। পরের বণ্টন থেকেই সুবিধা চালু হয়। Active হয়ে গেলে erationcards.in
+          আপনার কার্ড ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "The full Aadhaar & mobile linking guide (eKYC)" },
         { href: "/guides/verify-ration-card-west-bengal", label: "Check your card's live status" },

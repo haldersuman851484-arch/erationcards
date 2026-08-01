@@ -117,6 +117,16 @@ export default function VerifyRationCard() {
           {PRICING.ration.multi.public} per card for 2 or more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) গিয়ে E-Citizen অংশ খুলুন,{" "}
+          <strong>"Check the status of your Ration Card"</strong> বেছে নিন, আর কার্ড নম্বর ও ক্যাটাগরি দিন। ফলাফলে
+          দেখা যায় কার্ড Active না Deactivated, কার্ডধারীর নাম, আধার eKYC হয়েছে কিনা, এবং যুক্ত রেশন দোকান।
+          ডিঅ্যাক্টিভেটেড কার্ড সাধারণত আধার eKYC সেরে ঠিক করা যায়। কার্ড চালু থাকলে erationcards.in সেটি ওয়াটারপ্রুফ
+          PVC কার্ডে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/reactivate-ration-card-west-bengal", label: "Card deactivated? Reactivate it with Aadhaar eKYC" },
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "Link Aadhaar & mobile with your ration card" },

@@ -123,6 +123,16 @@ export default function MemberTransfer() {
           door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) <strong>Form-14</strong> দিয়ে এমন একজনকে অন্য একটি
+          বিদ্যমান পরিবারে সরান, যাঁর ইতিমধ্যেই পশ্চিমবঙ্গের রেশন কার্ড আছে — সবচেয়ে চেনা উদাহরণ বিয়ের পর নববধূ
+          শ্বশুরবাড়ির কার্ডে যোগ হওয়া। সেই সদস্যের কার্ড নম্বর ও গন্তব্য পরিবারের কার্ড নম্বর দিন, বিয়ের সার্টিফিকেট
+          (বা সমতুল্য) আপলোড করুন, OTP দিয়ে নিশ্চিত করে আবেদন ট্র্যাক করুন। অনুমোদনের পর নতুন e-Ration Card PDF
+          ডাউনলোড করুন — erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public} (২টি বা
+          বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/apply-new-ration-card-west-bengal", label: "Never had a card? Form-4 addition instead" },
         { href: "/guides/split-ration-card-family-west-bengal", label: "Whole group separating? Form-13 split" },

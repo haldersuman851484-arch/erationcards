@@ -123,6 +123,17 @@ export default function UpdateMobileNumber() {
           more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) Instant With Aadhaar পরিষেবার{" "}
+          <strong>"Update Mobile Number"</strong> খুলুন, কার্ডের ক্যাটাগরি ও নম্বর দিন, আপনার{" "}
+          <strong>আধারের সঙ্গে যুক্ত মোবাইলে</strong> আসা OTP নিশ্চিত করুন, আর নতুন নম্বরটি লিখুন — সঙ্গে সঙ্গেই কার্যকর
+          হয়। পুরনো SIM কখনও লাগে না, এটাই এর মূল কথা। নম্বর আবার চালু হলে সব OTP-ভিত্তিক পরিষেবা (সংশোধন, eKYC, দোকান
+          বদল) আবার হাতের নাগালে। কার্ড ঠিক থাকলে erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹
+          {PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public}), বাড়িতে পৌঁছে
+          দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/delink-mobile-number-ration-card-west-bengal", label: "Your number stuck on an unknown card? Delink it first" },
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "Complete Aadhaar eKYC — the 2-minute OTP linking" },

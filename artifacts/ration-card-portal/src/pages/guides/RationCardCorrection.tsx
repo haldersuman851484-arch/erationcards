@@ -127,6 +127,16 @@ export default function RationCardCorrection() {
           more), delivered to your door.
         </>
       }
+      bnQuickAnswer={
+        <>
+          পশ্চিমবঙ্গের রেশন কার্ডে নামের বানান, জন্মতারিখ, ঠিকানা বা অভিভাবকের নাম সংশোধন করতে{" "}
+          <strong>food.wb.gov.in</strong>-এ (সরকারি, ফ্রি) <strong>Form-5</strong> ব্যবহার করুন। নিবন্ধিত মোবাইলে
+          আসা OTP দিয়ে নিশ্চিত করুন, আধার বা অন্য প্রমাণ আপলোড করুন, আর অনুমোদন না হওয়া পর্যন্ত অ্যাপ্লিকেশন নম্বর
+          দিয়ে ট্র্যাক করুন। এরপর সংশোধিত e-Ration Card PDF ডাউনলোড করুন — erationcards.in সেটি ওয়াটারপ্রুফ PVC
+          কার্ডে প্রিন্ট করতে পারে ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
+          {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
+        </>
+      }
       related={[
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "Link Aadhaar & mobile with your ration card (eKYC)" },
         { href: "/guides/change-ration-shop-west-bengal", label: "Change your ration shop (Form-6) after moving" },
