@@ -44,6 +44,8 @@ Updated: July 2026. Prices below are live values substituted by the server at re
 - Guide — split a family ration card into separate units, Form-13: https://erationcards.in/guides/split-ration-card-family-west-bengal
 - Guide — shift a member to another family (after marriage), Form-14: https://erationcards.in/guides/ration-card-member-transfer-west-bengal
 - Guide — nominate someone to collect ration (elderly/disabled), Form-15: https://erationcards.in/guides/ration-card-nomination-west-bengal
+- Guide — update the mobile number on a ration card (Instant With Aadhaar OTP): https://erationcards.in/guides/update-mobile-number-ration-card-west-bengal
+- Guide — delink your mobile number from an unknown ration card: https://erationcards.in/guides/delink-mobile-number-ration-card-west-bengal
 - Download your e-Ration Card / ABHA / e-Shram PDF (official government links): https://erationcards.in/download
 - District pages (all 23, e.g. Kolkata): https://erationcards.in/pvc-ration-card/kolkata
 - Card-type pages — ration categories: https://erationcards.in/pvc-card/aay, https://erationcards.in/pvc-card/phh, https://erationcards.in/pvc-card/sphh, https://erationcards.in/pvc-card/rksy-1, https://erationcards.in/pvc-card/rksy-2

@@ -69,6 +69,8 @@ const STATIC_ROUTES = [
   "/guides/split-ration-card-family-west-bengal",
   "/guides/ration-card-member-transfer-west-bengal",
   "/guides/ration-card-nomination-west-bengal",
+  "/guides/update-mobile-number-ration-card-west-bengal",
+  "/guides/delink-mobile-number-ration-card-west-bengal",
   // Operator recruitment signup. Static copy + form, no prices rendered —
   // safe to snapshot. Without a snapshot the live page served the SPA shell
   // whose canonical points at "/", telling Google it duplicates the homepage.

@@ -43,6 +43,8 @@ export const CLIENT_ROUTE_PATTERNS: readonly string[] = [
   "/guides/split-ration-card-family-west-bengal",
   "/guides/ration-card-member-transfer-west-bengal",
   "/guides/ration-card-nomination-west-bengal",
+  "/guides/update-mobile-number-ration-card-west-bengal",
+  "/guides/delink-mobile-number-ration-card-west-bengal",
 
   "/operator/register",
   "/operator/login",

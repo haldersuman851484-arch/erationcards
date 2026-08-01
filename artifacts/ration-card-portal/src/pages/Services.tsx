@@ -18,6 +18,9 @@ import {
   HeartHandshake,
   Wand2,
   ArrowRight,
+  Smartphone,
+  PhoneOff,
+  Zap,
 } from "lucide-react";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -137,6 +140,18 @@ const TILES: ServiceTile[] = [
     desc: "Authorise a trusted person to draw ration for elderly or ill members.",
     icon: HeartHandshake,
   },
+  {
+    href: "/guides/update-mobile-number-ration-card-west-bengal",
+    title: "Update Mobile Number",
+    desc: "Lost the old SIM? Change the card's mobile instantly with an Aadhaar OTP.",
+    icon: Smartphone,
+  },
+  {
+    href: "/guides/delink-mobile-number-ration-card-west-bengal",
+    title: "Delink Mobile Number",
+    desc: "Remove your number from an unknown ration card — free, OTP-verified.",
+    icon: PhoneOff,
+  },
 ];
 
 const POPULAR_GUIDES = [
@@ -145,12 +160,46 @@ const POPULAR_GUIDES = [
   { href: "/guides/lost-ration-card-west-bengal", label: "Lost or damaged ration card? Every free recovery route" },
 ];
 
+/** The six OTP-based services food.wb.gov.in groups as "Instant With Aadhaar". */
+const INSTANT_AADHAAR = [
+  {
+    href: "/guides/link-aadhaar-ration-card-west-bengal",
+    title: "Link Aadhaar to Your Ration Card",
+    bn: "আধার OTP-এর মাধ্যমে আপনার রেশন কার্ডের সাথে আধার লিঙ্ক করুন",
+  },
+  {
+    href: "/guides/ration-card-correction-west-bengal",
+    title: "Rectify or Instant Correction",
+    bn: "আধার OTP-এর মাধ্যমে রেশন কার্ডের তথ্য সংশোধন করুন",
+  },
+  {
+    href: "/guides/change-ration-shop-west-bengal",
+    title: "Change Your Fair Price Shop",
+    bn: "আপনার পরিবারের রেশন দোকান পরিবর্তন করুন",
+  },
+  {
+    href: "/guides/split-ration-card-family-west-bengal",
+    title: "Split Family (পরিবার বিভাজন)",
+    bn: "আধারের মাধ্যমে পরিবার বিভাজন করুন",
+  },
+  {
+    href: "/guides/update-mobile-number-ration-card-west-bengal",
+    title: "Update Mobile Number",
+    bn: "আপনার রেশন কার্ডের মোবাইল নম্বরটি আপডেট করুন",
+  },
+  {
+    href: "/guides/delink-mobile-number-ration-card-west-bengal",
+    title: "Delink Mobile Number",
+    bn: "অজানা রেশন কার্ড থেকে আপনার মোবাইল নম্বরটি ডিলিঙ্ক করুন",
+  },
+];
+
 export default function Services() {
   const PRICING = usePricing();
 
   useSeo({
     title: "All West Bengal Ration Card Services — Correction, eKYC, New Card, Forms 3–15 & PVC Printing",
-    description: `Every West Bengal ration card service on one page: instant correction, Aadhaar eKYC, new card (Form-3/4), shop change, duplicate, split, transfer, nomination — free official steps for each — plus waterproof PVC printing from ₹${PRICING.ration.multi.public} per card, delivered.`,
+    description: `Every West Bengal ration card service on one page: instant correction, Aadhaar eKYC, new card (Form-3/4), shop change, mobile number update, duplicate, split, transfer, nomination — free official steps for each — plus waterproof PVC printing from ₹${PRICING.ration.multi.public} per card, delivered.`,
     canonical: CANONICAL,
   });
 
@@ -219,6 +268,42 @@ export default function Services() {
               </div>
             </div>
           </Link>
+
+          {/* Instant With Aadhaar — the official OTP-based service group */}
+          <section className="mb-10" data-testid="section-instant-aadhaar">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="w-8 h-8 rounded-lg bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                <Zap className="w-4 h-4" />
+              </span>
+              <h2 className="text-xl font-bold text-slate-900">Instant With Aadhaar</h2>
+            </div>
+            <p className="text-sm text-slate-600 mb-4 max-w-3xl">
+              Six services on food.wb.gov.in work instantly with an Aadhaar OTP — free, fully online, no office
+              visit. Tap one for the plain-language guide.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="grid-instant-aadhaar">
+              {INSTANT_AADHAAR.map((s) => (
+                <Link
+                  key={s.href}
+                  href={s.href}
+                  className="flex items-start gap-3 bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md hover:border-primary/40 transition-all group"
+                  data-testid={`tile-instant-${s.href.split("/").pop()}`}
+                >
+                  <span className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Fingerprint className="w-4 h-4" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-semibold text-slate-900 group-hover:text-primary transition-colors">
+                      {s.title}
+                    </span>
+                    <span lang="bn" className="block text-xs text-slate-500 leading-relaxed mt-0.5">
+                      {s.bn}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </section>
 
           {/* Services grid */}
           <h2 className="text-xl font-bold text-slate-900 mb-4">All services</h2>

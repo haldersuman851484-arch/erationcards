@@ -36,6 +36,8 @@ const GuideReactivateCard = lazy(() => import("./pages/guides/ReactivateCard"));
 const GuideSplitFamilyCard = lazy(() => import("./pages/guides/SplitFamilyCard"));
 const GuideMemberTransfer = lazy(() => import("./pages/guides/MemberTransfer"));
 const GuideNominationForm = lazy(() => import("./pages/guides/NominationForm"));
+const GuideUpdateMobileNumber = lazy(() => import("./pages/guides/UpdateMobileNumber"));
+const GuideDelinkMobileNumber = lazy(() => import("./pages/guides/DelinkMobileNumber"));
 const CardTypePage = lazy(() => import("./pages/CardTypePage"));
 
 const OrderUpload = lazy(() => import("./pages/OrderUpload"));
@@ -143,6 +145,8 @@ function Router() {
       <Route path="/guides/split-ration-card-family-west-bengal" component={GuideSplitFamilyCard} />
       <Route path="/guides/ration-card-member-transfer-west-bengal" component={GuideMemberTransfer} />
       <Route path="/guides/ration-card-nomination-west-bengal" component={GuideNominationForm} />
+      <Route path="/guides/update-mobile-number-ration-card-west-bengal" component={GuideUpdateMobileNumber} />
+      <Route path="/guides/delink-mobile-number-ration-card-west-bengal" component={GuideDelinkMobileNumber} />
 
       <Route path="/operator/register" component={OperatorRegister} />
       <Route path="/operator/login" component={OperatorLogin} />
