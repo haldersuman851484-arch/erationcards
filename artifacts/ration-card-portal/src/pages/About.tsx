@@ -79,9 +79,9 @@ export default function About() {
     },
     {
       q: "I run a shop — how do I become an operator?",
-      a: `Message us through the contact page, WhatsApp (${contact.phone}) or email (${contact.email}) and we will set up your operator login the same day. Operators get a bulk-order dashboard and wholesale rates — for example ₹${PRICING.ration.multi.operator} per ration card on multi-card orders — so the margin on every customer stays with you.`,
+      a: `Register directly at erationcards.in/operator/register — or message us through the contact page, WhatsApp (${contact.phone}) or email (${contact.email}) and we will set up your operator login the same day. Operators get a bulk-order dashboard and wholesale rates — for example ₹${PRICING.ration.multi.operator} per ration card on multi-card orders — so the margin on every customer stays with you.`,
       bnQ: "আমার দোকান আছে — অপারেটর কীভাবে হব?",
-      bnA: `কন্টাক্ট পেজ, WhatsApp-এ (${contact.phone}) বা ইমেইলে (${contact.email}) মেসেজ করুন — সেদিনই আপনার অপারেটর লগইন চালু করে দিই। বাল্ক অর্ডারের আলাদা ড্যাশবোর্ড আর পাইকারি দাম (যেমন মাল্টি-কার্ড অর্ডারে রেশন কার্ড প্রতি ₹${PRICING.ration.multi.operator}) — প্রতিটি গ্রাহকের মার্জিন পুরোটাই আপনার।`,
+      bnA: `সরাসরি erationcards.in/operator/register-এ রেজিস্টার করুন — অথবা কন্টাক্ট পেজ, WhatsApp-এ (${contact.phone}) বা ইমেইলে (${contact.email}) মেসেজ করুন, সেদিনই আপনার অপারেটর লগইন চালু করে দিই। বাল্ক অর্ডারের আলাদা ড্যাশবোর্ড আর পাইকারি দাম (যেমন মাল্টি-কার্ড অর্ডারে রেশন কার্ড প্রতি ₹${PRICING.ration.multi.operator}) — প্রতিটি গ্রাহকের মার্জিন পুরোটাই আপনার।`,
     },
   ];
 
@@ -405,14 +405,18 @@ export default function About() {
               ₹{PRICING.special.multi.operator} per ABHA/E-SHRAM/GENERAL card on multi-card
               orders — so the margin you earn on every customer is yours to keep. More than
               1,500 operators across West Bengal already use it as a steady side income. To
-              register, message us through the{" "}
+              register, sign up directly on the{" "}
+              <Link href="/operator/register" data-testid="link-about-operator-register" className="text-primary font-semibold hover:underline">operator registration page</Link>{" "}
+              — or message us through the{" "}
               <Link href="/contact" data-testid="link-about-contact-operator" className="text-primary font-semibold hover:underline">contact page</Link>{" "}
               and we will set up your operator login the same day.
             </p>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
               সাইবার ক্যাফে, জেরক্স দোকান বা মোবাইল রিচার্জ পয়েন্ট চালান? আমাদের অপারেটর প্রোগ্রামে যোগ দিন —
               আলাদা ড্যাশবোর্ড, পাইকারি দাম (যেমন মাল্টি-কার্ড অর্ডারে রেশন কার্ড প্রতি ₹{PRICING.ration.multi.operator}),
-              মার্জিন পুরোটাই আপনার। ১,৫০০-র বেশি অপারেটর ইতিমধ্যে যুক্ত। রেজিস্টার করতে কন্টাক্ট পেজে মেসেজ করুন।
+              মার্জিন পুরোটাই আপনার। ১,৫০০-র বেশি অপারেটর ইতিমধ্যে যুক্ত। সরাসরি{" "}
+              <Link href="/operator/register" data-testid="link-about-operator-register-bn" className="text-primary font-semibold hover:underline">অপারেটর রেজিস্ট্রেশন পেজে</Link>{" "}
+              সাইন আপ করুন, বা কন্টাক্ট পেজে মেসেজ করুন।
             </p>
 
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mt-12 mb-4">
