@@ -1,6 +1,8 @@
 import { Link } from "wouter";
+import { ArrowRight } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { usePricing } from "@/hooks/use-pricing";
+import { Button } from "@/components/ui/button";
 import { GuideLayout, GuideFaqList, GuideCta, GuideDisclaimer, type GuideFaq } from "./GuideLayout";
 import { useGuideSchema, GuideSteps, type GuideStep } from "./useGuideSchema";
 
@@ -121,6 +123,20 @@ export default function DuplicateRationCard() {
           PVC-তে প্রিন্ট করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public} (২টি বা বেশি হলে প্রতি কার্ড ₹
           {PRICING.ration.multi.public})।
         </>
+      }
+      heroAction={
+        <div className="text-center">
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <Link href="/order" data-testid="link-order-pvc">
+              Order your PVC card
+              <ArrowRight className="w-4 h-4 ml-1.5" />
+            </Link>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            erationcards.in — our printing service: your e-Ration Card on waterproof PVC, delivered to your door.{" "}
+            <span lang="bn">আমাদের পরিষেবা — ওয়াটারপ্রুফ PVC কার্ড, বাড়িতে ডেলিভারি।</span>
+          </p>
+        </div>
       }
       related={[
         { href: "/guides/lost-ration-card-west-bengal", label: "Lost card or number? Every free recovery route" },

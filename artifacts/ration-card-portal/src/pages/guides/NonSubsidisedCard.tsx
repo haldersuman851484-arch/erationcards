@@ -1,6 +1,8 @@
 import { Link } from "wouter";
+import { ExternalLink } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { usePricing } from "@/hooks/use-pricing";
+import { Button } from "@/components/ui/button";
 import { GuideLayout, GuideFaqList, GuideCta, GuideDisclaimer, type GuideFaq } from "./GuideLayout";
 import { useGuideSchema, GuideSteps, type GuideStep } from "./useGuideSchema";
 
@@ -131,6 +133,25 @@ export default function NonSubsidisedCard() {
           ডাউনলোড করুন। erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public} (২টি বা
           বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
         </>
+      }
+      heroAction={
+        <div className="text-center">
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <a
+              href="https://food.wb.gov.in/About_Category.aspx?page_id=70"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-official-non-subsidised"
+            >
+              Open the official application page
+              <ExternalLink className="w-4 h-4 ml-1.5" />
+            </a>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            food.wb.gov.in — Government of West Bengal's official site; applying there is free.{" "}
+            <span lang="bn">সরকারি ওয়েবসাইট — আবেদন ফ্রি।</span>
+          </p>
+        </div>
       }
       related={[
         { href: "/guides/ration-card-types-west-bengal", label: "All WB card categories compared (AAY → RKSY-II)" },
