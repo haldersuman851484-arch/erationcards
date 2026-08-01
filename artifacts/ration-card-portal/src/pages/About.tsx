@@ -61,9 +61,9 @@ export default function About() {
     },
     {
       q: "Why should I choose PVC Card Portal for PVC card printing?",
-      a: `Because we combine quality with honesty: bank-card grade waterproof PVC (85.6mm × 54mm, about 760 micron), sharp scannable printing, transparent prices from ₹${PRICING.ration.multi.public} per card, live order tracking, and support in Bengali and English on ${contact.phone}. Over 2,00,000 cards delivered and 1,500+ registered operators trust us — and we always tell you when a government service is free (like new applications or corrections at food.wb.gov.in), because we are a private printing service, not a government website.`,
+      a: `Because we combine quality with honesty: bank-card grade waterproof PVC (85.6mm × 54mm, about 760 micron), sharp scannable printing, transparent prices from ₹${PRICING.ration.multi.public} per card, live order tracking, and support in Bengali and English on ${contact.phone} or by email at ${contact.email}. Over 2,00,000 cards delivered and 1,500+ registered operators trust us — and we always tell you when a government service is free (like new applications or corrections at food.wb.gov.in), because we are a private printing service, not a government website.`,
       bnQ: "PVC কার্ড প্রিন্টের জন্য PVC Card Portal-ই কেন বেছে নেব?",
-      bnA: `কারণ মান আর সততা — দুটোই: ব্যাংক কার্ডের মানের ওয়াটারপ্রুফ PVC (85.6mm × 54mm, প্রায় 760 মাইক্রন), ঝকঝকে স্ক্যানযোগ্য প্রিন্ট, স্বচ্ছ দাম — প্রতি কার্ড ₹${PRICING.ration.multi.public} থেকে শুরু, লাইভ অর্ডার ট্র্যাকিং, আর বাংলা ও ইংরেজিতে সাপোর্ট (${contact.phone})। ২,০০,০০০+ কার্ড ডেলিভারি আর ১,৫০০+ রেজিস্টার্ড অপারেটরের ভরসা। কোন সরকারি পরিষেবা ফ্রি (যেমন food.wb.gov.in-এ নতুন আবেদন বা সংশোধন) — সেটা আমরা সবসময় আগে বলে দিই, কারণ আমরা বেসরকারি প্রিন্টিং পরিষেবা, সরকারি ওয়েবসাইট নই।`,
+      bnA: `কারণ মান আর সততা — দুটোই: ব্যাংক কার্ডের মানের ওয়াটারপ্রুফ PVC (85.6mm × 54mm, প্রায় 760 মাইক্রন), ঝকঝকে স্ক্যানযোগ্য প্রিন্ট, স্বচ্ছ দাম — প্রতি কার্ড ₹${PRICING.ration.multi.public} থেকে শুরু, লাইভ অর্ডার ট্র্যাকিং, আর বাংলা ও ইংরেজিতে সাপোর্ট (${contact.phone}, ইমেইল ${contact.email})। ২,০০,০০০+ কার্ড ডেলিভারি আর ১,৫০০+ রেজিস্টার্ড অপারেটরের ভরসা। কোন সরকারি পরিষেবা ফ্রি (যেমন food.wb.gov.in-এ নতুন আবেদন বা সংশোধন) — সেটা আমরা সবসময় আগে বলে দিই, কারণ আমরা বেসরকারি প্রিন্টিং পরিষেবা, সরকারি ওয়েবসাইট নই।`,
     },
     {
       q: "Do you deliver PVC cards near me?",
@@ -79,9 +79,9 @@ export default function About() {
     },
     {
       q: "I run a shop — how do I become an operator?",
-      a: `Message us through the contact page or WhatsApp (${contact.phone}) and we will set up your operator login the same day. Operators get a bulk-order dashboard and wholesale rates — for example ₹${PRICING.ration.multi.operator} per ration card on multi-card orders — so the margin on every customer stays with you.`,
+      a: `Message us through the contact page, WhatsApp (${contact.phone}) or email (${contact.email}) and we will set up your operator login the same day. Operators get a bulk-order dashboard and wholesale rates — for example ₹${PRICING.ration.multi.operator} per ration card on multi-card orders — so the margin on every customer stays with you.`,
       bnQ: "আমার দোকান আছে — অপারেটর কীভাবে হব?",
-      bnA: `কন্টাক্ট পেজ বা WhatsApp-এ (${contact.phone}) মেসেজ করুন — সেদিনই আপনার অপারেটর লগইন চালু করে দিই। বাল্ক অর্ডারের আলাদা ড্যাশবোর্ড আর পাইকারি দাম (যেমন মাল্টি-কার্ড অর্ডারে রেশন কার্ড প্রতি ₹${PRICING.ration.multi.operator}) — প্রতিটি গ্রাহকের মার্জিন পুরোটাই আপনার।`,
+      bnA: `কন্টাক্ট পেজ, WhatsApp-এ (${contact.phone}) বা ইমেইলে (${contact.email}) মেসেজ করুন — সেদিনই আপনার অপারেটর লগইন চালু করে দিই। বাল্ক অর্ডারের আলাদা ড্যাশবোর্ড আর পাইকারি দাম (যেমন মাল্টি-কার্ড অর্ডারে রেশন কার্ড প্রতি ₹${PRICING.ration.multi.operator}) — প্রতিটি গ্রাহকের মার্জিন পুরোটাই আপনার।`,
     },
   ];
 
@@ -271,11 +271,11 @@ export default function About() {
               paper never will, and PVC smart card printing with QR codes for attendance,
               membership and access systems. Bulk pricing depends on quantity and design — reach
               us through the <Link href="/contact" data-testid="link-about-contact" className="text-primary font-semibold hover:underline">contact page</Link>{" "}
-              or WhatsApp ({contact.phone}) for a quick quote.
+              or WhatsApp ({contact.phone}) or email us at {contact.email} for a quick quote.
             </p>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
               স্কুলের ছাত্রছাত্রীদের আইডি কার্ড, অফিসের কর্পোরেট আইডি, প্লাস্টিক বিজনেস কার্ড, QR কোড সহ স্মার্ট
-              কার্ড — বাল্ক অর্ডারও নিই। পরিমাণ ও ডিজাইন অনুযায়ী দাম — কন্টাক্ট পেজ বা WhatsApp-এ ({contact.phone})
+              কার্ড — বাল্ক অর্ডারও নিই। পরিমাণ ও ডিজাইন অনুযায়ী দাম — কন্টাক্ট পেজ, WhatsApp ({contact.phone}) বা ইমেইলে ({contact.email})
               যোগাযোগ করুন।
             </p>
 
@@ -361,7 +361,7 @@ export default function About() {
               </li>
               <li>
                 <span className="font-semibold text-slate-800">Support in your language.</span>{" "}
-                Bengali and English, on WhatsApp and phone ({contact.phone}), {contact.hours}.
+                Bengali and English, on WhatsApp and phone ({contact.phone}) or email ({contact.email}), {contact.hours}.
                 Real humans in {contact.city}, not a chatbot.
               </li>
               <li>
@@ -371,7 +371,7 @@ export default function About() {
             </ul>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
               কেন আমরা: ব্যাংক কার্ডের মানের মজবুত, ওয়াটারপ্রুফ কার্ড; স্ক্যানযোগ্য ঝকঝকে প্রিন্ট; বাংলা ও ইংরেজিতে
-              সাপোর্ট ({contact.phone}); লাইভ অর্ডার ট্র্যাকিং — আর সততা: আমরা বেসরকারি পরিষেবা, সরকারি কাজ
+              সাপোর্ট ({contact.phone}, ইমেইল {contact.email}); লাইভ অর্ডার ট্র্যাকিং — আর সততা: আমরা বেসরকারি পরিষেবা, সরকারি কাজ
               (নতুন আবেদন, সংশোধন, আপডেট) সবসময় food.wb.gov.in-এ ফ্রি।
             </p>
 
