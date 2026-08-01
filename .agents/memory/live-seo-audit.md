@@ -16,3 +16,5 @@ Read-only, zero-dep script; run anytime against the live domain (`node scripts/s
 **Rule:** The SEO hook appends `| PVC Card Portal` only when the given title doesn't already end with it.
 **Why:** Pages that passed a full title (already suffixed) got "… | PVC Card Portal | PVC Card Portal" live on six pages — messy truncated SERP titles.
 **How to apply:** When adding titles via the SEO hook, either form is now safe; but if a new suffix/brand rename happens, keep the ends-with guard in `use-seo.ts` in sync.
+
+**Update Aug 2026:** audit-live-seo.mjs no longer exists in portal scripts/. Use `scripts/audit-index-readiness.mjs` instead — it covers the local build and the live Googlebot-UA checks in one pass.

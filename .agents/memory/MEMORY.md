@@ -16,7 +16,7 @@
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
 - [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; boot-test: npm i + dummy unreachable DB URL, zip w/o node_modules; env-driven analytics; net-check + self-heal (proven live)
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file permanent; IndexNow 403→retry; sitemap box ≠ URL-inspect bar; day-of "Couldn't fetch" = pending quirk, verify via Googlebot-UA curl
-- [Live SEO audit](live-seo-audit.md) — audit-live-seo.mjs crawls live site bot+browser UA; SPA-shell routes inherit home canonical → prerender every sitemap route; title suffix append must be idempotent
+- [Live SEO audit](live-seo-audit.md) — use portal scripts/audit-index-readiness.mjs (old audit-live-seo.mjs is gone); SPA-shell routes inherit home canonical → prerender every sitemap route; title suffix must stay idempotent
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch
 - [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse NO_FCP always; use portal measure-perf.mjs rAF probe; DejaVu-only skews CLS; live probes hit Hostinger bot interstitial
 - [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations, no font preloads, metric-matched Inter Fallback, main CSS inlined into HTML; don't reintroduce
