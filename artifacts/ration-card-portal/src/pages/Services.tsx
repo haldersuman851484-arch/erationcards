@@ -35,6 +35,8 @@ interface ServiceTile {
   href: string;
   title: string;
   desc: string;
+  /** Bengali one-liner shown under the English description. */
+  bn: string;
   icon: typeof CreditCard;
   /** Our own portal features (vs free government guides). */
   portal?: boolean;
@@ -45,6 +47,7 @@ const TILES: ServiceTile[] = [
     href: "/order",
     title: "Order PVC Printed Card",
     desc: "Get your e-Ration Card printed on waterproof, wallet-size PVC — delivered to your door.",
+    bn: "আপনার ই-রেশন কার্ড জলরোধী PVC কার্ডে প্রিন্ট হয়ে বাড়িতে পৌঁছে যাবে",
     icon: CreditCard,
     portal: true,
   },
@@ -52,6 +55,7 @@ const TILES: ServiceTile[] = [
     href: "/track",
     title: "Check Order Status",
     desc: "Track your PVC card order anytime with the order number.",
+    bn: "অর্ডার নম্বর দিয়ে যেকোনো সময় আপনার অর্ডারের অবস্থা দেখুন",
     icon: PackageSearch,
     portal: true,
   },
@@ -59,6 +63,7 @@ const TILES: ServiceTile[] = [
     href: "/download",
     title: "Download Your Ration Card",
     desc: "Official links to download the e-Ration Card, ABHA and e-Shram PDFs free.",
+    bn: "ই-রেশন কার্ড, ABHA ও ই-শ্রম PDF ফ্রি ডাউনলোডের সরকারি লিঙ্ক",
     icon: Download,
     portal: true,
   },
@@ -66,90 +71,105 @@ const TILES: ServiceTile[] = [
     href: "/guides/verify-ration-card-west-bengal",
     title: "Verify Your Ration Card",
     desc: "Check Active/Deactivated status, category and eKYC in 2 minutes.",
+    bn: "কার্ড সচল না নিষ্ক্রিয়, ক্যাটাগরি ও eKYC — ২ মিনিটে দেখে নিন",
     icon: ShieldCheck,
   },
   {
     href: "/guides/apply-new-ration-card-west-bengal",
     title: "Apply for New Ration Card",
     desc: "Form-3 for a new family, Form-4 to add a newborn or new member.",
+    bn: "নতুন পরিবারের জন্য ফর্ম-৩, নতুন সদস্য যোগ করতে ফর্ম-৪",
     icon: FilePlus2,
   },
   {
     href: "/guides/ration-card-correction-west-bengal",
     title: "Modify / Correct Card Details",
     desc: "Fix name, date of birth, address or guardian name with Form-5.",
+    bn: "ফর্ম-৫ দিয়ে নাম, জন্মতারিখ বা ঠিকানা ফ্রি-তে সংশোধন করুন",
     icon: FilePenLine,
   },
   {
     href: "/guides/change-ration-shop-west-bengal",
     title: "Change Ration Shop (Form-6)",
     desc: "Move your card to a nearer fair-price shop after shifting home.",
+    bn: "বাড়ি বদলালে কাছের রেশন দোকানে কার্ড সরিয়ে নিন (ফর্ম-৬)",
     icon: Store,
   },
   {
     href: "/guides/surrender-ration-card-west-bengal",
     title: "Surrender Card (Form-7)",
     desc: "Close a card after a death, migration, or voluntarily.",
+    bn: "মৃত্যু, স্থানান্তর বা স্বেচ্ছায় কার্ড সমর্পণ করুন (ফর্ম-৭)",
     icon: FileX2,
   },
   {
     href: "/guides/ration-card-category-change-west-bengal",
     title: "Category Change (Form-8)",
     desc: "Request a different card category — e.g. RKSY-II to PHH.",
+    bn: "কার্ডের ক্যাটাগরি বদলের আবেদন — যেমন RKSY-II থেকে PHH (ফর্ম-৮)",
     icon: ArrowUpDown,
   },
   {
     href: "/guides/duplicate-ration-card-west-bengal",
     title: "Duplicate Card (Form-9)",
     desc: "Lost or damaged card? Re-download free, or request a formal duplicate.",
+    bn: "হারানো বা নষ্ট কার্ডের ডুপ্লিকেট নিন (ফর্ম-৯)",
     icon: Copy,
   },
   {
     href: "/guides/non-subsidised-ration-card-west-bengal",
     title: "Non-Subsidised Card (Form-10)",
     desc: "A valid card without foodgrain subsidy — ideal as ID and record.",
+    bn: "ভর্তুকি ছাড়া বৈধ রেশন কার্ড — পরিচয়পত্র হিসেবে কাজে লাগে (ফর্ম-১০)",
     icon: FileText,
   },
   {
     href: "/guides/link-aadhaar-ration-card-west-bengal",
     title: "Link Aadhaar & Mobile (eKYC)",
     desc: "The 2-minute OTP linking that keeps your card active.",
+    bn: "আধার OTP দিয়ে ২ মিনিটের লিঙ্কিং — কার্ড সচল রাখে",
     icon: Fingerprint,
   },
   {
     href: "/guides/reactivate-ration-card-west-bengal",
     title: "Reactivate Deactivated Card",
     desc: "Card deactivated? Complete eKYC and bring it back to Active.",
+    bn: "নিষ্ক্রিয় কার্ড? eKYC সম্পূর্ণ করে আবার সচল করুন",
     icon: RefreshCcw,
   },
   {
     href: "/guides/split-ration-card-family-west-bengal",
     title: "Split Family Card (Form-13)",
     desc: "Separate one card family into independent family units.",
+    bn: "এক কার্ডের পরিবারকে আলাদা আলাদা পরিবারে ভাগ করুন (ফর্ম-১৩)",
     icon: Split,
   },
   {
     href: "/guides/ration-card-member-transfer-west-bengal",
     title: "Member Transfer (Form-14)",
     desc: "Shift a card holder into another family — standard after marriage.",
+    bn: "বিয়ের পরে সদস্যকে অন্য পরিবারের কার্ডে স্থানান্তর করুন (ফর্ম-১৪)",
     icon: UserRoundPlus,
   },
   {
     href: "/guides/ration-card-nomination-west-bengal",
     title: "Nominate a Collector (Form-15)",
     desc: "Authorise a trusted person to draw ration for elderly or ill members.",
+    bn: "বয়স্ক বা অসুস্থ সদস্যের রেশন তুলতে বিশ্বস্ত কাউকে মনোনীত করুন (ফর্ম-১৫)",
     icon: HeartHandshake,
   },
   {
     href: "/guides/update-mobile-number-ration-card-west-bengal",
     title: "Update Mobile Number",
     desc: "Lost the old SIM? Change the card's mobile instantly with an Aadhaar OTP.",
+    bn: "আধার OTP দিয়ে কার্ডের মোবাইল নম্বর সঙ্গে সঙ্গে আপডেট করুন",
     icon: Smartphone,
   },
   {
     href: "/guides/delink-mobile-number-ration-card-west-bengal",
     title: "Delink Mobile Number",
     desc: "Remove your number from an unknown ration card — free, OTP-verified.",
+    bn: "অজানা রেশন কার্ড থেকে আপনার মোবাইল নম্বরটি ডিলিঙ্ক করুন",
     icon: PhoneOff,
   },
 ];
@@ -262,6 +282,10 @@ export default function Services() {
                   Wrong name spelling, date of birth or address? The OTP-based Form-5 correction on the official
                   portal is free — our guide shows every step, and we'll print the corrected card when it's done.
                 </p>
+                <p lang="bn" className="text-sm text-slate-600 max-w-2xl mt-1">
+                  নামের বানান, জন্মতারিখ বা ঠিকানা ভুল? সরকারি পোর্টালে OTP-ভিত্তিক ফর্ম-৫ সংশোধন সম্পূর্ণ ফ্রি —
+                  গাইডে প্রতিটি ধাপ দেখুন।
+                </p>
                 <span className="inline-flex items-center gap-1 text-sm font-semibold text-primary mt-3 group-hover:gap-2 transition-all">
                   Read the correction guide <ArrowRight className="w-4 h-4" />
                 </span>
@@ -335,6 +359,9 @@ export default function Services() {
                     {t.title}
                   </h3>
                   <p className="text-xs text-slate-500 leading-relaxed">{t.desc}</p>
+                  <p lang="bn" className="text-xs text-slate-500 leading-relaxed mt-1">
+                    {t.bn}
+                  </p>
                 </Link>
               );
             })}

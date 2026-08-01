@@ -18,6 +18,9 @@ test.describe("Services hub page", () => {
     const tiles = page.getByTestId("grid-services").locator("a");
     await expect(tiles).toHaveCount(18);
 
+    // Every tile carries a Bengali line alongside the English one
+    await expect(page.getByTestId("grid-services").locator('[lang="bn"]')).toHaveCount(18);
+
     // The three portal tiles link to existing pages
     await expect(page.getByTestId("tile-order")).toHaveAttribute("href", "/order");
     await expect(page.getByTestId("tile-track")).toHaveAttribute("href", "/track");
