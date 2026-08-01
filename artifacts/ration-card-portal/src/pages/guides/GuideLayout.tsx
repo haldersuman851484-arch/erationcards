@@ -36,6 +36,8 @@ interface GuideLayoutProps {
    * hardcoded ₹ amounts.
    */
   bnQuickAnswer: ReactNode;
+  /** Optional call-to-action rendered in the hero band, right under the intro lines. */
+  heroAction?: ReactNode;
   related?: RelatedLink[];
   children: ReactNode;
 }
@@ -50,7 +52,7 @@ interface GuideLayoutProps {
  * price shown must come from usePricing() so snapshots carry %%PRICE_*%%
  * tokens for live substitution.
  */
-export function GuideLayout({ title, intro, bnIntro, quickAnswer, bnQuickAnswer, related, children }: GuideLayoutProps) {
+export function GuideLayout({ title, intro, bnIntro, quickAnswer, bnQuickAnswer, heroAction, related, children }: GuideLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
@@ -78,6 +80,7 @@ export function GuideLayout({ title, intro, bnIntro, quickAnswer, bnQuickAnswer,
           <p lang="bn" className="text-slate-600 mt-1">
             {bnIntro}
           </p>
+          {heroAction && <div className="mt-5">{heroAction}</div>}
         </div>
       </div>
 

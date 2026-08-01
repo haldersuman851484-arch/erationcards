@@ -136,6 +136,25 @@ export default function LinkAadhaarEkyc() {
           {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
         </>
       }
+      heroAction={
+        <div className="text-center">
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <a
+              href="https://wbpds.wb.gov.in/Ekyc_otp.aspx"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-official-ekyc"
+            >
+              Open the official eKYC page
+              <ExternalLink className="w-4 h-4 ml-1.5" />
+            </a>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            wbpds.wb.gov.in — Government of West Bengal's official site; the eKYC there is free.{" "}
+            <span lang="bn">সরকারি ওয়েবসাইট — eKYC ফ্রি।</span>
+          </p>
+        </div>
+      }
       related={[
         { href: "/guides/reactivate-ration-card-west-bengal", label: "Card already deactivated? Reactivate it with eKYC" },
         { href: "/guides/verify-ration-card-west-bengal", label: "Check each member's eKYC status" },
@@ -143,34 +162,6 @@ export default function LinkAadhaarEkyc() {
         { href: "/services", label: "All ration card services — one page" },
       ]}
     >
-      {/* Direct door to the government's own eKYC page — opens in a new tab. */}
-      <div
-        className="bg-primary/5 border border-primary/20 rounded-xl p-5 mb-10"
-        data-testid="box-official-ekyc-link"
-      >
-        <p className="text-sm text-slate-700 leading-relaxed">
-          <strong>Ready to start?</strong> The OTP linking happens on the government's own eKYC page — open it
-          directly, then follow the steps below.
-        </p>
-        <p lang="bn" className="text-sm text-slate-700 leading-relaxed mt-1">
-          OTP দিয়ে লিঙ্কের কাজটি হয় সরকারের নিজস্ব eKYC পেজে — সরাসরি খুলুন, তারপর নিচের ধাপগুলো অনুসরণ করুন।
-        </p>
-        <Button asChild className="mt-4 bg-primary hover:bg-primary/90">
-          <a
-            href="https://wbpds.wb.gov.in/Ekyc_otp.aspx"
-            target="_blank"
-            rel="noopener noreferrer"
-            data-testid="link-official-ekyc"
-          >
-            Open the official eKYC page
-            <ExternalLink className="w-4 h-4 ml-1.5" />
-          </a>
-        </Button>
-        <p className="text-xs text-slate-500 mt-3">
-          wbpds.wb.gov.in — Government of West Bengal's official site; the eKYC there is free.
-        </p>
-      </div>
-
       <GuideSteps heading="Step-by-step: complete your eKYC" steps={STEPS} />
 
       <section className="mt-10">
