@@ -1,6 +1,8 @@
 import { Link } from "wouter";
+import { ExternalLink } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { usePricing } from "@/hooks/use-pricing";
+import { Button } from "@/components/ui/button";
 import { GuideLayout, GuideFaqList, GuideCta, GuideDisclaimer, type GuideFaq } from "./GuideLayout";
 import { useGuideSchema, GuideSteps, type GuideStep } from "./useGuideSchema";
 
@@ -136,6 +138,28 @@ export default function SplitFamilyCard() {
           PVC-তে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
           {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
         </>
+      }
+      heroAction={
+        <div className="text-center">
+          {/* The direct Family_Split_by_Aadhaar.aspx page currently shows the government's
+              "Temporarily stopped" notice, so this points at their Digital Portal — the
+              entry their own forms directory links for online applications (incl. Form-13). */}
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <a
+              href="https://wbpds.wb.gov.in/Digitalportal/index.aspx"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-official-split"
+            >
+              Open the official online portal
+              <ExternalLink className="w-4 h-4 ml-1.5" />
+            </a>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            wbpds.wb.gov.in — Government of West Bengal's official portal; the Form-13 split there is free.{" "}
+            <span lang="bn">সরকারি ওয়েবসাইট — ফর্ম-১৩ ফ্রি।</span>
+          </p>
+        </div>
       }
       related={[
         { href: "/guides/ration-card-member-transfer-west-bengal", label: "One person joining another family? Form-14 instead" },
