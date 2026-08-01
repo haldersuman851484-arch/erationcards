@@ -10,22 +10,27 @@ const STEPS: GuideStep[] = [
   {
     name: "First, just download the e-Ration Card again — it's usually all you need",
     text: "West Bengal ration cards are digital. If your card is lost or damaged, the fastest fix is downloading a fresh e-Ration Card PDF free from food.wb.gov.in — the download works any number of times. See our download guide.",
+    bn: "পশ্চিমবঙ্গের রেশন কার্ড এখন ডিজিটাল। কার্ড হারিয়ে গেলে বা নষ্ট হলে সবচেয়ে দ্রুত উপায় হল food.wb.gov.in থেকে বিনামূল্যে আবার একটা e-Ration Card PDF ডাউনলোড করা — যতবার খুশি ডাউনলোড করা যায়। আমাদের ডাউনলোড গাইডটি দেখুন।",
   },
   {
     name: "Use Form-9 when you need a formal duplicate",
     text: "If your situation needs the card formally re-issued (a legacy physical card, or an office insists on a duplicate issuance record), the official route is Form-9 — free on food.wb.gov.in under E-Citizen, or on paper at your food office.",
+    bn: "যদি কার্ড আনুষ্ঠানিকভাবে নতুন করে ইস্যু করাতেই হয় (পুরনো আমলের ফিজিক্যাল কার্ড, অথবা কোনো অফিস ডুপ্লিকেট ইস্যুর রেকর্ড চাইলে), তখন সরকারি পথ হল ফর্ম-৯ — food.wb.gov.in-এর E-Citizen অংশে বিনামূল্যে, অথবা কাগজে আপনার ফুড অফিসে।",
   },
   {
     name: "Enter the card details and reason",
     text: "Enter the ration card number (recover it first if unknown — see step 5), select the member, and give the reason: lost, damaged, mutilated or defaced.",
+    bn: "রেশন কার্ড নম্বর লিখুন (জানা না থাকলে আগে সেটি উদ্ধার করুন — ধাপ ৫ দেখুন), সদস্য বেছে নিন এবং কারণ জানান: হারানো, নষ্ট, ছেঁড়া বা বিকৃত।",
   },
   {
     name: "Verify with OTP and submit",
     text: "Confirm with the OTP sent to your registered mobile, submit, and save the acknowledgement number to track the request.",
+    bn: "আপনার নিবন্ধিত মোবাইলে আসা OTP দিয়ে নিশ্চিত করুন, জমা দিন এবং অনুরোধটি ট্র্যাক করতে অ্যাকনলেজমেন্ট নম্বরটি সেভ করে রাখুন।",
   },
   {
     name: "Don't know the card number? Recover it free",
     text: "Check any old photocopy or food-department SMS, or ask your ration dealer to look it up. Our lost ration card guide lists every free recovery route — you don't need an agent.",
+    bn: "কোনো পুরনো ফটোকপি বা খাদ্য দফতরের SMS দেখুন, অথবা আপনার রেশন ডিলারকে খুঁজে দিতে বলুন। আমাদের হারানো রেশন কার্ড গাইডে বিনামূল্যের সব উদ্ধারের উপায় দেওয়া আছে — এজেন্ট লাগে না।",
   },
 ];
 
@@ -42,27 +47,38 @@ export default function DuplicateRationCard() {
     {
       q: "What's the fastest replacement for a lost ration card?",
       a: "Download the e-Ration Card PDF again from food.wb.gov.in — free and instant with your card number and category. The PDF is the card in West Bengal's digital system; a Form-9 duplicate is only needed in special cases.",
+      bnQ: "হারানো রেশন কার্ডের সবচেয়ে দ্রুত বিকল্প কী?",
+      bnA: "food.wb.gov.in থেকে আবার e-Ration Card PDF ডাউনলোড করুন — কার্ড নম্বর ও ক্যাটাগরি দিয়ে বিনামূল্যে ও সঙ্গে সঙ্গে। পশ্চিমবঙ্গের ডিজিটাল ব্যবস্থায় এই PDF-ই আসল কার্ড; ফর্ম-৯ ডুপ্লিকেট কেবল বিশেষ ক্ষেত্রেই দরকার হয়।",
     },
     {
       q: "Is the duplicate card free?",
       a: "Yes. Both the e-Ration Card re-download and the Form-9 duplicate request are free government services in West Bengal. Pay nothing to anyone for a 'duplicate card' — the only optional cost is a durable PVC print of the card you already have.",
+      bnQ: "ডুপ্লিকেট কার্ড কি বিনামূল্যে?",
+      bnA: "হ্যাঁ। e-Ration Card আবার ডাউনলোড করা এবং ফর্ম-৯ ডুপ্লিকেটের আবেদন — পশ্চিমবঙ্গে দুটিই বিনামূল্যের সরকারি পরিষেবা। 'ডুপ্লিকেট কার্ড' করে দেওয়ার নাম করে কাউকে টাকা দেবেন না — একমাত্র ঐচ্ছিক খরচ হল আপনার কাছে থাকা কার্ডটির টেকসই PVC প্রিন্ট।",
     },
     {
       q: "Do I need a police report (FIR/GD) for a lost card?",
       a: "For a routine lost-card duplicate, the online process does not ask for a police report — the OTP verification protects the request. If your card was stolen along with other documents, filing a general diary is still sensible for your own records.",
+      bnQ: "হারানো কার্ডের জন্য কি পুলিশে রিপোর্ট (FIR/GD) লাগে?",
+      bnA: "সাধারণ হারানো কার্ডের ডুপ্লিকেটের ক্ষেত্রে অনলাইন প্রক্রিয়ায় পুলিশ রিপোর্ট চাওয়া হয় না — OTP যাচাইই অনুরোধটিকে সুরক্ষিত রাখে। তবে অন্যান্য নথিপত্রসহ কার্ড চুরি গেলে নিজের রেকর্ডের জন্য একটি জেনারেল ডায়েরি করা এখনও বুদ্ধিমানের কাজ।",
     },
     {
       q: "My PVC printed card was lost. Same process?",
       a: "Even simpler — your government card was never lost, only the printed copy. Just order a fresh PVC print with the same PDF (or a newly downloaded one). The government record is untouched.",
+      bnQ: "আমার PVC প্রিন্ট করা কার্ডটি হারিয়ে গেছে। একই প্রক্রিয়া কি?",
+      bnA: "আরও সহজ — আপনার সরকারি কার্ড তো হারায়নি, শুধু প্রিন্ট করা কপিটাই গেছে। একই PDF (বা নতুন ডাউনলোড করা PDF) দিয়ে আবার একটা PVC প্রিন্টের অর্ডার দিন। সরকারি রেকর্ডে কিছুই বদলায় না।",
     },
     {
       q: "I don't remember my ration card number at all.",
       a: "Your ration dealer can look it up, old documents or SMSes usually have it, and the portal offers search options that change from time to time. Our lost ration card guide walks through every free route.",
+      bnQ: "আমার রেশন কার্ড নম্বরটাই একেবারে মনে নেই।",
+      bnA: "আপনার রেশন ডিলার খুঁজে দিতে পারেন, পুরনো নথি বা SMS-এ সাধারণত থাকে, আর পোর্টালেও খোঁজার নানা অপশন থাকে যা মাঝে মাঝে বদলায়। আমাদের হারানো রেশন কার্ড গাইডে বিনামূল্যের প্রতিটি উপায় ধাপে ধাপে দেওয়া আছে।",
     },
     {
-      q: "হারানো রেশন কার্ডের ডুপ্লিকেট কীভাবে পাব?",
-      a: `সবচেয়ে দ্রুত উপায়: food.wb.gov.in থেকে আবার e-Ration Card PDF ডাউনলোড করুন — বিনামূল্যে, যতবার খুশি। আনুষ্ঠানিক ডুপ্লিকেট দরকার হলে Form-9 দিন, সেটিও ফ্রি। PDF পেলে erationcards.in থেকে ওয়াটারপ্রুফ PVC প্রিন্ট করান — একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
-      lang: "bn",
+      q: "In short — how do I get a duplicate of a lost ration card?",
+      a: `The fastest way: re-download the e-Ration Card PDF from food.wb.gov.in — free, any number of times. If you need a formal duplicate, submit Form-9, which is also free. Once you have the PDF, get a waterproof PVC print at erationcards.in — ₹${PRICING.ration.single.public} for one card, ₹${PRICING.ration.multi.public} per card for 2 or more.`,
+      bnQ: "হারানো রেশন কার্ডের ডুপ্লিকেট কীভাবে পাব?",
+      bnA: `সবচেয়ে দ্রুত উপায়: food.wb.gov.in থেকে আবার e-Ration Card PDF ডাউনলোড করুন — বিনামূল্যে, যতবার খুশি। আনুষ্ঠানিক ডুপ্লিকেট দরকার হলে Form-9 দিন, সেটিও ফ্রি। PDF পেলে erationcards.in থেকে ওয়াটারপ্রুফ PVC প্রিন্ট করান — একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
     },
   ];
 
@@ -84,6 +100,7 @@ export default function DuplicateRationCard() {
     <GuideLayout
       title="How to Get a Duplicate Ration Card in West Bengal (Form-9)"
       intro="Lost, damaged or defaced card? The digital re-download is instant and free — Form-9 covers the formal duplicate cases."
+      bnIntro="কার্ড হারিয়ে গেছে, নষ্ট হয়েছে বা ছিঁড়ে গেছে? ডিজিটাল ডাউনলোড সঙ্গে সঙ্গে ও বিনামূল্যে হয় — আনুষ্ঠানিক ডুপ্লিকেটের ক্ষেত্রে ফর্ম-৯ আছে।"
       quickAnswer={
         <>
           In West Bengal you rarely need a formal duplicate: download a fresh{" "}

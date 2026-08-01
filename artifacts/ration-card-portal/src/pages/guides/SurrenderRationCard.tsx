@@ -10,26 +10,32 @@ const STEPS: GuideStep[] = [
   {
     name: "Decide what you're surrendering",
     text: "You can surrender a single member's card (after a death, or someone settling permanently outside West Bengal) or the whole family's cards (entire family migrating, or no longer wanting the cards).",
+    bn: "আপনি একজন সদস্যের কার্ড সারেন্ডার করতে পারেন (মৃত্যুর পর, বা কেউ স্থায়ীভাবে পশ্চিমবঙ্গের বাইরে বসবাস শুরু করলে) অথবা পুরো পরিবারের কার্ড (গোটা পরিবার স্থানান্তরিত হলে, বা কার্ডগুলি আর না চাইলে)।",
   },
   {
     name: "Consider the non-subsidised switch instead",
     text: "If you only want to stop taking subsidised grain but keep the card as identity/record proof, don't surrender — convert to a non-subsidised card with Form-10 instead. See our non-subsidised card guide.",
+    bn: "আপনি যদি শুধু ভর্তুকির খাদ্যশস্য নেওয়া বন্ধ করতে চান কিন্তু কার্ডটি পরিচয়/রেকর্ডের প্রমাণ হিসেবে রাখতে চান, তাহলে সারেন্ডার করবেন না — বরং ফর্ম-১০ দিয়ে নন-সাবসিডাইজড কার্ডে বদলে নিন। আমাদের নন-সাবসিডাইজড কার্ড গাইড দেখুন।",
   },
   {
     name: "Open the official portal — food.wb.gov.in",
     text: 'Go to food.wb.gov.in (Khadya Sathi) and open the "E-Citizen" section. Surrender is Form-7 — free online, or on paper at your ration dealer, food inspector or BDO office.',
+    bn: 'food.wb.gov.in (খাদ্য সাথী)-এ গিয়ে "E-Citizen" বিভাগটি খুলুন। সারেন্ডার হল ফর্ম-৭ — অনলাইনে ফ্রি, অথবা কাগজে আপনার রেশন ডিলার, খাদ্য পরিদর্শক বা BDO অফিসে।',
   },
   {
     name: "Fill Form-7 with the member details",
     text: "Enter the ration card number(s) of the member(s) being surrendered and select the reason — death, migration, voluntary give-up, or ineligibility.",
+    bn: "যে সদস্য(দের) কার্ড সারেন্ডার করা হচ্ছে তার রেশন কার্ড নম্বর(গুলি) লিখুন এবং কারণ বেছে নিন — মৃত্যু, স্থানান্তর, স্বেচ্ছায় ছেড়ে দেওয়া, বা অযোগ্যতা।",
   },
   {
     name: "Attach the supporting document",
     text: "For a deceased member, upload the death certificate. For migration or voluntary surrender, Aadhaar and the card number are usually all that's needed.",
+    bn: "মৃত সদস্যের ক্ষেত্রে ডেথ সার্টিফিকেট আপলোড করুন। স্থানান্তর বা স্বেচ্ছায় সারেন্ডারের ক্ষেত্রে সাধারণত আধার আর কার্ড নম্বরই যথেষ্ট।",
   },
   {
     name: "Verify with OTP, submit and keep the acknowledgement",
     text: "Submit with the OTP sent to your registered mobile and save the acknowledgement number — it's your proof that the card was surrendered properly.",
+    bn: "নিবন্ধিত মোবাইলে পাঠানো OTP দিয়ে জমা দিন এবং অ্যাকনলেজমেন্ট নম্বরটি সেভ করে রাখুন — কার্ডটি ঠিকভাবে সারেন্ডার হয়েছে তার প্রমাণ এটাই।",
   },
 ];
 
@@ -46,27 +52,38 @@ export default function SurrenderRationCard() {
     {
       q: "Is surrendering a ration card free?",
       a: "Yes. Form-7 on food.wb.gov.in and at government offices costs nothing. Keep the acknowledgement number as proof of surrender.",
+      bnQ: "রেশন কার্ড সারেন্ডার করা কি ফ্রি?",
+      bnA: "হ্যাঁ। food.wb.gov.in-এ এবং সরকারি অফিসে ফর্ম-৭-এ কোনো খরচ নেই। সারেন্ডারের প্রমাণ হিসেবে অ্যাকনলেজমেন্ট নম্বরটি রেখে দিন।",
     },
     {
       q: "A family member passed away. Do we surrender their card?",
       a: "Yes — surrender the deceased member's card with Form-7 and the death certificate. The rest of the family's cards continue as normal; only that member's card is closed.",
+      bnQ: "পরিবারের একজন সদস্য মারা গেছেন। তাঁর কার্ড কি সারেন্ডার করব?",
+      bnA: "হ্যাঁ — ফর্ম-৭ ও ডেথ সার্টিফিকেট দিয়ে মৃত সদস্যের কার্ড সারেন্ডার করুন। পরিবারের বাকিদের কার্ড আগের মতোই চলতে থাকে; শুধু সেই সদস্যের কার্ডটিই বন্ধ হয়।",
     },
     {
       q: "We no longer qualify for subsidised grain. Must we surrender?",
       a: "If the household is no longer eligible for its subsidised category, the honest options are surrendering the subsidised cards (Form-7) or converting to the non-subsidised card (Form-10) to keep a valid card without foodgrain benefits. Continuing to draw subsidy while ineligible can invite recovery action.",
+      bnQ: "আমরা আর ভর্তুকির খাদ্যশস্যের যোগ্য নই। কি সারেন্ডার করতেই হবে?",
+      bnA: "পরিবার যদি তার ভর্তুকিযুক্ত ক্যাটাগরির জন্য আর যোগ্য না থাকে, তাহলে সৎ উপায় হল ভর্তুকিযুক্ত কার্ডগুলি সারেন্ডার করা (ফর্ম-৭) অথবা খাদ্যশস্যের সুবিধা ছাড়াই একটি বৈধ কার্ড রাখতে নন-সাবসিডাইজড কার্ডে (ফর্ম-১০) বদলে নেওয়া। অযোগ্য হয়েও ভর্তুকি নিতে থাকলে টাকা ফেরতের ব্যবস্থা নেওয়া হতে পারে।",
     },
     {
       q: "Can we get a card again after surrendering?",
       a: "Yes. If circumstances change, apply afresh — Form-3 for a family with no cards, or Form-4 to add a member back to an existing family card. Approval follows the normal eligibility verification.",
+      bnQ: "সারেন্ডারের পর কি আবার কার্ড পাওয়া যায়?",
+      bnA: "হ্যাঁ। পরিস্থিতি বদলালে নতুন করে আবেদন করুন — কোনো কার্ড না থাকা পরিবারের জন্য ফর্ম-৩, অথবা পুরনো পরিবার কার্ডে আবার সদস্য যোগ করতে ফর্ম-৪। স্বাভাবিক যোগ্যতা যাচাইয়ের পরই অনুমোদন হয়।",
     },
     {
       q: "Someone is moving abroad / to another state permanently.",
       a: "Surrender that member's West Bengal card with Form-7. If they're moving to another Indian state, they can apply for a card there under that state's rules once settled.",
+      bnQ: "কেউ স্থায়ীভাবে বিদেশে / অন্য রাজ্যে চলে যাচ্ছেন।",
+      bnA: "ফর্ম-৭ দিয়ে সেই সদস্যের পশ্চিমবঙ্গের কার্ড সারেন্ডার করুন। তিনি যদি ভারতের অন্য কোনো রাজ্যে যাচ্ছেন, তাহলে সেখানে থিতু হওয়ার পর সেই রাজ্যের নিয়ম অনুযায়ী কার্ডের জন্য আবেদন করতে পারবেন।",
     },
     {
-      q: "রেশন কার্ড সারেন্ডার করব কীভাবে?",
-      a: `food.wb.gov.in-এ Form-7 দিয়ে বিনামূল্যে কার্ড সারেন্ডার করুন — মৃত্যুর ক্ষেত্রে ডেথ সার্টিফিকেট লাগে, OTP দিয়ে যাচাই হয়। ভর্তুকি ছাড়তে চাইলে সারেন্ডার না করে Form-10 দিয়ে নন-সাবসিডাইজড কার্ডেও বদলাতে পারেন। বাকি সদস্যদের কার্ডের PVC প্রিন্ট: একটি ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public} — erationcards.in।`,
-      lang: "bn",
+      q: "In short, how do I surrender a ration card?",
+      a: "Use Form-7 on food.wb.gov.in to surrender a card for free — a death certificate is needed for a deceased member, and it's verified by OTP. If you only want to drop the subsidy, convert to a non-subsidised card with Form-10 instead of surrendering. For the cards your family keeps, erationcards.in can print them on PVC.",
+      bnQ: "রেশন কার্ড সারেন্ডার করব কীভাবে?",
+      bnA: `food.wb.gov.in-এ Form-7 দিয়ে বিনামূল্যে কার্ড সারেন্ডার করুন — মৃত্যুর ক্ষেত্রে ডেথ সার্টিফিকেট লাগে, OTP দিয়ে যাচাই হয়। ভর্তুকি ছাড়তে চাইলে সারেন্ডার না করে Form-10 দিয়ে নন-সাবসিডাইজড কার্ডেও বদলাতে পারেন। বাকি সদস্যদের কার্ডের PVC প্রিন্ট: একটি ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public} — erationcards.in।`,
     },
   ];
 
@@ -88,6 +105,7 @@ export default function SurrenderRationCard() {
     <GuideLayout
       title="How to Surrender a Ration Card in West Bengal (Form-7)"
       intro="For a deceased member, permanent migration, or voluntarily giving up the card — free on food.wb.gov.in."
+      bnIntro="মৃত সদস্য, স্থায়ী স্থানান্তর, বা স্বেচ্ছায় কার্ড ছেড়ে দেওয়ার জন্য — food.wb.gov.in-এ ফ্রি।"
       quickAnswer={
         <>
           Use <strong>Form-7</strong> on <strong>food.wb.gov.in</strong> (official, free) to surrender a West Bengal

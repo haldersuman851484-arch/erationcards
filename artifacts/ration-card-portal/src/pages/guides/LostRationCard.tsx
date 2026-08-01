@@ -19,27 +19,38 @@ export default function LostRationCard() {
     {
       q: "Is there a fine or fee for losing my ration card?",
       a: "No. Your ration card record lives in the government's digital system, not in the piece of paper. Downloading a fresh e-Ration Card PDF from food.wb.gov.in is free, any number of times. Nobody can legitimately charge you a 'duplicate card fee' for the digital copy.",
+      bnQ: "রেশন কার্ড হারিয়ে ফেললে কি জরিমানা বা ফি দিতে হয়?",
+      bnA: "না। আপনার রেশন কার্ডের রেকর্ড থাকে সরকারের ডিজিটাল সিস্টেমে, কাগজের টুকরোয় নয়। food.wb.gov.in থেকে নতুন e-Ration Card PDF ডাউনলোড করা যতবার খুশি বিনামূল্যে করা যায়। ডিজিটাল কপির জন্য কেউ বৈধভাবে আপনার কাছ থেকে 'ডুপ্লিকেট কার্ড ফি' নিতে পারে না।",
     },
     {
       q: "Do I need to file a police complaint (FIR) for a lost ration card?",
       a: "Not just to get your card back — re-downloading the e-Ration Card is free and needs no FIR. If you're worried the lost card could be misused, inform your local food & supplies office; they can advise on any extra steps, since your entitlements are tied to the government's digital record rather than the physical card alone. Exact requirements can vary by local office.",
+      bnQ: "হারানো রেশন কার্ডের জন্য কি পুলিশে অভিযোগ (FIR) করতে হবে?",
+      bnA: "শুধু কার্ড ফিরে পেতে নয় — e-Ration Card আবার ডাউনলোড করা বিনামূল্যে, তাতে কোনো FIR লাগে না। হারানো কার্ডের অপব্যবহার নিয়ে চিন্তিত থাকলে স্থানীয় খাদ্য ও সরবরাহ দফতরকে জানান; তাঁরা কোনো বাড়তি পদক্ষেপ নিয়ে পরামর্শ দিতে পারেন, কারণ আপনার অধিকার শুধু ফিজিক্যাল কার্ডে নয়, সরকারের ডিজিটাল রেকর্ডের সঙ্গে যুক্ত। সঠিক নিয়ম স্থানীয় দফতর ভেদে আলাদা হতে পারে।",
     },
     {
       q: "I don't remember my ration card number at all. What now?",
       a: "Three easy routes: (1) ask your ration dealer — they can look you up; (2) check another family member's card, since family records are linked; (3) use the search options on food.wb.gov.in or visit your nearest food & supplies office with your ID (Aadhaar is usually asked for; the exact process may vary by office). Once you have the number, download the PDF free.",
+      bnQ: "আমার রেশন কার্ড নম্বর একেবারেই মনে নেই। এখন কী করব?",
+      bnA: "তিনটি সহজ উপায়: (১) রেশন ডিলারকে জিজ্ঞেস করুন — তাঁরা আপনাকে খুঁজে দিতে পারেন; (২) পরিবারের অন্য কোনো সদস্যের কার্ড দেখুন, কারণ পরিবারের রেকর্ড একসঙ্গে যুক্ত থাকে; (৩) food.wb.gov.in-এর সার্চ অপশন ব্যবহার করুন অথবা আপনার পরিচয়পত্র নিয়ে নিকটবর্তী খাদ্য ও সরবরাহ দফতরে যান (সাধারণত আধার চাওয়া হয়; প্রক্রিয়া দফতর ভেদে আলাদা হতে পারে)। নম্বর পেয়ে গেলে বিনামূল্যে PDF ডাউনলোড করুন।",
     },
     {
       q: "My ration card is damaged but readable. Should I replace it?",
       a: "Your entitlements are unaffected — the record is digital. But if the printed copy is fading or torn, download a fresh PDF free and consider a waterproof PVC print so it doesn't happen again. Shopkeepers are also far less likely to question a clean, bank-card style copy.",
+      bnQ: "আমার রেশন কার্ড ছিঁড়ে গেছে কিন্তু পড়া যাচ্ছে। কি বদলানো উচিত?",
+      bnA: "আপনার অধিকারে কোনো প্রভাব পড়বে না — রেকর্ড তো ডিজিটাল। তবে ছাপানো কপিটি ঝাপসা বা ছেঁড়া হয়ে গেলে বিনামূল্যে নতুন PDF ডাউনলোড করুন এবং একটি ওয়াটারপ্রুফ PVC প্রিন্ট করানোর কথা ভাবুন যাতে আবার এমন না হয়। দোকানদাররাও পরিষ্কার, ব্যাঙ্ক-কার্ডের মতো কপি নিয়ে অনেক কম প্রশ্ন তোলেন।",
     },
     {
       q: "I lost the PVC card you printed for me. Can I reorder?",
       a: `Yes, anytime. Place a new order with the same e-Ration Card PDF — ₹${PRICING.ration.single.public} for one card or ₹${PRICING.ration.multi.public} per card for 2 or more, dispatched within 24–48 hours. There is no penalty; it's simply a fresh print.`,
+      bnQ: "আপনাদের প্রিন্ট করা PVC কার্ডটি হারিয়ে ফেলেছি। আবার অর্ডার করতে পারি?",
+      bnA: `হ্যাঁ, যেকোনো সময়। একই e-Ration Card PDF দিয়ে নতুন একটি অর্ডার দিন — একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}, ২৪–৪৮ ঘণ্টার মধ্যে পাঠানো হয়। কোনো জরিমানা নেই; এটি শুধু একটি নতুন প্রিন্ট।`,
     },
     {
-      q: "রেশন কার্ড হারিয়ে গেলে কী করব?",
-      a: `চিন্তার কিছু নেই — আপনার রেশন কার্ডের রেকর্ড সরকারের ডিজিটাল সিস্টেমে সুরক্ষিত আছে। food.wb.gov.in থেকে যেকোনো সময় বিনামূল্যে e-Ration Card PDF আবার ডাউনলোড করুন — কোনো জরিমানা নেই, FIR লাগে না। চাইলে erationcards.in থেকে ওয়াটারপ্রুফ PVC কপি প্রিন্ট করান — একটি ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
-      lang: "bn",
+      q: "In short — what do I do if I lose my ration card?",
+      a: `Relax — your ration card record is safely stored in the government's digital system. Re-download the e-Ration Card PDF free from food.wb.gov.in anytime — no penalty, no FIR needed. If you like, print a waterproof PVC copy at erationcards.in — ₹${PRICING.ration.single.public} for one card, ₹${PRICING.ration.multi.public} per card for 2 or more.`,
+      bnQ: "রেশন কার্ড হারিয়ে গেলে কী করব?",
+      bnA: `চিন্তার কিছু নেই — আপনার রেশন কার্ডের রেকর্ড সরকারের ডিজিটাল সিস্টেমে সুরক্ষিত আছে। food.wb.gov.in থেকে যেকোনো সময় বিনামূল্যে e-Ration Card PDF আবার ডাউনলোড করুন — কোনো জরিমানা নেই, FIR লাগে না। চাইলে erationcards.in থেকে ওয়াটারপ্রুফ PVC কপি প্রিন্ট করান — একটি ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
     },
   ];
 
@@ -50,7 +61,6 @@ export default function LostRationCard() {
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,
-      ...(f.lang ? { inLanguage: f.lang } : {}),
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   });
@@ -67,6 +77,7 @@ export default function LostRationCard() {
     <GuideLayout
       title="Lost or Damaged Ration Card in West Bengal? Here's What to Do"
       intro="No panic, no penalty — your card is digital and the copy is free to recover."
+      bnIntro="ঘাবড়াবেন না, কোনো জরিমানা নেই — আপনার কার্ড ডিজিটাল এবং কপি ফিরে পাওয়া সম্পূর্ণ বিনামূল্যে।"
       quickAnswer={
         <>
           Your West Bengal ration card record is stored digitally by the government, so a lost or damaged card is

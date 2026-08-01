@@ -52,27 +52,38 @@ export default function RationCardTypes() {
     {
       q: "How do I check which ration card type I have?",
       a: "The category code (AAY, PHH, SPHH, RKSY-I or RKSY-II) is printed on the card itself — on the e-Ration Card PDF it appears near the top alongside your card number. If you can't find it, your local ration dealer can tell you instantly from your card number.",
+      bnQ: "আমার রেশন কার্ড কোন ক্যাটাগরির, কীভাবে দেখব?",
+      bnA: "ক্যাটাগরি কোড (AAY, PHH, SPHH, RKSY-I বা RKSY-II) কার্ডেই ছাপা থাকে — e-Ration Card PDF-এ এটি উপরের দিকে আপনার কার্ড নম্বরের পাশে দেখা যায়। খুঁজে না পেলে আপনার স্থানীয় রেশন ডিলার কার্ড নম্বর দেখেই সঙ্গে সঙ্গে বলে দিতে পারেন।",
     },
     {
       q: "Can I choose or change my ration card category?",
       a: "No — the category is assigned by the government based on eligibility criteria. If you believe your category is wrong, you can apply for a review through food.wb.gov.in or your nearest food & supplies office. That service is free; nobody can legitimately charge you to 'upgrade' a card.",
+      bnQ: "আমি কি নিজের রেশন কার্ডের ক্যাটাগরি বেছে নিতে বা বদলাতে পারি?",
+      bnA: "না — যোগ্যতার মাপকাঠি অনুযায়ী সরকারই ক্যাটাগরি ঠিক করে দেয়। আপনার ক্যাটাগরি ভুল মনে হলে food.wb.gov.in-এ বা কাছের খাদ্য ও সরবরাহ দফতরে পুনর্বিবেচনার আবেদন করতে পারেন। এই পরিষেবা ফ্রি; কার্ড 'আপগ্রেড' করার নামে কেউ বৈধভাবে আপনার কাছে টাকা চাইতে পারে না।",
     },
     {
       q: "What do AAY, PHH, SPHH and RKSY entitle me to?",
       a: "Each category carries a different foodgrain entitlement set by the central NFSA or the West Bengal Khadya Sathi scheme. The exact quantities are decided by the government and can change, so check the current entitlement chart on food.wb.gov.in or ask your ration dealer.",
+      bnQ: "AAY, PHH, SPHH ও RKSY-তে আমি কী কী পাই?",
+      bnA: "প্রতিটি ক্যাটাগরিতে আলাদা পরিমাণ খাদ্যশস্য বরাদ্দ থাকে, যা কেন্দ্রীয় NFSA বা পশ্চিমবঙ্গের খাদ্য সাথী প্রকল্প ঠিক করে। ঠিক কী পরিমাণ তা সরকার নির্ধারণ করে এবং তা বদলাতে পারে, তাই food.wb.gov.in-এ বর্তমান বরাদ্দের তালিকা দেখুন বা আপনার রেশন ডিলারকে জিজ্ঞেস করুন।",
     },
     {
       q: "Do all card types work for PVC printing?",
       a: `Yes. We print every West Bengal ration card category — AAY, PHH, SPHH, RKSY-I and RKSY-II — at the same price: ₹${PRICING.ration.single.public} for a single card, ₹${PRICING.ration.multi.public} per card for 2 or more. The printed PVC card follows the official design of your category.`,
+      bnQ: "সব ধরনের কার্ডই কি PVC প্রিন্টে চলে?",
+      bnA: `হ্যাঁ। পশ্চিমবঙ্গের সব রেশন কার্ড ক্যাটাগরি — AAY, PHH, SPHH, RKSY-I ও RKSY-II — আমরা একই দামে প্রিন্ট করি: একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}। প্রিন্ট হওয়া PVC কার্ড আপনার ক্যাটাগরির সরকারি নকশা অনুসরণ করে।`,
     },
     {
       q: "Is the PVC card valid at the ration shop?",
       a: "The PVC card is a durable printed copy of your official e-Ration Card — same number, same details, same QR/barcode as the PDF. Your entitlements always come from the government's digital record; the plastic card just means the copy in your wallet doesn't tear or fade.",
+      bnQ: "PVC কার্ড কি রেশন দোকানে চলবে?",
+      bnA: "PVC কার্ড হল আপনার সরকারি e-Ration Card-এরই একটি টেকসই প্রিন্ট করা কপি — একই নম্বর, একই তথ্য, PDF-এর মতোই একই QR/বারকোড। আপনার প্রাপ্য সবসময় সরকারের ডিজিটাল রেকর্ড থেকেই আসে; প্লাস্টিক কার্ড শুধু এটুকু নিশ্চিত করে যে পকেটের কপিটা ছিঁড়বে বা ফিকে হবে না।",
     },
     {
-      q: "আমার রেশন কার্ড কোন ক্যাটাগরির, কীভাবে বুঝব?",
-      a: `কার্ডের উপরের দিকে ক্যাটাগরি কোড লেখা থাকে — AAY, PHH, SPHH, RKSY-I বা RKSY-II। e-Ration Card PDF-এও কার্ড নম্বরের পাশে এটি দেখা যায়। যেকোনো ক্যাটাগরির কার্ড আমরা PVC-তে প্রিন্ট করি — একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
-      lang: "bn",
+      q: "In short — how do I find my card's category and get it on PVC?",
+      a: `Look near the top of the card next to your card number for the category code — AAY, PHH, SPHH, RKSY-I or RKSY-II; it also shows on the e-Ration Card PDF. We print any category on PVC at ₹${PRICING.ration.single.public} for a single card and ₹${PRICING.ration.multi.public} per card for 2 or more.`,
+      bnQ: "আমার রেশন কার্ড কোন ক্যাটাগরির, কীভাবে বুঝব?",
+      bnA: `কার্ডের উপরের দিকে ক্যাটাগরি কোড লেখা থাকে — AAY, PHH, SPHH, RKSY-I বা RKSY-II। e-Ration Card PDF-এও কার্ড নম্বরের পাশে এটি দেখা যায়। যেকোনো ক্যাটাগরির কার্ড আমরা PVC-তে প্রিন্ট করি — একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}।`,
     },
   ];
 
@@ -83,7 +94,6 @@ export default function RationCardTypes() {
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,
-      ...(f.lang ? { inLanguage: f.lang } : {}),
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   });
@@ -100,6 +110,7 @@ export default function RationCardTypes() {
     <GuideLayout
       title="West Bengal Ration Card Types: AAY, PHH, SPHH, RKSY-I & RKSY-II Explained"
       intro="What each category code on your card means, who gets it, and how to check yours."
+      bnIntro="আপনার কার্ডের প্রতিটি ক্যাটাগরি কোডের মানে কী, কারা তা পান, আর নিজেরটা কীভাবে দেখবেন।"
       quickAnswer={
         <>
           West Bengal ration cards come in five categories: <strong>AAY</strong> (Antyodaya Anna Yojana — poorest

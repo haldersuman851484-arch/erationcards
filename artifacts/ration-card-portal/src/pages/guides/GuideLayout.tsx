@@ -22,6 +22,8 @@ interface GuideLayoutProps {
   title: string;
   /** One-line subtitle under the H1. */
   intro: string;
+  /** Bengali version of the subtitle, shown right under the English line. */
+  bnIntro: string;
   /**
    * 2–4 sentence direct answer rendered at the top. AI assistants often quote
    * this block verbatim, so it must stand alone: name the action, the cost
@@ -42,7 +44,7 @@ interface GuideLayoutProps {
  * price shown must come from usePricing() so snapshots carry %%PRICE_*%%
  * tokens for live substitution.
  */
-export function GuideLayout({ title, intro, quickAnswer, related, children }: GuideLayoutProps) {
+export function GuideLayout({ title, intro, bnIntro, quickAnswer, related, children }: GuideLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white">
       <Navbar />
@@ -67,6 +69,9 @@ export function GuideLayout({ title, intro, quickAnswer, related, children }: Gu
           </Breadcrumb>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">{title}</h1>
           <p className="text-slate-600">{intro}</p>
+          <p lang="bn" className="text-slate-600 mt-1">
+            {bnIntro}
+          </p>
         </div>
       </div>
 
@@ -105,12 +110,18 @@ export function GuideLayout({ title, intro, quickAnswer, related, children }: Gu
   );
 }
 
-/** FAQ entry for the guide pages; feeds both the visible list and JSON-LD. */
+/**
+ * FAQ entry for the guide pages; feeds both the visible list and JSON-LD.
+ * Every entry is bilingual: q/a in English (these also feed the JSON-LD),
+ * bnQ/bnA the Bengali equivalents shown alongside on the page.
+ */
 export interface GuideFaq {
   q: string;
   a: string;
-  /** BCP-47 language of the entry (defaults to English). */
-  lang?: "bn";
+  /** Bengali version of the question, shown under the English one. */
+  bnQ: string;
+  /** Bengali version of the answer, shown under the English one. */
+  bnA: string;
 }
 
 /** Native <details> FAQ block (crawler-visible without JavaScript). */
@@ -123,15 +134,22 @@ export function GuideFaqList({ faqs }: { faqs: GuideFaq[] }) {
           <details
             key={idx}
             open={idx === 0}
-            lang={faq.lang}
             className="group border border-slate-200 rounded-lg bg-white shadow-sm"
             data-testid={`guide-faq-item-${idx}`}
           >
             <summary className="flex items-center justify-between gap-3 cursor-pointer list-none px-4 py-3.5 hover:text-primary [&::-webkit-details-marker]:hidden">
-              <h3 className="text-sm font-medium text-slate-900 group-hover:text-primary text-left">{faq.q}</h3>
+              <div className="text-left">
+                <h3 className="text-sm font-medium text-slate-900 group-hover:text-primary">{faq.q}</h3>
+                <p lang="bn" className="text-sm text-slate-500 mt-0.5">
+                  {faq.bnQ}
+                </p>
+              </div>
               <ChevronDown className="w-4 h-4 shrink-0 text-slate-400 transition-transform group-open:rotate-180" />
             </summary>
-            <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed">{faq.a}</div>
+            <div className="px-4 pb-4 text-sm text-slate-600 leading-relaxed space-y-2">
+              <p>{faq.a}</p>
+              <p lang="bn">{faq.bnA}</p>
+            </div>
           </details>
         ))}
       </div>

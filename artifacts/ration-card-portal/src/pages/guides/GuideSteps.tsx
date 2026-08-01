@@ -18,6 +18,9 @@ export default function GuideSteps({ heading, steps }: { heading: string; steps:
             <div>
               <h3 className="text-sm font-semibold text-slate-900 mb-1">{s.name}</h3>
               <p className="text-sm text-slate-600 leading-relaxed">{s.text}</p>
+              <p lang="bn" className="text-sm text-slate-600 leading-relaxed mt-1.5">
+                {s.bn}
+              </p>
             </div>
           </li>
         ))}

@@ -73,6 +73,10 @@ test.describe("New guide articles", () => {
     await expect(page.locator("ol li").first()).toBeVisible();
     await expect(page.getByTestId("guide-faq-item-0")).toBeVisible();
 
+    // Bilingual article: Bengali line in the steps and in the first FAQ
+    await expect(page.locator('section ol li [lang="bn"]').first()).toBeVisible();
+    await expect(page.getByTestId("guide-faq-item-0").locator('[lang="bn"]').first()).toBeVisible();
+
     // Live price rendered (a ₹ amount, not a raw token) in the quick answer
     await expect(page.getByTestId("text-guide-quick-answer")).not.toContainText("%%PRICE");
 
@@ -104,6 +108,9 @@ test.describe("New guide articles", () => {
     );
     await expect(page.getByTestId("text-guide-quick-answer")).not.toContainText("%%PRICE");
     await expect(page.getByTestId("guide-faq-item-0")).toBeVisible();
+
+    // Bengali intro line renders under the English intro
+    await expect(page.locator('p[lang="bn"]').first()).toBeVisible();
   });
 
   test("navbar Services link reaches the hub", async ({ page }) => {

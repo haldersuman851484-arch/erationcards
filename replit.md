@@ -123,7 +123,7 @@ pnpm --filter @workspace/scripts run build-for-hostinger
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- **Customer-facing content is bilingual** — English first, Bengali (`lang="bn"`) directly under it. Services tiles, guide intros, steps and FAQs all follow this pattern (owner request, Aug 2026). Build new customer-facing features the same way; government services stay described as free in both languages, and Bengali price mentions use the same live-pricing placeholders as English (never hardcoded ₹).
 
 ## Gotchas
 

@@ -5,6 +5,8 @@ import type { GuideFaq } from "./GuideLayout";
 export interface GuideStep {
   name: string;
   text: string;
+  /** Bengali translation of the step, shown under the English text (not in JSON-LD). */
+  bn: string;
 }
 
 const SITE_ORIGIN = "https://erationcards.in";
@@ -54,11 +56,12 @@ export function useGuideSchema(opts: {
   useJsonLd(`${idPrefix}-faq-ld`, {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    inLanguage: faqs.some((f) => f.lang === "bn") ? ["en-IN", "bn"] : "en-IN",
+    // Guides are fully bilingual: English entries feed the schema, the visible
+    // page carries the Bengali (bnQ/bnA) alongside.
+    inLanguage: ["en-IN", "bn"],
     mainEntity: faqs.map((f) => ({
       "@type": "Question",
       name: f.q,
-      ...(f.lang ? { inLanguage: f.lang } : {}),
       acceptedAnswer: { "@type": "Answer", text: f.a },
     })),
   });
