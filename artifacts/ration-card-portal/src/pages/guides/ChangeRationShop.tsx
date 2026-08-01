@@ -1,6 +1,8 @@
 import { Link } from "wouter";
+import { ExternalLink } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { usePricing } from "@/hooks/use-pricing";
+import { Button } from "@/components/ui/button";
 import { GuideLayout, GuideFaqList, GuideCta, GuideDisclaimer, type GuideFaq } from "./GuideLayout";
 import { useGuideSchema, GuideSteps, type GuideStep } from "./useGuideSchema";
 
@@ -131,6 +133,25 @@ export default function ChangeRationShop() {
           erationcards.in সেটি ওয়াটারপ্রুফ PVC-তে প্রিন্ট করে বাড়িতে পৌঁছে দেয়, একটি কার্ড ₹{PRICING.ration.single.public}{" "}
           (২টি বা বেশি হলে প্রতি কার্ড ₹{PRICING.ration.multi.public})।
         </>
+      }
+      heroAction={
+        <div className="text-center">
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <a
+              href="https://wbpds.wb.gov.in/fps_change_by_aadhaar.aspx"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-official-shop-change"
+            >
+              Open the official shop change page
+              <ExternalLink className="w-4 h-4 ml-1.5" />
+            </a>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            wbpds.wb.gov.in — Government of West Bengal's official site; the shop change there is free.{" "}
+            <span lang="bn">সরকারি ওয়েবসাইট — দোকান বদল ফ্রি।</span>
+          </p>
+        </div>
       }
       related={[
         { href: "/guides/ration-card-correction-west-bengal", label: "Fix the address on your card first (Form-5)" },
