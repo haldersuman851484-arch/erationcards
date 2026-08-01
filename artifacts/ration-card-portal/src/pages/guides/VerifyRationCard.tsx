@@ -1,6 +1,8 @@
 import { Link } from "wouter";
+import { ExternalLink } from "lucide-react";
 import { useSeo } from "@/hooks/use-seo";
 import { usePricing } from "@/hooks/use-pricing";
+import { Button } from "@/components/ui/button";
 import { GuideLayout, GuideFaqList, GuideCta, GuideDisclaimer, type GuideFaq } from "./GuideLayout";
 import { useGuideSchema, GuideSteps, type GuideStep } from "./useGuideSchema";
 
@@ -126,6 +128,25 @@ export default function VerifyRationCard() {
           PVC কার্ডে প্রিন্ট করে ₹{PRICING.ration.single.public}-এ (২টি বা বেশি হলে প্রতি কার্ড ₹
           {PRICING.ration.multi.public}), বাড়িতে পৌঁছে দেওয়া হয়।
         </>
+      }
+      heroAction={
+        <div className="text-center">
+          <Button asChild className="bg-primary hover:bg-primary/90">
+            <a
+              href="https://wbpds.wb.gov.in/CheckRationCDetails.aspx"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-testid="link-official-verify"
+            >
+              Open the official card check page
+              <ExternalLink className="w-4 h-4 ml-1.5" />
+            </a>
+          </Button>
+          <p className="text-xs text-slate-500 mt-2">
+            wbpds.wb.gov.in — Government of West Bengal's official site; checking your card there is free.{" "}
+            <span lang="bn">সরকারি ওয়েবসাইট — কার্ড চেক ফ্রি।</span>
+          </p>
+        </div>
       }
       related={[
         { href: "/guides/reactivate-ration-card-west-bengal", label: "Card deactivated? Reactivate it with Aadhaar eKYC" },
