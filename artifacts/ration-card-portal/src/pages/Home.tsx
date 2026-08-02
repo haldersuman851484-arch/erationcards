@@ -428,114 +428,59 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Quick Answers — direct, fact-dense GEO block for AI search engines */}
+      {/* Our Services — quick action shortcuts */}
       <section className="py-20 bg-slate-50 border-b border-slate-200">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">PVC Ration Card West Bengal — Quick Answers</h2>
-            <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed" data-testid="text-quick-answer">
-              <strong>PVC Card Portal (erationcards.in)</strong> is a private online service that prints your existing
-              government-issued West Bengal e-Ration Card onto a wallet-size, waterproof PVC card and delivers it to
-              your doorstep in all 23 districts. Prices start at ₹{PRICING.ration.multi.public} per card, dispatch is
-              within 24–48 hours, and delivery takes 3–5 working days. We are not a government website — official
-              ration card services are free at food.wb.gov.in.
-            </p>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">Our Services</h2>
+            <p className="text-slate-600 max-w-2xl mx-auto">Access all ration card services through our centralized portal. Everything you need in one place.</p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8 items-start">
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">How much does a PVC ration card cost in West Bengal?</h3>
-              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-                <table className="w-full text-sm" data-testid="table-price">
-                  <thead>
-                    <tr className="bg-slate-100 text-slate-700">
-                      <th className="text-left font-semibold px-4 py-3">Card type</th>
-                      <th className="text-right font-semibold px-4 py-3">1 card</th>
-                      <th className="text-right font-semibold px-4 py-3">2+ cards (each)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-t border-slate-100">
-                      <td className="px-4 py-3 text-slate-700">Ration card (AAY, PHH, SPHH, RKSY-I, RKSY-II)</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.single.public}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.multi.public}</td>
-                    </tr>
-                    <tr className="border-t border-slate-100">
-                      <td className="px-4 py-3 text-slate-700">ABHA / E-SHRAM / GENERAL card</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.single.public}</td>
-                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.multi.public}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-xs text-slate-500 mt-3">
-                Prices as of July 2026 — printing, packaging and Speed Post doorstep delivery included. Payment by UPI
-                (Google Pay, PhonePe, Paytm).
-              </p>
-            </div>
-
-            <div>
-              <h3 className="text-xl font-bold text-slate-900 mb-4">How do I order a PVC ration card online?</h3>
-              <ol className="space-y-3">
-                {[
-                  "Fill in your name, mobile number and delivery address on the order form.",
-                  "Pay by UPI (Google Pay, PhonePe, Paytm) and upload the payment screenshot.",
-                  "Upload each family member's e-Ration Card PDF — one PVC card is printed per PDF.",
-                  "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days.",
-                ].map((step, i) => (
-                  <li key={i} className="flex gap-3 bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
-                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">
-                      {i + 1}
-                    </span>
-                    <span className="text-sm text-slate-700 leading-relaxed">{step}</span>
-                  </li>
-                ))}
-              </ol>
-              <div className="flex gap-3 mt-5">
-                <Link href="/order">
-                  <Button className="bg-primary hover:bg-primary/90">Start Your Order</Button>
-                </Link>
-                <Link href="/faq">
-                  <Button variant="outline" className="border-slate-300">
-                    Read All FAQs
-                  </Button>
-                </Link>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
+              <Link href="/order">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-primary">
+                    <CreditCard className="w-6 h-6" />
+                  </div>
+                  <CardTitle>Order PVC Card</CardTitle>
+                  <CardDescription>Apply for a physical PVC print of your digital ration card.</CardDescription>
+                </CardHeader>
+              </Link>
+            </Card>
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
+              <Link href="/track">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-blue-500">
+                    <Search className="w-6 h-6" />
+                  </div>
+                  <CardTitle>Track Order</CardTitle>
+                  <CardDescription>Check the real-time printing and delivery status.</CardDescription>
+                </CardHeader>
+              </Link>
+            </Card>
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
+              <Link href="/download">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-emerald-500">
+                    <Download className="w-6 h-6" />
+                  </div>
+                  <CardTitle>Download e-Card</CardTitle>
+                  <CardDescription>Get a digital PDF copy of your ration card instantly.</CardDescription>
+                </CardHeader>
+              </Link>
+            </Card>
+            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
+              <Link href="/operator/register">
+                <CardHeader>
+                  <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-purple-500">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <CardTitle>Operator Login</CardTitle>
+                  <CardDescription>Register as a printing partner and fulfill local orders.</CardDescription>
+                </CardHeader>
+              </Link>
+            </Card>
           </div>
-
-          <p className="mt-6 text-sm text-slate-600" data-testid="text-guide-links">
-            <strong className="text-slate-900">Helpful guides:</strong>{" "}
-            <Link href="/guides/download-e-ration-card" className="text-primary hover:underline">
-              How to download your e-Ration Card PDF (free)
-            </Link>
-            {" · "}
-            <Link href="/guides/ration-card-types-west-bengal" className="text-primary hover:underline">
-              AAY, PHH, SPHH &amp; RKSY card types explained
-            </Link>
-            {" · "}
-            <Link href="/guides/lost-ration-card-west-bengal" className="text-primary hover:underline">
-              Lost your ration card?
-            </Link>
-            {" · "}
-            <Link href="/services" className="text-primary hover:underline font-medium">
-              All ration card services &amp; guides →
-            </Link>
-          </p>
-
-          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
-            {[
-              ["Card size", "85.6 × 54 mm (CR80, bank-card size)"],
-              ["Material", "Waterproof PVC, ~760 microns"],
-              ["Dispatch time", "Within 24–48 hours of confirmation"],
-              ["Coverage", "All 23 districts of West Bengal"],
-            ].map(([dt, dd]) => (
-              <div key={dt} className="bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
-                <dt className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{dt}</dt>
-                <dd className="text-sm text-slate-900 font-medium mt-1">{dd}</dd>
-              </div>
-            ))}
-          </dl>
         </div>
       </section>
       {/* Sample Card Gallery */}
@@ -654,59 +599,114 @@ export default function Home() {
           </div>
         </div>
       </section>
-      {/* Quick Actions */}
+      {/* Quick Answers — direct, fact-dense GEO block for AI search engines */}
       <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Our Services</h2>
-            <p className="text-slate-600 max-w-2xl mx-auto">Access all ration card services through our centralized portal. Everything you need in one place.</p>
+        <div className="container mx-auto px-4 max-w-5xl">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">PVC Ration Card West Bengal — Quick Answers</h2>
+            <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed" data-testid="text-quick-answer">
+              <strong>PVC Card Portal (erationcards.in)</strong> is a private online service that prints your existing
+              government-issued West Bengal e-Ration Card onto a wallet-size, waterproof PVC card and delivers it to
+              your doorstep in all 23 districts. Prices start at ₹{PRICING.ration.multi.public} per card, dispatch is
+              within 24–48 hours, and delivery takes 3–5 working days. We are not a government website — official
+              ration card services are free at food.wb.gov.in.
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
-              <Link href="/order">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-primary">
-                    <CreditCard className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Order PVC Card</CardTitle>
-                  <CardDescription>Apply for a physical PVC print of your digital ration card.</CardDescription>
-                </CardHeader>
-              </Link>
-            </Card>
-            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
-              <Link href="/track">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-blue-500">
-                    <Search className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Track Order</CardTitle>
-                  <CardDescription>Check the real-time printing and delivery status.</CardDescription>
-                </CardHeader>
-              </Link>
-            </Card>
-            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
-              <Link href="/download">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-emerald-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-emerald-500">
-                    <Download className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Download e-Card</CardTitle>
-                  <CardDescription>Get a digital PDF copy of your ration card instantly.</CardDescription>
-                </CardHeader>
-              </Link>
-            </Card>
-            <Card className="border-slate-200 shadow-sm hover:shadow-md hover:border-[#41b8f0] hover:bg-[#41b8f0]/10 transition-all group cursor-pointer">
-              <Link href="/operator/register">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-lg bg-purple-50 flex items-center justify-center mb-4 group-hover:bg-[#41b8f0] group-hover:text-white transition-colors text-purple-500">
-                    <Users className="w-6 h-6" />
-                  </div>
-                  <CardTitle>Operator Login</CardTitle>
-                  <CardDescription>Register as a printing partner and fulfill local orders.</CardDescription>
-                </CardHeader>
-              </Link>
-            </Card>
+
+          <div className="grid md:grid-cols-2 gap-8 items-start">
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">How much does a PVC ration card cost in West Bengal?</h3>
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <table className="w-full text-sm" data-testid="table-price">
+                  <thead>
+                    <tr className="bg-slate-100 text-slate-700">
+                      <th className="text-left font-semibold px-4 py-3">Card type</th>
+                      <th className="text-right font-semibold px-4 py-3">1 card</th>
+                      <th className="text-right font-semibold px-4 py-3">2+ cards (each)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-t border-slate-100">
+                      <td className="px-4 py-3 text-slate-700">Ration card (AAY, PHH, SPHH, RKSY-I, RKSY-II)</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.single.public}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.multi.public}</td>
+                    </tr>
+                    <tr className="border-t border-slate-100">
+                      <td className="px-4 py-3 text-slate-700">ABHA / E-SHRAM / GENERAL card</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.single.public}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.multi.public}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-slate-500 mt-3">
+                Prices as of July 2026 — printing, packaging and Speed Post doorstep delivery included. Payment by UPI
+                (Google Pay, PhonePe, Paytm).
+              </p>
+            </div>
+
+            <div>
+              <h3 className="text-xl font-bold text-slate-900 mb-4">How do I order a PVC ration card online?</h3>
+              <ol className="space-y-3">
+                {[
+                  "Fill in your name, mobile number and delivery address on the order form.",
+                  "Pay by UPI (Google Pay, PhonePe, Paytm) and upload the payment screenshot.",
+                  "Upload each family member's e-Ration Card PDF — one PVC card is printed per PDF.",
+                  "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days.",
+                ].map((step, i) => (
+                  <li key={i} className="flex gap-3 bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
+                    <span className="w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-bold flex items-center justify-center shrink-0">
+                      {i + 1}
+                    </span>
+                    <span className="text-sm text-slate-700 leading-relaxed">{step}</span>
+                  </li>
+                ))}
+              </ol>
+              <div className="flex gap-3 mt-5">
+                <Link href="/order">
+                  <Button className="bg-primary hover:bg-primary/90">Start Your Order</Button>
+                </Link>
+                <Link href="/faq">
+                  <Button variant="outline" className="border-slate-300">
+                    Read All FAQs
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
+
+          <p className="mt-6 text-sm text-slate-600" data-testid="text-guide-links">
+            <strong className="text-slate-900">Helpful guides:</strong>{" "}
+            <Link href="/guides/download-e-ration-card" className="text-primary hover:underline">
+              How to download your e-Ration Card PDF (free)
+            </Link>
+            {" · "}
+            <Link href="/guides/ration-card-types-west-bengal" className="text-primary hover:underline">
+              AAY, PHH, SPHH &amp; RKSY card types explained
+            </Link>
+            {" · "}
+            <Link href="/guides/lost-ration-card-west-bengal" className="text-primary hover:underline">
+              Lost your ration card?
+            </Link>
+            {" · "}
+            <Link href="/services" className="text-primary hover:underline font-medium">
+              All ration card services &amp; guides →
+            </Link>
+          </p>
+
+          <dl className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-10">
+            {[
+              ["Card size", "85.6 × 54 mm (CR80, bank-card size)"],
+              ["Material", "Waterproof PVC, ~760 microns"],
+              ["Dispatch time", "Within 24–48 hours of confirmation"],
+              ["Coverage", "All 23 districts of West Bengal"],
+            ].map(([dt, dd]) => (
+              <div key={dt} className="bg-white border border-slate-200 rounded-lg px-4 py-3 shadow-sm">
+                <dt className="text-xs uppercase tracking-wide text-slate-500 font-semibold">{dt}</dt>
+                <dd className="text-sm text-slate-900 font-medium mt-1">{dd}</dd>
+              </div>
+            ))}
+          </dl>
         </div>
       </section>
       {/* 3 Easy Steps */}
