@@ -170,21 +170,25 @@ export function describeFetchError(err: unknown): string {
 }
 
 /**
- * True when real emails must NOT leave the building: development runs (dev
- * server, Playwright e2e, manual testing) share the SAME Resend account as
- * production, and Resend's free tier allows only 100 sends per UTC day. On
- * launch day (30 Jul 2026) test orders exhausted the quota by 04:29 UTC and
- * every PRODUCTION send for the rest of the day was rejected with
- * 429 daily_quota_exceeded. Suppressed sends are logged and reported as
- * success so dev flows behave as if the email went out.
+ * True when real emails must NOT leave the building. FAIL-CLOSED: only a
+ * host that explicitly declares NODE_ENV=production sends real email; the
+ * Hostinger bundle pins that both in its start script and at the top of
+ * dist/index.mjs (see scripts/src/build-for-hostinger.mjs). Set
+ * SETTINGS_OTP_SEND_EMAILS=true to deliberately opt in anywhere else.
  *
- * Gated on === "development" (the dev workflow always sets it) so a
- * production host that forgets NODE_ENV still sends. Set
- * SETTINGS_OTP_SEND_EMAILS=true to opt back in to real sends during
- * development (same flag the settings OTP/change emails already use).
+ * Why fail-closed: every environment shares the SAME Resend account, and
+ * the free tier allows only 100 sends per UTC day. On launch day
+ * (30 Jul 2026) test orders exhausted the quota by 04:29 UTC and every
+ * PRODUCTION send for the rest of the day was rejected with 429
+ * daily_quota_exceeded. Worse, the original gate suppressed only
+ * NODE_ENV === "development", so the vitest suite (NODE_ENV=test) emailed
+ * the REAL partners dozens of "settings changed" alerts on every test run
+ * (1-2 Aug 2026). Suppressed sends are logged and reported as success so
+ * dev flows behave as if the email went out.
  */
-function suppressRealEmailsInDev(): boolean {
-  return process.env.NODE_ENV === "development" && process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true";
+function suppressRealEmails(): boolean {
+  if (process.env["SETTINGS_OTP_SEND_EMAILS"] === "true") return false;
+  return process.env.NODE_ENV !== "production";
 }
 
 async function postToResend(body: Record<string, unknown>): Promise<globalThis.Response> {
@@ -232,10 +236,10 @@ async function postToResend(body: Record<string, unknown>): Promise<globalThis.R
  * errors are logged and reported as `false`.
  */
 export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log): Promise<boolean> {
-  if (suppressRealEmailsInDev()) {
+  if (suppressRealEmails()) {
     log.info(
       { orderNumber: order.orderNumber, to: order.customerEmail },
-      "DEV ONLY — order confirmation email suppressed (not sent, quota protection)",
+      "NON-PROD — order confirmation email suppressed (not sent, quota protection)",
     );
     return true;
   }
@@ -272,10 +276,10 @@ export async function sendOrderConfirmationEmail(order: OrderEmailData, log: Log
  * already exists), so all errors are logged and reported as `false`.
  */
 export async function sendOrderDispatchedEmail(data: DispatchEmailData, log: Log): Promise<boolean> {
-  if (suppressRealEmailsInDev()) {
+  if (suppressRealEmails()) {
     log.info(
       { orderNumber: data.orderNumber, to: data.customerEmail },
-      "DEV ONLY — order dispatched email suppressed (not sent, quota protection)",
+      "NON-PROD — order dispatched email suppressed (not sent, quota protection)",
     );
     return true;
   }
@@ -380,12 +384,12 @@ export async function sendSettingsChangedEmail(
   data: SettingsChangeEmailData,
   log: Log,
 ): Promise<boolean> {
-  // In development the real partners must never be emailed (same rule as the
-  // settings OTP codes). Set SETTINGS_OTP_SEND_EMAILS=true to opt back in.
-  if (suppressRealEmailsInDev()) {
+  // Outside production the real partners must never be emailed (same rule as
+  // the settings OTP codes). Set SETTINGS_OTP_SEND_EMAILS=true to opt back in.
+  if (suppressRealEmails()) {
     log.info(
       { recipients, field: data.fieldLabel },
-      "DEV ONLY — settings change email suppressed (not sent to partners)",
+      "NON-PROD — settings change email suppressed (not sent to partners)",
     );
     return true;
   }

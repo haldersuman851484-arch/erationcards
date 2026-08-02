@@ -68,8 +68,8 @@ process.env["ADMIN_EMAIL"] = "admin@test.com";
 process.env["ADMIN_PASSWORD"] = "test-password";
 process.env["MERCHANT_UPI_ID"] = "envdefault@okbank";
 process.env["SETTINGS_PARTNER_EMAILS"] = "partner1@test.com,partner2@test.com";
-// Under NODE_ENV=development the route suppresses OTP emails unless this opts
-// in — set it so these tests always exercise the real send path against the
+// Email sending is FAIL-CLOSED (real sends only under NODE_ENV=production).
+// Opt in explicitly so these tests exercise the real send path against the
 // mocked email module, regardless of the NODE_ENV vitest runs with.
 process.env["SETTINGS_OTP_SEND_EMAILS"] = "true";
 

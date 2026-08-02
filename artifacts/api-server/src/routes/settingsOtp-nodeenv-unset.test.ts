@@ -1,9 +1,14 @@
 /**
- * Regression test for the "NODE_ENV unset" production misconfiguration:
- * Hostinger's hPanel can launch dist/index.mjs directly, bypassing the npm
- * start script, so NODE_ENV may be UNSET on the live site. The OTP send
- * route must NEVER log plaintext unlock codes unless NODE_ENV is
- * explicitly "development".
+ * Regression test for the "NODE_ENV unset" misconfiguration (a host
+ * launching dist/index.mjs directly, bypassing the npm start script):
+ *  1. The OTP send route must NEVER log plaintext unlock codes unless
+ *     NODE_ENV is explicitly "development".
+ *  2. Email sending is FAIL-CLOSED: with NODE_ENV unset, real partner
+ *     emails must be SUPPRESSED. Only NODE_ENV=production — which the
+ *     Hostinger bundle pins in its start script AND at the top of
+ *     dist/index.mjs — or an explicit SETTINGS_OTP_SEND_EMAILS=true sends.
+ *     (The old fail-open gate let vitest runs, NODE_ENV=test, email the
+ *     real partners on every test run — 1-2 Aug 2026.)
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import request from "supertest";
@@ -111,22 +116,19 @@ beforeEach(() => {
 });
 
 describe("POST /api/admin/settings/otp/send with NODE_ENV unset", () => {
-  it("emails the partners (no dev suppression) and never logs the plaintext codes", async () => {
+  it("suppresses partner emails (fail-closed) and never logs the plaintext codes", async () => {
     const res = await adminPost("/api/admin/settings/otp/send");
     expect(res.status).toBe(200);
     expect(res.body.sent).toBe(true);
 
-    // Emails must NOT be suppressed — suppression is dev-only.
-    expect(emailMock.sent).toHaveLength(2);
+    // FAIL-CLOSED: NODE_ENV is not "production", so no real email may leave.
+    expect(emailMock.sent).toHaveLength(0);
 
     const allLogs = logCapture.lines.join("\n");
-    // The dev-only log line must be absent…
+    // The dev-only plaintext-code log line must also stay absent…
     expect(allLogs).not.toContain("DEV ONLY");
-    // …and neither plaintext code may appear anywhere in the logs.
-    for (const { code } of emailMock.sent) {
-      expect(code).toMatch(/^\d{6}$/);
-      expect(allLogs).not.toContain(code);
-    }
+    // …while the suppression itself is visible for diagnosis.
+    expect(allLogs).toContain("non-production: emails suppressed");
   });
 
   it("still logs the codes when NODE_ENV is explicitly development", async () => {

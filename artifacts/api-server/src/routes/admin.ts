@@ -594,14 +594,17 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
       return;
     }
 
-    // In development the real partners must never be emailed: the codes go to
-    // the server log only (below). Set SETTINGS_OTP_SEND_EMAILS=true to opt
-    // back in to real sends during development. Gated on === "development"
-    // (which the dev workflow always sets) rather than !== "production" so a
-    // production host that forgets to set NODE_ENV still emails the partners.
+    // FAIL-CLOSED: real partner emails leave only from a host that explicitly
+    // declares NODE_ENV=production. The deploy bundle pins that both in its
+    // start script and at the top of dist/index.mjs, so the live site always
+    // qualifies. Everything else — dev workflow, vitest (NODE_ENV=test), e2e
+    // helpers, stray boots — is suppressed unless SETTINGS_OTP_SEND_EMAILS=true
+    // deliberately opts in. (The previous gate suppressed only
+    // NODE_ENV === "development"; vitest runs emailed the REAL partners
+    // dozens of times on 1-2 Aug 2026 and burned the daily Resend quota.)
     const suppressEmails =
-      process.env.NODE_ENV === "development" &&
-      process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true";
+      process.env["SETTINGS_OTP_SEND_EMAILS"] !== "true" &&
+      process.env.NODE_ENV !== "production";
 
     // Fail-safe gate: codes are logged ONLY when NODE_ENV is explicitly
     // "development" (the dev workflow always sets it). A production host
@@ -609,6 +612,16 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
     if (process.env.NODE_ENV === "development") {
       // Dev-only testing aid: lets the flow be tested without inbox access.
       req.log.info({ codes: created.codes, emailsSuppressed: suppressEmails }, "DEV ONLY — settings OTP codes");
+    }
+
+    if (suppressEmails && process.env.NODE_ENV !== "development") {
+      // Neither dev (no code logging) nor production (no emails): the OTP flow
+      // is intentionally dead in this environment. Say so on stderr — if this
+      // line ever appears on the LIVE host, NODE_ENV is missing from hPanel
+      // (Settings & Redeploy → environment variables → NODE_ENV=production).
+      console.error(
+        "[SettingsOTP] Emails suppressed: NODE_ENV is not 'production'. Partners will NOT receive codes. Set NODE_ENV=production on the live host (or SETTINGS_OTP_SEND_EMAILS=true to force sends).",
+      );
     }
 
     if (!suppressEmails) {
@@ -626,7 +639,7 @@ router.post("/admin/settings/otp/send", async (req: Request, res: Response) => {
     req.log.info(
       { adminEmail: admin.email, emailsSuppressed: suppressEmails },
       suppressEmails
-        ? "Settings OTP codes generated (dev: emails suppressed, codes in log only)"
+        ? "Settings OTP codes generated (non-production: emails suppressed)"
         : "Settings OTP codes sent to partners",
     );
     res.json({

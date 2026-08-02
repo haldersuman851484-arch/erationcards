@@ -1,6 +1,6 @@
 ---
 name: Resend order emails
-description: Email transport, domain verification state, and connector key limits for order-confirmation emails
+description: Email transport, domain verification, connector key limits, quota math, and the FAIL-CLOSED send-suppression rule (two leak incidents)
 ---
 
 ## Current state (since 2026-07-29)
@@ -20,5 +20,9 @@ description: Email transport, domain verification state, and connector key limit
 - Free tier = **100 emails per UTC day**, resets at midnight UTC (= 5:30 AM IST). Dev/e2e runs share the production key and burned the whole allowance by 04:29 UTC on launch morning.
 - Over quota, `POST /emails` returns **429 `daily_quota_exceeded`**; the app surfaces it as an instant 502 on send endpoints and **nothing appears in Resend's email history** (rejected sends aren't logged) — from the outside it's indistinguishable from a network/env outage. `GET /domains` and `GET /emails` still answer 200 (they aren't sends), so reachability/auth diagnostics stay green while every send fails.
 - **How to diagnose:** replay one real `POST /emails` from the shell with the same key — the 429 body names the quota. Never trust "key works" probes alone.
-- **Guard:** `suppressRealEmailsInDev()` in api-server `email.ts` skips real order/dispatch/settings sends when `NODE_ENV=development` unless `SETTINGS_OTP_SEND_EMAILS=true` (e2e override). Put any NEW email-sending function behind it too.
+- **Send-log forensics:** `GET https://api.resend.com/emails?limit=50` (Bearer `$RESEND_API_KEY`) lists real deliveries with timestamp/recipient/subject; `GET /emails/:id` returns the rendered body. Fixture values in a body (admin@test.com, +91 90000 00001) betray a test-suite leak instantly.
+
+## Second incident — test suite emailed real partners (2026-08-01/02)
+- The original guard was **fail-open** (suppressed only `NODE_ENV=development`, "so a prod host that forgets NODE_ENV still sends"). vitest runs with `NODE_ENV=test` → every suite run fired real "settings changed" alerts to the two real partner gmails in machine-speed bursts (8–11/sec), because `SETTINGS_PARTNER_EMAILS` unset falls back to the real partner defaults and the DB is mocked so saves "succeed".
+- **Guard (since 2026-08-02, FAIL-CLOSED):** `suppressRealEmails()` in api-server `email.ts` blocks all real sends unless `NODE_ENV === "production"`, with `SETTINGS_OTP_SEND_EMAILS=true` as the explicit opt-in (tests that use it stub the transport). The Hostinger bundle pins `NODE_ENV=production` in its start script AND at the top of `dist/index.mjs`, so live still sends; the OTP route warns on stderr when suppressed outside development. Put any NEW email-sending function behind `suppressRealEmails()` too, and never re-introduce a fail-open gate — it has now burned twice (quota exhaustion 30 Jul; partner spam 1–2 Aug).
 - Volume math: 100/day ≈ 40–50 orders (confirmation + dispatch emails each). Beyond that → Resend Pro ~$20/mo (50k/mo).

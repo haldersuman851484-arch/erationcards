@@ -357,6 +357,23 @@ console.log(
   `  ✅  Bundle externals check: ${[...bundleImports].sort().join(", ") || "none"} — all declared in package.json.`
 );
 
+// ── 5c. Pin NODE_ENV=production inside the bundle entry itself ────────────
+// hPanel's "Entry file" field launches dist/index.mjs DIRECTLY, bypassing the
+// npm start script's NODE_ENV=production. Email sending is FAIL-CLOSED on
+// NODE_ENV=production (api-server/src/lib/email.ts), so a live host that
+// loses the env var would silently stop emailing partners and customers.
+// This bundle only ever runs in production — pin it at the top of the entry.
+// (ESM imports hoist above the pin, but the externalized packages don't read
+// NODE_ENV at import time; all app code is inlined below it. Source-map line
+// numbers shift by one — acceptable for a deploy-only artifact.)
+const entryPath = path.join(DEPLOY_DIR, "dist", "index.mjs");
+const entryPin = 'process.env.NODE_ENV ||= "production";\n';
+const entrySrc = readFileSync(entryPath, "utf8");
+if (!entrySrc.startsWith(entryPin)) {
+  writeFileSync(entryPath, entryPin + entrySrc);
+}
+console.log("  ✅  NODE_ENV=production pinned at the top of dist/index.mjs.");
+
 writeFileSync(
   path.join(DEPLOY_DIR, "package.json"),
   JSON.stringify(pkg, null, 2) + "\n"

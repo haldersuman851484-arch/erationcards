@@ -47,9 +47,9 @@ process.env["ADMIN_PASSWORD"] = "test-password";
 process.env["MERCHANT_UPI_ID"] = "envdefault@okbank";
 process.env["RESEND_API_KEY"] = "re_test_key_never_used";
 process.env["SETTINGS_PARTNER_EMAILS"] = "partner1@test.com,partner2@test.com";
-// Under NODE_ENV=development sendSettingsChangedEmail suppresses real sends
-// unless this opts in — set it so these tests always exercise the real send
-// path against the mocked transport, regardless of the NODE_ENV vitest uses.
+// Email sending is FAIL-CLOSED (real sends only under NODE_ENV=production).
+// Opt in explicitly so these tests exercise the real send path against the
+// stubbed transport, regardless of the NODE_ENV vitest uses.
 process.env["SETTINGS_OTP_SEND_EMAILS"] = "true";
 
 const fetchMock = vi.fn();

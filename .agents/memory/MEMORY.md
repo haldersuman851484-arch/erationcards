@@ -3,7 +3,7 @@
 - [Courier shipment e2e seeding](courier-shipment-e2e-seeding.md) — seed via real endpoints (printed + PDFs downloaded); dev dispatch hits Delhivery STAGING unless DELHIVERY_ENV=production
 - [Browser-safe shared code](browser-safe-shared-code.md) — portal-visible constants live in zero-dep libs (e.g. @workspace/pricing), never lib/db (exports mysql2 client)
 - [Playwright on NixOS](playwright-nixos-chromium.md) — bundled chromium can't load shared libs; use Nix chromium via launchOptions.executablePath; some older specs are stale
-- [Resend order emails](resend-order-emails.md) — verified domain, direct API everywhere; free tier 100/day UTC — 429 quota mimics an outage (history shows nothing); dev suppresses real sends
+- [Resend order emails](resend-order-emails.md) — verified domain, direct API; 100/day UTC, 429 mimics outage; sends FAIL-CLOSED (prod-only + opt-in flag) after two leaks; GET /emails = forensics
 - [ShellExec /tmp isolation](shellexec-tmp-isolation.md) — /tmp files AND background (nohup) processes die between calls; long e2e runs need one foreground command, fixtures pre-staged in workspace
 - [Multipart filename encoding](multipart-filename-utf8.md) — multer originalname is latin1 mojibake for UTF-8 names (Bengali!); re-decode latin1→utf8 with U+FFFD guard
 - [Courier dashboard modals](courier-dashboard-modals.md) — scanner keydown + cached search can drift/stale; modals must re-fetch on open, freeze target order id, close on drift
@@ -14,7 +14,7 @@
 - [GEO prerender pipeline](geo-prerender-pipeline.md) — snapshots carry %%PRICE/%%CONTACT tokens (server substitutes live); token keys with digits need [A-Z0-9_] regex; sitemap↔routes guard
 - [archiver v8 is pure ESM](archiver-v8-esm.md) — no default/callable export; use named ZipArchive + @types/archiver@8; "broken" @types on a major usually means the API shape changed
 - [OG share image](og-image-regeneration.md) — never bake prices into opengraph.jpg (can't tokenize images); regenerate via static HTML + exact-viewport screenshot
-- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; boot-test: npm i + dummy unreachable DB URL, zip w/o node_modules; env-driven analytics; net-check + self-heal (proven live)
+- [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; entry pins NODE_ENV=production; boot-test: dummy DB + NO NODE_ENV; zip w/o node_modules; self-heal proven live
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file permanent; IndexNow 403→retry; sitemap box ≠ URL-inspect bar; day-of "Couldn't fetch" = pending quirk, verify via Googlebot-UA curl
 - [Live SEO audit](live-seo-audit.md) — use portal scripts/audit-index-readiness.mjs (old audit-live-seo.mjs is gone); SPA-shell routes inherit home canonical → prerender every sitemap route; title suffix must stay idempotent
 - [Logo & brand assets](logo-asset-workflow.md) — AI gen weak for lettermarks: hand-craft SVG → chromium contact-sheet → picker; full checklist of every spot a brand-mark change must touch
