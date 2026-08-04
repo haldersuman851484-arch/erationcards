@@ -14,3 +14,5 @@ description: How to regenerate the portal's social-share image deterministically
 2. Screenshot it through the app preview at the exact viewport (e.g. 1200×630) with `saveTo` — vite serves `public/` at root instantly, no restart.
 3. `mv` the capture over `public/opengraph.jpg`, delete `og-source.html`.
 4. Keep `og:image:width/height` in `index.html` in lockstep with the file's real dimensions (guard exists for prices, not for this).
+
+- 2026-08 addendum: the same "never bake prices into images" rule got a reusable solution — the admin campaign banner is drawn client-side on an offscreen canvas from live pricing/contact hooks (brand color read from the CSS --primary var, logo from the served favicon-192.png so logo changes propagate automatically). Reuse that pattern for any future image that must show prices or contact info.

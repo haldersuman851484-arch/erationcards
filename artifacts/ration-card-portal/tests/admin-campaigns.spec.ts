@@ -65,7 +65,14 @@ async function openCampaignsTab(page: import("@playwright/test").Page) {
   await expect(page.getByTestId("campaign-message-whatsapp-en")).toBeVisible({ timeout: 10000 });
 }
 
-const CARD_IDS = ["whatsapp-en", "whatsapp-bn", "sms-en", "sms-bn"] as const;
+const CARD_IDS = [
+  "whatsapp-en",
+  "whatsapp-bn",
+  "whatsapp-operator-en",
+  "whatsapp-operator-bn",
+  "sms-en",
+  "sms-bn",
+] as const;
 
 test.describe("Admin campaign messages", () => {
   test("messages are built from live settings, keep honest wording, and links/hints are correct", async ({ page }) => {
@@ -97,6 +104,29 @@ test.describe("Admin campaign messages", () => {
     expect(waBn).toContain("₹61");
     expect(waBn).toContain("বেসরকারি");
 
+    // Operator messages: all four operator-audience rates from live settings,
+    // the tagged operator-registration link, section heading, and honesty note.
+    await expect(page.getByText("For shop & CSC operators")).toBeVisible();
+    const opEn = await page
+      .getByTestId("campaign-message-whatsapp-operator-en")
+      .locator("pre")
+      .innerText();
+    expect(opEn).toContain("single: ₹71, 2 or more: ₹47 per card");
+    expect(opEn).toContain("single: ₹97, 2 or more: ₹79 per card");
+    expect(opEn).toContain("erationcards.in/operator/register?utm_source=whatsapp");
+    expect(opEn).toContain("utm_campaign=operator_promo");
+    expect(opEn).toContain("Note: We are a private printing service");
+    const opBn = await page
+      .getByTestId("campaign-message-whatsapp-operator-bn")
+      .locator("pre")
+      .innerText();
+    expect(opBn).toContain("₹71");
+    expect(opBn).toContain("₹47");
+    expect(opBn).toContain("₹97");
+    expect(opBn).toContain("₹79");
+    expect(opBn).toContain("operator/register");
+    expect(opBn).toContain("বেসরকারি");
+
     // SMS messages: live prices via Rs./₹ and the short un-tagged domain.
     const smsEn = await page.getByTestId("campaign-message-sms-en").locator("pre").innerText();
     expect(smsEn).toContain("Rs.83");
@@ -107,7 +137,7 @@ test.describe("Admin campaign messages", () => {
     expect(smsBn).toContain("erationcards.in");
 
     // wa.me buttons encode the exact message text (Bengali included).
-    for (const id of ["whatsapp-en", "whatsapp-bn"] as const) {
+    for (const id of ["whatsapp-en", "whatsapp-bn", "whatsapp-operator-en", "whatsapp-operator-bn"] as const) {
       const text = await page.getByTestId(`campaign-message-${id}`).locator("pre").innerText();
       const href = await page.getByTestId(`button-whatsapp-${id}`).getAttribute("href");
       expect(href).not.toBeNull();
@@ -130,6 +160,24 @@ test.describe("Admin campaign messages", () => {
         expect(hint).toContain(`billed as ${parts} joined SMS parts`);
       }
     }
+  });
+
+  test("banner image is generated with the logo and is downloadable", async ({ page }) => {
+    await setupMocks(page);
+    await openCampaignsTab(page);
+
+    const img = page.getByTestId("img-campaign-banner");
+    await expect(img).toBeVisible({ timeout: 15000 });
+    const src = await img.getAttribute("src");
+    expect(src).not.toBeNull();
+    expect(src!.startsWith("data:image/png")).toBe(true);
+    // A painted 1080×1080 banner encodes far larger than a blank canvas would.
+    expect(src!.length).toBeGreaterThan(20000);
+
+    const download = page.getByTestId("link-download-banner");
+    await expect(download).toBeVisible();
+    expect(await download.getAttribute("download")).toBe("erationcards-whatsapp-banner.png");
+    expect((await download.getAttribute("href"))!.startsWith("data:image/png")).toBe(true);
   });
 
   test("copy button copies the message to the clipboard and shows feedback", async ({ page, context }) => {

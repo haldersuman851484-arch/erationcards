@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
+import CampaignBanner from "./CampaignBanner";
 import type { PricingMatrix } from "@workspace/pricing";
 import type { ContactDisplay } from "@workspace/contact";
 import { Megaphone, Copy, Check, MessageCircle, Smartphone, Info } from "lucide-react";
@@ -26,6 +27,8 @@ type CampaignMessage = {
   title: string;
   channel: "whatsapp" | "sms";
   lang: "en" | "bn";
+  /** Who the message should be sent to — regular customers, or shop/CSC operators. */
+  audience: "customers" | "operators";
   text: string;
 };
 
@@ -33,10 +36,17 @@ type CampaignMessage = {
 const WHATSAPP_LINK = "https://erationcards.in/order?utm_source=whatsapp&utm_medium=broadcast&utm_campaign=pvc_promo";
 /** SMS is billed per part, so its link stays as short as possible — bare domain, no tracking tag. */
 const SMS_LINK = "erationcards.in";
+/** Operator-recruitment link, tagged with its own campaign so operator sign-ups stay attributable. */
+const OPERATOR_LINK =
+  "https://erationcards.in/operator/register?utm_source=whatsapp&utm_medium=broadcast&utm_campaign=operator_promo";
 
 function buildCampaignMessages(pricing: PricingMatrix, contact: ContactDisplay): CampaignMessage[] {
   const single = pricing.ration.single.public;
   const multi = pricing.ration.multi.public;
+  const opRationSingle = pricing.ration.single.operator;
+  const opRationMulti = pricing.ration.multi.operator;
+  const opSpecialSingle = pricing.special.single.operator;
+  const opSpecialMulti = pricing.special.multi.operator;
   const phone = contact.phone;
 
   return [
@@ -45,6 +55,7 @@ function buildCampaignMessages(pricing: PricingMatrix, contact: ContactDisplay):
       title: "WhatsApp message — English",
       channel: "whatsapp",
       lang: "en",
+      audience: "customers",
       text: `*PVC Ration Card Printing — West Bengal*
 
 Get your existing WB ration card printed on a durable, waterproof PVC card (ATM-card size) — delivered to your home, anywhere in West Bengal.
@@ -67,6 +78,7 @@ _Note: We are a private printing service, not a government website. Ration cards
       title: "WhatsApp message — Bengali (বাংলা)",
       channel: "whatsapp",
       lang: "bn",
+      audience: "customers",
       text: `*পিভিসি রেশন কার্ড প্রিন্টিং — পশ্চিমবঙ্গ*
 
 আপনার বর্তমান রেশন কার্ডটি টেকসই, জলরোধী পিভিসি কার্ডে (এটিএম কার্ডের মাপে) প্রিন্ট করিয়ে নিন — পশ্চিমবঙ্গের যে কোনও জেলায় বাড়িতে ডেলিভারি।
@@ -89,6 +101,7 @@ _বিঃদ্রঃ আমরা একটি বেসরকারি প্
       title: "Short SMS — English",
       channel: "sms",
       lang: "en",
+      audience: "customers",
       text: `Print your WB ration card on durable PVC. Home delivery. Single Rs.${single}, family Rs.${multi}/card. Private printing service. Order: ${SMS_LINK} Ph: ${phone}`,
     },
     {
@@ -96,7 +109,54 @@ _বিঃদ্রঃ আমরা একটি বেসরকারি প্
       title: "Short SMS — Bengali (বাংলা)",
       channel: "sms",
       lang: "bn",
+      audience: "customers",
       text: `রেশন কার্ড টেকসই পিভিসি কার্ডে, বাড়িতে ডেলিভারি। একটি ₹${single}, পরিবারে ₹${multi}/কার্ড। বেসরকারি পরিষেবা। ${SMS_LINK} ফোন: ${phone}`,
+    },
+    {
+      id: "whatsapp-operator-en",
+      title: "Operator offer — English",
+      channel: "whatsapp",
+      lang: "en",
+      audience: "operators",
+      text: `*Special Operator Rates — PVC Ration Card Printing*
+
+Do you run a Xerox, mobile-recharge, CSC or online-seva shop in West Bengal? Print your customers' ration cards on durable PVC at special operator rates.
+
+Operator rates (registration is free):
+✅ Ration card — single: ₹${opRationSingle}, 2 or more: ₹${opRationMulti} per card
+✅ ABHA / E-SHRAM / General — single: ₹${opSpecialSingle}, 2 or more: ₹${opSpecialMulti} per card
+✅ Order online from your shop — we print and deliver anywhere in West Bengal
+✅ Track every order from your own operator dashboard
+
+Register free in 2 minutes:
+${OPERATOR_LINK}
+
+Call / WhatsApp: ${phone}
+
+_Note: We are a private printing service, not a government website. Ration cards and all government food-supply services are always free from the WB Food & Supplies Department — we only print existing cards on durable PVC for convenience._`,
+    },
+    {
+      id: "whatsapp-operator-bn",
+      title: "Operator offer — Bengali (বাংলা)",
+      channel: "whatsapp",
+      lang: "bn",
+      audience: "operators",
+      text: `*অপারেটরদের জন্য বিশেষ রেট — পিভিসি রেশন কার্ড প্রিন্টিং*
+
+আপনার কি পশ্চিমবঙ্গে জেরক্স, মোবাইল রিচার্জ, CSC বা অনলাইন সেবার দোকান আছে? বিশেষ অপারেটর রেটে আপনার গ্রাহকদের রেশন কার্ড টেকসই পিভিসি কার্ডে প্রিন্ট করান।
+
+অপারেটর রেট (রেজিস্ট্রেশন বিনামূল্যে):
+✅ রেশন কার্ড — একটি: ₹${opRationSingle}, ২টি বা বেশি: প্রতি কার্ড ₹${opRationMulti}
+✅ ABHA / E-SHRAM / General — একটি: ₹${opSpecialSingle}, ২টি বা বেশি: প্রতি কার্ড ₹${opSpecialMulti}
+✅ দোকান থেকেই অনলাইনে অর্ডার — প্রিন্ট ও ডেলিভারি আমাদের দায়িত্ব
+✅ নিজের অপারেটর ড্যাশবোর্ড থেকে প্রতিটি অর্ডার ট্র্যাক করুন
+
+মাত্র ২ মিনিটে বিনামূল্যে রেজিস্টার করুন:
+${OPERATOR_LINK}
+
+ফোন / হোয়াটসঅ্যাপ: ${phone}
+
+_বিঃদ্রঃ আমরা একটি বেসরকারি প্রিন্টিং পরিষেবা, কোনও সরকারি ওয়েবসাইট নই। রেশন কার্ড এবং সরকারি খাদ্য পরিষেবা পশ্চিমবঙ্গ খাদ্য ও সরবরাহ দপ্তর থেকে সবসময় বিনামূল্যে পাওয়া যায় — আমরা শুধু বর্তমান কার্ড সুবিধার জন্য টেকসই পিভিসি-তে প্রিন্ট করি।_`,
     },
   ];
 }
@@ -186,8 +246,23 @@ export default function CampaignsTab() {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {messages.map((m) => {
+      <CampaignBanner />
+
+      {(
+        [
+          { key: "customers", heading: "For customers", note: null },
+          {
+            key: "operators",
+            heading: "For shop & CSC operators",
+            note: "Send these to shop owners who place orders for their customers — the operator rates fill in from the Settings tab, just like the customer prices.",
+          },
+        ] as const
+      ).map((group) => (
+        <div key={group.key} className="space-y-2">
+          <h3 className="text-sm font-semibold text-slate-700 px-1">{group.heading}</h3>
+          {group.note && <p className="text-xs text-slate-500 px-1">{group.note}</p>}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {messages.filter((m) => m.audience === group.key).map((m) => {
           const isCopied = copiedId === m.id;
           const isFailed = copyFailedId === m.id;
           return (
@@ -260,8 +335,10 @@ export default function CampaignsTab() {
               </CardContent>
             </Card>
           );
-        })}
-      </div>
+            })}
+          </div>
+        </div>
+      ))}
 
       <Card className="border border-primary/15 bg-primary/5 shadow-none">
         <CardContent className="pt-4 pb-4">
