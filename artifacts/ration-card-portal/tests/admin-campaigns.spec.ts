@@ -180,6 +180,102 @@ test.describe("Admin campaign messages", () => {
     expect((await download.getAttribute("href"))!.startsWith("data:image/png")).toBe(true);
   });
 
+  test("share button hands WhatsApp the banner picture and a live-settings caption", async ({ page }) => {
+    await setupMocks(page);
+    // Stub the Web Share API before the app loads and record what it receives.
+    await page.addInitScript(() => {
+      (window as unknown as { __shared: unknown }).__shared = null;
+      Object.defineProperty(navigator, "canShare", { value: () => true, configurable: true });
+      Object.defineProperty(navigator, "share", {
+        value: async (data: { text?: string; files?: File[] }) => {
+          (window as unknown as { __shared: unknown }).__shared = {
+            text: data.text ?? "",
+            fileName: data.files?.[0]?.name ?? "",
+            fileType: data.files?.[0]?.type ?? "",
+            fileSize: data.files?.[0]?.size ?? 0,
+          };
+        },
+        configurable: true,
+      });
+    });
+    await openCampaignsTab(page);
+
+    await expect(page.getByTestId("img-campaign-banner")).toBeVisible({ timeout: 15000 });
+    await page.getByTestId("button-share-banner").click();
+    await page.waitForFunction(() => (window as unknown as { __shared: unknown }).__shared !== null);
+
+    const shared = await page.evaluate(
+      () =>
+        (window as unknown as { __shared: { text: string; fileName: string; fileType: string; fileSize: number } })
+          .__shared
+    );
+    expect(shared.fileName).toBe("erationcards-whatsapp-banner.png");
+    expect(shared.fileType).toBe("image/png");
+    // A painted 1080×1080 banner is far larger than a blank canvas would be.
+    expect(shared.fileSize).toBeGreaterThan(15000);
+    // Caption comes from the mocked live settings, keeps the campaign link,
+    // stays bilingual, and carries the honesty disclaimer.
+    expect(shared.text).toContain("Single card ₹83");
+    expect(shared.text).toContain("₹61 each");
+    expect(shared.text).toContain(MOCK_CONTACT.phone);
+    expect(shared.text).toContain("utm_source=whatsapp");
+    expect(shared.text).toContain("private printing service");
+    expect(shared.text).toContain("বেসরকারি");
+    // Native share succeeded, so the manual-fallback note must not appear.
+    await expect(page.getByTestId("text-share-note")).toHaveCount(0);
+  });
+
+  test("when sharing and clipboard are both unavailable, fallback downloads the picture and stays honest", async ({ page }) => {
+    await setupMocks(page);
+    await page.addInitScript(() => {
+      // No Web Share API at all, and every copy path blocked.
+      Object.defineProperty(navigator, "share", { value: undefined, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: undefined, configurable: true });
+      Object.defineProperty(navigator, "clipboard", {
+        value: { writeText: () => Promise.reject(new Error("denied")) },
+        configurable: true,
+      });
+      Object.defineProperty(document, "execCommand", { value: () => false, configurable: true });
+    });
+    await openCampaignsTab(page);
+
+    await expect(page.getByTestId("img-campaign-banner")).toBeVisible({ timeout: 15000 });
+    const downloadPromise = page.waitForEvent("download");
+    await page.getByTestId("button-share-banner").click();
+
+    // The picture still reaches the admin as a download.
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toBe("erationcards-whatsapp-banner.png");
+
+    // The note must NOT claim the message was copied — it wasn't.
+    const note = page.getByTestId("text-share-note");
+    await expect(note).toBeVisible();
+    await expect(note).toContainText("copying the message did not work");
+    // Instead the caption is offered for manual copying, built from live settings.
+    const captionBox = page.getByTestId("text-share-caption");
+    await expect(captionBox).toBeVisible();
+    await expect(captionBox).toContainText("Single card ₹83");
+    await expect(captionBox).toContainText("বেসরকারি");
+  });
+
+  test("closing the share sheet is a cancel — no fallback note, no caption box", async ({ page }) => {
+    await setupMocks(page);
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "canShare", { value: () => true, configurable: true });
+      Object.defineProperty(navigator, "share", {
+        value: () => Promise.reject(new DOMException("closed", "AbortError")),
+        configurable: true,
+      });
+    });
+    await openCampaignsTab(page);
+
+    await expect(page.getByTestId("img-campaign-banner")).toBeVisible({ timeout: 15000 });
+    await page.getByTestId("button-share-banner").click();
+    await page.waitForTimeout(400);
+    await expect(page.getByTestId("text-share-note")).toHaveCount(0);
+    await expect(page.getByTestId("text-share-caption")).toHaveCount(0);
+  });
+
   test("copy button copies the message to the clipboard and shows feedback", async ({ page, context }) => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);
     await setupMocks(page);
