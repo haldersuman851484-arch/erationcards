@@ -23,3 +23,4 @@
 - [Account migration via GitHub](replit-account-migration.md) — gitPush needs the "GitHub Source Control" connection, not the API connector; in-frame OAuth dies; BRANCH_ALREADY_EXISTS ≈ already synced
 - [Gov-link verification](gov-link-verification.md) — screenshot-verify pasted wbpds URLs before linking (user may paste the gov 404 "Temporarily stopped" page); curl/webFetch unreliable; retry blank shots
 - [Follow-up task cards](followup-task-preference.md) — user cancels every proposeFollowUpTasks card (4× by Aug 2026); never propose again on this project — offer next steps as chat prose
+- [Admin-spec mocking](admin-spec-mocking.md) — staff-page Playwright specs must fulfill every /api/** route (fallback 200 []); any real-API 401 triggers the global session-expired redirect mid-test

@@ -54,9 +54,10 @@ import {
   Phone, CreditCard, Calendar, ShieldCheck, ClipboardList,
   UserCheck, UserX, Store, AlertCircle, Send,
   Star, MessageSquare, RotateCcw, Trash2, Settings, IndianRupee as RupeeIcon,
-  Lock, Mail, HardDrive,
+  Lock, Mail, HardDrive, Megaphone,
 } from "lucide-react";
 import DataStorageTab from "./DataStorageTab";
+import CampaignsTab from "./CampaignsTab";
 import ScreenshotViewer from "@/components/ScreenshotViewer";
 
 function getAuthHeader() {
@@ -731,7 +732,7 @@ export default function AdminDashboard() {
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="bg-white border border-slate-200 shadow-sm h-11 p-1 flex-wrap">
+            <TabsList className="bg-white border border-slate-200 shadow-sm min-h-11 h-auto p-1 flex-wrap">
               <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <UserCheck className="w-4 h-4" /> Applications
                 {applicationsData && (applicationsData as any[]).length > 0 && (
@@ -755,6 +756,9 @@ export default function AdminDashboard() {
               </TabsTrigger>
               <TabsTrigger value="storage" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-storage">
                 <HardDrive className="w-4 h-4" /> Data &amp; Storage
+              </TabsTrigger>
+              <TabsTrigger value="campaigns" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-campaigns">
+                <Megaphone className="w-4 h-4" /> Campaigns
               </TabsTrigger>
             </TabsList>
 
@@ -1605,6 +1609,11 @@ export default function AdminDashboard() {
                 goToSettings={() => setActiveTab("settings")}
                 onSettingsAuthError={handleSettingsAuthError}
               />
+            </TabsContent>
+
+            {/* ── Campaigns Tab ── */}
+            <TabsContent value="campaigns" className="tab-panel mt-4">
+              <CampaignsTab />
             </TabsContent>
           </Tabs>
         </main>
