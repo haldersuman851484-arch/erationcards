@@ -22,3 +22,7 @@ description: How to produce/approve logos with this user and every place a brand
 - LocalBusiness JSON-LD `logo`/`image` (absolute prod URLs)
 - `public/opengraph.jpg` via the og-source recipe (see og-image-regeneration.md; never bake prices)
 - Order emails have NO logo (candidate follow-up), so nothing to update there today.
+
+**Raster icons shipped half-cropped once (found 2026-08-04):** favicon-192.png / email-logo.png / apple-touch-icon.png contained only the top strip of the mark (content bbox 160x70 of 192 — dots/PVC/holo missing); site looked fine because navbar/footer/boot use favicon.svg, but the admin campaign banner draws favicon-192 and exposed it ("logo showing half").
+**Why:** the original raster step captured before/misaligned and nobody bbox-checked.
+**How to apply:** after ANY icon rasterization run `magick file.png -alpha extract -threshold 5% -format "%@" info:` and confirm the bbox covers the full mark (~160x133+16+35 for 192px). Use the checked-in renderer `artifacts/ration-card-portal/scripts/render-logo-icons.mjs` (playwright + Nix chromium). Raw `chromium --headless --screenshot` renders BLANK pages on this box (both file:// img and inline SVG, with/without --virtual-time-budget) — don't retry that path.
