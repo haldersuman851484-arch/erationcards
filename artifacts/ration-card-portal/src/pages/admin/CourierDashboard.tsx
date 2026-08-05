@@ -44,6 +44,22 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+/** Main card + family member cards, each with its cardIndex (0 = main). */
+function buildAllCards(o: any) {
+  const family: { customerName: string; rationCardNumber: string; cardType: string }[] = o.familyCards ?? [];
+  return [
+    { name: o.customerName, cardNumber: o.rationCardNumber, cardType: o.cardType, cardIndex: 0 },
+    ...family.map((fc, i) => ({
+      name: fc.customerName, cardNumber: fc.rationCardNumber, cardType: fc.cardType, cardIndex: i + 1,
+    })),
+  ];
+}
+
+/** True when the order has already been through printing (or beyond). */
+function isPrintedOrBeyond(status: string) {
+  return ["printed", "dispatched", "delivered"].includes(status);
+}
+
 type Service = "download" | "print" | null;
 
 interface CourierDashboardProps {
@@ -111,6 +127,34 @@ export default function CourierDashboard({ source }: CourierDashboardProps) {
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [activeService, printSearchOpen]);
+
+  // Open download search on any printable keypress too (barcode scanner or
+  // keyboard) — same behaviour as the print view, so a courier can scan a
+  // card without first tapping the 🔍 icon.
+  useEffect(() => {
+    if (activeService !== "download") return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (searchOpen) return;
+      // Don't steal keystrokes that belong to another control — the download
+      // header also has date inputs and the card-type select.
+      const t = e.target as HTMLElement | null;
+      if (
+        t &&
+        (t.tagName === "INPUT" ||
+          t.tagName === "TEXTAREA" ||
+          t.isContentEditable ||
+          ["combobox", "listbox", "option"].includes(t.getAttribute("role") ?? ""))
+      ) return;
+      if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        // Same ghost-first-character guard as the print view above.
+        e.preventDefault();
+        setSearchOpen(true);
+        setFilterCardSearch(e.key);
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [activeService, searchOpen]);
 
   const label = source === "public" ? "Public Order" : "Operator Order";
   const courierLabel = COURIER_OPTIONS.find((c) => c.value === selectedCourier)?.label ?? "Delivery";
@@ -360,8 +404,10 @@ function DownloadView({
   // Downloaded badge for a row shows only when ALL PDFs in that row are done.
   const [downloadedPdfs, setDownloadedPdfs]   = useState<Set<string>>(new Set());
   const [downloadingPdfs, setDownloadingPdfs] = useState<Set<string>>(new Set());
-  // PATCH state tracked per order (one PATCH per order, on first PDF download)
-  const [patchedOrders, setPatchedOrders]   = useState<Set<number>>(new Set());
+  // One status-PATCH attempt per order (on first PDF download). A ref, not
+  // state: the check-and-mark must be synchronous, or two rapid clicks on
+  // different PDFs of the same order both pass the guard and double-PATCH.
+  const patchAttemptedOrders = useRef<Set<number>>(new Set());
   const [syncFailedOrders, setSyncFailedOrders] = useState<Set<number>>(new Set());
 
   const { data, isLoading, error } = useQuery<{ orders: any[]; total: number }>({
@@ -384,29 +430,34 @@ function DownloadView({
     refetchInterval: 30000,
   });
 
-  async function handleDownload(orderId: number, cardIndex: number, pdfUrl: string, totalPdfs: number) {
+  /** Fetch the PDF as a blob and trigger a real file save (preserves server filename). */
+  async function savePdfFile(pdfUrl: string) {
+    const r = await fetch(pdfUrl);
+    if (!r.ok) throw new Error("Download failed");
+    const blob = await r.blob();
+
+    // Extract filename from the URL's last path segment — never override it
+    const filename = decodeURIComponent(pdfUrl.split("/").pop()?.split("?")[0] ?? "ration-card.pdf");
+
+    const objectUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = objectUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  async function handleDownload(order: any, cardIndex: number, pdfUrl: string) {
+    const orderId: number = order.id;
     const pdfKey = `${orderId}_${cardIndex}`;
     if (downloadingPdfs.has(pdfKey)) return;
 
     setDownloadingPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
 
     try {
-      // Fetch PDF as blob to force a real file download (preserves server filename)
-      const r = await fetch(pdfUrl);
-      if (!r.ok) throw new Error("Download failed");
-      const blob = await r.blob();
-
-      // Extract filename from the URL's last path segment — never override it
-      const filename = decodeURIComponent(pdfUrl.split("/").pop()?.split("?")[0] ?? "ration-card.pdf");
-
-      const objectUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = objectUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(objectUrl);
+      await savePdfFile(pdfUrl);
 
       // Mark this individual PDF as downloaded (session state for instant UI feedback)
       setDownloadedPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
@@ -418,9 +469,13 @@ function DownloadView({
         headers: getAuthHeader(),
       }).catch(() => {});
 
-      // PATCH order to processing on first PDF download — non-blocking, fires once per order
-      if (!patchedOrders.has(orderId)) {
-        setPatchedOrders(prev => { const s = new Set(prev); s.add(orderId); return s; });
+      // PATCH order to processing on first PDF download — non-blocking, fires
+      // once per order. Guarded by the order's SERVER state, not just session
+      // memory: only a fresh "pending" order may advance to processing. An
+      // order that is already processing — or printed/dispatched/delivered/
+      // cancelled — must never be moved (back) to processing by a download.
+      if (order.status === "pending" && !patchAttemptedOrders.current.has(orderId)) {
+        patchAttemptedOrders.current.add(orderId);
         try {
           const pr = await staffFetch(`/api/orders/${orderId}`, {
             method: "PATCH",
@@ -447,7 +502,38 @@ function DownloadView({
     }
   }
 
-  async function retrySyncPatch(orderId: number) {
+  /**
+   * Download a PDF again after it was already downloaded (or the order was
+   * printed). Deliberately fires NO PATCHes — re-fetching a lost file must
+   * never change the order: status stays exactly as it is (a printed order
+   * stays printed) and the downloaded flags are untouched.
+   */
+  async function handleRedownload(orderId: number, cardIndex: number, pdfUrl: string) {
+    const pdfKey = `${orderId}_${cardIndex}`;
+    if (downloadingPdfs.has(pdfKey)) return;
+
+    setDownloadingPdfs(prev => { const s = new Set(prev); s.add(pdfKey); return s; });
+    try {
+      await savePdfFile(pdfUrl);
+      toast({ title: "PDF downloaded again ✓" });
+    } catch {
+      toast({ title: "Download failed. Please try again.", variant: "destructive" });
+    } finally {
+      setDownloadingPdfs(prev => { const s = new Set(prev); s.delete(pdfKey); return s; });
+    }
+  }
+
+  async function retrySyncPatch(order: any) {
+    const orderId: number = order.id;
+    // The pending→processing sync only applies while the order is still
+    // pending on the server. If it advanced meanwhile (someone printed or
+    // dispatched it), retrying must NOT knock the status back — just clear
+    // the stale sync-failed flag.
+    if (order.status !== "pending") {
+      setSyncFailedOrders(prev => { const s = new Set(prev); s.delete(orderId); return s; });
+      queryClient.invalidateQueries({ queryKey: ["courier-download", source] });
+      return;
+    }
     try {
       const pr = await staffFetch(`/api/orders/${orderId}`, {
         method: "PATCH",
@@ -506,12 +592,10 @@ function DownloadView({
               <TableBody>
                 {orders.map((order, i) => {
                   const pdfs: { cardIndex: number; pdfUrl: string; downloaded?: boolean; downloadedAt?: string | null }[] = order.rationCardPdfs ?? [];
-                  // All PDFs downloaded → show single green badge instead of buttons
-                  // allDownloaded: true if every PDF is marked done — either in-session or persisted in DB
-                  const allDownloaded = pdfs.length > 0 && pdfs.every(p =>
-                    downloadedPdfs.has(`${order.id}_${p.cardIndex}`) || p.downloaded === true
-                  );
-                  const syncFailed    = syncFailedOrders.has(order.id);
+                  const allCards     = buildAllCards(order);
+                  // Order already went through printing → done badges read "Printed ✓"
+                  const printedOrder = isPrintedOrBeyond(order.status);
+                  const syncFailed   = syncFailedOrders.has(order.id);
 
                   return (
                     <TableRow
@@ -552,27 +636,40 @@ function DownloadView({
                           <span className="flex items-center gap-1 text-xs text-amber-500">
                             <AlertCircle className="w-3 h-3" /> Pending
                           </span>
-                        ) : allDownloaded ? (
-                          <span className="flex items-center gap-1 text-xs font-medium text-emerald-600">
-                            <CheckCircle2 className="w-3.5 h-3.5" /> Downloaded ✓
-                          </span>
                         ) : (
                           <div className="flex flex-col gap-1">
-                            {/* Per-PDF download buttons — each independent */}
-                            {pdfs.map((p, idx) => {
+                            {/* Per-PDF buttons — each card stays individually
+                                (re-)downloadable, labelled by its card number */}
+                            {pdfs.map((p) => {
                               const pdfKey     = `${order.id}_${p.cardIndex}`;
                               const isDone     = downloadedPdfs.has(pdfKey) || p.downloaded === true;
                               const isInFlight = downloadingPdfs.has(pdfKey);
+                              const cardNumber = String(allCards.find(c => c.cardIndex === p.cardIndex)?.cardNumber ?? "");
+                              const cardTail   = cardNumber.length > 6 ? `…${cardNumber.slice(-6)}` : cardNumber;
                               return isDone ? (
-                                <span key={p.cardIndex} className="flex items-center gap-1 text-xs text-emerald-600">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  {pdfs.length === 1 ? "Downloaded ✓" : `PDF ${idx + 1} ✓`}
-                                </span>
+                                <button
+                                  key={p.cardIndex}
+                                  disabled={isInFlight}
+                                  onClick={() => handleRedownload(order.id, p.cardIndex, p.pdfUrl)}
+                                  title={`Download this PDF again — card ${cardNumber}`}
+                                  data-testid={`button-redownload-${order.id}-${p.cardIndex}`}
+                                  className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5 hover:bg-emerald-100 hover:border-emerald-300 transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                >
+                                  {isInFlight ? (
+                                    <div className="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 className="w-3 h-3" />
+                                  )}
+                                  {printedOrder ? "Printed ✓" : "Downloaded ✓"}
+                                  <span className="font-mono text-[10px] opacity-80">{cardTail}</span>
+                                  <Download className="w-3 h-3 opacity-60" />
+                                </button>
                               ) : (
                                 <button
                                   key={p.cardIndex}
                                   disabled={isInFlight}
-                                  onClick={() => handleDownload(order.id, p.cardIndex, p.pdfUrl, pdfs.length)}
+                                  onClick={() => handleDownload(order, p.cardIndex, p.pdfUrl)}
+                                  data-testid={`button-download-${order.id}-${p.cardIndex}`}
                                   className="inline-flex items-center gap-1 text-xs border border-slate-300 rounded px-2 py-0.5 hover:border-primary hover:text-primary transition-colors text-slate-600 disabled:opacity-50 disabled:cursor-wait"
                                 >
                                   {isInFlight ? (
@@ -580,7 +677,8 @@ function DownloadView({
                                   ) : (
                                     <Download className="w-3 h-3" />
                                   )}
-                                  {pdfs.length === 1 ? (isInFlight ? "Downloading…" : "Download") : (isInFlight ? `PDF ${idx + 1}…` : `PDF ${idx + 1}`)}
+                                  {isInFlight ? "Downloading…" : "Download"}
+                                  <span className="font-mono text-[10px] opacity-70">{cardTail}</span>
                                 </button>
                               );
                             })}
@@ -591,7 +689,7 @@ function DownloadView({
                                   <AlertCircle className="w-3 h-3" /> Sync failed
                                 </span>
                                 <button
-                                  onClick={() => retrySyncPatch(order.id)}
+                                  onClick={() => retrySyncPatch(order)}
                                   className="text-xs text-amber-700 underline hover:text-amber-900"
                                 >
                                   Retry
@@ -803,13 +901,18 @@ function PrintStatusView({
   useEffect(() => {
     if (!order) return;
     if (autoMarkedIds.current.has(order.id)) return;
-    if (["printed", "dispatched", "delivered"].includes(order.status)) return;
-    // If the search term is a prefix of the order number but NOT of the ration card number,
-    // the courier is doing a manual order lookup — do not auto-mark.
+    if (isPrintedOrBeyond(order.status)) return;
+    // If the search term is a prefix of the order number but NOT of any card
+    // number on the order — main card or a family member's card — the courier
+    // is doing a manual order lookup, so do not auto-mark. A scan of ANY card
+    // belonging to the order counts as a card scan.
+    const isCardScan = buildAllCards(order).some(
+      (c) => typeof c.cardNumber === "string" && c.cardNumber.startsWith(debouncedSearch)
+    );
     const isOrderNumberSearch =
       debouncedSearch.length > 0 &&
       order.orderNumber.startsWith(debouncedSearch) &&
-      !order.rationCardNumber.startsWith(debouncedSearch);
+      !isCardScan;
     if (isOrderNumberSearch) return;
     autoMarkedIds.current.add(order.id);
     // Optimistically flip badges green before the PATCH resolves
@@ -863,16 +966,6 @@ function PrintStatusView({
     .reduce((sum: number, o: any) => sum + (o.quantity ?? 1), 0);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
-
-  function buildAllCards(o: any) {
-    const family: { customerName: string; rationCardNumber: string; cardType: string }[] = o.familyCards ?? [];
-    return [
-      { name: o.customerName, cardNumber: o.rationCardNumber, cardType: o.cardType, cardIndex: 0 },
-      ...family.map((fc, i) => ({
-        name: fc.customerName, cardNumber: fc.rationCardNumber, cardType: fc.cardType, cardIndex: i + 1,
-      })),
-    ];
-  }
 
   function fmtDate(iso: string) {
     return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });

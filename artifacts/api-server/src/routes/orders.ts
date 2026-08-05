@@ -148,7 +148,7 @@ router.get("/orders", async (req: Request, res: Response) => {
     const params = ListOrdersQueryParams.parse(req.query);
     const search = typeof req.query.search === "string" ? req.query.search.trim() : undefined;
     const page = params.page ?? 1;
-    // quickSearch: searches rationCardNumber (prefix) OR order id (exact) — capped at 5 results
+    // quickSearch: searches any card number on the order (prefix, incl. family member cards) OR order number/id — capped at 5 results
     const quickSearch = typeof req.query.quickSearch === "string" ? req.query.quickSearch.trim() : undefined;
     const limit = quickSearch ? 5 : (params.limit ?? 20);
     const offset = (page - 1) * limit;
@@ -176,8 +176,21 @@ router.get("/orders", async (req: Request, res: Response) => {
       const to = new Date(toDate + "T23:59:59");
       if (!isNaN(to.getTime())) conditions.push(lte(ordersTable.createdAt, to));
     }
+    // Prefix-match against ANY card number on the order: the main card column
+    // or a family member card inside the family_cards JSON array. JSON_SEARCH's
+    // search string supports % wildcards, giving the same prefix semantics as
+    // the LIKE on the main column. family_cards is NOT NULL (defaults to []),
+    // and JSON_SEARCH returns NULL on no match, so IS NOT NULL is the hit test.
+    const familyCardMatch = (term: string) =>
+      sql`JSON_SEARCH(${ordersTable.familyCards}, 'one', ${`${term}%`}, NULL, '$[*].rationCardNumber') IS NOT NULL`;
+
     if (rationCardSearch && rationCardSearch.length > 0) {
-      conditions.push(like(ordersTable.rationCardNumber, `${rationCardSearch}%`));
+      conditions.push(
+        or(
+          like(ordersTable.rationCardNumber, `${rationCardSearch}%`),
+          familyCardMatch(rationCardSearch)
+        )!
+      );
     }
     if (phoneSearch && phoneSearch.length > 0) {
       conditions.push(eq(ordersTable.customerPhone, phoneSearch));
@@ -185,9 +198,10 @@ router.get("/orders", async (req: Request, res: Response) => {
     if (quickSearch && quickSearch.length > 0) {
       const numericId = parseInt(quickSearch);
       const rcMatch = like(ordersTable.rationCardNumber, `${quickSearch}%`);
+      const fcMatch = familyCardMatch(quickSearch);
       const onMatch = like(ordersTable.orderNumber, `${quickSearch}%`);
       const idMatch = !isNaN(numericId) ? eq(ordersTable.id, numericId) : undefined;
-      conditions.push(idMatch ? or(rcMatch, onMatch, idMatch)! : or(rcMatch, onMatch)!);
+      conditions.push(idMatch ? or(rcMatch, fcMatch, onMatch, idMatch)! : or(rcMatch, fcMatch, onMatch)!);
     }
     if (search) {
       // Sanitize the term for FULLTEXT boolean mode: strip special operators

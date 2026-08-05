@@ -27,3 +27,11 @@ Hostinger remote MySQL can reject the workspace with ER_ACCESS_DENIED_ERROR when
 **Remedy (user-side):** hPanel → Databases → Remote MySQL → pick the erationcards database (shows truncated as "u394996455_ration…"; app DB is u394996455_rationcards, user u394996455_erationcards) → add the workspace's current egress IP or tick "Any host (%)". Until it takes effect, the dev preview's API also 500s on every DB route — so this breaks more than validation.
 
 **Jul 31 2026 escalation:** user added both the exact IP and "%", then removed the IP row leaving only "%" — STILL ER_ACCESS_DENIED_ERROR 35+ min later on a bare mysql2 SELECT 1. So hPanel rows existing ≠ working grants; Hostinger-side sync can silently fail. Live site unaffected (connects server-side, not via remote allowlist). If this blocks task validation: verify with the bare probe, then complete with an audited skip_validation_reason and tell the user to delete & re-add the entry later or contact Hostinger support; retest at next task.
+
+## Family-card search via JSON_SEARCH (Aug 2026)
+Orders list search (rationCardSearch/quickSearch) also matches family members via
+`JSON_SEARCH(family_cards, 'one', '<term>%', NULL, '$[*].rationCardNumber') IS NOT NULL`
+(the search-string arg supports % wildcards → prefix semantics). The dev box cannot
+reach Hostinger MySQL, so this expression shipped verified only by architect review +
+mocked Playwright tests — never smoke-tested against the live server. If family-number
+search misbehaves in production, test that expression first in phpMyAdmin.
