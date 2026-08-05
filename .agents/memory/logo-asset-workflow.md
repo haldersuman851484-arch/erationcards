@@ -15,7 +15,7 @@ description: How to produce/approve logos with this user and every place a brand
 **Master file:** `attached_assets/logo_options/premium_B_realistic.svg` (approved 2026-07-31). 
 
 **Integration checklist (a brand-mark change must touch ALL of these):**
-- `public/favicon.svg`, `public/favicon-192.png`, `public/apple-touch-icon.png` + the three `<link rel=…>` tags in `index.html`
+- `public/favicon.svg` + ALL rasters (favicon-192/96/48.png, favicon.ico 16/32/48, apple-touch-icon.png, email-logo.png) — regenerated in one run of `scripts/render-logo-icons.mjs`; five `<link rel=…>` tags in `index.html` (favicon.ico is deliberately untagged — served from web root by convention for crawlers)
 - `index.html` boot-shell inline `<img>` (was a `.boot-mark` text square)
 - `layout.tsx` Navbar AND Footer (near-identical blocks with DIFFERENT indentation — replace_all on one indentation misses the other; grep afterwards)
 - admin `Login.tsx` header block
@@ -25,4 +25,4 @@ description: How to produce/approve logos with this user and every place a brand
 
 **Raster icons shipped half-cropped once (found 2026-08-04):** favicon-192.png / email-logo.png / apple-touch-icon.png contained only the top strip of the mark (content bbox 160x70 of 192 — dots/PVC/holo missing); site looked fine because navbar/footer/boot use favicon.svg, but the admin campaign banner draws favicon-192 and exposed it ("logo showing half").
 **Why:** the original raster step captured before/misaligned and nobody bbox-checked.
-**How to apply:** after ANY icon rasterization run `magick file.png -alpha extract -threshold 5% -format "%@" info:` and confirm the bbox covers the full mark (~160x133+16+35 for 192px). Use the checked-in renderer `artifacts/ration-card-portal/scripts/render-logo-icons.mjs` (playwright + Nix chromium). Raw `chromium --headless --screenshot` renders BLANK pages on this box (both file:// img and inline SVG, with/without --virtual-time-budget) — don't retry that path.
+**How to apply:** use the checked-in renderer `artifacts/ration-card-portal/scripts/render-logo-icons.mjs` (playwright + Nix chromium) — since 2026-08-05 it SELF-verifies every output's content bbox (throws if <60% W or <50% H of canvas; white-bg apple icon checked via `-fuzz 8% -trim`) and builds favicon.ico (16/32/48) via magick from the 48px render. For any icon produced OUTSIDE the renderer, still run `magick file.png -alpha extract -threshold 5% -format "%@" info:` manually (~160x133+16+35 is right for 192px). Raw `chromium --headless --screenshot` renders BLANK pages on this box (both file:// img and inline SVG, with/without --virtual-time-budget) — don't retry that path.

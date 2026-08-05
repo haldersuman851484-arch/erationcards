@@ -17,7 +17,7 @@
 - [Hostinger deploy bundle](hostinger-deploy-bundle.md) — externals in generated pkg.json; entry pins NODE_ENV=production; boot-test: dummy DB + NO NODE_ENV; zip w/o node_modules; self-heal proven live
 - [Search-engine submissions](search-engine-submissions.md) — GSC verify file permanent; IndexNow 403→retry; sitemap box ≠ URL-inspect bar; day-of "Couldn't fetch" = pending quirk, verify via Googlebot-UA curl
 - [Live SEO audit](live-seo-audit.md) — use portal scripts/audit-index-readiness.mjs (old audit-live-seo.mjs is gone); SPA-shell routes inherit home canonical → prerender every sitemap route; title suffix must stay idempotent
-- [Logo & brand assets](logo-asset-workflow.md) — hand-craft SVG (AI gen weak); rasterize via portal scripts/render-logo-icons.mjs + always bbox-verify (icons once shipped half-cropped); full brand-touchpoint checklist
+- [Logo & brand assets](logo-asset-workflow.md) — hand-craft SVG (AI gen weak); renderer emits 48/96/192/ico/apple/email + self-verifies bboxes (once shipped half-cropped); full brand-touchpoint checklist
 - [Perf measurement on this box](perf-measurement-nixos.md) — Lighthouse NO_FCP always; use portal measure-perf.mjs rAF probe; DejaVu-only skews CLS; live probes hit Hostinger bot interstitial
 - [Mobile speed decisions](mobile-speed-decisions.md) — snapshot pages: no first-mount animations, no font preloads, metric-matched Inter Fallback, main CSS inlined into HTML; don't reintroduce
 - [Account migration via GitHub](replit-account-migration.md) — gitPush needs the "GitHub Source Control" connection, not the API connector; in-frame OAuth dies; BRANCH_ALREADY_EXISTS ≈ already synced

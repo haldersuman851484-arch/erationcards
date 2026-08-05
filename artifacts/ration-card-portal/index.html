@@ -126,7 +126,16 @@
          captured into the prerendered snapshot) so it is not duplicated on
          every route. District pages carry their own FAQPage + BreadcrumbList. -->
 
+    <!-- ── Icons ──────────────────────────────────────────────────────────
+         Google SERP favicon guidelines: square, a multiple of 48px, stable
+         crawlable URLs, declared on the homepage. PNGs cover 48/96/192; the
+         SVG gives modern browsers a sharp vector icon; /favicon.ico at the
+         web root (deliberately no tag) answers crawlers and older browsers
+         that request that exact path by convention. All rasters are generated
+         from favicon.svg by scripts/render-logo-icons.mjs — never hand-export. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <!-- Fonts are self-hosted via @fontsource imports in src/index.css. They
