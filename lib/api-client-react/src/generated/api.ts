@@ -25,6 +25,7 @@ import type {
   ContactSetting,
   ContactSettingUpdate,
   CustomerInfoUpdate,
+  DeleteOperatorResponse,
   ErrorResponse,
   ExportOrdersArchiveParams,
   GetOperatorOrdersParams,
@@ -68,6 +69,7 @@ import type {
   SettingsOtpVerifyResponse,
   SuccessResponse,
   TrackOrderParams,
+  UpdateOperatorInput,
   UpdateOperatorStatusInput,
   UpiConfig,
   UpiSetting,
@@ -2944,6 +2946,147 @@ export const useUpdateOperatorStatus = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getUpdateOperatorStatusMutationOptions(options));
+    }
+
+export const getUpdateOperatorUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/operators/${id}`
+}
+
+/**
+ * @summary Edit an operator's profile (admin) — every field, duplicate emails rejected
+ */
+export const updateOperator = async (id: number,
+    updateOperatorInput: UpdateOperatorInput, options?: RequestInit): Promise<Operator> => {
+
+  return customFetch<Operator>(getUpdateOperatorUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(updateOperatorInput)
+  }
+);}
+
+
+
+
+export const getUpdateOperatorMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOperator>>, TError,{id: number;data: BodyType<UpdateOperatorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOperator>>, TError,{id: number;data: BodyType<UpdateOperatorInput>}, TContext> => {
+
+const mutationKey = ['updateOperator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOperator>>, {id: number;data: BodyType<UpdateOperatorInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateOperator(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOperatorMutationResult = NonNullable<Awaited<ReturnType<typeof updateOperator>>>
+    export type UpdateOperatorMutationBody = BodyType<UpdateOperatorInput>
+    export type UpdateOperatorMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Edit an operator's profile (admin) — every field, duplicate emails rejected
+ */
+export const useUpdateOperator = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOperator>>, TError,{id: number;data: BodyType<UpdateOperatorInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateOperator>>,
+        TError,
+        {id: number;data: BodyType<UpdateOperatorInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateOperatorMutationOptions(options));
+    }
+
+export const getDeleteOperatorUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/operators/${id}`
+}
+
+/**
+ * @summary Permanently delete an operator account (admin) — login stops immediately, past orders are kept
+ */
+export const deleteOperator = async (id: number, options?: RequestInit): Promise<DeleteOperatorResponse> => {
+
+  return customFetch<DeleteOperatorResponse>(getDeleteOperatorUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteOperatorMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOperator>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteOperator>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteOperator'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteOperator>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteOperator(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteOperatorMutationResult = NonNullable<Awaited<ReturnType<typeof deleteOperator>>>
+
+    export type DeleteOperatorMutationError = ErrorType<ErrorResponse>
+
+    /**
+ * @summary Permanently delete an operator account (admin) — login stops immediately, past orders are kept
+ */
+export const useDeleteOperator = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteOperator>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteOperator>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteOperatorMutationOptions(options));
     }
 
 export const getListPaymentVerificationsUrl = (params?: ListPaymentVerificationsParams,) => {

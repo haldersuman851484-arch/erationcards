@@ -1237,6 +1237,80 @@ export const UpdateOperatorStatusResponse = zod.object({
 
 
 /**
+ * @summary Edit an operator's profile (admin) — every field, duplicate emails rejected
+ */
+export const UpdateOperatorParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const updateOperatorBodyNameMin = 2;
+export const updateOperatorBodyNameMax = 100;
+
+export const updateOperatorBodyEmailMax = 255;
+
+export const updateOperatorBodyPhoneRegExp = new RegExp('^[6-9][0-9]{9}$');
+export const updateOperatorBodyShopNameMin = 2;
+export const updateOperatorBodyShopNameMax = 150;
+
+export const updateOperatorBodyAddressMin = 5;
+export const updateOperatorBodyAddressMax = 500;
+
+export const updateOperatorBodyStateMin = 2;
+export const updateOperatorBodyStateMax = 100;
+
+export const updateOperatorBodyDistrictMin = 2;
+export const updateOperatorBodyDistrictMax = 100;
+
+export const updateOperatorBodyPincodeRegExp = new RegExp('^[1-9][0-9]{5}$');
+export const updateOperatorBodyWalletBalanceMin = 0;
+export const updateOperatorBodyWalletBalanceMax = 9999999.99;
+
+
+
+export const UpdateOperatorBody = zod.object({
+  "name": zod.string().min(updateOperatorBodyNameMin).max(updateOperatorBodyNameMax),
+  "email": zod.string().email().max(updateOperatorBodyEmailMax),
+  "phone": zod.string().regex(updateOperatorBodyPhoneRegExp),
+  "shopName": zod.string().min(updateOperatorBodyShopNameMin).max(updateOperatorBodyShopNameMax),
+  "address": zod.string().min(updateOperatorBodyAddressMin).max(updateOperatorBodyAddressMax),
+  "state": zod.string().min(updateOperatorBodyStateMin).max(updateOperatorBodyStateMax),
+  "district": zod.string().min(updateOperatorBodyDistrictMin).max(updateOperatorBodyDistrictMax),
+  "pincode": zod.string().regex(updateOperatorBodyPincodeRegExp),
+  "status": zod.enum(['pending', 'active', 'suspended']),
+  "walletBalance": zod.number().min(updateOperatorBodyWalletBalanceMin).max(updateOperatorBodyWalletBalanceMax)
+})
+
+export const UpdateOperatorResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "email": zod.string(),
+  "phone": zod.string(),
+  "shopName": zod.string(),
+  "address": zod.string(),
+  "state": zod.string(),
+  "district": zod.string(),
+  "pincode": zod.string(),
+  "status": zod.string(),
+  "walletBalance": zod.number(),
+  "totalOrdersHandled": zod.number(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Permanently delete an operator account (admin) — login stops immediately, past orders are kept
+ */
+export const DeleteOperatorParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteOperatorResponse = zod.object({
+  "success": zod.boolean(),
+  "ordersKept": zod.number().describe('Number of past orders that stay in the system (unassigned lookups keep working)')
+})
+
+
+/**
  * @summary List payment verification history (admin)
  */
 export const ListPaymentVerificationsQueryParams = zod.object({

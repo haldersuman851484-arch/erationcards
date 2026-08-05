@@ -11,7 +11,7 @@ import {
   TrackOrderQueryParams,
 } from "@workspace/api-zod";
 import { ZodError } from "zod";
-import { generateOrderNumber, parseOperatorToken, parseStaffToken } from "../lib/auth";
+import { generateOrderNumber, parseLiveOperatorToken, parseStaffToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
 import { getPricingMatrix } from "../lib/settings";
 import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from "../lib/email";
@@ -323,7 +323,14 @@ router.post("/orders", async (req: Request, res: Response) => {
     }
     const familyCards = familyCardsResult.data;
     const quantity = 1 + familyCards.length;
-    const operatorId = parseOperatorToken(req);
+    // Operator token is OPTIONAL here (public customers order too), but a
+    // terminated account's token must never place operator-priced orders.
+    const opToken = await parseLiveOperatorToken(req);
+    if (opToken.kind === "deleted") {
+      res.status(401).json({ error: "This operator account no longer exists. Please contact support." });
+      return;
+    }
+    const operatorId = opToken.kind === "live" ? opToken.operatorId : null;
     const isOperator = operatorId !== null;
     // Group-aware pricing: ration categories vs ABHA/E-SHRAM/GENERAL have
     // different rates, and the single/multi tier is decided by the order's
@@ -589,9 +596,12 @@ router.get("/orders/:id", async (req: Request, res: Response) => {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) { res.status(400).json({ error: "Invalid order ID" }); return; }
 
-    // Admin, or the operator the order is assigned to — full customer PII
+    // Admin, or the operator the order is assigned to — full customer PII.
+    // parseLiveOperatorToken treats a terminated operator's token as dead,
+    // so it can't keep unlocking customer PII.
     const admin = await parseStaffToken(req);
-    const operatorId = parseOperatorToken(req);
+    const opToken = await parseLiveOperatorToken(req);
+    const operatorId = opToken.kind === "live" ? opToken.operatorId : null;
     if (!admin && operatorId === null) { res.status(401).json({ error: "Not authenticated" }); return; }
 
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id));

@@ -40,7 +40,15 @@ export async function verifyProcessingLogin(email: string, password: string): Pr
   return password === envPassword ? processingEmail : null;
 }
 
-export function parseOperatorToken(req: Request): number | null {
+/**
+ * Raw JWT parse only — deliberately NOT exported. It cannot see whether the
+ * account still exists, so using it directly would let a terminated
+ * operator's token keep working. Route code must go through
+ * requireOperator() (operator-only routes) or parseLiveOperatorToken()
+ * (routes where an operator token is optional), which both enforce
+ * revocation centrally.
+ */
+function parseOperatorToken(req: Request): number | null {
   const auth = req.headers.authorization;
   if (!auth || !auth.startsWith("Bearer ")) return null;
   const token = auth.slice(7);
@@ -50,6 +58,41 @@ export function parseOperatorToken(req: Request): number | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Operator tokens are stateless JWTs, so a terminated (hard-deleted) account
+ * would otherwise keep working until the token expires. This is the single
+ * place that combines "who does the token claim to be" with "does that
+ * account still exist", so termination locks the account out immediately on
+ * every route that uses it.
+ *
+ * - "none":    no usable operator token on the request
+ * - "deleted": a valid token for an account that no longer exists
+ * - "live":    a valid token for an existing account
+ */
+export type OperatorTokenState =
+  | { kind: "none" }
+  | { kind: "deleted"; operatorId: number }
+  | { kind: "live"; operatorId: number };
+
+export async function parseLiveOperatorToken(req: Request): Promise<OperatorTokenState> {
+  const operatorId = parseOperatorToken(req);
+  if (operatorId === null) return { kind: "none" };
+  return (await operatorAccountExists(operatorId))
+    ? { kind: "live", operatorId }
+    : { kind: "deleted", operatorId };
+}
+
+/**
+ * Operator-only gate: writes the 401 itself so callers just `return` on
+ * null. Terminated accounts get an explicit "no longer exists" message.
+ */
+export async function requireOperator(req: Request, res: Response): Promise<number | null> {
+  const state = await parseLiveOperatorToken(req);
+  if (state.kind === "none") { res.status(401).json({ error: "Not authenticated" }); return null; }
+  if (state.kind === "deleted") { res.status(401).json({ error: "This operator account no longer exists" }); return null; }
+  return state.operatorId;
 }
 
 export function parseAdminToken(req: Request): { email: string; role: string } | null {
@@ -159,4 +202,23 @@ export function generateOrderNumber(): string {
 export function hashPassword(password: string): string {
   const crypto = require("crypto") as typeof import("crypto");
   return crypto.createHash("sha256").update(password + "pvc_salt_2024").digest("hex");
+}
+
+/**
+ * True while the operator's account row still exists. Internal building
+ * block for parseLiveOperatorToken/requireOperator — not exported, so the
+ * existence check cannot be skipped by accident.
+ */
+async function operatorAccountExists(operatorId: number): Promise<boolean> {
+  // Lazy import so this auth module stays usable in contexts without a DB.
+  const [{ db, operatorsTable }, { eq }] = await Promise.all([
+    import("@workspace/db"),
+    import("drizzle-orm"),
+  ]);
+  const [row] = await db
+    .select({ id: operatorsTable.id })
+    .from(operatorsTable)
+    .where(eq(operatorsTable.id, operatorId))
+    .limit(1);
+  return !!row;
 }

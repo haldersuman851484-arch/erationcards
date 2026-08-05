@@ -232,12 +232,12 @@ export function toCsvBuffer(header: string[], rows: unknown[][]): Buffer {
   return Buffer.concat([Buffer.from("\uFEFF", "utf8"), Buffer.from(lines.join("\r\n") + "\r\n", "utf8")]);
 }
 
-function iso(d: Date | string | null | undefined): string {
+export function iso(d: Date | string | null | undefined): string {
   if (!d) return "";
   return d instanceof Date ? d.toISOString() : String(d);
 }
 
-function istReadable(d: Date | string | null | undefined): string {
+export function istReadable(d: Date | string | null | undefined): string {
   if (!d) return "";
   const date = d instanceof Date ? d : new Date(d);
   if (isNaN(date.getTime())) return "";

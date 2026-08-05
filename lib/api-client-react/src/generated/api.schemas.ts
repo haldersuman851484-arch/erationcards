@@ -511,6 +511,61 @@ export interface UpdateOperatorStatusInput {
   status: UpdateOperatorStatusInputStatus;
 }
 
+export type UpdateOperatorInputStatus = typeof UpdateOperatorInputStatus[keyof typeof UpdateOperatorInputStatus];
+
+
+export const UpdateOperatorInputStatus = {
+  pending: 'pending',
+  active: 'active',
+  suspended: 'suspended',
+} as const;
+
+export interface UpdateOperatorInput {
+  /**
+     * @minLength 2
+     * @maxLength 100
+     */
+  name: string;
+  /** @maxLength 255 */
+  email: string;
+  /** @pattern ^[6-9][0-9]{9}$ */
+  phone: string;
+  /**
+     * @minLength 2
+     * @maxLength 150
+     */
+  shopName: string;
+  /**
+     * @minLength 5
+     * @maxLength 500
+     */
+  address: string;
+  /**
+     * @minLength 2
+     * @maxLength 100
+     */
+  state: string;
+  /**
+     * @minLength 2
+     * @maxLength 100
+     */
+  district: string;
+  /** @pattern ^[1-9][0-9]{5}$ */
+  pincode: string;
+  status: UpdateOperatorInputStatus;
+  /**
+     * @minimum 0
+     * @maximum 9999999.99
+     */
+  walletBalance: number;
+}
+
+export interface DeleteOperatorResponse {
+  success: boolean;
+  /** Number of past orders that stay in the system (unassigned lookups keep working) */
+  ordersKept: number;
+}
+
 export interface OperatorStatusResponse {
   id: number;
   name: string;

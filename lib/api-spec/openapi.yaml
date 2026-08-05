@@ -883,6 +883,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/OperatorStatusResponse"
 
+  /admin/operators/{id}:
+    patch:
+      operationId: updateOperator
+      tags: [dashboard]
+      summary: Edit an operator's profile (admin) — every field, duplicate emails rejected
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateOperatorInput"
+      responses:
+        "200":
+          description: Updated operator (passwordHash never included)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Operator"
+        "404":
+          description: Operator not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Another operator already uses this email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteOperator
+      tags: [dashboard]
+      summary: Permanently delete an operator account (admin) — login stops immediately, past orders are kept
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Operator permanently deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOperatorResponse"
+        "404":
+          description: Operator not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
   # ── Admin ─────────────────────────────────────────────────────────────────────
   /admin/verifications:
     get:
@@ -1895,6 +1955,70 @@ components:
           enum: [active, pending, suspended]
       required:
         - status
+
+    UpdateOperatorInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 255
+        phone:
+          type: string
+          pattern: "^[6-9][0-9]{9}$"
+        shopName:
+          type: string
+          minLength: 2
+          maxLength: 150
+        address:
+          type: string
+          minLength: 5
+          maxLength: 500
+        state:
+          type: string
+          minLength: 2
+          maxLength: 100
+        district:
+          type: string
+          minLength: 2
+          maxLength: 100
+        pincode:
+          type: string
+          pattern: "^[1-9][0-9]{5}$"
+        status:
+          type: string
+          enum: [pending, active, suspended]
+        walletBalance:
+          type: number
+          minimum: 0
+          maximum: 9999999.99
+      required:
+        - name
+        - email
+        - phone
+        - shopName
+        - address
+        - state
+        - district
+        - pincode
+        - status
+        - walletBalance
+
+    DeleteOperatorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        ordersKept:
+          type: integer
+          description: Number of past orders that stay in the system (unassigned lookups keep working)
+      required:
+        - success
+        - ordersKept
 
     OperatorStatusResponse:
       type: object

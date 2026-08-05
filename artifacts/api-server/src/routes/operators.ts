@@ -7,7 +7,7 @@ import {
   LoginOperatorBody,
   GetOperatorOrdersQueryParams,
 } from "@workspace/api-zod";
-import { parseOperatorToken, createOperatorToken, hashPassword, parseStaffToken } from "../lib/auth";
+import { createOperatorToken, hashPassword, parseStaffToken, requireOperator } from "../lib/auth";
 
 const router = Router();
 
@@ -105,8 +105,9 @@ router.post("/operators/logout", (_req: Request, res: Response) => {
 // GET /operators/me/orders - must be before /operators/me
 router.get("/operators/me/orders", async (req: Request, res: Response) => {
   try {
-    const operatorId = parseOperatorToken(req);
-    if (!operatorId) { res.status(401).json({ error: "Not authenticated" }); return; }
+    // requireOperator centrally rejects terminated (deleted) accounts too.
+    const operatorId = await requireOperator(req, res);
+    if (operatorId === null) return;
 
     const params = GetOperatorOrdersQueryParams.parse(req.query);
     const conditions: ReturnType<typeof eq>[] = [eq(ordersTable.operatorId, operatorId)];
@@ -123,8 +124,9 @@ router.get("/operators/me/orders", async (req: Request, res: Response) => {
 // GET /operators/me/stats - must be before /operators/me
 router.get("/operators/me/stats", async (req: Request, res: Response) => {
   try {
-    const operatorId = parseOperatorToken(req);
-    if (!operatorId) { res.status(401).json({ error: "Not authenticated" }); return; }
+    // requireOperator centrally rejects terminated (deleted) accounts too.
+    const operatorId = await requireOperator(req, res);
+    if (operatorId === null) return;
 
     const [stats] = await db
       .select({
@@ -161,8 +163,9 @@ router.get("/operators/me/stats", async (req: Request, res: Response) => {
 // GET /operators/me
 router.get("/operators/me", async (req: Request, res: Response) => {
   try {
-    const operatorId = parseOperatorToken(req);
-    if (!operatorId) { res.status(401).json({ error: "Not authenticated" }); return; }
+    // requireOperator centrally rejects terminated (deleted) accounts too.
+    const operatorId = await requireOperator(req, res);
+    if (operatorId === null) return;
 
     const [operator] = await db.select().from(operatorsTable).where(eq(operatorsTable.id, operatorId));
     if (!operator) { res.status(401).json({ error: "Not authenticated" }); return; }
@@ -174,7 +177,7 @@ router.get("/operators/me", async (req: Request, res: Response) => {
   }
 });
 
-function formatOperator(op: any) {
+export function formatOperator(op: any) {
   return {
     id: op.id,
     name: op.name,

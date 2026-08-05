@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, UpdateContactSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody } from "@workspace/api-zod";
+import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, UpdateContactSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody, UpdateOperatorBody } from "@workspace/api-zod";
 import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import {
   getOtpGateStatus,
@@ -28,15 +28,16 @@ import {
   UPI_ID_REGEX,
 } from "../lib/settings";
 import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, contactFieldError, type ContactInfo } from "@workspace/contact";
-import { ORDERS_CLEANUP_HISTORY_FIELD } from "../lib/orderArchive";
+import { ORDERS_CLEANUP_HISTORY_FIELD, toCsvBuffer, iso, istReadable } from "../lib/orderArchive";
+import { formatOperator } from "./operators";
 
 /** Multi-line readable form of the contact details for change-alert emails. */
 function formatContactForEmail(c: ContactInfo): string {
   return CONTACT_FIELDS.map((f) => `${CONTACT_FIELD_LABELS[f]}: ${c[f]}`).join("\n");
 }
 import { db } from "@workspace/db";
-import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable } from "@workspace/db";
-import { desc, sql, eq } from "drizzle-orm";
+import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable, ordersTable } from "@workspace/db";
+import { desc, sql, eq, and, ne } from "drizzle-orm";
 
 const router = Router();
 
@@ -120,6 +121,173 @@ router.patch("/admin/operators/:id/status", async (req: Request, res: Response) 
   } catch (err) {
     req.log.error({ err }, "Failed to update operator status");
     res.status(500).json({ error: "Failed to update operator status" });
+  }
+});
+
+// ── Full operator management (admin only) ────────────────────────────────────
+
+// Plain-language messages for each edit field, used when validation fails.
+const OPERATOR_EDIT_HINTS: Record<string, string> = {
+  name: "Name must be 2-100 characters",
+  email: "Enter a valid email address",
+  phone: "Phone must be a 10-digit Indian mobile number (starting 6-9)",
+  shopName: "Shop name must be 2-150 characters",
+  address: "Address must be 5-500 characters",
+  state: "State must be 2-100 characters",
+  district: "District must be 2-100 characters",
+  pincode: "PIN code must be 6 digits and cannot start with 0",
+  status: "Status must be pending, active or suspended",
+  walletBalance: "Wallet balance must be between ₹0 and ₹99,99,999.99",
+};
+
+/** MySQL duplicate-key error → the unique email index caught a race. */
+function isDuplicateEmailError(err: unknown): boolean {
+  const e = err as { code?: string; errno?: number } | null;
+  return e?.code === "ER_DUP_ENTRY" || e?.errno === 1062;
+}
+
+// PATCH /admin/operators/:id — edit every profile field (admin only).
+// passwordHash is never accepted, returned, or touched by this route.
+router.patch("/admin/operators/:id", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid operator ID" }); return; }
+
+    const parsed = UpdateOperatorBody.safeParse(req.body);
+    if (!parsed.success) {
+      const field = String(parsed.error.issues[0]?.path?.[0] ?? "");
+      res.status(400).json({ error: OPERATOR_EDIT_HINTS[field] ?? "Please check the form fields and try again" });
+      return;
+    }
+
+    const [existing] = await db.select().from(operatorsTable).where(eq(operatorsTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Operator not found" }); return; }
+
+    const body = parsed.data;
+    const email = body.email.trim();
+
+    // Two operators must never share a login email — reject with a clear message.
+    const [emailOwner] = await db
+      .select({ id: operatorsTable.id, name: operatorsTable.name })
+      .from(operatorsTable)
+      .where(and(eq(operatorsTable.email, email), ne(operatorsTable.id, id)))
+      .limit(1);
+    if (emailOwner) {
+      res.status(409).json({ error: `Another operator (${emailOwner.name}) already uses ${email}. Each operator needs their own email.` });
+      return;
+    }
+
+    await db
+      .update(operatorsTable)
+      .set({
+        name: body.name.trim(),
+        email,
+        phone: body.phone.trim(),
+        shopName: body.shopName.trim(),
+        address: body.address.trim(),
+        state: body.state.trim(),
+        district: body.district.trim(),
+        pincode: body.pincode.trim(),
+        status: body.status,
+        walletBalance: body.walletBalance.toFixed(2),
+        updatedAt: new Date(),
+      })
+      .where(eq(operatorsTable.id, id));
+
+    const [updated] = await db.select().from(operatorsTable).where(eq(operatorsTable.id, id)).limit(1);
+    if (!updated) { res.status(404).json({ error: "Operator not found" }); return; }
+
+    req.log.info({ adminEmail: admin.email, operatorId: id }, "Operator profile edited by admin");
+    res.json(formatOperator(updated));
+  } catch (err) {
+    if (isDuplicateEmailError(err)) {
+      // Concurrent edit slipped past the pre-check; the unique index caught it.
+      res.status(409).json({ error: "Another operator already uses this email. Each operator needs their own email." });
+      return;
+    }
+    req.log.error({ err }, "Failed to update operator");
+    res.status(500).json({ error: "Failed to update operator" });
+  }
+});
+
+// DELETE /admin/operators/:id — PERMANENTLY delete an operator account.
+// Hard delete: login and every operator-token endpoint stop working
+// immediately (operator auth centrally re-checks the row in
+// requireOperator/parseLiveOperatorToken). Past orders are intentionally left
+// untouched — orders.operatorId keeps its value so the public/operator source
+// split and the order history stay correct.
+router.delete("/admin/operators/:id", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) { res.status(400).json({ error: "Invalid operator ID" }); return; }
+
+    const [existing] = await db.select().from(operatorsTable).where(eq(operatorsTable.id, id)).limit(1);
+    if (!existing) { res.status(404).json({ error: "Operator not found" }); return; }
+
+    // Count and delete inside one transaction so ordersKept reflects the
+    // moment of deletion (no drift from orders created between statements),
+    // and a failed delete can never report success.
+    const outcome = await db.transaction(async (tx) => {
+      const [{ kept }] = await tx
+        .select({ kept: sql<number>`count(*)` })
+        .from(ordersTable)
+        .where(eq(ordersTable.operatorId, id));
+      const [deleted] = await tx.delete(operatorsTable).where(eq(operatorsTable.id, id));
+      return { kept: Number(kept), deletedRows: deleted.affectedRows ?? 0 };
+    });
+
+    if (outcome.deletedRows === 0) {
+      // Lost a race with a concurrent delete — the account is already gone.
+      res.status(404).json({ error: "Operator not found" });
+      return;
+    }
+
+    req.log.info(
+      { adminEmail: admin.email, operatorId: id, operatorEmail: existing.email, ordersKept: outcome.kept },
+      "Operator account permanently deleted",
+    );
+    res.json({ success: true, ordersKept: outcome.kept });
+  } catch (err) {
+    req.log.error({ err }, "Failed to delete operator");
+    res.status(500).json({ error: "Failed to delete operator" });
+  }
+});
+
+// GET /admin/operators/export — every operator as an Excel-friendly CSV.
+// toCsvBuffer prepends a UTF-8 BOM so Bengali names/addresses open correctly
+// in Excel. passwordHash is never included.
+router.get("/admin/operators/export", async (req: Request, res: Response) => {
+  try {
+    const admin = await requireAdmin(req, res);
+    if (!admin) return;
+
+    const rows = await db.select().from(operatorsTable).orderBy(operatorsTable.id);
+    const header = [
+      "ID", "Name", "Email", "Phone", "Shop Name", "Address", "State", "District",
+      "PIN Code", "Status", "Wallet Balance (Rs)", "Orders Handled",
+      "Joined (IST)", "Joined (ISO)", "Updated (ISO)",
+    ];
+    const data = rows.map((o) => [
+      o.id, o.name, o.email, o.phone, o.shopName, o.address, o.state, o.district,
+      o.pincode, o.status, o.walletBalance, o.totalOrdersHandled,
+      istReadable(o.createdAt), iso(o.createdAt), iso(o.updatedAt),
+    ]);
+
+    const today = new Date().toISOString().slice(0, 10);
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="operators_${today}.csv"`);
+    res.setHeader("Cache-Control", "no-store");
+    req.log.info({ adminEmail: admin.email, count: rows.length }, "Operator roster exported to CSV");
+    res.send(toCsvBuffer(header, data));
+  } catch (err) {
+    req.log.error({ err }, "Failed to export operators");
+    res.status(500).json({ error: "Failed to export operators" });
   }
 });
 

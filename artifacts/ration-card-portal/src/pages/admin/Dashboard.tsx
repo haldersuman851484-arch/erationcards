@@ -18,7 +18,6 @@ import {
   getGetOrderStatsQueryKey,
   useListOperators,
   getListOperatorsQueryKey,
-  useUpdateOperatorStatus,
   useLogoutAdmin,
   useListPaymentVerifications,
   getListPaymentVerificationsQueryKey,
@@ -58,6 +57,7 @@ import {
 } from "lucide-react";
 import DataStorageTab from "./DataStorageTab";
 import CampaignsTab from "./CampaignsTab";
+import OperatorsTab from "./OperatorsTab";
 import ScreenshotViewer from "@/components/ScreenshotViewer";
 
 function getAuthHeader() {
@@ -161,7 +161,7 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [activeTab, setActiveTab] = useState("applications");
+  const [activeTab, setActiveTab] = useState("operators");
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
 
@@ -180,20 +180,7 @@ export default function AdminDashboard() {
     request: { headers: getAuthHeader() },
   } as any);
 
-  const { data: applicationsData, isLoading: applicationsLoading } = useQuery<any[]>({
-    queryKey: ["operators", "pending"],
-    enabled: !!admin && activeTab === "applications",
-    refetchInterval: activeTab === "applications" ? 15000 : false,
-    queryFn: async () => {
-      const r = await staffFetch("/api/operators?status=pending", { headers: getAuthHeader() as Record<string, string> });
-      if (!r.ok) throw new Error("Failed to fetch applications");
-      return r.json();
-    },
-  });
-
-  const updateOperatorStatus = useUpdateOperatorStatus({
-    request: { headers: getAuthHeader() },
-  } as any);
+  const pendingApplications = ((operators as any[] | undefined) ?? []).filter((o) => o?.status === "pending").length;
 
   const { data: verificationsData, isLoading: verificationsLoading } = useListPaymentVerifications(
     {},
@@ -583,20 +570,6 @@ export default function AdminDashboard() {
     );
   }
 
-  function handleOperatorStatus(operatorId: number, status: "active" | "suspended") {
-    updateOperatorStatus.mutate(
-      { id: operatorId, data: { status } },
-      {
-        onSuccess: () => {
-          toast({ title: status === "active" ? "Operator approved! They can now log in." : "Operator rejected." });
-          queryClient.invalidateQueries({ queryKey: ["operators", "pending"] });
-          queryClient.invalidateQueries({ queryKey: getListOperatorsQueryKey() });
-        },
-        onError: () => toast({ title: "Failed to update operator status", variant: "destructive" }),
-      }
-    );
-  }
-
   function handleReviewAction(reviewId: number, status: "approved" | "rejected", successTitle?: string) {
     updateReviewStatus.mutate(
       { id: reviewId, data: { status } },
@@ -733,10 +706,10 @@ export default function AdminDashboard() {
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="bg-white border border-slate-200 shadow-sm min-h-11 h-auto p-1 flex-wrap">
-              <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
-                <UserCheck className="w-4 h-4" /> Applications
-                {applicationsData && (applicationsData as any[]).length > 0 && (
-                  <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">{(applicationsData as any[]).length}</span>
+              <TabsTrigger value="operators" data-testid="tab-operators" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
+                <Users className="w-4 h-4" /> Operators
+                {pendingApplications > 0 && (
+                  <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">{pendingApplications}</span>
                 )}
               </TabsTrigger>
               <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-verifications">
@@ -762,100 +735,9 @@ export default function AdminDashboard() {
               </TabsTrigger>
             </TabsList>
 
-            {/* ── Applications Tab ── */}
-            <TabsContent value="applications" className="tab-panel mt-4">
-              <Card className="border-0 shadow-sm bg-white">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <UserCheck className="w-5 h-5 text-primary" />
-                      Operator Applications
-                      <span className="text-slate-400 font-normal text-sm">
-                        ({applicationsLoading ? "…" : (applicationsData as any[] | undefined)?.length ?? 0} pending)
-                      </span>
-                    </CardTitle>
-                    <span className="text-xs text-slate-400">Auto-refreshes every 15s</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {applicationsLoading ? (
-                    <div className="py-14 flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                      <p className="text-slate-400 text-sm">Loading applications…</p>
-                    </div>
-                  ) : !applicationsData || (applicationsData as any[]).length === 0 ? (
-                    <div className="py-16 text-center">
-                      <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-4">
-                        <UserCheck className="w-8 h-8 text-emerald-300" />
-                      </div>
-                      <p className="text-slate-500 font-medium">No pending applications</p>
-                      <p className="text-slate-400 text-sm mt-1">All operator applications have been reviewed.</p>
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-slate-100">
-                      {(applicationsData as any[]).map((op, i) => (
-                        <div
-                          key={op.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5"
-                          style={{ animation: "fadeSlideIn 0.35s ease both", animationDelay: `${i * 60}ms` }}
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="w-11 h-11 rounded-xl bg-amber-100 flex items-center justify-center shrink-0 border border-amber-200">
-                              <Store className="w-5 h-5 text-amber-600" />
-                            </div>
-                            <div className="space-y-0.5">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-semibold text-slate-900">{op.name}</p>
-                                <Badge className="bg-amber-100 text-amber-700 border border-amber-200 text-xs gap-1">
-                                  <AlertCircle className="w-3 h-3" /> Pending Review
-                                </Badge>
-                              </div>
-                              <p className="text-sm font-medium text-slate-600">{op.shopName}</p>
-                              <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-500 mt-1">
-                                <span className="flex items-center gap-1">
-                                  <MapPin className="w-3 h-3" /> {op.district}, {op.state}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Phone className="w-3 h-3" /> {op.phone}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <CreditCard className="w-3 h-3" /> PIN {op.pincode}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                  <Calendar className="w-3 h-3" /> Applied {new Date(op.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                </span>
-                              </div>
-                              <p className="text-xs text-slate-400">{op.email}</p>
-                              {op.address && <p className="text-xs text-slate-400 italic">{op.address}</p>}
-                            </div>
-                          </div>
-                          <div className="flex gap-2 shrink-0 sm:flex-col sm:items-end ml-14 sm:ml-0">
-                            <Button
-                              size="sm"
-                              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-9 px-4 shadow-sm"
-                              data-testid={`button-approve-operator-${op.id}`}
-                              onClick={() => handleOperatorStatus(op.id, "active")}
-                              disabled={updateOperatorStatus.isPending}
-                            >
-                              <UserCheck className="w-4 h-4" /> Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="border-red-300 text-red-700 hover:bg-red-50 gap-1.5 h-9 px-4"
-                              data-testid={`button-reject-operator-${op.id}`}
-                              onClick={() => handleOperatorStatus(op.id, "suspended")}
-                              disabled={updateOperatorStatus.isPending}
-                            >
-                              <UserX className="w-4 h-4" /> Reject
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+            {/* ── Operators Tab (full management: view, edit, terminate, download) ── */}
+            <TabsContent value="operators" className="tab-panel mt-4">
+              <OperatorsTab authHeaders={getAuthHeader() as Record<string, string>} />
             </TabsContent>
 
             {/* ── Reviews Tab ── */}
