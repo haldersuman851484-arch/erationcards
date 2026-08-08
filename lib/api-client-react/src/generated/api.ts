@@ -21,6 +21,9 @@ import type {
 
 import type {
   AdminAuthResponse,
+  CashfreeSessionRequest,
+  CashfreeSessionResponse,
+  CashfreeStatusResponse,
   ContactConfig,
   ContactSetting,
   ContactSettingUpdate,
@@ -28,6 +31,7 @@ import type {
   DeleteOperatorResponse,
   ErrorResponse,
   ExportOrdersArchiveParams,
+  GetCashfreePaymentStatusParams,
   GetOperatorOrdersParams,
   GetOrdersArchivePreviewParams,
   HealthStatus,
@@ -50,7 +54,6 @@ import type {
   OrdersArchiveDeleteRequest,
   OrdersArchiveDeleteResponse,
   OrdersArchivePreview,
-  PaymentScreenshotUploadResponse,
   PaymentStatusUpdate,
   PaymentStatusUpdateResponse,
   PaymentVerificationListResponse,
@@ -73,8 +76,7 @@ import type {
   UpdateOperatorStatusInput,
   UpiConfig,
   UpiSetting,
-  UpiSettingUpdate,
-  UploadPaymentScreenshotBody
+  UpiSettingUpdate
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1005,38 +1007,36 @@ export const useSubmitOrder = <TError = ErrorType<ErrorResponse>,
       return useMutation(getSubmitOrderMutationOptions(options));
     }
 
-export const getUploadPaymentScreenshotUrl = () => {
+export const getCreateCashfreePaymentSessionUrl = () => {
 
 
 
 
-  return `/api/payments/upload-screenshot`
+  return `/api/payments/cashfree/session`
 }
 
 /**
- * @summary Upload a UPI payment screenshot
+ * @summary Create (or reuse) a Cashfree payment session for an order
  */
-export const uploadPaymentScreenshot = async (uploadPaymentScreenshotBody: UploadPaymentScreenshotBody, options?: RequestInit): Promise<PaymentScreenshotUploadResponse> => {
-    const formData = new FormData();
-formData.append(`screenshot`, uploadPaymentScreenshotBody.screenshot);
+export const createCashfreePaymentSession = async (cashfreeSessionRequest: CashfreeSessionRequest, options?: RequestInit): Promise<CashfreeSessionResponse> => {
 
-  return customFetch<PaymentScreenshotUploadResponse>(getUploadPaymentScreenshotUrl(),
+  return customFetch<CashfreeSessionResponse>(getCreateCashfreePaymentSessionUrl(),
   {
     ...options,
-    method: 'POST'
-    ,
-    body: formData
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(cashfreeSessionRequest)
   }
 );}
 
 
 
 
-export const getUploadPaymentScreenshotMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext> => {
+export const getCreateCashfreePaymentSessionMutationOptions = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCashfreePaymentSession>>, TError,{data: BodyType<CashfreeSessionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCashfreePaymentSession>>, TError,{data: BodyType<CashfreeSessionRequest>}, TContext> => {
 
-const mutationKey = ['uploadPaymentScreenshot'];
+const mutationKey = ['createCashfreePaymentSession'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -1046,10 +1046,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, {data: BodyType<UploadPaymentScreenshotBody>}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCashfreePaymentSession>>, {data: BodyType<CashfreeSessionRequest>}> = (props) => {
           const {data} = props ?? {};
 
-          return  uploadPaymentScreenshot(data,requestOptions)
+          return  createCashfreePaymentSession(data,requestOptions)
         }
 
 
@@ -1059,23 +1059,107 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type UploadPaymentScreenshotMutationResult = NonNullable<Awaited<ReturnType<typeof uploadPaymentScreenshot>>>
-    export type UploadPaymentScreenshotMutationBody = BodyType<UploadPaymentScreenshotBody>
-    export type UploadPaymentScreenshotMutationError = ErrorType<ErrorResponse>
+    export type CreateCashfreePaymentSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createCashfreePaymentSession>>>
+    export type CreateCashfreePaymentSessionMutationBody = BodyType<CashfreeSessionRequest>
+    export type CreateCashfreePaymentSessionMutationError = ErrorType<ErrorResponse>
 
     /**
- * @summary Upload a UPI payment screenshot
+ * @summary Create (or reuse) a Cashfree payment session for an order
  */
-export const useUploadPaymentScreenshot = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof uploadPaymentScreenshot>>, TError,{data: BodyType<UploadPaymentScreenshotBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+export const useCreateCashfreePaymentSession = <TError = ErrorType<ErrorResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCashfreePaymentSession>>, TError,{data: BodyType<CashfreeSessionRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof uploadPaymentScreenshot>>,
+        Awaited<ReturnType<typeof createCashfreePaymentSession>>,
         TError,
-        {data: BodyType<UploadPaymentScreenshotBody>},
+        {data: BodyType<CashfreeSessionRequest>},
         TContext
       > => {
-      return useMutation(getUploadPaymentScreenshotMutationOptions(options));
+      return useMutation(getCreateCashfreePaymentSessionMutationOptions(options));
     }
+
+export const getGetCashfreePaymentStatusUrl = (params: GetCashfreePaymentStatusParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/payments/cashfree/status?${stringifiedParams}` : `/api/payments/cashfree/status`
+}
+
+/**
+ * @summary Re-check an order's payment with Cashfree and sync the stored status
+ */
+export const getCashfreePaymentStatus = async (params: GetCashfreePaymentStatusParams, options?: RequestInit): Promise<CashfreeStatusResponse> => {
+
+  return customFetch<CashfreeStatusResponse>(getGetCashfreePaymentStatusUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetCashfreePaymentStatusQueryKey = (params?: GetCashfreePaymentStatusParams,) => {
+    return [
+    `/api/payments/cashfree/status`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetCashfreePaymentStatusQueryOptions = <TData = Awaited<ReturnType<typeof getCashfreePaymentStatus>>, TError = ErrorType<ErrorResponse>>(params: GetCashfreePaymentStatusParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCashfreePaymentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCashfreePaymentStatusQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCashfreePaymentStatus>>> = ({ signal }) => getCashfreePaymentStatus(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCashfreePaymentStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetCashfreePaymentStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getCashfreePaymentStatus>>>
+export type GetCashfreePaymentStatusQueryError = ErrorType<ErrorResponse>
+
+
+/**
+ * @summary Re-check an order's payment with Cashfree and sync the stored status
+ */
+
+export function useGetCashfreePaymentStatus<TData = Awaited<ReturnType<typeof getCashfreePaymentStatus>>, TError = ErrorType<ErrorResponse>>(
+ params: GetCashfreePaymentStatusParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getCashfreePaymentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetCashfreePaymentStatusQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export const getGetUpiConfigUrl = () => {
 

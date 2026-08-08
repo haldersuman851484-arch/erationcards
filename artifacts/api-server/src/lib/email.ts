@@ -39,6 +39,8 @@ export interface OrderEmailData {
   customerEmail: string;
   amount: string;
   quantity: number;
+  /** true when the payment was completed online (gateway-confirmed) — switches the email to the "payment received" variant. */
+  paymentReceived?: boolean;
 }
 
 function buildHtml(order: OrderEmailData): string {
@@ -61,9 +63,15 @@ ${buildEmailHeader()}
         <td style="padding: 6px 0; text-align: right; font-weight: bold; border-top: 1px solid #e2e8f0;">&#8377;${escapeHtml(order.amount)}</td>
       </tr>
     </table>
-    <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
-      Our team is now verifying your payment screenshot. Your card will be printed after verification and delivered within 5&ndash;7 working days.
-    </div>
+    ${
+      order.paymentReceived
+        ? `<div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px; font-size: 13px; color: #065f46; margin-bottom: 16px;">
+      Payment received &#10003; &mdash; your payment was completed securely online. Your card will be printed and delivered within 5&ndash;7 working days.
+    </div>`
+        : `<div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
+      Our team is now verifying your payment. Your card will be printed after verification and delivered within 5&ndash;7 working days.
+    </div>`
+    }
     <p style="margin: 0 0 6px; font-size: 14px;">Keep this order number safe &mdash; you will need it to track your order:</p>
     <p style="margin: 0 0 16px;"><a href="${TRACK_URL}" style="color: #00afc8; font-weight: bold;">${TRACK_URL}</a></p>
     <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is an automatic email from PVC Card Portal. Please do not reply.</p>
@@ -80,7 +88,9 @@ function buildText(order: OrderEmailData): string {
     `Total cards: ${order.quantity}`,
     `Amount paid: Rs ${order.amount}`,
     ``,
-    `Our team is now verifying your payment screenshot. Your card will be printed after verification and delivered within 5-7 working days.`,
+    order.paymentReceived
+      ? `Payment received - your payment was completed securely online. Your card will be printed and delivered within 5-7 working days.`
+      : `Our team is now verifying your payment. Your card will be printed after verification and delivered within 5-7 working days.`,
     ``,
     `Track your order: ${TRACK_URL}`,
   ].join("\n");

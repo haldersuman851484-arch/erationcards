@@ -96,8 +96,8 @@ export default function Terms() {
 
           <Section icon={ShoppingCart} title="4. Ordering &amp; Payment">
             <ul className="list-disc list-inside space-y-1">
-              <li>Payment must be made in advance via UPI (GPay, PhonePe, Paytm) or Net Banking</li>
-              <li>An order is confirmed only after our team manually verifies your payment screenshot</li>
+              <li>Payment must be made in advance through our secure payment partner, Cashfree Payments (UPI, debit card or net banking)</li>
+              <li>An order is confirmed automatically once your online payment is successful</li>
               <li>We reserve the right to reject any order that appears fraudulent or incomplete</li>
               <li>Prices are subject to change without prior notice; the price shown at checkout applies to your order</li>
             </ul>

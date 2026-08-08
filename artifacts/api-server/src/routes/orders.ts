@@ -455,6 +455,7 @@ router.post("/orders/:orderNumber/submit", async (req: Request, res: Response) =
           customerEmail: order.customerEmail,
           amount: String(order.amount),
           quantity: order.quantity,
+          paymentReceived: order.paymentStatus === "paid" || order.paymentStatus === "confirmed",
         },
         req.log,
       );

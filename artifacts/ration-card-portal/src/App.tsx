@@ -42,6 +42,7 @@ const CardTypePage = lazy(() => import("./pages/CardTypePage"));
 
 const OrderUpload = lazy(() => import("./pages/OrderUpload"));
 const Receipt = lazy(() => import("./pages/Receipt"));
+const PayOrder = lazy(() => import("./pages/PayOrder"));
 const OperatorRegister = lazy(() => import("./pages/operator/Register"));
 const OperatorLogin = lazy(() => import("./pages/operator/Login"));
 const OperatorDashboard = lazy(() => import("./pages/operator/Dashboard"));
@@ -117,6 +118,7 @@ function Router() {
       <Route path="/order" component={Order} />
       <Route path="/order-upload/:orderNumber" component={OrderUpload} />
       <Route path="/receipt/:orderNumber" component={Receipt} />
+      <Route path="/pay/:orderNumber" component={PayOrder} />
       <Route path="/track" component={TrackOrder} />
       <Route path="/download" component={DownloadCard} />
       <Route path="/about" component={About} />

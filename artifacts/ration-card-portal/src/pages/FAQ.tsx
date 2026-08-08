@@ -103,15 +103,15 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "How do I place an order?",
-    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card category (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), complete the UPI payment, and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
+    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card category (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), pay securely online (UPI, debit card or net banking), and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
     bnQ: "কীভাবে PVC রেশন কার্ড অর্ডার করব?",
-    bnA: "হোম পেজ থেকে 'Order PVC Card'-এ ক্লিক করুন। নাম, রেশন কার্ড নম্বর ও ডেলিভারির ঠিকানা লিখুন, কার্ডের ক্যাটাগরি বেছে নিন (AAY / PHH / SPHH / RKSY-I / RKSY-II — অন্য কার্ডের জন্য ABHA / E-SHRAM / GENERAL), UPI পেমেন্ট সেরে আপনার e-Ration Card PDF আপলোড করুন। প্রিন্টিং আর ডেলিভারির দায়িত্ব আমাদের।",
+    bnA: "হোম পেজ থেকে 'Order PVC Card'-এ ক্লিক করুন। নাম, রেশন কার্ড নম্বর ও ডেলিভারির ঠিকানা লিখুন, কার্ডের ক্যাটাগরি বেছে নিন (AAY / PHH / SPHH / RKSY-I / RKSY-II — অন্য কার্ডের জন্য ABHA / E-SHRAM / GENERAL), অনলাইনে পেমেন্ট সেরে আপনার e-Ration Card PDF আপলোড করুন। প্রিন্টিং আর ডেলিভারির দায়িত্ব আমাদের।",
   },
   {
     q: "What payment methods are accepted?",
-    a: "We accept UPI payments via Google Pay, PhonePe, Paytm, and any UPI-enabled app. After placing your order, you'll receive our UPI ID and a QR code to scan for payment.",
+    a: "Payment happens on a secure Cashfree Payments page right after you fill the order form. You can pay by UPI (Google Pay, PhonePe, Paytm or any UPI app), debit card or net banking — the payment is confirmed automatically within seconds.",
     bnQ: "কোন কোন পেমেন্ট পদ্ধতি নেওয়া হয়?",
-    bnA: "Google Pay, PhonePe, Paytm-সহ যেকোনো UPI অ্যাপে পেমেন্ট নেওয়া হয়। অর্ডার দেওয়ার পর আমাদের UPI ID আর স্ক্যান করার QR কোড পেয়ে যাবেন।",
+    bnA: "অর্ডার ফর্ম পূরণের পরেই Cashfree Payments-এর নিরাপদ পেজে পেমেন্ট হয়। UPI (Google Pay, PhonePe, Paytm বা যেকোনো UPI অ্যাপ), ডেবিট কার্ড বা নেট ব্যাংকিং-এ পেমেন্ট করা যায় — কয়েক সেকেন্ডেই পেমেন্ট নিশ্চিত হয়ে যায়।",
   },
   {
     q: "How long does delivery take?",
@@ -127,9 +127,9 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "Is my personal data and ration card PDF safe?",
-    a: "Yes. Your uploaded PDFs and payment screenshots are stored privately and used only to print and verify your order. Order receipt pages are blocked from search engines, and we do not sell or share your personal details with third parties.",
+    a: "Yes. Your uploaded PDFs are stored privately and used only to print your order. Payments happen on Cashfree's secure systems — we never see your UPI PIN or card details. Order receipt pages are blocked from search engines, and we do not sell or share your personal details with third parties.",
     bnQ: "আমার ব্যক্তিগত তথ্য ও রেশন কার্ডের PDF কি নিরাপদ?",
-    bnA: "হ্যাঁ। আপলোড করা PDF ও পেমেন্ট স্ক্রিনশট গোপনে সংরক্ষিত থাকে এবং শুধু অর্ডার প্রিন্ট ও যাচাইয়ের কাজে ব্যবহার হয়। রসিদের পেজ সার্চ ইঞ্জিন থেকে ব্লক করা, আর আপনার তথ্য আমরা কারো কাছে বিক্রি বা শেয়ার করি না।",
+    bnA: "হ্যাঁ। আপলোড করা PDF গোপনে সংরক্ষিত থাকে এবং শুধু অর্ডার প্রিন্টের কাজে ব্যবহার হয়। পেমেন্ট হয় Cashfree-র নিরাপদ সিস্টেমে — আপনার UPI PIN বা কার্ডের তথ্য আমরা কখনো দেখি না। রসিদের পেজ সার্চ ইঞ্জিন থেকে ব্লক করা, আর আপনার তথ্য আমরা কারো কাছে বিক্রি বা শেয়ার করি না।",
   },
   {
     q: "What is the difference between a PVC card and a laminated paper card?",

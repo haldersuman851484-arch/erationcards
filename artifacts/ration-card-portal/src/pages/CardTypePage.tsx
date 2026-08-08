@@ -420,8 +420,8 @@ export default function CardTypePage() {
     },
     {
       icon: <CreditCard className="w-6 h-6 text-emerald-500" />,
-      title: "Order & pay by UPI",
-      desc: `Fill the order form with your delivery address, pay ₹${single} (or ₹${multi} per card for 2+) via Google Pay, PhonePe, Paytm or any UPI app, and upload the payment screenshot.`,
+      title: "Order & pay online",
+      desc: `Fill the order form with your delivery address and pay ₹${single} (or ₹${multi} per card for 2+) securely online — UPI (Google Pay, PhonePe, Paytm), debit card or net banking. Payment confirms instantly.`,
     },
     {
       icon: <Truck className="w-6 h-6 text-orange-500" />,

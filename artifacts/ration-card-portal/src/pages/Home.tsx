@@ -293,7 +293,7 @@ const STATIC_TESTIMONIALS = [
     cardType: "SPHH",
     badgeClass: "bg-purple-100 text-purple-700",
     rating: 4,
-    quote: "Process was smooth. Uploaded my screenshot and got confirmation the same day. Card quality is good — text is clear and lamination is solid. Slight delay in dispatch but overall satisfied.",
+    quote: "Process was smooth. Paid online and got confirmation within a minute. Card quality is good — text is clear and lamination is solid. Slight delay in dispatch but overall satisfied.",
     date: "April 2025",
   },
   {
@@ -357,7 +357,7 @@ export default function Home() {
     estimatedCost: { "@type": "MonetaryAmount", currency: "INR", value: String(PRICING.ration.single.public) },
     step: [
       { "@type": "HowToStep", position: 1, name: "Fill the order form", text: "Go to erationcards.in/order and enter your name, mobile number and delivery address.", url: "https://erationcards.in/order" },
-      { "@type": "HowToStep", position: 2, name: "Pay by UPI", text: "Pay using Google Pay, PhonePe, Paytm or any UPI app and upload the payment screenshot." },
+      { "@type": "HowToStep", position: 2, name: "Pay securely online", text: "Pay using UPI (Google Pay, PhonePe, Paytm), debit card or net banking on Cashfree's secure payment page — payment confirms instantly." },
       { "@type": "HowToStep", position: 3, name: "Upload your e-Ration Card PDF", text: "Upload each family member's e-Ration Card PDF downloaded from food.wb.gov.in — one PVC card is printed per PDF." },
       { "@type": "HowToStep", position: 4, name: "Receive your card", text: "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days anywhere in West Bengal." },
     ],
@@ -650,7 +650,7 @@ export default function Home() {
               <ol className="space-y-3">
                 {[
                   "Fill in your name, mobile number and delivery address on the order form.",
-                  "Pay by UPI (Google Pay, PhonePe, Paytm) and upload the payment screenshot.",
+                  "Pay securely online — UPI (Google Pay, PhonePe, Paytm), debit card or net banking.",
                   "Upload each family member's e-Ration Card PDF — one PVC card is printed per PDF.",
                   "Cards are printed and dispatched within 24–48 hours; Speed Post delivery takes 3–5 working days.",
                 ].map((step, i) => (

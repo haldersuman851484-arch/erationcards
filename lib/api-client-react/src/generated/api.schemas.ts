@@ -125,13 +125,50 @@ export interface OrderInput {
   familyCards?: OrderInputFamilyCardsItem[];
   quantity: number;
   amount: number;
-  paymentStatus?: string;
-  paymentMethod?: string;
-  paymentScreenshotUrl?: string;
 }
 
 export interface UpiConfig {
   merchantUpiId: string;
+}
+
+export interface CashfreeSessionRequest {
+  /**
+     * @minLength 4
+     * @maxLength 64
+     */
+  orderNumber: string;
+  /**
+     * SPA path to return to after checkout (defaults to /pay/{orderNumber}); origin is resolved server-side
+     * @maxLength 200
+     */
+  returnPath?: string;
+}
+
+export type CashfreeSessionResponseMode = typeof CashfreeSessionResponseMode[keyof typeof CashfreeSessionResponseMode];
+
+
+export const CashfreeSessionResponseMode = {
+  sandbox: 'sandbox',
+  production: 'production',
+} as const;
+
+export interface CashfreeSessionResponse {
+  alreadyPaid: boolean;
+  /** @nullable */
+  paymentSessionId: string | null;
+  mode: CashfreeSessionResponseMode;
+  amount: number;
+  /** @nullable */
+  cfOrderId?: string | null;
+}
+
+export interface CashfreeStatusResponse {
+  paymentStatus: string;
+  /**
+     * Raw Cashfree order_status (ACTIVE, PAID, EXPIRED, TERMINATED) when the gateway was reachable
+     * @nullable
+     */
+  cashfreeStatus?: string | null;
 }
 
 /**
@@ -352,10 +389,6 @@ export interface SettingsOtpVerifyResponse {
   /** Send as the x-settings-unlock header on settings endpoints */
   unlockToken: string;
   expiresInSeconds: number;
-}
-
-export interface PaymentScreenshotUploadResponse {
-  url: string;
 }
 
 export type PaymentStatusUpdatePaymentStatus = typeof PaymentStatusUpdatePaymentStatus[keyof typeof PaymentStatusUpdatePaymentStatus];
@@ -761,8 +794,8 @@ orderNumber?: string;
 rationCardNumber?: string;
 };
 
-export type UploadPaymentScreenshotBody = {
-  screenshot: Blob;
+export type GetCashfreePaymentStatusParams = {
+orderNumber: string;
 };
 
 export type GetOrdersArchivePreviewParams = {

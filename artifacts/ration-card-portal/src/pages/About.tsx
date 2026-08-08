@@ -43,9 +43,9 @@ export default function About() {
   const ABOUT_FAQS = [
     {
       q: "How do I order a PVC card online?",
-      a: "Fill the order form at erationcards.in/order with your name, mobile number and delivery address, pay by UPI (Google Pay, PhonePe, Paytm), upload the payment screenshot, then upload the PDF of each card you want printed. We print within 24–48 hours and deliver by Speed Post / courier in about 3–5 working days in West Bengal.",
+      a: "Fill the order form at erationcards.in/order with your name, mobile number and delivery address, pay securely online (UPI, debit card or net banking via Cashfree Payments), then upload the PDF of each card you want printed. We print within 24–48 hours and deliver by Speed Post / courier in about 3–5 working days in West Bengal.",
       bnQ: "অনলাইনে PVC কার্ড কীভাবে অর্ডার করব?",
-      bnA: "erationcards.in/order-এ নাম, মোবাইল নম্বর ও ঠিকানা দিয়ে ফর্ম পূরণ করুন, UPI-তে (Google Pay, PhonePe, Paytm) পেমেন্ট করে স্ক্রিনশট আপলোড করুন, তারপর যে কার্ড ছাপাতে চান তার PDF আপলোড করুন। ২৪–৪৮ ঘণ্টায় প্রিন্ট, পশ্চিমবঙ্গে ৩–৫ কর্মদিবসে ডেলিভারি।",
+      bnA: "erationcards.in/order-এ নাম, মোবাইল নম্বর ও ঠিকানা দিয়ে ফর্ম পূরণ করুন, অনলাইনে নিরাপদে পেমেন্ট করুন (UPI, ডেবিট কার্ড বা নেট ব্যাংকিং), তারপর যে কার্ড ছাপাতে চান তার PDF আপলোড করুন। ২৪–৪৮ ঘণ্টায় প্রিন্ট, পশ্চিমবঙ্গে ৩–৫ কর্মদিবসে ডেলিভারি।",
     },
     {
       q: "Which PVC cards do you print?",
@@ -294,9 +294,9 @@ export default function About() {
                 enter your name, mobile number and delivery address.
               </li>
               <li>
-                <span className="font-semibold text-slate-800">Pay by UPI.</span> Google Pay,
-                PhonePe, Paytm — any UPI app works. Upload the payment screenshot so we can match
-                your order instantly.
+                <span className="font-semibold text-slate-800">Pay securely online.</span> UPI (Google Pay,
+                PhonePe, Paytm), debit card or net banking — your payment is confirmed
+                automatically within seconds.
               </li>
               <li>
                 <span className="font-semibold text-slate-800">Upload your card PDF.</span> One

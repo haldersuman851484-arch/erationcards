@@ -47,7 +47,4 @@ export interface OrderInput {
   familyCards?: OrderInputFamilyCardsItem[];
   quantity: number;
   amount: number;
-  paymentStatus?: string;
-  paymentMethod?: string;
-  paymentScreenshotUrl?: string;
 }

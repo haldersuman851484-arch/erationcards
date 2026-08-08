@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { QRCodeSVG } from "qrcode.react";
 import { Navbar, Footer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,9 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { useCreateOrder, useGetUpiConfig, useUploadPaymentScreenshot, useSubmitOrder } from "@workspace/api-client-react";
+import { useCreateOrder, useSubmitOrder, useCreateCashfreePaymentSession } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, CheckCircle2, CreditCard, Download, ExternalLink, FileText, Loader2, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, Copy, Smartphone, Clock } from "lucide-react";
+import { CheckCircle2, CreditCard, Download, ExternalLink, FileText, Loader2, Lock, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/hooks/use-seo";
 import {
@@ -29,6 +28,7 @@ import { usePricing } from "@/hooks/use-pricing";
 import { useContact } from "@/hooks/use-contact";
 import { applyServerFieldErrors, extractFamilyCardIssues, scrollToFamilyCard, scrollToField } from "@/lib/serverFieldErrors";
 import { trackEvent } from "@/lib/analytics";
+import { openCashfreeCheckout, pollPaymentStatus } from "@/lib/cashfreeCheckout";
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
@@ -120,7 +120,7 @@ export default function Order() {
   const FUNNEL_STEP_EVENTS: Record<number, string> = {
     2: "begin_checkout",     // step 1 (card details) completed
     3: "add_shipping_info",  // step 2 (address) completed
-    4: "add_payment_info",   // step 3 (payment screenshot) completed
+    4: "add_payment_info",   // step 3 (online payment) completed
   };
   function advanceToStep(next: number) {
     const eventName = FUNNEL_STEP_EVENTS[next];
@@ -136,23 +136,21 @@ export default function Order() {
   const [subError, setSubError] = useState("");
   // Server-rejected family-card entries: index in familyCards → message.
   const [familyCardErrors, setFamilyCardErrors] = useState<Record<number, string>>({});
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [copiedUpi, setCopiedUpi] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
+  // Online-payment UI phase. "unconfirmed" = the checkout window closed but
+  // the server has not seen the money yet — offer a re-check, never assume.
+  const [payPhase, setPayPhase] = useState<
+    "idle" | "opening" | "paying" | "checking" | "unconfirmed" | "failed" | "unavailable"
+  >("idle");
   const [createdOrder, setCreatedOrder] = useState<{ orderNumber: string } | null>(null);
   const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
   const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
   const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const createOrder = useCreateOrder();
   const submitOrder = useSubmitOrder();
-  const uploadScreenshot = useUploadPaymentScreenshot();
-  const { data: upiConfig, isLoading: upiLoading, isError: upiError, refetch: refetchUpi } = useGetUpiConfig();
-  const merchantUpiId = upiConfig?.merchantUpiId || "";
+  const createCashfreeSession = useCreateCashfreePaymentSession();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -281,39 +279,75 @@ export default function Order() {
     );
   }
 
-  function handleScreenshotChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setScreenshotFile(file);
-    const reader = new FileReader();
-    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string);
-    reader.readAsDataURL(file);
+  const payBusy =
+    createOrder.isPending || payPhase === "opening" || payPhase === "paying" || payPhase === "checking";
+
+  function onPaid() {
+    setPayPhase("idle");
+    toast({ title: "Payment received", description: "Your payment is confirmed. One last step — upload your card PDF(s)." });
+    advanceToStep(4);
+    window.scrollTo(0, 0);
   }
 
-  function copyUpiId() {
-    if (!merchantUpiId) return;
-    navigator.clipboard.writeText(merchantUpiId).then(() => {
-      setCopiedUpi(true);
-      setTimeout(() => setCopiedUpi(false), 2000);
-    });
+  /** Re-check with the server whether the money actually arrived. */
+  async function checkPaymentNow(orderNumber: string, attempts: number, intervalMs: number) {
+    setPayPhase("checking");
+    const status = await pollPaymentStatus(orderNumber, attempts, intervalMs);
+    if (status === "paid") onPaid();
+    else if (status === "failed") setPayPhase("failed");
+    else setPayPhase("unconfirmed");
+  }
+
+  /**
+   * Create (or reuse) the Cashfree payment session for this order, open the
+   * secure checkout window, then poll the server for the outcome. The server
+   * is the source of truth — the SDK promise only tells us the window closed.
+   */
+  async function startPayment(orderNumber: string) {
+    setPayPhase("opening");
+    let session;
+    try {
+      session = await createCashfreeSession.mutateAsync({
+        data: { orderNumber, returnPath: `/pay/${orderNumber}` },
+      });
+    } catch (err: any) {
+      if (err?.status === 503) {
+        setPayPhase("unavailable");
+        return;
+      }
+      const serverMessage = typeof err?.data?.error === "string" ? err.data.error : null;
+      setPayPhase("idle");
+      toast({ title: "Could not start the payment", description: serverMessage ?? "Please check your connection and try again.", variant: "destructive" });
+      return;
+    }
+    if (session.alreadyPaid) {
+      onPaid();
+      return;
+    }
+    if (!session.paymentSessionId) {
+      setPayPhase("unavailable");
+      return;
+    }
+    try {
+      setPayPhase("paying");
+      await openCashfreeCheckout(session.paymentSessionId, session.mode);
+    } catch {
+      setPayPhase("idle");
+      toast({ title: "Could not open the payment window", description: "Please check your connection and try again.", variant: "destructive" });
+      return;
+    }
+    await checkPaymentNow(orderNumber, 3, 1500);
   }
 
   async function onSubmit(data: OrderForm) {
-    // Order already created — the customer is on step 4; never create a duplicate.
-    if (createdOrder) { setStep(4); return; }
-    if (!screenshotFile) {
-      toast({ title: "Screenshot required", description: "Please upload your UPI payment screenshot.", variant: "destructive" });
+    // Order already created (an earlier payment attempt) — never create a
+    // duplicate; jump straight back into the payment flow.
+    if (createdOrder) {
+      await startPayment(createdOrder.orderNumber);
       return;
     }
-
-    setIsUploading(true);
-    let screenshotUrl = "";
-    try {
-      const result = await uploadScreenshot.mutateAsync({ data: { screenshot: screenshotFile } });
-      screenshotUrl = result.url;
-    } catch {
-      toast({ title: "Upload failed", description: "Could not upload payment screenshot. Please try again.", variant: "destructive" });
-      setIsUploading(false);
+    if (!consentChecked) {
+      toast({ title: "Consent required", description: "Please tick the box to accept the Terms & Conditions and Refund Policy.", variant: "destructive" });
       return;
     }
 
@@ -334,21 +368,16 @@ export default function Order() {
           familyCards,
           quantity: totalCards,
           amount,
-          paymentStatus: "pending",
-          paymentMethod: "upi",
-          paymentScreenshotUrl: screenshotUrl,
         },
       },
       {
         onSuccess: (order) => {
-          setIsUploading(false);
           setCreatedOrder({ orderNumber: order.orderNumber });
           setCardPdfs({});
-          advanceToStep(4);
-          window.scrollTo(0, 0);
+          // Straight into payment — the order stays "pending" until paid.
+          void startPayment(order.orderNumber);
         },
         onError: (err: any) => {
-          setIsUploading(false);
           const serverMessage = typeof err?.data?.error === "string" ? err.data.error : null;
           // Field-level 400: highlight the offending input(s) inline, jump to
           // the wizard step that contains the first one, and scroll to it.
@@ -413,12 +442,12 @@ export default function Order() {
         <main className="flex-1 flex items-center justify-center py-20 px-4">
           <Card className="max-w-md w-full text-center border-slate-200 shadow-lg" data-testid="order-success-card">
             <CardContent className="pt-12 pb-10 space-y-6">
-              <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto">
-                <Clock className="w-10 h-10 text-amber-500" />
+              <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500" />
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-slate-900 mb-2">Order Placed!</h2>
-                <p className="text-slate-600">We have received your order. Our team is reviewing your payment screenshot.</p>
+                <p className="text-slate-600">Payment received — your order is confirmed and queued for printing.</p>
               </div>
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <p className="text-sm text-slate-500 mb-1">Your Order Number</p>
@@ -436,9 +465,9 @@ export default function Order() {
                   <p className="text-xs text-amber-700">We could not send the email right now — please write down your order number shown above.</p>
                 </div>
               )}
-              <div className="bg-amber-50 rounded-lg p-3 border border-amber-200 text-left">
-                <p className="text-sm text-amber-800 font-medium mb-1">⏳ Payment NOT yet confirmed</p>
-                <p className="text-xs text-amber-700">Our team will manually check your payment screenshot. <strong>Your card will NOT be printed until we verify your payment.</strong> If your screenshot is invalid or fake, your order will be cancelled. Verified orders are delivered in 5–7 working days.</p>
+              <div className="bg-emerald-50 rounded-lg p-3 border border-emerald-200 text-left" data-testid="note-payment-received">
+                <p className="text-sm text-emerald-800 font-medium mb-1">✅ Payment received</p>
+                <p className="text-xs text-emerald-700">Your payment was completed securely online through Cashfree — no manual verification needed. Your card will be printed and delivered within <strong>5–7 working days</strong>.</p>
               </div>
               <Button
                 variant="outline"
@@ -463,9 +492,8 @@ export default function Order() {
                   setSubError("");
                   setFamilyCardErrors({});
                   setShowFamilyDialog(false);
-                  setScreenshotFile(null);
-                  setScreenshotPreview(null);
-                  setPaymentConfirmed(false);
+                  setConsentChecked(false);
+                  setPayPhase("idle");
                   setCreatedOrder(null);
                   setCardPdfs({});
                   setEmailSent(null);
@@ -778,8 +806,8 @@ export default function Order() {
               {step === 3 && (
                 <Card className="border-slate-200 shadow-sm">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Pay via UPI</CardTitle>
-                    <CardDescription>Scan the QR code or use the UPI ID below, then upload your payment screenshot</CardDescription>
+                    <CardTitle className="flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> Review &amp; Pay</CardTitle>
+                    <CardDescription>Check your order summary, then pay securely online — UPI, card or net banking.</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-5">
                     <div className="bg-primary/5 rounded-lg p-4 border border-primary/20">
@@ -799,207 +827,143 @@ export default function Order() {
                       </div>
                     </div>
 
-                    {/* Numbered steps guide */}
+                    {/* How online payment works */}
                     <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-                      <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">Follow these steps in order</p>
+                      <p className="text-xs font-semibold text-primary uppercase tracking-wide mb-2">How payment works</p>
                       <ol className="space-y-1.5">
                         <li className="flex items-start gap-2 text-sm text-slate-700">
                           <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">1</span>
-                          <span>Scan the QR code or copy the UPI ID below</span>
+                          <span>Tick the consent box below</span>
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-700">
                           <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">2</span>
-                          <span>Complete the payment of <strong>₹{amount}</strong> in your UPI app</span>
+                          <span>Press the Pay button — a secure payment window opens</span>
                         </li>
                         <li className="flex items-start gap-2 text-sm text-slate-700">
                           <span className="shrink-0 w-5 h-5 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center mt-0.5">3</span>
-                          <span>Take a screenshot of the payment success screen, then upload it below</span>
+                          <span>Pay <strong>₹{amount}</strong> by UPI, card or net banking — your order confirms automatically</span>
                         </li>
                       </ol>
                     </div>
 
-                    {upiLoading ? (
-                      <div className="text-center py-6 text-slate-500 text-sm">
-                        Loading payment details…
-                      </div>
-                    ) : upiError ? (
-                      <div className="text-center py-6 space-y-3">
-                        <p className="text-sm font-medium text-slate-700">Could not load payment details</p>
-                        <p className="text-xs text-slate-500">Please check your connection and try again.</p>
-                        <button
-                          type="button"
-                          onClick={() => refetchUpi()}
-                          className="text-xs text-primary underline underline-offset-2 hover:text-primary/80"
+                    {/* Consent checkbox */}
+                    <label className="flex items-start gap-3 cursor-pointer group" data-testid="label-consent">
+                      <input
+                        type="checkbox"
+                        checked={consentChecked}
+                        onChange={(e) => setConsentChecked(e.target.checked)}
+                        data-testid="checkbox-consent"
+                        className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
+                      />
+                      <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
+                        I have read and understood all the{" "}
+                        <a
+                          href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/terms`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-primary hover:text-primary/80"
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid="link-consent-terms"
                         >
-                          Retry
-                        </button>
+                          Terms &amp; Conditions
+                        </a>{" "}
+                        and the{" "}
+                        <a
+                          href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/refund`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline text-primary hover:text-primary/80"
+                          onClick={(e) => e.stopPropagation()}
+                          data-testid="link-consent-refund"
+                        >
+                          Return/Refund Policy
+                        </a>
+                        , and I hereby give my consent to proceed with the printing of my document.
+                      </span>
+                    </label>
+
+                    {/* Secure payment note */}
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 flex gap-2.5">
+                      <Lock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        Payments are processed securely by <strong>Cashfree Payments</strong>, an RBI-authorised payment gateway. We never see or store your UPI PIN or card details.
+                      </p>
+                    </div>
+
+                    {payPhase === "unavailable" && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3" data-testid="pay-unavailable-note">
+                        <p className="text-sm font-semibold text-amber-800">Online payment is temporarily unavailable</p>
+                        <p className="text-xs text-amber-700 mt-0.5">
+                          {createdOrder
+                            ? `Your order ${createdOrder.orderNumber} is saved. Please try the payment again in a few minutes — you can also finish it later from the Track Order page.`
+                            : "Please try again in a few minutes — your details stay filled in."}
+                        </p>
                       </div>
-                    ) : merchantUpiId ? (
-                      <>
-                        <div className="flex flex-col sm:flex-row gap-6 items-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <div className="p-3 bg-white border-2 border-primary/20 rounded-xl shadow-sm">
-                              <QRCodeSVG
-                                value={`upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Card+Order`}
-                                size={160}
-                                fgColor="#00afc8"
-                                data-testid="upi-qr-code"
-                              />
-                            </div>
-                            <p className="text-xs text-slate-500 text-center">Scan with any UPI app</p>
-                          </div>
-                          <div className="flex-1 space-y-4 w-full">
-                            <div>
-                              <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">UPI ID</p>
-                              <div className="flex items-center gap-2">
-                                <div className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm text-slate-900 select-all" data-testid="text-merchant-upi-id">
-                                  {merchantUpiId}
-                                </div>
-                                <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={copyUpiId} data-testid="button-copy-upi">
-                                  <Copy className="w-4 h-4 mr-1" />
-                                  {copiedUpi ? "Copied!" : "Copy"}
-                                </Button>
-                              </div>
-                            </div>
-                            <a
-                              href={`upi://pay?pa=${merchantUpiId}&pn=PVC+Card+Portal&am=${amount}&cu=INR&tn=PVC+Card+Order`}
-                              data-testid="link-open-upi-app"
-                            >
-                              <Button type="button" className="w-full bg-primary hover:bg-primary/90 gap-2">
-                                <Smartphone className="w-4 h-4" />
-                                Open in UPI App
-                              </Button>
-                            </a>
-                            <p className="text-xs text-slate-500">Works with PhonePe, GPay, Paytm &amp; all UPI apps</p>
-                          </div>
-                        </div>
+                    )}
 
-                        <div className="border-t border-slate-200 pt-5 space-y-4">
-                          {/* Payment confirmation checkbox */}
-                          <label className="flex items-start gap-3 cursor-pointer group" data-testid="label-payment-confirmed">
-                            <input
-                              type="checkbox"
-                              checked={paymentConfirmed}
-                              onChange={(e) => setPaymentConfirmed(e.target.checked)}
-                              data-testid="checkbox-payment-confirmed"
-                              className="mt-0.5 w-4 h-4 accent-primary shrink-0 cursor-pointer"
-                            />
-                            <span className="text-sm text-slate-700 group-hover:text-slate-900 leading-snug">
-                              I confirm that I have <strong>completed the UPI payment</strong> of <strong>₹{amount}</strong> and I am uploading the payment success screenshot below. I have read and understood all the{" "}
-                              <a
-                                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/terms`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline text-primary hover:text-primary/80"
-                                onClick={(e) => e.stopPropagation()}
-                                data-testid="link-consent-terms"
-                              >
-                                Terms &amp; Conditions
-                              </a>{" "}
-                              and the{" "}
-                              <a
-                                href={`${import.meta.env.BASE_URL.replace(/\/$/, "")}/refund`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline text-primary hover:text-primary/80"
-                                onClick={(e) => e.stopPropagation()}
-                                data-testid="link-consent-refund"
-                              >
-                                Return/Refund Policy
-                              </a>
-                              , and I hereby give my consent to proceed with the printing of my document.
-                            </span>
-                          </label>
+                    {payPhase === "failed" && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3" data-testid="pay-failed-note">
+                        <p className="text-sm font-semibold text-red-700">Payment not completed</p>
+                        <p className="text-xs text-red-600 mt-0.5">The payment failed or was cancelled. If any money left your account, your bank returns it automatically within a few days. You can safely try again.</p>
+                      </div>
+                    )}
 
-                          <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex gap-2">
-                            <span className="text-red-500 text-lg leading-none mt-0.5">⚠️</span>
-                            <div>
-                              <p className="text-sm font-semibold text-red-700">Upload your UPI payment screenshot only</p>
-                              <p className="text-xs text-red-600 mt-0.5">Uploading any other photo (selfie, tree, random image, etc.) will cause your order to be <strong>cancelled with no refund</strong>. Our team manually verifies every screenshot.</p>
-                            </div>
-                          </div>
+                    {payPhase === "unconfirmed" && (
+                      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 space-y-2" data-testid="pay-unconfirmed-note">
+                        <p className="text-sm font-semibold text-amber-800">Payment confirmation not received yet</p>
+                        <p className="text-xs text-amber-700">If you completed the payment, wait a moment and press <strong>Check Payment Status</strong> — please do not pay twice. If you closed the window without paying, simply press the Pay button again.</p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          data-testid="button-check-status"
+                          onClick={() => createdOrder && checkPaymentNow(createdOrder.orderNumber, 4, 2000)}
+                        >
+                          Check Payment Status
+                        </Button>
+                      </div>
+                    )}
 
-                          <p className="text-sm font-medium text-slate-700">
-                            Upload UPI payment screenshot *
-                          </p>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            className="hidden"
-                            onChange={handleScreenshotChange}
-                            data-testid="input-screenshot"
-                          />
-                          {screenshotPreview ? (
-                            <div className="space-y-3">
-                              <div className="relative w-full max-w-xs rounded-lg overflow-hidden border-2 border-emerald-300 shadow-sm">
-                                <img src={screenshotPreview} alt="Payment screenshot" className="w-full object-cover max-h-48" />
-                                <div className="absolute top-2 left-2 bg-emerald-500 text-white text-xs font-medium px-2 py-0.5 rounded-full">Screenshot selected</div>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => { setScreenshotFile(null); setScreenshotPreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; }}
-                              >
-                                Change Screenshot
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                data-testid="button-upload-screenshot"
-                                onClick={() => paymentConfirmed && fileInputRef.current?.click()}
-                                disabled={!paymentConfirmed}
-                                className={`w-full border-2 border-dashed rounded-xl p-6 text-center transition-colors ${
-                                  paymentConfirmed
-                                    ? "border-slate-300 hover:border-primary/50 cursor-pointer bg-slate-50/50 hover:bg-primary/5"
-                                    : "border-slate-200 cursor-not-allowed bg-slate-100/70 opacity-60"
-                                }`}
-                              >
-                                <Upload className={`w-8 h-8 mx-auto mb-2 ${paymentConfirmed ? "text-slate-400" : "text-slate-300"}`} />
-                                <p className={`text-sm font-medium ${paymentConfirmed ? "text-slate-700" : "text-slate-400"}`}>
-                                  {paymentConfirmed ? "Click to upload UPI payment screenshot" : "Confirm payment above to unlock upload"}
-                                </p>
-                                <p className="text-xs text-slate-400 mt-1">Must be your UPI payment success screen · JPG or PNG</p>
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="text-center py-6 space-y-1">
-                        <p className="text-sm font-medium text-slate-700">Payment setup in progress</p>
-                        <p className="text-xs text-slate-500">Our payment details are being configured. Please contact us to complete your order.</p>
+                    {payPhase === "checking" && (
+                      <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex items-center gap-2" data-testid="pay-checking-note">
+                        <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                        <p className="text-sm text-slate-700">Checking your payment…</p>
                       </div>
                     )}
 
                     <div className="space-y-2 pt-2">
-                      {(!paymentConfirmed || !screenshotFile) && !isUploading && !createOrder.isPending && merchantUpiId && (
+                      {createdOrder && payPhase !== "checking" && payPhase !== "paying" && (
+                        <p className="text-xs text-slate-500" data-testid="note-order-saved">
+                          Your order <span className="font-mono font-semibold">{createdOrder.orderNumber}</span> is saved — the details above can no longer be changed for this order.
+                        </p>
+                      )}
+                      {!consentChecked && !payBusy && (
                         <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="submit-disabled-hint">
-                          <span>⚠️</span>
-                          {!paymentConfirmed
-                            ? "Please confirm you have completed payment before submitting."
-                            : "Please upload your UPI payment screenshot before submitting."}
+                          <span>⚠️</span> Please tick the consent box above to enable payment.
                         </p>
                       )}
                       <div className="flex gap-3">
-                        <Button type="button" variant="outline" onClick={() => setStep(2)}>Back</Button>
+                        <Button type="button" variant="outline" onClick={() => setStep(2)} disabled={payBusy}>Back</Button>
                         <Button
                           type="submit"
-                          data-testid="button-submit-order"
+                          data-testid="button-pay-now"
                           className="bg-primary hover:bg-primary/90 px-8"
-                          disabled={isUploading || createOrder.isPending || !screenshotFile || !merchantUpiId || !paymentConfirmed}
-                          title={
-                            !paymentConfirmed
-                              ? "Confirm you have completed payment first"
-                              : !screenshotFile
-                              ? "Upload your payment screenshot first"
-                              : undefined
-                          }
+                          disabled={payBusy || !consentChecked}
+                          title={!consentChecked ? "Tick the consent box first" : undefined}
                         >
-                          {isUploading || createOrder.isPending ? "Placing Order…" : "Place Order & Continue"}
+                          {payPhase === "opening" ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Starting secure payment…</>
+                          ) : payPhase === "paying" ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Finish payment in the window…</>
+                          ) : payPhase === "checking" ? (
+                            <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Checking payment…</>
+                          ) : createOrder.isPending ? (
+                            "Saving order…"
+                          ) : payPhase === "failed" || payPhase === "unconfirmed" ? (
+                            "Try Payment Again"
+                          ) : (
+                            <>Pay ₹{amount} Securely</>
+                          )}
                         </Button>
                       </div>
                     </div>

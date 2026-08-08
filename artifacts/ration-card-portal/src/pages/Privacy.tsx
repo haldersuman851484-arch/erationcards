@@ -64,7 +64,7 @@ export default function Privacy() {
               <li>Full name, phone number, and email address</li>
               <li>Delivery address (street, district, pincode)</li>
               <li>Ration card number(s) and card type</li>
-              <li>Payment screenshot uploaded for order verification</li>
+              <li>Payment confirmation from our payment gateway (order ID and payment status — never your UPI PIN or card details)</li>
               <li>e-Ration Card PDF file(s) uploaded for printing</li>
             </ul>
             <p className="mt-2">
@@ -76,7 +76,7 @@ export default function Privacy() {
             <p>We use your information solely to:</p>
             <ul className="list-disc list-inside space-y-1 mt-1">
               <li>Process and fulfil your PVC card printing order</li>
-              <li>Verify your UPI payment screenshot</li>
+              <li>Confirm your online payment through our payment gateway</li>
               <li>Deliver the printed card to your address</li>
               <li>Send order status updates (if email/phone provided)</li>
             </ul>
@@ -88,7 +88,7 @@ export default function Privacy() {
 
           <Section icon={Lock} title="3. Data Storage &amp; Security">
             <p>
-              All data is stored on secured servers. Uploaded PDF files and payment screenshots are
+              All data is stored on secured servers. Uploaded PDF files are
               retained only for the duration required to fulfil your order. We implement reasonable
               technical safeguards to protect your data from unauthorised access.
             </p>
@@ -122,9 +122,10 @@ export default function Privacy() {
 
           <Section icon={Shield} title="5. Third-Party Services">
             <p>
-              We use UPI payment infrastructure (GPay, PhonePe, Paytm) to facilitate payments.
-              These services operate under their own privacy policies. We only receive a payment
-              screenshot as uploaded by you — we do not have access to your bank or wallet account.
+              Payments are processed securely by Cashfree Payments, an RBI-authorised payment
+              gateway. Your UPI, card or net-banking details are handled on Cashfree's systems
+              under their own privacy policy — we never see your UPI PIN, card number or bank
+              password, and we do not have access to your bank or wallet account.
             </p>
           </Section>
 

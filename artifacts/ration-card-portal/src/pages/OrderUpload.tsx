@@ -30,6 +30,8 @@ interface OrderData {
   amount: number;
   quantity: number;
   createdAt: string;
+  paymentStatus?: string | null;
+  paymentMethod?: string | null;
 }
 
 export default function OrderUpload() {
@@ -332,14 +334,33 @@ export default function OrderUpload() {
           </div>
         </div>
 
-        {/* Payment pending notice */}
-        <div className="bg-slate-100 rounded-xl p-4 flex items-start gap-2.5">
-          <Clock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
-          <div className="text-xs text-slate-600">
-            <p className="font-semibold mb-0.5">Payment verification pending</p>
-            <p>Our team is reviewing your payment screenshot. Your card will be printed once payment is confirmed and all PDFs are uploaded. Delivery in 5–7 working days.</p>
+        {/* Payment status notice */}
+        {order?.paymentStatus === "paid" || order?.paymentStatus === "confirmed" ? (
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-2.5" data-testid="note-payment-received">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-emerald-700">
+              <p className="font-semibold mb-0.5">Payment received</p>
+              <p>Your payment is confirmed. Your card will be printed once all PDFs are uploaded. Delivery in 5–7 working days.</p>
+            </div>
           </div>
-        </div>
+        ) : order?.paymentMethod === "cashfree" ? (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-2.5" data-testid="note-payment-due">
+            <Clock className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="text-xs text-amber-700">
+              <p className="font-semibold mb-0.5">Payment not completed yet</p>
+              <p>This order has not been paid, so printing cannot start. Please complete the payment — it only takes a minute.</p>
+              <Link href={`/pay/${encodeURIComponent(order.orderNumber)}`} className="inline-block mt-1.5 font-semibold text-amber-800 underline" data-testid="link-complete-payment">Complete Payment →</Link>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-slate-100 rounded-xl p-4 flex items-start gap-2.5">
+            <Clock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
+            <div className="text-xs text-slate-600">
+              <p className="font-semibold mb-0.5">Payment verification pending</p>
+              <p>Our team is reviewing your payment. Your card will be printed once payment is confirmed and all PDFs are uploaded. Delivery in 5–7 working days.</p>
+            </div>
+          </div>
+        )}
 
         <div className="h-4" />
       </main>

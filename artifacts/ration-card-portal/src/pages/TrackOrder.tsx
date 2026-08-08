@@ -422,10 +422,22 @@ export default function TrackOrder() {
                       <p className="font-medium text-slate-900 font-mono text-xs break-all">{order.rationCardNumber}</p>
                     </div>
                     <div className="bg-slate-50 rounded-lg px-3 py-2.5">
-                      <p className="text-xs text-slate-500 mb-0.5">Amount Paid</p>
-                      <p className="font-medium text-emerald-600">₹{order.amount}</p>
+                      <p className="text-xs text-slate-500 mb-0.5">{order.paymentStatus === "paid" || order.paymentStatus === "confirmed" ? "Amount Paid" : "Order Amount"}</p>
+                      <p className={`font-medium ${order.paymentStatus === "paid" || order.paymentStatus === "confirmed" ? "text-emerald-600" : "text-slate-900"}`}>₹{order.amount}</p>
                     </div>
                   </div>
+
+                  {order.paymentMethod === "cashfree" && (order.paymentStatus === "pending" || order.paymentStatus === "failed") && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:justify-between" data-testid="banner-payment-due">
+                      <div>
+                        <p className="text-sm font-semibold text-amber-800">Payment not completed</p>
+                        <p className="text-xs text-amber-700 mt-0.5">This order is saved but not paid yet — printing starts after payment.</p>
+                      </div>
+                      <Link href={`/pay/${encodeURIComponent(order.orderNumber)}`}>
+                        <Button size="sm" className="bg-primary hover:bg-primary/90 shrink-0" data-testid="button-complete-payment">Complete Payment</Button>
+                      </Link>
+                    </div>
+                  )}
 
                   <Link href={`/receipt/${order.orderNumber}`}>
                     <Button variant="outline" size="sm" className="gap-1.5" data-testid="link-download-receipt">

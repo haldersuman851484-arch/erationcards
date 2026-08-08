@@ -6,6 +6,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type UploadPaymentScreenshotBody = {
-  screenshot: Blob;
+export type GetCashfreePaymentStatusParams = {
+orderNumber: string;
 };

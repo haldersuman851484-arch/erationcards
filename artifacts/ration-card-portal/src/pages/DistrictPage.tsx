@@ -418,7 +418,7 @@ export default function DistrictPage() {
                   icon: <CheckCircle className="w-6 h-6 text-emerald-500" />,
                   step: "2",
                   title: "Pay via UPI",
-                  desc: "Scan the QR code or use our UPI ID. Upload your payment screenshot.",
+                  desc: "Pay securely online — UPI, debit card or net banking. Payment confirms instantly.",
                 },
                 {
                   icon: <Truck className="w-6 h-6 text-orange-500" />,

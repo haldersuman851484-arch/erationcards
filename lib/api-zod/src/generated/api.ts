@@ -115,10 +115,7 @@ export const CreateOrderBody = zod.object({
   "cardType": zod.string()
 })).optional(),
   "quantity": zod.number(),
-  "amount": zod.number(),
-  "paymentStatus": zod.string().optional(),
-  "paymentMethod": zod.string().optional(),
-  "paymentScreenshotUrl": zod.string().optional()
+  "amount": zod.number()
 })
 
 export const CreateOrderResponse = zod.object({
@@ -538,14 +535,39 @@ export const SubmitOrderResponse = zod.object({
 
 
 /**
- * @summary Upload a UPI payment screenshot
+ * @summary Create (or reuse) a Cashfree payment session for an order
  */
-export const UploadPaymentScreenshotBody = zod.object({
-  "screenshot": zod.instanceof(File)
+export const createCashfreePaymentSessionBodyOrderNumberMin = 4;
+export const createCashfreePaymentSessionBodyOrderNumberMax = 64;
+
+export const createCashfreePaymentSessionBodyReturnPathMax = 200;
+
+
+
+export const CreateCashfreePaymentSessionBody = zod.object({
+  "orderNumber": zod.string().min(createCashfreePaymentSessionBodyOrderNumberMin).max(createCashfreePaymentSessionBodyOrderNumberMax),
+  "returnPath": zod.string().max(createCashfreePaymentSessionBodyReturnPathMax).optional().describe('SPA path to return to after checkout (defaults to \/pay\/{orderNumber}); origin is resolved server-side')
 })
 
-export const UploadPaymentScreenshotResponse = zod.object({
-  "url": zod.string()
+export const CreateCashfreePaymentSessionResponse = zod.object({
+  "alreadyPaid": zod.boolean(),
+  "paymentSessionId": zod.string().nullable(),
+  "mode": zod.enum(['sandbox', 'production']),
+  "amount": zod.number(),
+  "cfOrderId": zod.string().nullish()
+})
+
+
+/**
+ * @summary Re-check an order's payment with Cashfree and sync the stored status
+ */
+export const GetCashfreePaymentStatusQueryParams = zod.object({
+  "orderNumber": zod.coerce.string()
+})
+
+export const GetCashfreePaymentStatusResponse = zod.object({
+  "paymentStatus": zod.string(),
+  "cashfreeStatus": zod.string().nullish().describe('Raw Cashfree order_status (ACTIVE, PAID, EXPIRED, TERMINATED) when the gateway was reachable')
 })
 
 

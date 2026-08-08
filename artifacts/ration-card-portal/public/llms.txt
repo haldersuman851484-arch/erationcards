@@ -19,7 +19,7 @@ Updated: August 2026. Prices below are live values substituted by the server at 
 ## How to order
 
 1. Go to https://erationcards.in/order and fill in your name, phone number and delivery address
-2. Pay by UPI and upload the payment screenshot
+2. Pay securely online (UPI, debit card or net banking via Cashfree Payments)
 3. Upload each family member's e-Ration Card PDF (one PVC card is printed per PDF)
 4. Track anytime at https://erationcards.in/track using your order number — dispatch within 24–48 hours, delivery in 3–5 working days
 

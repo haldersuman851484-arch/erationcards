@@ -335,7 +335,9 @@ export default function ProcessingPanel() {
                               <ImageIcon className="w-3.5 h-3.5" /> Screenshot
                             </button>
                           )}
-                          {order.paymentStatus === "pending" ? (
+                          {order.paymentMethod === "cashfree" && (order.paymentStatus === "pending" || order.paymentStatus === "failed") ? (
+                            <Badge className="text-xs border w-fit bg-amber-100 text-amber-700 border-amber-200" data-testid={`badge-awaiting-payment-${order.id}`}>Awaiting payment</Badge>
+                          ) : order.paymentMethod !== "cashfree" && order.paymentStatus === "pending" ? (
                             <div className="flex gap-1">
                               <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-confirm-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
                                 <CheckCircle2 className="w-3 h-3 mr-0.5" /> Confirm
@@ -344,7 +346,7 @@ export default function ProcessingPanel() {
                                 <XCircle className="w-3 h-3 mr-0.5" /> Reject
                               </Button>
                             </div>
-                          ) : order.paymentStatus === "rejected" ? (
+                          ) : order.paymentMethod !== "cashfree" && order.paymentStatus === "rejected" ? (
                             <div className="flex flex-col gap-1">
                               <Badge className="text-xs border w-fit capitalize bg-red-100 text-red-700 border-red-200">Rejected</Badge>
                               <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-reapprove-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
@@ -652,7 +654,10 @@ export default function ProcessingPanel() {
                       </div>
                     )}
                   </div>
-                  {selectedOrder.paymentStatus === "pending" && (
+                  {selectedOrder.paymentMethod === "cashfree" && (selectedOrder.paymentStatus === "pending" || selectedOrder.paymentStatus === "failed") && (
+                    <p className="text-xs text-amber-600 mt-2" data-testid="dialog-awaiting-payment-note">Awaiting online payment — the status updates automatically once the customer completes the Cashfree payment.</p>
+                  )}
+                  {selectedOrder.paymentMethod !== "cashfree" && selectedOrder.paymentStatus === "pending" && (
                     <div className="flex gap-2 mt-3">
                       <Button size="sm" variant="outline" className="text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid="button-dialog-confirm-payment" onClick={() => handlePaymentStatus(selectedOrder.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
                         <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm Payment

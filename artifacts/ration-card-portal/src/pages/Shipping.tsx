@@ -99,7 +99,7 @@ export default function Shipping() {
             </p>
             <ol className="mt-2 space-y-2 list-none">
               {[
-                "Payment screenshot is verified by our team",
+                "Payment is confirmed automatically when you pay online",
                 "All ration card PDFs are received from the customer",
                 "Card is printed and quality-checked",
                 "Card is packed and handed over to the courier",

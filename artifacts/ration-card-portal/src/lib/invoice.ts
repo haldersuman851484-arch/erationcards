@@ -39,7 +39,7 @@ export const PAY_LABEL: Record<PayKind, string> = {
 export function payNotes(supportEmail: string): Record<PayKind, string> {
   return {
     paid: "Payment received with thanks.",
-    pending: "Payment verification is pending. This invoice confirms your order details and becomes a payment receipt once your payment is verified.",
+    pending: "Payment is pending. This invoice confirms your order details and becomes a payment receipt once your payment is completed.",
     failed: `We could not verify this payment. Please contact ${supportEmail} for help.`,
     refunded: `This payment has been refunded. Contact ${supportEmail} if you have any questions.`,
     unknown: `For questions about this payment, contact ${supportEmail}.`,
@@ -133,7 +133,12 @@ export function buildInvoiceModel(order: InvoiceOrder, pricing: PricingMatrix = 
     payKind,
     payLabel,
     isPaid: payKind === "paid",
-    paymentMethod: order.paymentMethod ? String(order.paymentMethod).toUpperCase() : "UPI",
+    paymentMethod:
+      order.paymentMethod === "cashfree"
+        ? "Online (Cashfree)"
+        : order.paymentMethod
+          ? String(order.paymentMethod).toUpperCase()
+          : "UPI",
     deliveryName: order.deliveryName || order.customerName,
     postOffice: order.postOffice ?? null,
     phone,
