@@ -119,6 +119,10 @@ app.use(
   }),
 );
 app.use(cors());
+// Cashfree signs its webhook with HMAC over the RAW request bytes, so this
+// one route must keep the unparsed body. express.raw() marks the request as
+// consumed (req._body), which makes the global express.json() below skip it.
+app.use("/api/payments/cashfree/webhook", express.raw({ type: () => true, limit: "1mb" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

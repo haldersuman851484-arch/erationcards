@@ -311,11 +311,6 @@ router.post("/orders", async (req: Request, res: Response) => {
       return;
     }
 
-    if (!body.paymentScreenshotUrl || body.paymentScreenshotUrl.trim() === "") {
-      res.status(400).json({ error: "Payment screenshot is required. Please upload your UPI payment screenshot before submitting." });
-      return;
-    }
-
     const familyCardsResult = FamilyCardsSchema.safeParse(body.familyCards ?? []);
     if (!familyCardsResult.success) {
       res.status(400).json({ error: "Invalid familyCards", details: familyCardsResult.error.issues });
@@ -382,9 +377,13 @@ router.post("/orders", async (req: Request, res: Response) => {
         familyCards: familyCards as any,
         quantity,
         amount: String(amount),
-        paymentStatus: (body.paymentStatus ?? "pending") as any,
-        paymentMethod: body.paymentMethod ?? "upi",
-        paymentScreenshotUrl: body.paymentScreenshotUrl ?? null,
+        // Every order starts unpaid and is settled through the Cashfree
+        // gateway. Payment fields are server-managed — the client cannot set
+        // them (the old screenshot flow accepted them; the gateway flow
+        // does not).
+        paymentStatus: "pending" as any,
+        paymentMethod: "cashfree",
+        paymentScreenshotUrl: null,
         operatorId: operatorId ?? null,
       });
     }
@@ -419,6 +418,20 @@ router.post("/orders/:orderNumber/submit", async (req: Request, res: Response) =
       .where(eq(ordersTable.orderNumber, orderNumber))
       .limit(1);
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
+
+    // Gateway orders may only finish once Cashfree has confirmed the money
+    // (or an admin has). Legacy screenshot orders keep the old behavior —
+    // they submit as "pending" and are verified manually afterwards.
+    if (
+      order.paymentMethod === "cashfree" &&
+      order.paymentStatus !== "paid" &&
+      order.paymentStatus !== "confirmed"
+    ) {
+      res.status(409).json({
+        error: "Payment for this order is not completed yet. Please finish the payment first, then submit.",
+      });
+      return;
+    }
 
     // Idempotency guard: atomically claim the submission. Only the first
     // submit for an order sends the email — replays (double-clicks, network

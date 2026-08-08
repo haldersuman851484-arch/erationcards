@@ -51,6 +51,12 @@ export const ordersTable = mysqlTable("orders", {
   paymentStatus: mysqlEnum("payment_status", ["pending", "paid", "failed", "refunded", "confirmed", "rejected"]).notNull().default("pending"),
   paymentMethod: text("payment_method"),
   paymentScreenshotUrl: text("payment_screenshot_url"),
+  // Latest Cashfree order_id for this order (our order number, plus a -R<n>
+  // suffix after retried attempts). Nullable: legacy UPI-screenshot orders
+  // and orders that never reached the payment step have none. The column is
+  // created on existing databases by the boot self-heal in the API server
+  // (dev boxes cannot reach the Hostinger MySQL instance to run a push).
+  cfOrderId: text("cf_order_id"),
   rationCardPdfs: json("ration_card_pdfs").$type<CardPdfEntry[]>().notNull().default([]),
   status: mysqlEnum("status", ["pending", "processing", "printed", "dispatched", "delivered", "returned", "cancelled"]).notNull().default("pending"),
   operatorId: int("operator_id"),
@@ -87,6 +93,8 @@ export const insertOrderSchema = createInsertSchema(ordersTable).omit({
   // Server-managed submit tracking — never client-settable.
   submittedAt: true,
   confirmationEmailSentAt: true,
+  // Server-managed Cashfree order reference — never client-settable.
+  cfOrderId: true,
 });
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;

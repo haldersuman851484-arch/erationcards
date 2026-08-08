@@ -2,6 +2,7 @@ import app from "./app";
 import { logger } from "./lib/logger";
 import { syncDeliveredOrders } from "./routes/orders";
 import { ensureOrdersSearchIndexes } from "./lib/ensureSearchIndexes";
+import { ensureCashfreeColumns } from "./lib/ensureCashfreeColumns";
 
 // A production host (e.g. Hostinger hPanel launching dist/index.mjs
 // directly) can start the server with NODE_ENV unset. Several behaviors
@@ -37,6 +38,10 @@ app.listen(port, (err) => {
   // Self-heal the raw-SQL-only orders indexes (FULLTEXT search + created_at).
   // Runs once per boot, never throws; see ensureSearchIndexes.ts for why.
   void ensureOrdersSearchIndexes(logger);
+
+  // Self-heal the Cashfree payment column the same way (dev boxes cannot
+  // push schema to the Hostinger MySQL instance; see ensureCashfreeColumns).
+  void ensureCashfreeColumns(logger);
 
   // Background delivered-status sync: keeps dispatched orders accurate even
   // when nobody opens the tracking page. syncDeliveredOrders never throws.
