@@ -38,7 +38,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const SIDEBAR_FAQS = [
   { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
   { q: "What does PVC Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
-  { q: "How to Order PVC e Ration Card?", a: "Simply enter your card holder name, ration card number, and select your card type below, then follow the steps to complete your address and payment details." },
+  { q: "How to Order PVC e Ration Card?", a: "Simply select your card type, then enter your card holder name and ration card number below, and follow the steps to complete your address and payment details." },
 ];
 
 const orderSchema = z.object({
@@ -592,9 +592,21 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
-                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Type</CardDescription>
+                      <CardDescription>Select Card Type, then type Card Holder Name &amp; Card Number</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
+                      <FormField control={form.control} name="cardType" render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Card Type *</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
+                            <SelectContent>
+                              <CardTypeOptions />
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <FormField control={form.control} name="customerName" render={({ field }) => (
                           <FormItem>
@@ -611,18 +623,6 @@ export default function Order() {
                           </FormItem>
                         )} />
                       </div>
-                      <FormField control={form.control} name="cardType" render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Card Type *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
-                            <SelectContent>
-                              <CardTypeOptions />
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )} />
                       {familyCards.length > 0 && (
                         <div className="rounded-lg bg-slate-100 border border-slate-200 p-4">
                           <div className="flex items-center justify-between mb-3">
@@ -675,26 +675,26 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Add Another Card Details</CardTitle>
-                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Type</CardDescription>
+                      <CardDescription>Select Card Type, then type Card Holder Name &amp; Card Number</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="space-y-1">
-                        <label className="text-sm font-medium text-slate-700">Card Holder Name *</label>
-                        <Input data-testid="input-family-name" placeholder="CARD HOLDER NAME" value={subCard.customerName} onChange={(e) => setSubCard((s) => ({ ...s, customerName: e.target.value }))} />
+                        <label className="text-sm font-medium text-slate-700">Card Type *</label>
+                        <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
+                          <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
+                          <SelectContent>
+                            <CardTypeOptions />
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div className="space-y-1">
-                          <label className="text-sm font-medium text-slate-700">Card Number *</label>
-                          <Input data-testid="input-family-number" placeholder="00000 00000" value={subCard.rationCardNumber} onChange={(e) => setSubCard((s) => ({ ...s, rationCardNumber: e.target.value }))} />
+                          <label className="text-sm font-medium text-slate-700">Card Holder Name *</label>
+                          <Input data-testid="input-family-name" placeholder="CARD HOLDER NAME" value={subCard.customerName} onChange={(e) => setSubCard((s) => ({ ...s, customerName: e.target.value }))} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-sm font-medium text-slate-700">Card Type *</label>
-                          <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
-                            <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
-                            <SelectContent>
-                              <CardTypeOptions />
-                            </SelectContent>
-                          </Select>
+                          <label className="text-sm font-medium text-slate-700">Card Number *</label>
+                          <Input data-testid="input-family-number" placeholder="00000 00000" value={subCard.rationCardNumber} onChange={(e) => setSubCard((s) => ({ ...s, rationCardNumber: e.target.value }))} />
                         </div>
                       </div>
                       {subError && <p className="text-sm text-red-600">{subError}</p>}
