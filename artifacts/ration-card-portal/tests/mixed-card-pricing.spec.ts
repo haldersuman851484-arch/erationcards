@@ -113,7 +113,9 @@ test.describe("Public order form — mixed card pricing", () => {
     await page.getByTestId("input-family-name").fill("Sunita Kumar");
     await page.getByTestId("input-family-number").fill("ABHA1234567890");
     await pickCardType(page, page.getByTestId("select-family-card-type"), "ABHA");
-    await page.getByTestId("button-family-save").click();
+    // "Add More" commits the ABHA card into the summary and opens a blank
+    // panel; Next then silently discards the untouched blank panel.
+    await page.getByTestId("button-add-another").click();
 
     await expect(page.getByTestId("family-card-0")).toContainText("ABHA");
     await page.getByTestId("button-next-step1").click();

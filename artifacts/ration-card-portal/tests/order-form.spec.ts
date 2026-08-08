@@ -128,8 +128,6 @@ async function fillStep1(page: Page) {
   await page.getByTestId("input-customer-name").fill("Rajesh Kumar");
   await page.getByTestId("input-ration-card-number").fill("WB01234567890");
   await page.getByTestId("button-next-step1").click();
-  await expect(page.getByTestId("dialog-family-member")).toBeVisible({ timeout: 5000 });
-  await page.getByTestId("button-family-no").click();
 }
 
 async function fillStep2(page: Page) {
@@ -204,14 +202,13 @@ test.describe("Order form — online payment", () => {
     await page.getByTestId("button-next-step1").click();
 
     await expect(page.getByText("Please select your card type")).toBeVisible();
-    // Neither the family-member dialog nor step 2 may open.
-    await expect(page.getByTestId("dialog-family-member")).not.toBeVisible();
+    // Step 2 may not open.
     await expect(page.getByTestId("input-delivery-name")).not.toBeVisible();
 
     // Choosing a type clears the block.
     await pickCardType(page, "select-card-type-step1", "PHH");
     await page.getByTestId("button-next-step1").click();
-    await expect(page.getByTestId("dialog-family-member")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("input-delivery-name")).toBeVisible({ timeout: 5000 });
   });
 
   test("order API 500 keeps the customer on step 3 and never opens the payment modal", async ({

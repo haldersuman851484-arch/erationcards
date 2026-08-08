@@ -123,9 +123,6 @@ test.describe("Public order form — new card types", () => {
 
     await page.getByTestId("button-next-step1").click();
 
-    // Single-card order → the form asks about family members; answer "No"
-    await page.getByTestId("button-family-no").click();
-
     // Step 2: delivery
     await expect(page.getByTestId("input-delivery-name")).toBeVisible({ timeout: 5000 });
     await page.getByTestId("input-delivery-name").fill("Rajesh Kumar");

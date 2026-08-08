@@ -67,13 +67,14 @@ async function pickCardType(page: Page, trigger: ReturnType<Page["locator"]>, ty
 /* ─────────────────────────── Public /order form ─────────────────────────── */
 
 async function publicAddFamilyCard(page: Page, name: string, cardNumber: string) {
+  // "Yes, Add More" commits any panel already being edited, then opens a
+  // blank one — cards save on Add More / Next, there is no Save button.
   await page.getByTestId("button-add-another").click();
   await expect(page.getByTestId("input-family-name")).toBeVisible({ timeout: 5000 });
+  await expect(page.getByTestId("input-family-name")).toHaveValue("");
   await pickCardType(page, page.getByTestId("select-family-card-type"), "PHH");
   await page.getByTestId("input-family-name").fill(name);
   await page.getByTestId("input-family-number").fill(cardNumber);
-  await page.getByTestId("button-family-save").click();
-  await expect(page.getByTestId("input-family-name")).not.toBeVisible();
 }
 
 async function publicSubmitWithTwoFamilyCards(page: Page) {
@@ -84,7 +85,9 @@ async function publicSubmitWithTwoFamilyCards(page: Page) {
   await page.getByTestId("input-ration-card-number").fill("WB01234567890");
   await publicAddFamilyCard(page, "Sunita Devi", "WB09876543210");
   await publicAddFamilyCard(page, "Amit Kumar", "WB05554443332");
-  await expect(page.getByTestId("family-card-1")).toBeVisible();
+  // The first card is already committed to the summary; the second card is
+  // still in the open panel and commits when Next runs.
+  await expect(page.getByTestId("family-card-0")).toBeVisible();
   await page.getByTestId("button-next-step1").click();
 
   // Step 2: delivery details.

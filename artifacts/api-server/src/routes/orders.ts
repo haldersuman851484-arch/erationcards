@@ -137,6 +137,18 @@ export function isDuplicateKeyError(err: unknown): boolean {
   return false;
 }
 
+// InnoDB deadlock (ER_LOCK_DEADLOCK, errno 1213). Concurrent INSERTs whose
+// order numbers land in the same unique-index gap can deadlock on the gap
+// locks taken for the duplicate check; MariaDB rolls one transaction back and
+// the documented remedy is simply to reissue it. We retry with a fresh order
+// number, which also moves the insert to a different gap.
+export function isDeadlockError(err: unknown): boolean {
+  for (let e: any = err; e; e = e.cause) {
+    if (e.code === "ER_LOCK_DEADLOCK" || e.errno === 1213) return true;
+  }
+  return false;
+}
+
 // GET /orders - list all orders
 // Courier/admin only — rows carry full customer contact details (name, phone,
 // address, ration-card number), so unauthenticated access would leak PII.
@@ -341,7 +353,10 @@ router.post("/orders", async (req: Request, res: Response) => {
     // Insert with a freshly generated order number; on the (rare) chance two
     // concurrent orders draw the same number, the unique constraint rejects
     // the second insert and we retry with a new number instead of failing
-    // the customer's submission with a 400.
+    // the customer's submission. Same for an InnoDB deadlock rollback: two
+    // simultaneous orders can deadlock on the order-number unique index even
+    // when the numbers differ (gap locks), and the rolled-back insert is
+    // safe to reissue.
     const MAX_ATTEMPTS = 5;
     let orderNumber = "";
     for (let attempt = 1; ; attempt++) {
@@ -350,8 +365,9 @@ router.post("/orders", async (req: Request, res: Response) => {
         await insertOrder(orderNumber);
         break;
       } catch (err) {
-        if (isDuplicateKeyError(err) && attempt < MAX_ATTEMPTS) {
-          req.log.warn({ orderNumber, attempt }, "Order number collision; retrying with a fresh number");
+        if ((isDuplicateKeyError(err) || isDeadlockError(err)) && attempt < MAX_ATTEMPTS) {
+          const reason = isDeadlockError(err) ? "insert deadlock" : "order number collision";
+          req.log.warn({ orderNumber, attempt, reason }, "Order insert conflict; retrying with a fresh number");
           continue;
         }
         throw err;

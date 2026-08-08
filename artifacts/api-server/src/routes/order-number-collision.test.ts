@@ -28,7 +28,7 @@ vi.mock("../lib/auth", async (importOriginal) => {
 
 import { generateOrderNumber } from "../lib/auth";
 import app from "../app";
-import { isDuplicateKeyError } from "./orders";
+import { isDuplicateKeyError, isDeadlockError } from "./orders";
 
 const createdOrderNumbers: string[] = [];
 
@@ -89,6 +89,18 @@ describe("isDuplicateKeyError", () => {
     ).toBe(true);
     expect(isDuplicateKeyError(new Error("something else"))).toBe(false);
     expect(isDuplicateKeyError(null)).toBe(false);
+  });
+});
+
+describe("isDeadlockError", () => {
+  it("recognizes InnoDB ER_LOCK_DEADLOCK by code, errno, and nested cause", () => {
+    expect(isDeadlockError(Object.assign(new Error("dl"), { code: "ER_LOCK_DEADLOCK" }))).toBe(true);
+    expect(isDeadlockError(Object.assign(new Error("dl"), { errno: 1213 }))).toBe(true);
+    expect(
+      isDeadlockError(new Error("wrapped", { cause: Object.assign(new Error("dl"), { errno: 1213 }) })),
+    ).toBe(true);
+    expect(isDeadlockError(new Error("something else"))).toBe(false);
+    expect(isDeadlockError(null)).toBe(false);
   });
 });
 
