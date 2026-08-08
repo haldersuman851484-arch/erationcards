@@ -26,3 +26,4 @@
 - [Admin-spec mocking](admin-spec-mocking.md) — staff specs must fulfill every /api/** route (fallback 200 []); real-API 401 = session-expired redirect; toast getByText needs .first() (aria-live dupe)
 - [Cashfree payments](cashfree-payments.md) — prod-looking keys w/o CASHFREE_ENV=production are REFUSED; __cashfreeTestFactory seam in specs; tsx smoke test works with DB down; go-live checklist
 - [Endpoint-removal sweep](endpoint-removal-sweep.md) — kill routes in openapi paths+schemas, lib index re-exports, auth-matrix spec, smoke-test string routes, SPA route list; orval wipes gen dirs on bad $ref
+- [Local practice MariaDB](local-practice-mariadb.md) — throwaway 3311 DB when Hostinger denies dev box; MariaDB not MySQL8 (UNIQUE on TEXT); dev env var beats same-name secret; self-heals + hand-applied 0003/0005 close fresh-DB drift

@@ -78,5 +78,7 @@ channel = "stable-25_05"
 EMAIL_FROM = "PVC Card Portal <orders@erationcards.in>"
 PROCESSING_EMAIL = "help@erationcards.in"
 
+[userenv.development]
+
 [objectStorage]
 defaultBucketID = "replit-objstore-1385b690-cb6e-4577-a122-1280056f167b"

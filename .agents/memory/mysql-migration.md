@@ -35,3 +35,5 @@ Orders list search (rationCardSearch/quickSearch) also matches family members vi
 reach Hostinger MySQL, so this expression shipped verified only by architect review +
 mocked Playwright tests — never smoke-tested against the live server. If family-number
 search misbehaves in production, test that expression first in phpMyAdmin.
+
+- Aug 8, 2026: allowlist grants dead AGAIN with both `%` and the exact IP rows visible in hPanel (2nd recurrence after Jul 31). Hostinger support script handed to user; meanwhile full journey testing ran on the local practice DB (see local-practice-mariadb.md).

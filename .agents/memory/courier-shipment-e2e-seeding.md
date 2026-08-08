@@ -44,3 +44,5 @@ The dev workspace has no DELHIVERY_ENV secret, so dispatch/cancel/track there hi
 staging-express.delhivery.com — clicking "Create Shipment" in dev creates only a staging AWB
 (no real courier). Real shipments require `DELHIVERY_ENV=production` (deployment must set it).
 Still never dispatch arbitrary existing orders in tests — use a purpose-made test order.
+
+- Aug 8, 2026: staging CMU create.json failed twice with Delhivery's own server fault — 502 "'NoneType' object has no attribute 'end_date'" — payload not at fault; dispatch route surfaced it cleanly (no waybill written, order stayed printed, retry allowed).

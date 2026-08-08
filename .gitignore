@@ -60,3 +60,4 @@ artifacts/ration-card-portal/public/*.zip
 
 # Hostinger deploy zips at repo root stay local-only
 /erationcards-hostinger-*.zip
+.local-mysql/

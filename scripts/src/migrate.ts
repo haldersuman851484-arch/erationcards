@@ -28,9 +28,22 @@ function buildMysqlUrl(raw: string): string {
 
 console.log("Connecting to database…");
 
+// TLS is required for remote servers (Hostinger), but local practice servers
+// (127.0.0.1) have no certificates and reject a TLS handshake outright.
+const targetHost = (() => {
+  try {
+    // URL.hostname keeps brackets around IPv6 literals ("[::1]") — strip them
+    // so the loopback allowlist below matches.
+    return new URL(dbUrl).hostname.replace(/^\[|\]$/g, "");
+  } catch {
+    return "";
+  }
+})();
+const isLocalDb = ["127.0.0.1", "::1", "localhost"].includes(targetHost);
+
 const connection = await mysql.createConnection({
   uri: buildMysqlUrl(dbUrl),
-  ssl: { rejectUnauthorized: false },
+  ...(isLocalDb ? {} : { ssl: { rejectUnauthorized: false } }),
 });
 
 const db = drizzle(connection);
