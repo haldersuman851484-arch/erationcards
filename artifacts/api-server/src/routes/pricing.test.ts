@@ -10,7 +10,7 @@ import {
 // lib/pricing/src/index.ts. POST /orders uses computeOrderAmount directly,
 // so these tests pin the amounts customers are charged.
 
-describe("shared pricing — card categories", () => {
+describe("shared pricing — card types", () => {
   it("includes the 5 ration categories and the 3 special products", () => {
     expect([...ALLOWED_CARD_TYPES]).toEqual([
       "AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II", "ABHA", "E-SHRAM", "GENERAL",

@@ -269,7 +269,7 @@ export default function DistrictPage() {
           name: `Which ration card types are supported for ${info.name} residents?`,
           acceptedAnswer: {
             "@type": "Answer",
-            text: `We support all West Bengal ration card categories for ${info.name} residents: AAY (Antyodaya Anna Yojana), PHH (Priority Household), SPHH (Special Priority Household), RKSY-I and RKSY-II. Upload your existing government-issued e-Ration Card PDF and we print it on durable PVC.`,
+            text: `We support all West Bengal ration card types for ${info.name} residents: AAY (Antyodaya Anna Yojana), PHH (Priority Household), SPHH (Special Priority Household), RKSY-I and RKSY-II. Upload your existing government-issued e-Ration Card PDF and we print it on durable PVC.`,
           },
         },
         {

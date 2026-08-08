@@ -38,7 +38,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 const SIDEBAR_FAQS = [
   { q: "What is e Ration Card?", a: "An e-Ration Card is the digital version of your ration card issued by the government's PDS system. It contains the same details as your physical card and can be downloaded online." },
   { q: "What does PVC Card Portal do?", a: "We help you order a durable, wallet-size PVC printed version of your e-Ration card. We print your official card details onto a premium PVC card and deliver it to your doorstep." },
-  { q: "How to Order PVC e Ration Card?", a: "Simply enter your card holder name, ration card number, and select your card category below, then follow the steps to complete your address and payment details." },
+  { q: "How to Order PVC e Ration Card?", a: "Simply enter your card holder name, ration card number, and select your card type below, then follow the steps to complete your address and payment details." },
 ];
 
 const orderSchema = z.object({
@@ -85,7 +85,7 @@ const WB_DISTRICTS = [
 // Pricing lives in @workspace/pricing — shared with the API server, which
 // recomputes the amount authoritatively when the order is created.
 
-/** Card-category options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+/** Card-type options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
 function CardTypeOptions() {
   return (
     <>
@@ -592,7 +592,7 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Personal Details</CardTitle>
-                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Category</CardDescription>
+                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Type</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -613,9 +613,9 @@ export default function Order() {
                       </div>
                       <FormField control={form.control} name="cardType" render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Card Category *</FormLabel>
+                          <FormLabel>Card Type *</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Category" /></SelectTrigger></FormControl>
+                            <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
                             <SelectContent>
                               <CardTypeOptions />
                             </SelectContent>
@@ -675,7 +675,7 @@ export default function Order() {
                   <Card className="border-slate-200 shadow-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2"><User className="w-5 h-5 text-primary" /> Add Another Card Details</CardTitle>
-                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Category</CardDescription>
+                      <CardDescription>Type Card Holder Name, Card Number &amp; Select Card Type</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-5">
                       <div className="space-y-1">
@@ -688,9 +688,9 @@ export default function Order() {
                           <Input data-testid="input-family-number" placeholder="00000 00000" value={subCard.rationCardNumber} onChange={(e) => setSubCard((s) => ({ ...s, rationCardNumber: e.target.value }))} />
                         </div>
                         <div className="space-y-1">
-                          <label className="text-sm font-medium text-slate-700">Card Category *</label>
+                          <label className="text-sm font-medium text-slate-700">Card Type *</label>
                           <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
-                            <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Category" /></SelectTrigger>
+                            <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
                             <SelectContent>
                               <CardTypeOptions />
                             </SelectContent>

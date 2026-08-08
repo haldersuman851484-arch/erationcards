@@ -67,7 +67,7 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "Which ration card types (AAY, PHH, SPHH, RKSY) do you support?",
-    a: "We support PVC printing for all West Bengal ration card categories: AAY (Antyodaya Anna Yojana), PHH (Priority Household), SPHH (Special Priority Household), RKSY-I (Rajya Khadya Suraksha Yojana Category I), and RKSY-II (Rajya Khadya Suraksha Yojana Category II). Your card category is already determined by the government — simply upload your e-Ration Card PDF and we'll print whichever type you have.",
+    a: "We support PVC printing for all West Bengal ration card types: AAY (Antyodaya Anna Yojana), PHH (Priority Household), SPHH (Special Priority Household), RKSY-I (Rajya Khadya Suraksha Yojana Category I), and RKSY-II (Rajya Khadya Suraksha Yojana Category II). Your card type is already determined by the government — simply upload your e-Ration Card PDF and we'll print whichever type you have.",
     bnQ: "কোন কোন রেশন কার্ডের ধরন (AAY, PHH, SPHH, RKSY) সাপোর্ট করেন?",
     bnA: "পশ্চিমবঙ্গের সব রেশন কার্ড ক্যাটাগরিই আমরা PVC-তে প্রিন্ট করি: AAY (অন্ত্যোদয় অন্ন যোজনা), PHH (প্রায়োরিটি হাউসহোল্ড), SPHH (স্পেশাল প্রায়োরিটি হাউসহোল্ড), RKSY-I ও RKSY-II (রাজ্য খাদ্য সুরক্ষা যোজনা)। আপনার কার্ডের ক্যাটাগরি সরকারই আগে থেকে ঠিক করে দিয়েছে — শুধু e-Ration Card PDF আপলোড করুন, যে ধরনেরই হোক আমরা প্রিন্ট করে দেব।",
   },
@@ -103,7 +103,7 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "How do I place an order?",
-    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card category (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), pay securely online (UPI, debit card or net banking), and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
+    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card type (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), pay securely online (UPI, debit card or net banking), and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
     bnQ: "কীভাবে PVC রেশন কার্ড অর্ডার করব?",
     bnA: "হোম পেজ থেকে 'Order PVC Card'-এ ক্লিক করুন। নাম, রেশন কার্ড নম্বর ও ডেলিভারির ঠিকানা লিখুন, কার্ডের ক্যাটাগরি বেছে নিন (AAY / PHH / SPHH / RKSY-I / RKSY-II — অন্য কার্ডের জন্য ABHA / E-SHRAM / GENERAL), অনলাইনে পেমেন্ট সেরে আপনার e-Ration Card PDF আপলোড করুন। প্রিন্টিং আর ডেলিভারির দায়িত্ব আমাদের।",
   },

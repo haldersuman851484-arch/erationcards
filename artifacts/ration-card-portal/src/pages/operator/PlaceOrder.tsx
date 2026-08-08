@@ -46,10 +46,10 @@ const WB_DISTRICTS = [
 const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-// Card categories & operator pricing come from @workspace/pricing — shared
+// Card types & operator pricing come from @workspace/pricing — shared
 // with the API server, which recomputes the amount when the order is created.
 
-/** Card-category options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+/** Card-type options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
 function CardTypeOptions() {
   return (
     <>
@@ -540,9 +540,9 @@ export default function PlaceOrder() {
                         <FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="cardType" render={({ field }) => (
-                      <FormItem><FormLabel>Card Category *</FormLabel>
+                      <FormItem><FormLabel>Card Type *</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select category" /></SelectTrigger></FormControl>
+                          <FormControl><SelectTrigger><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
                           <SelectContent><CardTypeOptions /></SelectContent>
                         </Select>
                         <FormMessage /></FormItem>
@@ -920,7 +920,7 @@ export default function PlaceOrder() {
               <Input placeholder="Card number" value={subCard.rationCardNumber} onChange={e => setSubCard(p => ({ ...p, rationCardNumber: e.target.value }))} />
             </div>
             <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Category *</label>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Type *</label>
               <Select value={subCard.cardType} onValueChange={v => setSubCard(p => ({ ...p, cardType: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent><CardTypeOptions /></SelectContent>

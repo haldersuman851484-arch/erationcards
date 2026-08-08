@@ -154,7 +154,7 @@ export default function NonSubsidisedCard() {
         </div>
       }
       related={[
-        { href: "/guides/ration-card-types-west-bengal", label: "All WB card categories compared (AAY → RKSY-II)" },
+        { href: "/guides/ration-card-types-west-bengal", label: "All WB card types compared (AAY → RKSY-II)" },
         { href: "/guides/surrender-ration-card-west-bengal", label: "Surrendering entirely instead (Form-7)" },
         { href: "/guides/ration-card-category-change-west-bengal", label: "Moving to a subsidised category later (Form-8)" },
         { href: "/services", label: "All ration card services — one page" },

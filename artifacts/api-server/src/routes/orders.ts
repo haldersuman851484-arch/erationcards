@@ -307,7 +307,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     const body = CreateOrderBody.parse(req.body);
 
     if (!(ALLOWED_CARD_TYPES as readonly string[]).includes(body.cardType)) {
-      res.status(400).json({ error: `Invalid card category. Must be one of: ${ALLOWED_CARD_TYPES.join(", ")}` });
+      res.status(400).json({ error: `Invalid card type. Must be one of: ${ALLOWED_CARD_TYPES.join(", ")}` });
       return;
     }
 

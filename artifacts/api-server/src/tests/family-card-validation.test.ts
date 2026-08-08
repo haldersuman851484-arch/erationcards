@@ -221,6 +221,6 @@ describe("POST /api/orders — familyCards validation", () => {
     expect(res.status).toBe(400);
     // This error comes from the explicit cardType check, not FamilyCardsSchema
     expect(typeof res.body.error).toBe("string");
-    expect(res.body.error).toMatch(/Invalid card category/i);
+    expect(res.body.error).toMatch(/Invalid card type/i);
   });
 });

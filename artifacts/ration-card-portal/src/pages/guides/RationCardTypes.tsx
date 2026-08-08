@@ -56,7 +56,7 @@ export default function RationCardTypes() {
       bnA: "ক্যাটাগরি কোড (AAY, PHH, SPHH, RKSY-I বা RKSY-II) কার্ডেই ছাপা থাকে — e-Ration Card PDF-এ এটি উপরের দিকে আপনার কার্ড নম্বরের পাশে দেখা যায়। খুঁজে না পেলে আপনার স্থানীয় রেশন ডিলার কার্ড নম্বর দেখেই সঙ্গে সঙ্গে বলে দিতে পারেন।",
     },
     {
-      q: "Can I choose or change my ration card category?",
+      q: "Can I choose or change my ration card type?",
       a: "No — the category is assigned by the government based on eligibility criteria. If you believe your category is wrong, you can apply for a review through food.wb.gov.in or your nearest food & supplies office. That service is free; nobody can legitimately charge you to 'upgrade' a card.",
       bnQ: "আমি কি নিজের রেশন কার্ডের ক্যাটাগরি বেছে নিতে বা বদলাতে পারি?",
       bnA: "না — যোগ্যতার মাপকাঠি অনুযায়ী সরকারই ক্যাটাগরি ঠিক করে দেয়। আপনার ক্যাটাগরি ভুল মনে হলে food.wb.gov.in-এ বা কাছের খাদ্য ও সরবরাহ দফতরে পুনর্বিবেচনার আবেদন করতে পারেন। এই পরিষেবা ফ্রি; কার্ড 'আপগ্রেড' করার নামে কেউ বৈধভাবে আপনার কাছে টাকা চাইতে পারে না।",
@@ -69,7 +69,7 @@ export default function RationCardTypes() {
     },
     {
       q: "Do all card types work for PVC printing?",
-      a: `Yes. We print every West Bengal ration card category — AAY, PHH, SPHH, RKSY-I and RKSY-II — at the same price: ₹${PRICING.ration.single.public} for a single card, ₹${PRICING.ration.multi.public} per card for 2 or more. The printed PVC card follows the official design of your category.`,
+      a: `Yes. We print every West Bengal ration card type — AAY, PHH, SPHH, RKSY-I and RKSY-II — at the same price: ₹${PRICING.ration.single.public} for a single card, ₹${PRICING.ration.multi.public} per card for 2 or more. The printed PVC card follows the official design of your category.`,
       bnQ: "সব ধরনের কার্ডই কি PVC প্রিন্টে চলে?",
       bnA: `হ্যাঁ। পশ্চিমবঙ্গের সব রেশন কার্ড ক্যাটাগরি — AAY, PHH, SPHH, RKSY-I ও RKSY-II — আমরা একই দামে প্রিন্ট করি: একটি কার্ড ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public}। প্রিন্ট হওয়া PVC কার্ড আপনার ক্যাটাগরির সরকারি নকশা অনুসরণ করে।`,
     },
@@ -183,7 +183,7 @@ export default function RationCardTypes() {
       <section className="mt-10">
         <h2 className="text-xl font-bold text-slate-900 mb-3">Does the type change the PVC print price?</h2>
         <p className="text-sm text-slate-600 leading-relaxed">
-          No. Every ration card category — AAY, PHH, SPHH, RKSY-I, RKSY-II — costs the same to print: ₹
+          No. Every ration card type — AAY, PHH, SPHH, RKSY-I, RKSY-II — costs the same to print: ₹
           {PRICING.ration.single.public} for a single card or ₹{PRICING.ration.multi.public} per card for 2 or more,
           printing and Speed Post delivery included. Each category keeps its official card design and colour. We
           also print ABHA, E-SHRAM and other general cards at ₹{PRICING.special.single.public} single / ₹

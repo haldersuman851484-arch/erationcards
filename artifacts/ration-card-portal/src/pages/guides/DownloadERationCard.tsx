@@ -19,7 +19,7 @@ const STEPS = [
   },
   {
     name: "Enter your ration card number and category",
-    text: "Type your ration card number, select the card category printed on your card (AAY, PHH, SPHH, RKSY-I or RKSY-II) and complete the captcha check.",
+    text: "Type your ration card number, select the card type printed on your card (AAY, PHH, SPHH, RKSY-I or RKSY-II) and complete the captcha check.",
     bn: "আপনার রেশন কার্ড নম্বর লিখুন, কার্ডে ছাপা ক্যাটাগরি (AAY, PHH, SPHH, RKSY-I বা RKSY-II) বেছে নিন এবং ক্যাপচা যাচাইটি সম্পূর্ণ করুন।",
   },
   {
@@ -173,7 +173,7 @@ export default function DownloadERationCard() {
         <h2 className="text-xl font-bold text-slate-900 mb-3">What you need before you start</h2>
         <ul className="list-disc pl-5 space-y-1.5 text-sm text-slate-600 leading-relaxed">
           <li>Your ration card number (printed on your old card, or ask your ration dealer)</li>
-          <li>Your card category — AAY, PHH, SPHH, RKSY-I or RKSY-II (also printed on the card)</li>
+          <li>Your card type — AAY, PHH, SPHH, RKSY-I or RKSY-II (also printed on the card)</li>
           <li>Any phone or computer with an internet connection — no login or OTP is needed in most cases</li>
         </ul>
         <p className="mt-3 text-sm text-slate-600 leading-relaxed">

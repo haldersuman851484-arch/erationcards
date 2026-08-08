@@ -189,7 +189,7 @@ export default function RationCardCorrection() {
             .
           </li>
           <li>
-            <strong>Changing your card category</strong> (for example RKSY-II to PHH) is Form-8 — see the{" "}
+            <strong>Changing your card type</strong> (for example RKSY-II to PHH) is Form-8 — see the{" "}
             <Link href="/guides/ration-card-category-change-west-bengal" className="text-primary hover:underline">
               category change guide
             </Link>

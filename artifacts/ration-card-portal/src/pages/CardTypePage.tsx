@@ -69,7 +69,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     chip: "bg-red-50 border-red-200 text-red-700",
     scheme: "Central scheme under the National Food Security Act (NFSA), issued in West Bengal by the Department of Food & Supplies.",
     whatIs:
-      "AAY (Antyodaya Anna Yojana) is the ration card category for the poorest households under the National Food Security Act, and it carries the highest food-grain entitlement of any category. The government selects AAY families — the category is printed on your e-Ration Card.",
+      "AAY (Antyodaya Anna Yojana) is the ration card type for the poorest households under the National Food Security Act, and it carries the highest food-grain entitlement of any card type. The government selects AAY families — the card type is printed on your e-Ration Card.",
     whoFor: "The poorest of poor families, as identified by the government under NFSA.",
     officialName: "food.wb.gov.in (WB Food & Supplies)",
     officialUrl: "https://food.wb.gov.in",
@@ -78,10 +78,10 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     extraFaqs: () => [
       {
         q: "Who qualifies for an AAY ration card?",
-        a: "AAY is meant for the poorest households, identified and approved by the government under the National Food Security Act. You cannot apply for AAY through any private service — eligibility and category assignment are decided entirely by the government. Check your current category on your e-Ration Card PDF.",
+        a: "AAY is meant for the poorest households, identified and approved by the government under the National Food Security Act. You cannot apply for AAY through any private service — eligibility and category assignment are decided entirely by the government. Check your current card type on your e-Ration Card PDF.",
       },
       {
-        q: "Can you change my card category or correct details on my AAY card?",
+        q: "Can you change my card type or correct details on my AAY card?",
         a: "No. We are a printing service only — we reproduce your existing government-issued card exactly as it is. Category changes, name corrections and address updates are free government services at food.wb.gov.in or your local food & supplies office.",
       },
     ],
@@ -97,7 +97,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     chip: "bg-blue-50 border-blue-200 text-blue-700",
     scheme: "Central scheme under the National Food Security Act (NFSA), issued in West Bengal by the Department of Food & Supplies.",
     whatIs:
-      "PHH (Priority Household) is the most common ration card category in West Bengal, issued to eligible households under the National Food Security Act. Entitlements are calculated per family member, and the category is printed on your e-Ration Card.",
+      "PHH (Priority Household) is the most common ration card type in West Bengal, issued to eligible households under the National Food Security Act. Entitlements are calculated per family member, and the card type is printed on your e-Ration Card.",
     whoFor: "Eligible priority households identified by the state government under NFSA.",
     officialName: "food.wb.gov.in (WB Food & Supplies)",
     officialUrl: "https://food.wb.gov.in",
@@ -125,7 +125,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     chip: "bg-purple-50 border-purple-200 text-purple-700",
     scheme: "Central scheme under the National Food Security Act (NFSA), issued in West Bengal by the Department of Food & Supplies.",
     whatIs:
-      "SPHH (Special Priority Household) is a special priority ration card category used in West Bengal under the National Food Security Act. It sits alongside PHH in the priority group, with the exact classification assigned by the state government and printed on your e-Ration Card.",
+      "SPHH (Special Priority Household) is a special priority ration card type used in West Bengal under the National Food Security Act. It sits alongside PHH in the priority group, with the exact classification assigned by the state government and printed on your e-Ration Card.",
     whoFor: "Specially categorised priority households, as classified by the West Bengal government.",
     officialName: "food.wb.gov.in (WB Food & Supplies)",
     officialUrl: "https://food.wb.gov.in",
@@ -166,7 +166,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
       },
       {
         q: "My family has mixed card types — can I order them together?",
-        a: `Yes. One order can include any mix of ration card categories. Every ration card PVC print costs the same — ₹${P.ration.single.public} for one card or ₹${P.ration.multi.public} per card for 2 or more — and each family member's PDF is printed as their own card.`,
+        a: `Yes. One order can include any mix of ration card types. Every ration card PVC print costs the same — ₹${P.ration.single.public} for one card or ₹${P.ration.multi.public} per card for 2 or more — and each family member's PDF is printed as their own card.`,
       },
     ],
   },
@@ -289,7 +289,7 @@ function buildCommonFaqs(info: CardTypeInfo, P: PricingMatrix): FaqEntry[] {
   const multi = info.category === "ration" ? P.ration.multi.public : P.special.multi.public;
   const priceFamily =
     info.category === "ration"
-      ? "Every ration card category — AAY, PHH, SPHH, RKSY-I and RKSY-II — costs the same"
+      ? "Every ration card type — AAY, PHH, SPHH, RKSY-I and RKSY-II — costs the same"
       : "ABHA, E-SHRAM and GENERAL cards share the same PVC pricing";
   return [
     {

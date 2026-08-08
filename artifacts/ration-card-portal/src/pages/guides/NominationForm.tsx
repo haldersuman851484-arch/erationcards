@@ -151,7 +151,7 @@ export default function NominationForm() {
       related={[
         { href: "/guides/link-aadhaar-ration-card-west-bengal", label: "eKYC basics — why authentication is needed" },
         { href: "/guides/verify-ration-card-west-bengal", label: "Check the family's cards are active" },
-        { href: "/guides/ration-card-types-west-bengal", label: "What each card category is entitled to" },
+        { href: "/guides/ration-card-types-west-bengal", label: "What each card type is entitled to" },
         { href: "/services", label: "All ration card services — one page" },
       ]}
     >

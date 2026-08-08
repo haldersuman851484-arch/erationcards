@@ -25,7 +25,7 @@
 export const RATION_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
 export const SPECIAL_CARD_TYPES = ["ABHA", "E-SHRAM", "GENERAL"] as const;
 
-/** All orderable card categories, ration types first. */
+/** All orderable card types, ration types first. */
 export const ALLOWED_CARD_TYPES = [...RATION_CARD_TYPES, ...SPECIAL_CARD_TYPES] as const;
 
 export type RationCardType = (typeof RATION_CARD_TYPES)[number];

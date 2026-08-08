@@ -489,7 +489,7 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">What Your PVC Ration Card Looks Like</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              High-quality, credit-card-size PVC prints for every West Bengal ration card category. Waterproof, scratch-resistant, and built to last.
+              High-quality, credit-card-size PVC prints for every West Bengal ration card type. Waterproof, scratch-resistant, and built to last.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-8 max-w-6xl mx-auto">
@@ -747,7 +747,7 @@ export default function Home() {
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">All Ration Card Types — AAY, PHH, SPHH, RKSY-I, RKSY-II</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              We support PVC printing for all West Bengal ration card categories. Your card type is already determined by the government — just order and we'll print it.
+              We support PVC printing for all West Bengal ration card types. Your card type is already determined by the government — just order and we'll print it.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 max-w-6xl mx-auto">

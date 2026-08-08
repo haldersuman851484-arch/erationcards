@@ -15,8 +15,8 @@ const STEPS: GuideStep[] = [
     bn: 'সরকারি food.wb.gov.in পোর্টালে "Instant With Aadhaar" পরিষেবার তালিকা থেকে "Update Mobile Number" বেছে নিন। মেনুর নাম মাঝে মাঝে বদলায় — রেশন কার্ডের মোবাইল নম্বর আপডেট সংক্রান্ত অপশনটিই ঠিক জায়গা।',
   },
   {
-    name: "Enter your ration card category and card number",
-    text: "Select the card category (PHH, SPHH, AAY, RKSY-I or RKSY-II) and type the card number exactly as it appears on the card or the e-Ration Card PDF.",
+    name: "Enter your ration card type and card number",
+    text: "Select the card type (PHH, SPHH, AAY, RKSY-I or RKSY-II) and type the card number exactly as it appears on the card or the e-Ration Card PDF.",
     bn: "কার্ডের ক্যাটাগরি (PHH, SPHH, AAY, RKSY-I বা RKSY-II) বেছে নিয়ে কার্ডে বা ই-রেশন কার্ড PDF-এ যেমন আছে, ঠিক তেমনভাবে কার্ড নম্বরটি লিখুন।",
   },
   {
@@ -89,7 +89,7 @@ export default function UpdateMobileNumber() {
     },
     {
       q: "In short — how does the whole update work?",
-      a: `On food.wb.gov.in, open "Update Mobile Number" under Instant With Aadhaar, enter your card category and number, confirm the OTP that reaches your Aadhaar-linked mobile, and save the new number — free and instant, no old SIM needed. Card sorted? PVC printing at erationcards.in: ₹${PRICING.ration.single.public} for one card, ₹${PRICING.ration.multi.public} per card for 2 or more.`,
+      a: `On food.wb.gov.in, open "Update Mobile Number" under Instant With Aadhaar, enter your card type and number, confirm the OTP that reaches your Aadhaar-linked mobile, and save the new number — free and instant, no old SIM needed. Card sorted? PVC printing at erationcards.in: ₹${PRICING.ration.single.public} for one card, ₹${PRICING.ration.multi.public} per card for 2 or more.`,
       bnQ: "রেশন কার্ডের মোবাইল নম্বর কীভাবে আপডেট করব?",
       bnA: `food.wb.gov.in-এ "Instant With Aadhaar" পরিষেবার "Update Mobile Number" অপশনে কার্ডের ক্যাটাগরি ও নম্বর দিন — আধারের মোবাইলে OTP আসবে, দিলেই নতুন নম্বর সেভ হয়ে যাবে। পুরনো SIM হারিয়ে গেলেও সমস্যা নেই, সম্পূর্ণ ফ্রি। কার্ডের PVC প্রিন্ট: একটি ₹${PRICING.ration.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.ration.multi.public} — erationcards.in।`,
     },
@@ -117,7 +117,7 @@ export default function UpdateMobileNumber() {
       quickAnswer={
         <>
           On <strong>food.wb.gov.in</strong> (official, free), open <strong>"Update Mobile Number"</strong> under the
-          Instant With Aadhaar services, enter your ration card category and number, confirm the OTP sent to your{" "}
+          Instant With Aadhaar services, enter your ration card type and number, confirm the OTP sent to your{" "}
           <strong>Aadhaar-linked mobile</strong>, and type the new number — it takes effect immediately. The old SIM
           is never needed, which is the whole point. Once your number works again, every OTP-based service
           (corrections, eKYC, shop change) is back within reach. Card sorted? erationcards.in prints it on
