@@ -262,3 +262,42 @@ export function verifyCashfreeWebhookSignature(
   if (a.length !== b.length) return false;
   return crypto.timingSafeEqual(a, b);
 }
+
+export type WebhookSuccessBinding =
+  | { accept: true }
+  | { accept: false; reason: "attempt-mismatch" | "amount-missing" | "amount-mismatch" };
+
+/**
+ * A verified webhook signature only proves the event came from Cashfree —
+ * not that it belongs to this order. Before money is recorded, the signed
+ * event must also bind to the order: its order_id must equal the CURRENTLY
+ * recorded payment attempt (stale -R retries are refused; retries only ever
+ * happen after the previous attempt went terminal and unpayable), and the
+ * signed amount must match what the customer owes to the paisa. Anything
+ * else is logged for manual review in the Cashfree dashboard, never
+ * auto-accepted.
+ */
+export function evaluateWebhookSuccess(params: {
+  payloadCfOrderId: string;
+  payloadAmount: unknown;
+  recordedCfOrderId: string | null;
+  orderAmount: string | number;
+}): WebhookSuccessBinding {
+  if (!params.recordedCfOrderId || params.payloadCfOrderId !== params.recordedCfOrderId) {
+    return { accept: false, reason: "attempt-mismatch" };
+  }
+  const paid =
+    typeof params.payloadAmount === "number"
+      ? params.payloadAmount
+      : typeof params.payloadAmount === "string" && params.payloadAmount.trim() !== ""
+        ? Number(params.payloadAmount)
+        : NaN;
+  if (!Number.isFinite(paid)) {
+    return { accept: false, reason: "amount-missing" };
+  }
+  const expected = Number(params.orderAmount);
+  if (!Number.isFinite(expected) || Math.abs(paid - expected) > 0.009) {
+    return { accept: false, reason: "amount-mismatch" };
+  }
+  return { accept: true };
+}

@@ -164,6 +164,12 @@ export default function OrderUpload() {
   const cards = buildCardList(order);
   const uploadedCount = cards.filter((c) => c.pdfUrl).length;
   const allUploaded = uploadedCount === cards.length;
+  // Online-payment orders are only queued for printing once the money has
+  // actually arrived — the server also refuses PDF uploads until then.
+  const awaitingPayment =
+    order.paymentMethod === "cashfree" &&
+    order.paymentStatus !== "paid" &&
+    order.paymentStatus !== "confirmed";
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -208,10 +214,24 @@ export default function OrderUpload() {
             <span className="text-sm font-bold text-slate-800">{cards.length} Card{cards.length !== 1 ? "s" : ""}</span>
             <span className="text-xs text-slate-400">({uploadedCount}/{cards.length} PDFs uploaded)</span>
           </div>
-          {allUploaded && (
+          {allUploaded && !awaitingPayment && (
             <div className="mt-3 flex items-center gap-2 bg-emerald-50 rounded-xl px-3 py-2 border border-emerald-200">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <p className="text-xs text-emerald-700 font-semibold">All PDFs uploaded! Your order is now queued for processing.</p>
+            </div>
+          )}
+          {awaitingPayment && (
+            <div className="mt-3 flex items-start gap-2 bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-200" data-testid="note-upload-payment-due">
+              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-xs text-amber-800 font-semibold">Payment pending — this order is not queued for printing yet.</p>
+                <p className="text-xs text-amber-700 mt-0.5">Please complete the payment first. PDF upload opens right after, and nothing you entered is lost.</p>
+                <Link href={`/pay/${order.orderNumber}`}>
+                  <Button size="sm" className="mt-2 h-8 bg-amber-600 hover:bg-amber-700 text-white gap-1.5 text-xs" data-testid="button-pay-first">
+                    <CreditCard className="w-3.5 h-3.5" /> Complete Payment
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>
@@ -270,7 +290,7 @@ export default function OrderUpload() {
                         ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                         : "bg-primary hover:bg-primary/90 text-white"
                     }`}
-                    disabled={isUploading}
+                    disabled={isUploading || awaitingPayment}
                     onClick={() => fileRefs.current[card.cardIndex]?.click()}
                   >
                     {isUploading ? (

@@ -26,8 +26,6 @@ function mockApis(page: Page, details: unknown) {
     const method = request.method();
     if (pathname === "/api/payments/upi-config" && method === "GET") {
       await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ merchantUpiId: "test@upi" }) });
-    } else if (pathname === "/api/payments/upload-screenshot" && method === "POST") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: "https://example.com/screenshot.jpg" }) });
     } else if (pathname === "/api/orders" && method === "POST") {
       await route.fulfill({
         status: 400,
@@ -95,15 +93,11 @@ async function publicSubmitWithTwoFamilyCards(page: Page) {
   await page.getByTestId("input-email").fill("rajesh@example.com");
   await page.getByTestId("button-next-step2").click();
 
-  // Step 3: payment.
-  await expect(page.getByTestId("checkbox-payment-confirmed")).toBeVisible({ timeout: 5000 });
-  await page.getByTestId("checkbox-payment-confirmed").click();
-  await page.setInputFiles('[data-testid="input-screenshot"]', {
-    name: "screenshot.jpg",
-    mimeType: "image/jpeg",
-    buffer: Buffer.from("fake-image-data"),
-  });
-  const submit = page.getByTestId("button-submit-order");
+  // Step 3: review & pay. The 422 fires on POST /api/orders, before any
+  // payment session is requested — no Cashfree mocks needed.
+  await expect(page.getByTestId("checkbox-consent")).toBeVisible({ timeout: 5000 });
+  await page.getByTestId("checkbox-consent").click();
+  const submit = page.getByTestId("button-pay-now");
   await expect(submit).toBeEnabled({ timeout: 5000 });
   await submit.click();
 }
@@ -164,15 +158,11 @@ async function operatorSubmitWithTwoFamilyCards(page: Page) {
   await page.getByTestId("input-email").fill("rajesh@example.com");
   await page.getByRole("button", { name: /Next: Payment/ }).click();
 
-  // Step 3: payment.
-  await expect(page.getByTestId("checkbox-payment-confirmed")).toBeVisible({ timeout: 5000 });
-  await page.getByTestId("checkbox-payment-confirmed").click();
-  await page.setInputFiles('input[type="file"]', {
-    name: "screenshot.jpg",
-    mimeType: "image/jpeg",
-    buffer: Buffer.from("fake-image-data"),
-  });
-  const submit = page.getByRole("button", { name: /Place Order & Continue/ });
+  // Step 3: review & pay. The 422 fires on POST /api/orders, before any
+  // payment session is requested — no Cashfree mocks needed.
+  await expect(page.getByTestId("checkbox-consent")).toBeVisible({ timeout: 5000 });
+  await page.getByTestId("checkbox-consent").click();
+  const submit = page.getByTestId("button-pay-now");
   await expect(submit).toBeEnabled({ timeout: 5000 });
   await submit.click();
 }

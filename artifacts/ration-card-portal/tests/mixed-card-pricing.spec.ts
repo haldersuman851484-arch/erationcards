@@ -60,14 +60,20 @@ async function setupMocks(
   { operator, expectedAmount }: { operator: boolean; expectedAmount: number }
 ): Promise<Captured> {
   const captured: Captured = { body: null };
+  // Fake Cashfree checkout: openCashfreeCheckout() uses this instead of the SDK.
+  await page.addInitScript(() => {
+    (window as unknown as Record<string, unknown>).__cashfreeTestFactory = () => ({
+      checkout: async () => ({}),
+    });
+  });
   await page.route("**/api/**", async (route, request) => {
     const { pathname } = new URL(request.url());
     const method = request.method();
 
-    if (pathname === "/api/payments/upi-config" && method === "GET") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ merchantUpiId: "test@upi" }) });
-    } else if (pathname === "/api/payments/upload-screenshot" && method === "POST") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ url: "https://example.com/screenshot.jpg" }) });
+    if (pathname === "/api/payments/cashfree/session" && method === "POST") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ orderNumber: "PVCMIX001", cfOrderId: "PVCMIX001", paymentSessionId: "session_test_mix", mode: "sandbox", alreadyPaid: false }) });
+    } else if (pathname === "/api/payments/cashfree/status" && method === "GET") {
+      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ orderNumber: "PVCMIX001", paymentStatus: "paid" }) });
     } else if (pathname === "/api/orders" && method === "POST") {
       captured.body = request.postDataJSON();
       await route.fulfill({
@@ -136,14 +142,9 @@ test.describe("Public order form — mixed card pricing", () => {
     await expect(specialLine).toContainText("₹75");
     await expect(page.getByTestId("text-amount-to-pay")).toHaveText("₹125");
 
-    // Confirm payment, upload screenshot, submit
-    await page.getByTestId("checkbox-payment-confirmed").click();
-    await page.setInputFiles('[data-testid="input-screenshot"]', {
-      name: "screenshot.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.from("fake-image-data"),
-    });
-    const submit = page.getByTestId("button-submit-order");
+    // Consent, then pay online (checkout modal + status poll are mocked to "paid")
+    await page.getByTestId("checkbox-consent").click();
+    const submit = page.getByTestId("button-pay-now");
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
@@ -209,17 +210,14 @@ test.describe("Operator order form — mixed card pricing", () => {
     await page.getByPlaceholder("customer@example.com").fill("rajesh@example.com");
     await page.getByRole("button", { name: /Next: Payment/ }).click();
 
-    // Step 3: payment shows the same operator total & breakdown
-    await expect(page.getByText("Pay ₹110 via UPI")).toBeVisible({ timeout: 5000 });
-    await expect(page.getByText("Amount: ₹110")).toBeVisible();
+    // Step 3: review & pay shows the same operator total & breakdown
+    await expect(page.getByTestId("price-line-step3-ration")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("price-line-step3-ration")).toContainText("₹40");
+    await expect(page.getByTestId("price-line-step3-special")).toContainText("₹70");
+    await expect(page.getByTestId("button-pay-now")).toContainText("₹110");
 
-    await page.setInputFiles('input[type="file"]', {
-      name: "screenshot.jpg",
-      mimeType: "image/jpeg",
-      buffer: Buffer.from("fake-image-data"),
-    });
-    await page.getByTestId("checkbox-payment-confirmed").click();
-    const submit = page.getByRole("button", { name: "Place Order" });
+    await page.getByTestId("checkbox-consent").click();
+    const submit = page.getByTestId("button-pay-now");
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 

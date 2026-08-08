@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
 import { ordersTable, paymentVerificationsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { parseStaffToken } from "../lib/auth";
 import { getMerchantUpiId, getPricingMatrix, getContactInfo } from "../lib/settings";
@@ -12,6 +12,7 @@ import {
   nextCfOrderId,
   cfOrderIdToOrderNumber,
   mapCashfreeOrderStatus,
+  evaluateWebhookSuccess,
   verifyCashfreeWebhookSignature,
   isOrderAlreadyExistsError,
   type CashfreeOrderInfo,
@@ -363,14 +364,44 @@ router.post("/payments/cashfree/webhook", async (req: Request, res: Response) =>
       cfPaymentStatus === "USER_DROPPED";
 
     if (isSuccess) {
-      // Money arrived — record it no matter which retry attempt paid, but
-      // never downgrade an admin's explicit confirmed state.
-      if (order.paymentStatus !== "paid" && order.paymentStatus !== "confirmed") {
+      // Bind the signed event to the CURRENT payment attempt and the exact
+      // rupee amount before recording money. The signature only proves the
+      // event came from Cashfree — not that it belongs to this attempt or
+      // matches what the customer owes. Mismatches are logged for manual
+      // follow-up in the Cashfree dashboard, never auto-accepted.
+      const binding = evaluateWebhookSuccess({
+        payloadCfOrderId: cfOrderId,
+        payloadAmount: payload?.data?.order?.order_amount,
+        recordedCfOrderId: order.cfOrderId ?? null,
+        orderAmount: order.amount,
+      });
+      if (!binding.accept) {
+        req.log.warn(
+          { orderNumber, cfOrderId, recordedCfOrderId: order.cfOrderId, reason: binding.reason },
+          "Cashfree webhook: signed SUCCESS did not match the order — ignored; verify in the Cashfree dashboard",
+        );
+        res.json({ received: true });
+        return;
+      }
+      if (order.paymentStatus === "pending" || order.paymentStatus === "failed") {
+        // Atomic guard: only pending/failed may become paid, so a duplicate
+        // webhook, replay, or concurrent status poll can never downgrade a
+        // settled order or double-apply.
         await db
           .update(ordersTable)
-          .set({ paymentStatus: "paid" as any, paymentMethod: "cashfree", cfOrderId, updatedAt: new Date() })
-          .where(eq(ordersTable.id, order.id));
+          .set({ paymentStatus: "paid" as any, paymentMethod: "cashfree", updatedAt: new Date() })
+          .where(
+            and(
+              eq(ordersTable.id, order.id),
+              inArray(ordersTable.paymentStatus, ["pending", "failed"]),
+            ),
+          );
         req.log.info({ orderNumber, cfOrderId }, "Cashfree webhook: payment marked paid");
+      } else {
+        req.log.info(
+          { orderNumber, paymentStatus: order.paymentStatus },
+          "Cashfree webhook: success for an already-settled order — no change",
+        );
       }
     } else if (isFailure) {
       // Only fail the CURRENT attempt — a late webhook for an old attempt
@@ -409,15 +440,25 @@ router.patch("/orders/:id/payment-status", async (req: Request, res: Response) =
       return;
     }
     const body = PaymentStatusUpdateBody.parse(req.body);
-    await db
-      .update(ordersTable)
-      .set({ paymentStatus: body.paymentStatus as any, updatedAt: new Date() })
-      .where(eq(ordersTable.id, id));
     const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
     if (!order) {
       res.status(404).json({ error: "Order not found" });
       return;
     }
+    // Online payments are confirmed by the gateway (webhook + status sync).
+    // A manual override could mark an unpaid order as ready to print or
+    // reject a genuinely paid one, so Cashfree orders are read-only here.
+    if (order.paymentMethod === "cashfree") {
+      res.status(409).json({
+        error:
+          "This order uses Cashfree online payment — its payment status is set automatically by the gateway and cannot be changed manually.",
+      });
+      return;
+    }
+    await db
+      .update(ordersTable)
+      .set({ paymentStatus: body.paymentStatus as any, updatedAt: new Date() })
+      .where(eq(ordersTable.id, id));
 
     if (body.paymentStatus === "confirmed" || body.paymentStatus === "rejected") {
       await db.insert(paymentVerificationsTable).values({
@@ -429,7 +470,7 @@ router.patch("/orders/:id/payment-status", async (req: Request, res: Response) =
       });
     }
 
-    res.json({ id: order.id, paymentStatus: order.paymentStatus });
+    res.json({ id: order.id, paymentStatus: body.paymentStatus });
   } catch (err) {
     req.log.error({ err }, "Failed to update payment status");
     res.status(400).json({ error: "Invalid request" });

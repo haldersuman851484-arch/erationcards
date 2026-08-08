@@ -102,6 +102,21 @@ router.post(
         return;
       }
 
+      // Online-payment orders must be paid before PDFs can join the print
+      // queue — otherwise a saved-but-unpaid order looks "queued" while it
+      // would never be printed. The UI sends these customers to /pay first.
+      if (
+        order.paymentMethod === "cashfree" &&
+        order.paymentStatus !== "paid" &&
+        order.paymentStatus !== "confirmed"
+      ) {
+        res.status(409).json({
+          error:
+            "Payment for this order is not complete yet. Please complete the payment first — you can upload the card PDFs right after.",
+        });
+        return;
+      }
+
       // Per-order, per-card storage key that ends in the customer's own
       // filename: same-named files from different orders/cards can never
       // collide, and re-uploading a card simply replaces its PDF.

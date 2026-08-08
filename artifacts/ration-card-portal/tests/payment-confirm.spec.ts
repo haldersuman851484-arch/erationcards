@@ -173,4 +173,20 @@ test.describe("Payment confirmation", () => {
 
     await expect(page.getByText("confirmed").first()).toBeVisible();
   });
+
+  test("cashfree order awaiting payment shows amber badge and no Confirm/Reject buttons", async ({ page }) => {
+    const orders = [
+      makeOrder({ paymentMethod: "cashfree", paymentStatus: "pending", paymentScreenshotUrl: null }),
+    ];
+
+    await setupMocks(page, { orders });
+
+    await page.goto("/processing");
+    await expect(page.locator("text=PVCPAY001")).toBeVisible({ timeout: 10000 });
+
+    // Online payments are confirmed by the gateway, not by staff.
+    await expect(page.getByTestId("badge-awaiting-payment-42")).toBeVisible();
+    await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible();
+    await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
+  });
 });

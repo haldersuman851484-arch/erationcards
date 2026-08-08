@@ -6,6 +6,7 @@ import {
   verifyCashfreeWebhookSignature,
   cfOrderIdToOrderNumber,
   isOrderAlreadyExistsError,
+  evaluateWebhookSuccess,
   CashfreeApiError,
 } from "./cashfree";
 
@@ -158,5 +159,62 @@ describe("isOrderAlreadyExistsError", () => {
   it("ignores other errors", () => {
     expect(isOrderAlreadyExistsError(new CashfreeApiError(400, "bad_request", "x"))).toBe(false);
     expect(isOrderAlreadyExistsError(new Error("nope"))).toBe(false);
+  });
+});
+
+describe("evaluateWebhookSuccess", () => {
+  const base = {
+    payloadCfOrderId: "PVC1-R2",
+    payloadAmount: 149,
+    recordedCfOrderId: "PVC1-R2",
+    orderAmount: "149",
+  };
+
+  it("accepts a success bound to the current attempt with a matching amount", () => {
+    expect(evaluateWebhookSuccess(base)).toEqual({ accept: true });
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: 149.0, orderAmount: 149 })).toEqual({
+      accept: true,
+    });
+  });
+
+  it("rejects a success for a stale or different payment attempt", () => {
+    expect(
+      evaluateWebhookSuccess({ ...base, recordedCfOrderId: "PVC1-R3" }).accept,
+    ).toBe(false);
+    expect(
+      evaluateWebhookSuccess({ ...base, payloadCfOrderId: "PVC1" }).accept,
+    ).toBe(false);
+  });
+
+  it("rejects when no attempt was ever recorded", () => {
+    const r = evaluateWebhookSuccess({ ...base, recordedCfOrderId: null });
+    expect(r).toEqual({ accept: false, reason: "attempt-mismatch" });
+  });
+
+  it("rejects a tampered or wrong amount", () => {
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: 1 })).toEqual({
+      accept: false,
+      reason: "amount-mismatch",
+    });
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: 148.5 })).toEqual({
+      accept: false,
+      reason: "amount-mismatch",
+    });
+  });
+
+  it("rejects a missing or non-numeric amount instead of guessing", () => {
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: undefined })).toEqual({
+      accept: false,
+      reason: "amount-missing",
+    });
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: "not-a-number" })).toEqual({
+      accept: false,
+      reason: "amount-missing",
+    });
+  });
+
+  it("tolerates paise-level float noise only", () => {
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: 149.004 })).toEqual({ accept: true });
+    expect(evaluateWebhookSuccess({ ...base, payloadAmount: 149.02 }).accept).toBe(false);
   });
 });
