@@ -37,7 +37,6 @@ import type {
   HealthStatus,
   ListAdminReviewsParams,
   ListOrdersParams,
-  ListPaymentVerificationsParams,
   LoginInput,
   Operator,
   OperatorAuthResponse,
@@ -54,9 +53,6 @@ import type {
   OrdersArchiveDeleteRequest,
   OrdersArchiveDeleteResponse,
   OrdersArchivePreview,
-  PaymentStatusUpdate,
-  PaymentStatusUpdateResponse,
-  PaymentVerificationListResponse,
   PricingConfig,
   PricingSetting,
   PricingSettingUpdate,
@@ -73,10 +69,7 @@ import type {
   SuccessResponse,
   TrackOrderParams,
   UpdateOperatorInput,
-  UpdateOperatorStatusInput,
-  UpiConfig,
-  UpiSetting,
-  UpiSettingUpdate
+  UpdateOperatorStatusInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -795,77 +788,6 @@ export const useUpdateOrderCustomerInfo = <TError = ErrorType<ErrorResponse>,
       return useMutation(getUpdateOrderCustomerInfoMutationOptions(options));
     }
 
-export const getUpdateOrderPaymentStatusUrl = (id: number,) => {
-
-
-
-
-  return `/api/orders/${id}/payment-status`
-}
-
-/**
- * @summary Confirm or reject a payment (admin)
- */
-export const updateOrderPaymentStatus = async (id: number,
-    paymentStatusUpdate: PaymentStatusUpdate, options?: RequestInit): Promise<PaymentStatusUpdateResponse> => {
-
-  return customFetch<PaymentStatusUpdateResponse>(getUpdateOrderPaymentStatusUrl(id),
-  {
-    ...options,
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(paymentStatusUpdate)
-  }
-);}
-
-
-
-
-export const getUpdateOrderPaymentStatusMutationOptions = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext> => {
-
-const mutationKey = ['updateOrderPaymentStatus'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, {id: number;data: BodyType<PaymentStatusUpdate>}> = (props) => {
-          const {id,data} = props ?? {};
-
-          return  updateOrderPaymentStatus(id,data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateOrderPaymentStatusMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrderPaymentStatus>>>
-    export type UpdateOrderPaymentStatusMutationBody = BodyType<PaymentStatusUpdate>
-    export type UpdateOrderPaymentStatusMutationError = ErrorType<ErrorResponse>
-
-    /**
- * @summary Confirm or reject a payment (admin)
- */
-export const useUpdateOrderPaymentStatus = <TError = ErrorType<ErrorResponse>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrderPaymentStatus>>, TError,{id: number;data: BodyType<PaymentStatusUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof updateOrderPaymentStatus>>,
-        TError,
-        {id: number;data: BodyType<PaymentStatusUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateOrderPaymentStatusMutationOptions(options));
-    }
-
 export const getAssignOrderToOperatorUrl = (id: number,) => {
 
 
@@ -1149,83 +1071,6 @@ export function useGetCashfreePaymentStatus<TData = Awaited<ReturnType<typeof ge
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCashfreePaymentStatusQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getGetUpiConfigUrl = () => {
-
-
-
-
-  return `/api/payments/upi-config`
-}
-
-/**
- * @summary Get merchant UPI ID for display and QR code generation
- */
-export const getUpiConfig = async ( options?: RequestInit): Promise<UpiConfig> => {
-
-  return customFetch<UpiConfig>(getGetUpiConfigUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetUpiConfigQueryKey = () => {
-    return [
-    `/api/payments/upi-config`
-    ] as const;
-    }
-
-
-export const getGetUpiConfigQueryOptions = <TData = Awaited<ReturnType<typeof getUpiConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetUpiConfigQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUpiConfig>>> = ({ signal }) => getUpiConfig({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetUpiConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getUpiConfig>>>
-export type GetUpiConfigQueryError = ErrorType<unknown>
-
-
-/**
- * @summary Get merchant UPI ID for display and QR code generation
- */
-
-export function useGetUpiConfig<TData = Awaited<ReturnType<typeof getUpiConfig>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetUpiConfigQueryOptions(options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -1537,153 +1382,6 @@ export const useUpdatePricingSetting = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getUpdatePricingSettingMutationOptions(options));
-    }
-
-export const getGetUpiSettingUrl = () => {
-
-
-
-
-  return `/api/admin/settings/upi`
-}
-
-/**
- * @summary Get the merchant UPI ID setting (admin)
- */
-export const getUpiSetting = async ( options?: RequestInit): Promise<UpiSetting> => {
-
-  return customFetch<UpiSetting>(getGetUpiSettingUrl(),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getGetUpiSettingQueryKey = () => {
-    return [
-    `/api/admin/settings/upi`
-    ] as const;
-    }
-
-
-export const getGetUpiSettingQueryOptions = <TData = Awaited<ReturnType<typeof getUpiSetting>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetUpiSettingQueryKey();
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getUpiSetting>>> = ({ signal }) => getUpiSetting({ signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type GetUpiSettingQueryResult = NonNullable<Awaited<ReturnType<typeof getUpiSetting>>>
-export type GetUpiSettingQueryError = ErrorType<void>
-
-
-/**
- * @summary Get the merchant UPI ID setting (admin)
- */
-
-export function useGetUpiSetting<TData = Awaited<ReturnType<typeof getUpiSetting>>, TError = ErrorType<void>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getUpiSetting>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getGetUpiSettingQueryOptions(options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
-
-export const getUpdateUpiSettingUrl = () => {
-
-
-
-
-  return `/api/admin/settings/upi`
-}
-
-/**
- * @summary Update the merchant UPI ID (admin)
- */
-export const updateUpiSetting = async (upiSettingUpdate: UpiSettingUpdate, options?: RequestInit): Promise<UpiSetting> => {
-
-  return customFetch<UpiSetting>(getUpdateUpiSettingUrl(),
-  {
-    ...options,
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...options?.headers },
-    body: JSON.stringify(upiSettingUpdate)
-  }
-);}
-
-
-
-
-export const getUpdateUpiSettingMutationOptions = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext> => {
-
-const mutationKey = ['updateUpiSetting'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateUpiSetting>>, {data: BodyType<UpiSettingUpdate>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  updateUpiSetting(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type UpdateUpiSettingMutationResult = NonNullable<Awaited<ReturnType<typeof updateUpiSetting>>>
-    export type UpdateUpiSettingMutationBody = BodyType<UpiSettingUpdate>
-    export type UpdateUpiSettingMutationError = ErrorType<void>
-
-    /**
- * @summary Update the merchant UPI ID (admin)
- */
-export const useUpdateUpiSetting = <TError = ErrorType<void>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateUpiSetting>>, TError,{data: BodyType<UpiSettingUpdate>}, TContext>, request?: SecondParameter<typeof customFetch>}
- ): UseMutationResult<
-        Awaited<ReturnType<typeof updateUpiSetting>>,
-        TError,
-        {data: BodyType<UpiSettingUpdate>},
-        TContext
-      > => {
-      return useMutation(getUpdateUpiSettingMutationOptions(options));
     }
 
 export const getGetContactSettingUrl = () => {
@@ -3172,90 +2870,6 @@ export const useDeleteOperator = <TError = ErrorType<ErrorResponse>,
       > => {
       return useMutation(getDeleteOperatorMutationOptions(options));
     }
-
-export const getListPaymentVerificationsUrl = (params?: ListPaymentVerificationsParams,) => {
-  const normalizedParams = new URLSearchParams();
-
-  Object.entries(params || {}).forEach(([key, value]) => {
-
-    if (value !== undefined) {
-      normalizedParams.append(key, value === null ? 'null' : String(value))
-    }
-  });
-
-  const stringifiedParams = normalizedParams.toString();
-
-  return stringifiedParams.length > 0 ? `/api/admin/verifications?${stringifiedParams}` : `/api/admin/verifications`
-}
-
-/**
- * @summary List payment verification history (admin)
- */
-export const listPaymentVerifications = async (params?: ListPaymentVerificationsParams, options?: RequestInit): Promise<PaymentVerificationListResponse> => {
-
-  return customFetch<PaymentVerificationListResponse>(getListPaymentVerificationsUrl(params),
-  {
-    ...options,
-    method: 'GET'
-
-
-  }
-);}
-
-
-
-
-
-export const getListPaymentVerificationsQueryKey = (params?: ListPaymentVerificationsParams,) => {
-    return [
-    `/api/admin/verifications`, ...(params ? [params] : [])
-    ] as const;
-    }
-
-
-export const getListPaymentVerificationsQueryOptions = <TData = Awaited<ReturnType<typeof listPaymentVerifications>>, TError = ErrorType<unknown>>(params?: ListPaymentVerificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getListPaymentVerificationsQueryKey(params);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPaymentVerifications>>> = ({ signal }) => listPaymentVerifications(params, { signal, ...requestOptions });
-
-
-
-
-
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData> & { queryKey: QueryKey }
-}
-
-export type ListPaymentVerificationsQueryResult = NonNullable<Awaited<ReturnType<typeof listPaymentVerifications>>>
-export type ListPaymentVerificationsQueryError = ErrorType<unknown>
-
-
-/**
- * @summary List payment verification history (admin)
- */
-
-export function useListPaymentVerifications<TData = Awaited<ReturnType<typeof listPaymentVerifications>>, TError = ErrorType<unknown>>(
- params?: ListPaymentVerificationsParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPaymentVerifications>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
-
- ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-
-  const queryOptions = getListPaymentVerificationsQueryOptions(params,options)
-
-  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
-
-  return withQueryKey(query, queryOptions.queryKey);
-}
-
-
-
-
-
-
 
 export const getListApprovedReviewsUrl = () => {
 

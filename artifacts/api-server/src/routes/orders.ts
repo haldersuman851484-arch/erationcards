@@ -419,16 +419,16 @@ router.post("/orders/:orderNumber/submit", async (req: Request, res: Response) =
       .limit(1);
     if (!order) { res.status(404).json({ error: "Order not found" }); return; }
 
-    // Gateway orders may only finish once Cashfree has confirmed the money
-    // (or an admin has). Legacy screenshot orders keep the old behavior —
-    // they submit as "pending" and are verified manually afterwards.
-    if (
-      order.paymentMethod === "cashfree" &&
-      order.paymentStatus !== "paid" &&
-      order.paymentStatus !== "confirmed"
-    ) {
+    // An order may only finish once its payment is confirmed. Gateway orders
+    // are confirmed by Cashfree automatically; orders from the earlier payment
+    // process have no self-serve payment path anymore, so support has to
+    // settle them before they can move forward.
+    if (order.paymentStatus !== "paid" && order.paymentStatus !== "confirmed") {
       res.status(409).json({
-        error: "Payment for this order is not completed yet. Please finish the payment first, then submit.",
+        error:
+          order.paymentMethod === "cashfree"
+            ? "Payment for this order is not completed yet. Please finish the payment first, then submit."
+            : "This order was placed through our earlier payment process and its payment was never confirmed. Please contact support and we will sort it out quickly.",
       });
       return;
     }

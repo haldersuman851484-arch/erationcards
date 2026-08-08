@@ -95,7 +95,6 @@ process.env["SESSION_SECRET"] = "test-secret-for-unit-tests";
 process.env["MYSQL_DATABASE_URL"] = "mysql://unused:unused@localhost/unused";
 process.env["ADMIN_EMAIL"] = "admin@test.com";
 process.env["ADMIN_PASSWORD"] = "test-password";
-process.env["MERCHANT_UPI_ID"] = "envdefault@okbank";
 
 const { default: app } = await import("../app.js");
 const { db, ordersTable, paymentVerificationsTable, settingsChangeHistoryTable } = await import("@workspace/db");

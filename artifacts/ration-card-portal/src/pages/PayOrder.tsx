@@ -189,7 +189,7 @@ export default function PayOrder({ params }: { params: { orderNumber: string } }
               <div>
                 <h1 className="text-lg font-bold text-slate-900">No online payment needed here</h1>
                 <p className="text-sm text-slate-600 mt-1">
-                  Order <span className="font-mono font-semibold">{order.orderNumber}</span> was placed with our earlier payment process, so it is verified manually by our team. You can see its latest status on Track Order.
+                  Order <span className="font-mono font-semibold">{order.orderNumber}</span> was placed with our earlier payment process, so there is nothing to pay online here. You can see its latest status on Track Order — and if you have a question about a payment you already made, our support team is happy to help.
                 </p>
               </div>
               <Link href="/track"><Button variant="outline" data-testid="link-track">Track Order</Button></Link>

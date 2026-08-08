@@ -127,10 +127,6 @@ export interface OrderInput {
   amount: number;
 }
 
-export interface UpiConfig {
-  merchantUpiId: string;
-}
-
 export interface CashfreeSessionRequest {
   /**
      * @minLength 4
@@ -169,23 +165,6 @@ export interface CashfreeStatusResponse {
      * @nullable
      */
   cashfreeStatus?: string | null;
-}
-
-/**
- * custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback
- */
-export type UpiSettingSource = typeof UpiSettingSource[keyof typeof UpiSettingSource];
-
-
-export const UpiSettingSource = {
-  custom: 'custom',
-  default: 'default',
-} as const;
-
-export interface UpiSetting {
-  merchantUpiId: string;
-  /** custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback */
-  source: UpiSettingSource;
 }
 
 export interface PriceTierPrices {
@@ -299,14 +278,6 @@ export interface ContactSettingUpdate {
   contact: ContactInfo;
 }
 
-export interface UpiSettingUpdate {
-  /**
-     * @minLength 3
-     * @maxLength 120
-     */
-  merchantUpiId: string;
-}
-
 export interface ProcessingPasswordUpdate {
   /**
      * New employee (processing) login password
@@ -389,24 +360,6 @@ export interface SettingsOtpVerifyResponse {
   /** Send as the x-settings-unlock header on settings endpoints */
   unlockToken: string;
   expiresInSeconds: number;
-}
-
-export type PaymentStatusUpdatePaymentStatus = typeof PaymentStatusUpdatePaymentStatus[keyof typeof PaymentStatusUpdatePaymentStatus];
-
-
-export const PaymentStatusUpdatePaymentStatus = {
-  confirmed: 'confirmed',
-  rejected: 'rejected',
-  pending: 'pending',
-} as const;
-
-export interface PaymentStatusUpdate {
-  paymentStatus: PaymentStatusUpdatePaymentStatus;
-}
-
-export interface PaymentStatusUpdateResponse {
-  id: number;
-  paymentStatus: string;
 }
 
 export interface OrderStatusUpdate {
@@ -606,19 +559,6 @@ export interface OperatorStatusResponse {
   status: string;
 }
 
-export interface PaymentVerification {
-  id: number;
-  orderId: number;
-  orderNumber: string;
-  action: string;
-  adminEmail: string;
-  /** @nullable */
-  screenshotUrl?: string | null;
-  /** @nullable */
-  notes?: string | null;
-  verifiedAt: string;
-}
-
 export type ReviewStatus = typeof ReviewStatus[keyof typeof ReviewStatus];
 
 
@@ -665,13 +605,6 @@ export const ReviewStatusUpdateStatus = {
 
 export interface ReviewStatusUpdate {
   status: ReviewStatusUpdateStatus;
-}
-
-export interface PaymentVerificationListResponse {
-  verifications: PaymentVerification[];
-  total: number;
-  page: number;
-  limit: number;
 }
 
 export type OrdersArchiveFilterSource = typeof OrdersArchiveFilterSource[keyof typeof OrdersArchiveFilterSource];
@@ -839,11 +772,6 @@ export const ExportOrdersArchiveSource = {
 
 export type GetOperatorOrdersParams = {
 status?: string;
-};
-
-export type ListPaymentVerificationsParams = {
-page?: number;
-limit?: number;
 };
 
 export type ListAdminReviewsParams = {

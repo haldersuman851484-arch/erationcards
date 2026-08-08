@@ -102,17 +102,17 @@ router.post(
         return;
       }
 
-      // Online-payment orders must be paid before PDFs can join the print
-      // queue — otherwise a saved-but-unpaid order looks "queued" while it
-      // would never be printed. The UI sends these customers to /pay first.
-      if (
-        order.paymentMethod === "cashfree" &&
-        order.paymentStatus !== "paid" &&
-        order.paymentStatus !== "confirmed"
-      ) {
+      // No order may feed the print queue while its payment is not complete —
+      // otherwise a saved-but-unpaid order looks "queued" while it would never
+      // be printed. Gateway orders are sent to /pay; orders from the earlier
+      // payment process have no self-serve payment path anymore, so support
+      // has to settle them first.
+      if (order.paymentStatus !== "paid" && order.paymentStatus !== "confirmed") {
         res.status(409).json({
           error:
-            "Payment for this order is not complete yet. Please complete the payment first — you can upload the card PDFs right after.",
+            order.paymentMethod === "cashfree"
+              ? "Payment for this order is not complete yet. Please complete the payment first — you can upload the card PDFs right after."
+              : "This order was placed through our earlier payment process and its payment was never confirmed. Please contact support and we will sort it out quickly.",
         });
         return;
       }

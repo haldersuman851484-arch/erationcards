@@ -23,10 +23,6 @@ export type {
   OrderListResponse,
   OrderStats,
   OrderStatusUpdate,
-  PaymentStatusUpdate,
-  PaymentStatusUpdatePaymentStatus,
-  PaymentStatusUpdateResponse,
   SuccessResponse,
   TrackOrderParams,
-  UpiConfig,
 } from "./generated/types";

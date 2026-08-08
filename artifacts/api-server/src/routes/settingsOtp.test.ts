@@ -66,7 +66,6 @@ process.env["SESSION_SECRET"] = "test-secret-for-unit-tests";
 process.env["MYSQL_DATABASE_URL"] = "mysql://unused:unused@localhost/unused";
 process.env["ADMIN_EMAIL"] = "admin@test.com";
 process.env["ADMIN_PASSWORD"] = "test-password";
-process.env["MERCHANT_UPI_ID"] = "envdefault@okbank";
 process.env["SETTINGS_PARTNER_EMAILS"] = "partner1@test.com,partner2@test.com";
 // Email sending is FAIL-CLOSED (real sends only under NODE_ENV=production).
 // Opt in explicitly so these tests exercise the real send path against the
@@ -314,7 +313,7 @@ describe("POST /api/admin/settings/otp/verify", () => {
 
 describe("unlock token gates the settings endpoints end-to-end", () => {
   it("locked without header → unlocked with a token earned through the real flow", async () => {
-    const locked = await adminGet("/api/admin/settings/upi");
+    const locked = await adminGet("/api/admin/settings/pricing");
     expect(locked.status).toBe(403);
     expect(locked.body.code).toBe("SETTINGS_LOCKED");
 
@@ -322,16 +321,16 @@ describe("unlock token gates the settings endpoints end-to-end", () => {
     const verify = await adminPost("/api/admin/settings/otp/verify").send({ codes });
     expect(verify.status).toBe(200);
 
-    const unlocked = await adminGet("/api/admin/settings/upi").set(
+    const unlocked = await adminGet("/api/admin/settings/pricing").set(
       "x-settings-unlock",
       verify.body.unlockToken,
     );
     expect(unlocked.status).toBe(200);
-    expect(unlocked.body.merchantUpiId).toBe("envdefault@okbank");
+    expect(unlocked.body.source).toBe("default");
   });
 
   it("an admin login JWT cannot be smuggled into the unlock header (scope check)", async () => {
-    const res = await adminGet("/api/admin/settings/upi").set("x-settings-unlock", makeAdminToken());
+    const res = await adminGet("/api/admin/settings/pricing").set("x-settings-unlock", makeAdminToken());
     expect(res.status).toBe(403);
   });
 
@@ -339,7 +338,7 @@ describe("unlock token gates the settings endpoints end-to-end", () => {
     const expired = jwt.sign({ scope: "settings_unlock", email: "admin@test.com" }, TEST_SECRET, {
       expiresIn: -10,
     });
-    const res = await adminGet("/api/admin/settings/upi").set("x-settings-unlock", expired);
+    const res = await adminGet("/api/admin/settings/pricing").set("x-settings-unlock", expired);
     expect(res.status).toBe(403);
   });
 });

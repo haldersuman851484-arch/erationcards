@@ -8,7 +8,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import ScreenshotViewer from "@/components/ScreenshotViewer";
 import {
   useGetCurrentAdmin,
   getGetCurrentAdminQueryKey,
@@ -20,15 +19,13 @@ import {
   useListOperators,
   getListOperatorsQueryKey,
   useUpdateOrderStatus,
-  useUpdateOrderPaymentStatus,
   useLogoutAdmin,
-  getListPaymentVerificationsQueryKey,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import {
   Package, Clock, Truck, CheckCircle, CheckCircle2, XCircle,
-  ImageIcon, LogOut, IndianRupee, Users, Search, X, MapPin,
+  LogOut, IndianRupee, Users, Search, X, MapPin,
   Phone, CreditCard, Calendar, Hash, ClipboardList,
   Store, AlertCircle, FileText, Download, Send, RotateCcw,
 } from "lucide-react";
@@ -110,7 +107,6 @@ export default function ProcessingPanel() {
 
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [dispatchForm, setDispatchForm] = useState<{
     orderId: number;
     courier: string;
@@ -157,9 +153,6 @@ export default function ProcessingPanel() {
   const updateStatus = useUpdateOrderStatus({
     request: { headers: getAuthHeader() },
   } as any);
-  const updatePaymentStatus = useUpdateOrderPaymentStatus({
-    request: { headers: getAuthHeader() },
-  } as any);
   const logoutAdmin = useLogoutAdmin();
 
   useEffect(() => {
@@ -170,24 +163,6 @@ export default function ProcessingPanel() {
     setSelectedOrderId(orderId);
     setDetailOpen(true);
   }, []);
-
-  function handlePaymentStatus(orderId: number, paymentStatus: "confirmed" | "rejected" | "pending") {
-    const successMsg =
-      paymentStatus === "confirmed" ? "Payment confirmed!" :
-      paymentStatus === "rejected" ? "Payment rejected." :
-      "Payment reset to pending.";
-    updatePaymentStatus.mutate(
-      { id: orderId, data: { paymentStatus } },
-      {
-        onSuccess: () => {
-          toast({ title: successMsg });
-          queryClient.invalidateQueries({ queryKey: getListOrdersQueryKey({}) });
-          queryClient.invalidateQueries({ queryKey: getListPaymentVerificationsQueryKey({}) });
-        },
-        onError: () => toast({ title: "Failed to update payment status", variant: "destructive" }),
-      }
-    );
-  }
 
   function handleStatusUpdate(
     orderId: number,
@@ -330,29 +305,8 @@ export default function ProcessingPanel() {
                       </TableCell>
                       <TableCell onClick={(e) => e.stopPropagation()}>
                         <div className="flex flex-col gap-1.5 min-w-[130px]">
-                          {order.paymentScreenshotUrl && (
-                            <button onClick={() => setPreviewImg(order.paymentScreenshotUrl!)} className="flex items-center gap-1 text-xs text-primary hover:underline" data-testid={`button-view-screenshot-${order.id}`}>
-                              <ImageIcon className="w-3.5 h-3.5" /> Screenshot
-                            </button>
-                          )}
                           {order.paymentMethod === "cashfree" && (order.paymentStatus === "pending" || order.paymentStatus === "failed") ? (
                             <Badge className="text-xs border w-fit bg-amber-100 text-amber-700 border-amber-200" data-testid={`badge-awaiting-payment-${order.id}`}>Awaiting payment</Badge>
-                          ) : order.paymentMethod !== "cashfree" && order.paymentStatus === "pending" ? (
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-confirm-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
-                                <CheckCircle2 className="w-3 h-3 mr-0.5" /> Confirm
-                              </Button>
-                              <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-red-700 border-red-300 hover:bg-red-50" data-testid={`button-reject-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "rejected")} disabled={updatePaymentStatus.isPending}>
-                                <XCircle className="w-3 h-3 mr-0.5" /> Reject
-                              </Button>
-                            </div>
-                          ) : order.paymentMethod !== "cashfree" && order.paymentStatus === "rejected" ? (
-                            <div className="flex flex-col gap-1">
-                              <Badge className="text-xs border w-fit capitalize bg-red-100 text-red-700 border-red-200">Rejected</Badge>
-                              <Button size="sm" variant="outline" className="h-6 px-1.5 text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid={`button-reapprove-payment-${order.id}`} onClick={() => handlePaymentStatus(order.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
-                                <CheckCircle2 className="w-3 h-3 mr-0.5" /> Re-approve
-                              </Button>
-                            </div>
                           ) : (
                             <Badge className={`text-xs border w-fit capitalize ${PAYMENT_STATUS_BADGE[order.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{order.paymentStatus ?? "—"}</Badge>
                           )}
@@ -495,8 +449,6 @@ export default function ProcessingPanel() {
         <Dialog open={detailOpen} onOpenChange={setDetailOpen}>
           <DialogContent
             className="max-w-2xl max-h-[90vh] overflow-y-auto"
-            onInteractOutside={(e) => { if (previewImg) e.preventDefault(); }}
-            onEscapeKeyDown={(e) => { if (previewImg) e.preventDefault(); }}
           >
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-base">
@@ -645,27 +597,9 @@ export default function ProcessingPanel() {
                         <Badge className={`text-xs border capitalize ${PAYMENT_STATUS_BADGE[selectedOrder.paymentStatus ?? ""] || "bg-slate-100 text-slate-600 border-slate-200"}`}>{selectedOrder.paymentStatus}</Badge>
                       </div>
                     </div>
-                    {selectedOrder.paymentScreenshotUrl && (
-                      <div className="shrink-0">
-                        <p className="text-xs text-slate-500 mb-1.5">Payment Screenshot</p>
-                        <button type="button" onClick={() => setPreviewImg(selectedOrder.paymentScreenshotUrl!)} className="block" data-testid="button-dialog-screenshot">
-                          <img src={selectedOrder.paymentScreenshotUrl} alt="Payment screenshot" className="w-28 h-28 object-cover rounded-lg border border-slate-200 shadow-sm hover:opacity-90 transition-opacity" />
-                        </button>
-                      </div>
-                    )}
                   </div>
                   {selectedOrder.paymentMethod === "cashfree" && (selectedOrder.paymentStatus === "pending" || selectedOrder.paymentStatus === "failed") && (
                     <p className="text-xs text-amber-600 mt-2" data-testid="dialog-awaiting-payment-note">Awaiting online payment — the status updates automatically once the customer completes the Cashfree payment.</p>
-                  )}
-                  {selectedOrder.paymentMethod !== "cashfree" && selectedOrder.paymentStatus === "pending" && (
-                    <div className="flex gap-2 mt-3">
-                      <Button size="sm" variant="outline" className="text-emerald-700 border-emerald-300 hover:bg-emerald-50" data-testid="button-dialog-confirm-payment" onClick={() => handlePaymentStatus(selectedOrder.id, "confirmed")} disabled={updatePaymentStatus.isPending}>
-                        <CheckCircle2 className="w-4 h-4 mr-1" /> Confirm Payment
-                      </Button>
-                      <Button size="sm" variant="outline" className="text-red-700 border-red-300 hover:bg-red-50" data-testid="button-dialog-reject-payment" onClick={() => handlePaymentStatus(selectedOrder.id, "rejected")} disabled={updatePaymentStatus.isPending}>
-                        <XCircle className="w-4 h-4 mr-1" /> Reject Payment
-                      </Button>
-                    </div>
                   )}
                 </section>
 
@@ -787,9 +721,6 @@ export default function ProcessingPanel() {
             )}
           </DialogContent>
         </Dialog>
-
-        {/* Screenshot Lightbox */}
-        <ScreenshotViewer src={previewImg} onClose={() => setPreviewImg(null)} />
       </div>
     </>
   );

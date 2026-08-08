@@ -19,14 +19,8 @@ import {
   useListOperators,
   getListOperatorsQueryKey,
   useLogoutAdmin,
-  useListPaymentVerifications,
-  getListPaymentVerificationsQueryKey,
   useUpdateReviewStatus,
   useDeleteReview,
-  useGetUpiSetting,
-  getGetUpiSettingQueryKey,
-  useUpdateUpiSetting,
-  getGetUpiConfigQueryKey,
   useGetPricingSetting,
   getGetPricingSettingQueryKey,
   useUpdatePricingSetting,
@@ -58,7 +52,6 @@ import {
 import DataStorageTab from "./DataStorageTab";
 import CampaignsTab from "./CampaignsTab";
 import OperatorsTab from "./OperatorsTab";
-import ScreenshotViewer from "@/components/ScreenshotViewer";
 
 function getAuthHeader() {
   const token = localStorage.getItem("adminToken");
@@ -131,8 +124,6 @@ function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_p
   }
 }
 
-// Mirrors UPI_ID_REGEX on the server: handle@psp, e.g. mystore@okaxis
-const UPI_INPUT_REGEX = /^[a-zA-Z0-9][a-zA-Z0-9._-]{1,49}@[a-zA-Z][a-zA-Z0-9]{1,63}$/;
 
 function AnimatedRow({ children, index }: { children: React.ReactNode; index: number }) {
   return (
@@ -154,7 +145,7 @@ function AnimatedRow({ children, index }: { children: React.ReactNode; index: nu
  * Day-to-day order processing (public/operator order tabs and the courier
  * mPanels) lives in the Processing Panel at /processing, where employees log
  * in with the processing password. This dashboard keeps the admin-only areas:
- * operator applications, the payment verification log, reviews, and settings.
+ * operator applications, reviews, and settings.
  */
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
@@ -163,7 +154,6 @@ export default function AdminDashboard() {
 
   const [activeTab, setActiveTab] = useState("operators");
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; name: string } | null>(null);
-  const [previewImg, setPreviewImg] = useState<string | null>(null);
 
   const { data: admin, isLoading: adminLoading, error: adminError } = useGetCurrentAdmin({
     query: { queryKey: getGetCurrentAdminQueryKey() },
@@ -182,17 +172,6 @@ export default function AdminDashboard() {
 
   const pendingApplications = ((operators as any[] | undefined) ?? []).filter((o) => o?.status === "pending").length;
 
-  const { data: verificationsData, isLoading: verificationsLoading } = useListPaymentVerifications(
-    {},
-    {
-      query: {
-        queryKey: getListPaymentVerificationsQueryKey({}),
-        enabled: !!admin && activeTab === "verifications",
-        refetchInterval: activeTab === "verifications" ? 15000 : false,
-      },
-      request: { headers: getAuthHeader() },
-    } as any
-  );
 
   const { data: reviewsData, isLoading: reviewsLoading, refetch: refetchReviews } = useQuery<any[]>({
     queryKey: ["admin", "reviews"],
@@ -313,7 +292,6 @@ export default function AdminDashboard() {
         setSettingsUnlock(unlock);
         setOtpSent(false);
         setOtpInputs({});
-        queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetPricingSettingQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetContactSettingQueryKey() });
         toast({ title: "Settings unlocked!", description: "Both codes matched. Settings stay open for 15 minutes." });
@@ -339,50 +317,6 @@ export default function AdminDashboard() {
     ...getAuthHeader(),
     ...(settingsUnlock ? { "x-settings-unlock": settingsUnlock.token } : {}),
   };
-
-  // ── Payment settings (merchant UPI ID) ──
-  const upiSettingQuery = useGetUpiSetting({
-    query: { queryKey: getGetUpiSettingQueryKey(), enabled: settingsUnlocked },
-    request: { headers: settingsHeaders },
-  } as any);
-  const updateUpiMutation = useUpdateUpiSetting({
-    request: { headers: settingsHeaders },
-  } as any);
-  const [upiInput, setUpiInput] = useState("");
-  const [upiInputInvalid, setUpiInputInvalid] = useState(false);
-
-  useEffect(() => {
-    if (upiSettingQuery.data) setUpiInput(upiSettingQuery.data.merchantUpiId);
-  }, [upiSettingQuery.data]);
-
-  function handleSaveUpi() {
-    const candidate = upiInput.trim();
-    if (!UPI_INPUT_REGEX.test(candidate)) {
-      setUpiInputInvalid(true);
-      return;
-    }
-    setUpiInputInvalid(false);
-    updateUpiMutation.mutate(
-      { data: { merchantUpiId: candidate } },
-      {
-        onSuccess: () => {
-          toast({ title: "UPI ID updated!", description: "Customers now see the new UPI ID and QR code." });
-          queryClient.invalidateQueries({ queryKey: getGetUpiSettingQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getGetUpiConfigQueryKey() });
-          queryClient.invalidateQueries({ queryKey: getListSettingsChangeHistoryQueryKey() });
-        },
-        onError: (err: unknown) => {
-          if (handleSettingsAuthError(err)) return;
-          const serverMsg = (err as { data?: { error?: string } })?.data?.error;
-          toast({
-            title: "Could not save UPI ID",
-            description: serverMsg || "Check the format (yourname@bank) and try again.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  }
 
   // ── Support contact details (phone, email, address, city, hours) ──
   const contactSettingQuery = useGetContactSetting({
@@ -503,11 +437,11 @@ export default function AdminDashboard() {
   // back 403 SETTINGS_LOCKED — treat that exactly like a mutation relock so the
   // gate reappears instead of a dead "unlocked" screen with load errors.
   useEffect(() => {
-    const errors: unknown[] = [upiSettingQuery.error, pricingSettingQuery.error, contactSettingQuery.error];
+    const errors: unknown[] = [pricingSettingQuery.error, contactSettingQuery.error];
     if (errors.some((e) => (e as { data?: { code?: string } } | null)?.data?.code === "SETTINGS_LOCKED")) {
       relockSettings(true);
     }
-  }, [upiSettingQuery.error, pricingSettingQuery.error, contactSettingQuery.error, relockSettings]);
+  }, [pricingSettingQuery.error, contactSettingQuery.error, relockSettings]);
   // Flat string inputs keyed "group.tier.audience" so partial typing never crashes
   const [priceInputs, setPriceInputs] = useState<Record<string, string>>({});
   const [priceErrors, setPriceErrors] = useState<Record<string, boolean>>({});
@@ -621,7 +555,6 @@ export default function AdminDashboard() {
     );
   }
 
-  const verifications = verificationsData?.verifications ?? [];
   const pendingDeliveries = (stats?.pendingOrders ?? 0) + (stats?.processingOrders ?? 0) + (stats?.printedOrders ?? 0) + (stats?.dispatchedOrders ?? 0);
 
   return (
@@ -711,10 +644,6 @@ export default function AdminDashboard() {
                 {pendingApplications > 0 && (
                   <span className="bg-red-500 text-white text-xs px-1.5 py-0.5 rounded-full animate-pulse">{pendingApplications}</span>
                 )}
-              </TabsTrigger>
-              <TabsTrigger value="verifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all" data-testid="tab-verifications">
-                <ShieldCheck className="w-4 h-4" /> Verification Log
-                {verificationsData && <span className="bg-primary/20 text-primary text-xs px-1.5 py-0.5 rounded-full">{verificationsData.total}</span>}
               </TabsTrigger>
               <TabsTrigger value="reviews" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
                 <Star className="w-4 h-4" /> Reviews
@@ -888,119 +817,6 @@ export default function AdminDashboard() {
               </Card>
             </TabsContent>
 
-            {/* ── Verification Log Tab ── */}
-            <TabsContent value="verifications" className="tab-panel mt-4">
-              <Card className="border-0 shadow-sm bg-white">
-                <CardHeader className="pb-4">
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-base flex items-center gap-2">
-                      <ClipboardList className="w-5 h-5 text-primary" />
-                      Payment Verification Log
-                      {verificationsData && (
-                        <span className="text-slate-400 font-normal text-sm ml-1">({verificationsData.total} records)</span>
-                      )}
-                    </CardTitle>
-                    <span className="text-xs text-slate-400">Auto-refreshes every 15s</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {verificationsLoading ? (
-                    <div className="py-14 flex flex-col items-center gap-3">
-                      <div className="w-8 h-8 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-                      <p className="text-slate-400 text-sm">Loading verification records…</p>
-                    </div>
-                  ) : verifications.length === 0 ? (
-                    <div className="py-16 text-center">
-                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                        <ShieldCheck className="w-8 h-8 text-slate-300" />
-                      </div>
-                      <p className="text-slate-500 font-medium">No verifications yet</p>
-                      <p className="text-slate-400 text-sm mt-1">Records appear here when you confirm or reject a payment.</p>
-                    </div>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow className="bg-slate-50">
-                            <TableHead className="w-12">#</TableHead>
-                            <TableHead>Order Number</TableHead>
-                            <TableHead>Decision</TableHead>
-                            <TableHead>Verified By</TableHead>
-                            <TableHead>Screenshot</TableHead>
-                            <TableHead>Date & Time</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {verifications.map((v, i) => (
-                            <AnimatedRow key={v.id} index={i}>
-                              <TableCell className="text-xs text-slate-400 font-mono">{v.id}</TableCell>
-                              <TableCell>
-                                <span className="font-mono text-sm font-semibold text-primary">{v.orderNumber}</span>
-                              </TableCell>
-                              <TableCell>
-                                {v.action === "confirmed" ? (
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                    <Badge className="bg-emerald-100 text-emerald-700 border border-emerald-200 gap-1">
-                                      <CheckCircle2 className="w-3 h-3" /> Confirmed
-                                    </Badge>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-1.5">
-                                    <div className="w-2 h-2 rounded-full bg-red-500" />
-                                    <Badge className="bg-red-100 text-red-700 border border-red-200 gap-1">
-                                      <XCircle className="w-3 h-3" /> Rejected
-                                    </Badge>
-                                  </div>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex items-center gap-1.5">
-                                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                                    <Shield className="w-3 h-3 text-primary" />
-                                  </div>
-                                  <span className="text-xs text-slate-600">{v.adminEmail}</span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                {v.screenshotUrl ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => setPreviewImg(v.screenshotUrl!)}
-                                    className="group flex items-center gap-1.5"
-                                    data-testid={`button-verification-screenshot-${v.id}`}
-                                  >
-                                    <img
-                                      src={v.screenshotUrl}
-                                      alt="Payment screenshot"
-                                      className="w-10 h-10 rounded-lg object-cover border border-slate-200 shadow-sm group-hover:scale-105 transition-transform"
-                                    />
-                                    <span className="text-xs text-primary group-hover:underline hidden sm:block">View</span>
-                                  </button>
-                                ) : (
-                                  <span className="text-xs text-slate-400">—</span>
-                                )}
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex flex-col">
-                                  <span className="text-xs font-medium text-slate-700">
-                                    {new Date(v.verifiedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                  </span>
-                                  <span className="text-xs text-slate-400">
-                                    {new Date(v.verifiedAt).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
-                                  </span>
-                                </div>
-                              </TableCell>
-                            </AnimatedRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
-
             {/* ── Settings Tab ── */}
             <TabsContent value="settings" className="tab-panel mt-4 space-y-6">
               {!settingsUnlocked ? (
@@ -1010,7 +826,7 @@ export default function AdminDashboard() {
                     <Lock className="w-5 h-5 text-primary" /> Settings are locked
                   </CardTitle>
                   <p className="text-sm text-slate-500">
-                    The payment UPI ID and card prices are protected. One-time codes are emailed to
+                    Card prices, contact details and the employee password are protected. One-time codes are emailed to
                     both partners — settings open only after both codes are entered.
                   </p>
                 </CardHeader>
@@ -1113,77 +929,6 @@ export default function AdminDashboard() {
                   <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Unlocked by both partners — locks again automatically after 15 minutes
                 </Badge>
               </div>
-              <Card className="border-slate-200 shadow-sm max-w-2xl">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-lg">
-                    <RupeeIcon className="w-5 h-5 text-primary" /> Payment UPI ID
-                  </CardTitle>
-                  <p className="text-sm text-slate-500">
-                    Customers pay to this UPI ID on the order page — the QR code and the copy button both use it.
-                    A change applies to the very next order, no restart needed.
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {upiSettingQuery.isLoading ? (
-                    <p className="text-sm text-slate-500">Loading current UPI ID…</p>
-                  ) : upiSettingQuery.isError ? (
-                    <p className="text-sm text-red-600" data-testid="text-upi-load-error">
-                      Could not load the current UPI ID. Refresh the page to try again.
-                    </p>
-                  ) : (
-                    <>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">Currently in use</p>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-mono text-sm text-slate-900" data-testid="text-current-upi-id">
-                            {upiSettingQuery.data?.merchantUpiId || "— not set —"}
-                          </div>
-                          <Badge
-                            variant="outline"
-                            className={upiSettingQuery.data?.source === "custom"
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                              : "bg-slate-100 text-slate-600 border-slate-200"}
-                            data-testid="badge-upi-source"
-                          >
-                            {upiSettingQuery.data?.source === "custom" ? "Saved by you" : "Default (server setting)"}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 mb-1.5 font-medium uppercase tracking-wide">Change UPI ID</p>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={upiInput}
-                            onChange={(e) => { setUpiInput(e.target.value); setUpiInputInvalid(false); }}
-                            placeholder="yourname@bank"
-                            className="font-mono max-w-sm"
-                            data-testid="input-upi-id"
-                          />
-                          <Button
-                            onClick={handleSaveUpi}
-                            disabled={
-                              updateUpiMutation.isPending ||
-                              !upiInput.trim() ||
-                              upiInput.trim() === upiSettingQuery.data?.merchantUpiId
-                            }
-                            data-testid="button-save-upi"
-                          >
-                            {updateUpiMutation.isPending ? "Saving…" : "Save"}
-                          </Button>
-                        </div>
-                        {upiInputInvalid && (
-                          <p className="text-xs text-red-600 mt-1.5" data-testid="text-upi-format-error">
-                            Enter a valid UPI ID like yourname@bank
-                          </p>
-                        )}
-                        <p className="text-xs text-slate-400 mt-1.5">
-                          Example: 9876543210@ybl or mystore@okaxis. Double-check before saving — customers will pay to this ID.
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
 
               {/* ── Support contact details ── */}
               <Card className="border-slate-200 shadow-sm max-w-2xl" data-testid="card-contact-details">
@@ -1415,7 +1160,7 @@ export default function AdminDashboard() {
                     <ClipboardList className="w-5 h-5 text-primary" /> Recent changes
                   </CardTitle>
                   <p className="text-sm text-slate-500">
-                    Every saved UPI ID or price change is recorded here automatically — what changed,
+                    Every saved settings change is recorded here automatically — what changed,
                     from and to what, and who saved it. This list cannot be edited or deleted.
                   </p>
                 </CardHeader>
@@ -1428,7 +1173,7 @@ export default function AdminDashboard() {
                     </p>
                   ) : (historyQuery.data?.changes?.length ?? 0) === 0 ? (
                     <p className="text-sm text-slate-500" data-testid="text-history-empty">
-                      No changes recorded yet. The first UPI ID or price save will appear here.
+                      No changes recorded yet. The first settings save will appear here.
                     </p>
                   ) : (
                     <ul className="space-y-3">
@@ -1523,7 +1268,6 @@ export default function AdminDashboard() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <ScreenshotViewer src={previewImg} onClose={() => setPreviewImg(null)} />
       </div>
     </>
   );

@@ -155,7 +155,6 @@ const STAFF_ENDPOINTS: Array<{ label: string; call: (token: string) => request.T
   { label: "POST /api/orders/:id/dispatch", call: (t) => request(app).post("/api/orders/12345/dispatch").send({}).set("Authorization", `Bearer ${t}`) },
   { label: "DELETE /api/orders/:id/dispatch", call: (t) => request(app).delete("/api/orders/12345/dispatch").set("Authorization", `Bearer ${t}`) },
   { label: "PATCH /api/orders/:id/assign", call: (t) => request(app).patch("/api/orders/12345/assign").send({ operatorId: 1 }).set("Authorization", `Bearer ${t}`) },
-  { label: "PATCH /api/orders/:id/payment-status", call: (t) => request(app).patch("/api/orders/12345/payment-status").send({ paymentStatus: "confirmed" }).set("Authorization", `Bearer ${t}`) },
 ];
 
 describe("staff endpoints — processing token passes the auth gate", () => {
@@ -180,10 +179,7 @@ describe("staff endpoints — processing token passes the auth gate", () => {
 // ── Admin-only endpoints must 403 a processing token ────────────────────────
 
 const ADMIN_ONLY_ENDPOINTS: Array<{ label: string; call: (token: string) => request.Test }> = [
-  { label: "GET /api/admin/verifications", call: (t) => request(app).get("/api/admin/verifications").set("Authorization", `Bearer ${t}`) },
   { label: "PATCH /api/admin/operators/:id/status", call: (t) => request(app).patch("/api/admin/operators/5/status").send({ status: "active" }).set("Authorization", `Bearer ${t}`) },
-  { label: "GET /api/admin/settings/upi", call: (t) => request(app).get("/api/admin/settings/upi").set("Authorization", `Bearer ${t}`) },
-  { label: "PUT /api/admin/settings/upi", call: (t) => request(app).put("/api/admin/settings/upi").send({ merchantUpiId: "x@bank" }).set("Authorization", `Bearer ${t}`) },
   { label: "GET /api/admin/settings/pricing", call: (t) => request(app).get("/api/admin/settings/pricing").set("Authorization", `Bearer ${t}`) },
   { label: "PUT /api/admin/settings/pricing", call: (t) => request(app).put("/api/admin/settings/pricing").send({}).set("Authorization", `Bearer ${t}`) },
   { label: "GET /api/admin/settings/history", call: (t) => request(app).get("/api/admin/settings/history").set("Authorization", `Bearer ${t}`) },
@@ -211,13 +207,13 @@ describe("admin-only endpoints — processing token is forbidden (403)", () => {
     });
   }
 
-  it("admin token still passes the gate on GET /api/admin/verifications", async () => {
+  it("admin token still passes the gate on GET /api/admin/reviews", async () => {
     const res = await call401Check();
     expect([401, 403]).not.toContain(res.status);
   });
 
   function call401Check() {
-    return request(app).get("/api/admin/verifications").set("Authorization", `Bearer ${adminToken}`);
+    return request(app).get("/api/admin/reviews").set("Authorization", `Bearer ${adminToken}`);
   }
 });
 

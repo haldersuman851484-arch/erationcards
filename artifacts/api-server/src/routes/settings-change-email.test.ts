@@ -81,14 +81,6 @@ const VALID_PRICING = {
   special: { single: { public: 120, operator: 100 }, multi: { public: 110, operator: 90 } },
 };
 
-function putUpi(upi = "newstore@okaxis") {
-  return request(app)
-    .put("/api/admin/settings/upi")
-    .set("Authorization", `Bearer ${makeAdminToken()}`)
-    .set(UNLOCK_HEADER, makeUnlockToken())
-    .send({ merchantUpiId: upi });
-}
-
 function putPricing() {
   return request(app)
     .put("/api/admin/settings/pricing")
@@ -98,20 +90,6 @@ function putPricing() {
 }
 
 /** Asserts the setting upsert and the audit-trail history row were both written. */
-function expectUpiPersisted() {
-  expect(valuesFn()).toHaveBeenCalledWith(
-    expect.objectContaining({ key: "merchant_upi_id", value: "newstore@okaxis" })
-  );
-  expect(valuesFn()).toHaveBeenCalledWith(
-    expect.objectContaining({
-      field: "merchant_upi_id",
-      oldValue: "envdefault@okbank",
-      newValue: "newstore@okaxis",
-      changedBy: "admin@test.com",
-    })
-  );
-}
-
 function expectPricingPersisted() {
   expect(valuesFn()).toHaveBeenCalledWith(
     expect.objectContaining({ key: "pricing_matrix", value: JSON.stringify(VALID_PRICING) })
@@ -130,32 +108,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-describe("PUT /api/admin/settings/upi — email transport failure never blocks the save", () => {
-  it("still saves and writes history when the transport rejects (network down)", async () => {
-    fetchMock.mockRejectedValue(new Error("ECONNREFUSED: resend is down"));
-    const res = await putUpi();
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ merchantUpiId: "newstore@okaxis", source: "custom" });
-    expectUpiPersisted();
-    // The email was genuinely attempted (once per partner) and failed silently.
-    await waitForEmailAttempts(2);
-  });
-
-  it("still saves and writes history when Resend returns a non-OK response", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ message: "rate limited" }), { status: 429 })
-    );
-    const res = await putUpi();
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ merchantUpiId: "newstore@okaxis", source: "custom" });
-    expectUpiPersisted();
-    await waitForEmailAttempts(2);
-  });
-});
-
 describe("PUT /api/admin/settings/pricing — email transport failure never blocks the save", () => {
   it("still saves and writes history when the transport rejects", async () => {
     fetchMock.mockRejectedValue(new Error("socket hang up"));
+    // The email is genuinely attempted (once per partner) and fails silently.
     const res = await putPricing();
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ pricing: VALID_PRICING, source: "custom" });
@@ -181,30 +137,6 @@ describe("settings change email — happy path notifies both partners", () => {
       .filter(([url]) => String(url).includes("api.resend.com/emails"))
       .map(([, init]) => JSON.parse((init as RequestInit).body as string));
   }
-
-  it("UPI save emails both partners with what changed, old → new, who and when", async () => {
-    fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: "email_ok" }), { status: 200 }));
-    const res = await putUpi();
-    expect(res.status).toBe(200);
-    await waitForEmailAttempts(2);
-
-    const payloads = sentPayloads();
-    const recipients = payloads.flatMap((p) => p.to).sort();
-    expect(recipients).toEqual(["partner1@test.com", "partner2@test.com"]);
-
-    for (const p of payloads) {
-      expect(p.subject).toBe("UPI ID changed - PVC Card Portal settings");
-      // Old → new values, who saved, and when (IST timestamp) in the text body.
-      expect(p.text).toContain("Old value: envdefault@okbank");
-      expect(p.text).toContain("New value: newstore@okaxis");
-      expect(p.text).toContain("Saved by: admin@test.com");
-      expect(p.text).toMatch(/When: .+IST/);
-      // HTML body carries the same facts.
-      expect(p.html).toContain("envdefault@okbank");
-      expect(p.html).toContain("newstore@okaxis");
-      expect(p.html).toContain("admin@test.com");
-    }
-  });
 
   it("pricing save emails both partners with the readable old/new price matrices", async () => {
     fetchMock.mockResolvedValue(new Response(JSON.stringify({ id: "email_ok" }), { status: 200 }));

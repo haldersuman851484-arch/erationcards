@@ -14,6 +14,7 @@ export const CLIENT_ROUTE_PATTERNS: readonly string[] = [
   "/",
   "/order",
   "/order-upload/:orderNumber",
+  "/pay/:orderNumber",
   "/receipt/:orderNumber",
   "/track",
   "/download",

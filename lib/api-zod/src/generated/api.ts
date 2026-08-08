@@ -452,23 +452,6 @@ export const UpdateOrderCustomerInfoResponse = zod.object({
 
 
 /**
- * @summary Confirm or reject a payment (admin)
- */
-export const UpdateOrderPaymentStatusParams = zod.object({
-  "id": zod.coerce.number()
-})
-
-export const UpdateOrderPaymentStatusBody = zod.object({
-  "paymentStatus": zod.enum(['confirmed', 'rejected', 'pending'])
-})
-
-export const UpdateOrderPaymentStatusResponse = zod.object({
-  "id": zod.number(),
-  "paymentStatus": zod.string()
-})
-
-
-/**
  * @summary Assign order to an operator
  */
 export const AssignOrderToOperatorParams = zod.object({
@@ -568,14 +551,6 @@ export const GetCashfreePaymentStatusQueryParams = zod.object({
 export const GetCashfreePaymentStatusResponse = zod.object({
   "paymentStatus": zod.string(),
   "cashfreeStatus": zod.string().nullish().describe('Raw Cashfree order_status (ACTIVE, PAID, EXPIRED, TERMINATED) when the gateway was reachable')
-})
-
-
-/**
- * @summary Get merchant UPI ID for display and QR code generation
- */
-export const GetUpiConfigResponse = zod.object({
-  "merchantUpiId": zod.string()
 })
 
 
@@ -793,33 +768,6 @@ export const UpdatePricingSettingResponse = zod.object({
 })
 }).describe('Per-card ₹ prices by group (ration vs special), tier (single vs multi) and audience (public vs operator)'),
   "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = built-in launch prices')
-})
-
-
-/**
- * @summary Get the merchant UPI ID setting (admin)
- */
-export const GetUpiSettingResponse = zod.object({
-  "merchantUpiId": zod.string(),
-  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback')
-})
-
-
-/**
- * @summary Update the merchant UPI ID (admin)
- */
-export const updateUpiSettingBodyMerchantUpiIdMin = 3;
-export const updateUpiSettingBodyMerchantUpiIdMax = 120;
-
-
-
-export const UpdateUpiSettingBody = zod.object({
-  "merchantUpiId": zod.string().min(updateUpiSettingBodyMerchantUpiIdMin).max(updateUpiSettingBodyMerchantUpiIdMax)
-})
-
-export const UpdateUpiSettingResponse = zod.object({
-  "merchantUpiId": zod.string(),
-  "source": zod.enum(['custom', 'default']).describe('custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback')
 })
 
 
@@ -1329,31 +1277,6 @@ export const DeleteOperatorParams = zod.object({
 export const DeleteOperatorResponse = zod.object({
   "success": zod.boolean(),
   "ordersKept": zod.number().describe('Number of past orders that stay in the system (unassigned lookups keep working)')
-})
-
-
-/**
- * @summary List payment verification history (admin)
- */
-export const ListPaymentVerificationsQueryParams = zod.object({
-  "page": zod.coerce.number().optional(),
-  "limit": zod.coerce.number().optional()
-})
-
-export const ListPaymentVerificationsResponse = zod.object({
-  "verifications": zod.array(zod.object({
-  "id": zod.number(),
-  "orderId": zod.number(),
-  "orderNumber": zod.string(),
-  "action": zod.string(),
-  "adminEmail": zod.string(),
-  "screenshotUrl": zod.string().nullish(),
-  "notes": zod.string().nullish(),
-  "verifiedAt": zod.string()
-})),
-  "total": zod.number(),
-  "page": zod.number(),
-  "limit": zod.number()
 })
 
 

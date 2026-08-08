@@ -59,6 +59,9 @@ vi.mock("@workspace/db", () => {
       update: updateFn,
     },
     ordersTable: {},
+    // parseLiveOperatorToken checks the operator row still exists; the select
+    // chain below resolves a row, so mocked operator tokens count as live.
+    operatorsTable: { id: {} },
     // settings lookups (pricing matrix) go through the same select chain;
     // the fake row has no `value`, so getPricingMatrix falls back to defaults.
     settingsTable: { key: {}, value: {} },
@@ -139,8 +142,8 @@ describe("POST /api/orders/:id/dispatch — authorization", () => {
   });
 });
 
-describe("POST /api/orders — screenshot guard", () => {
-  it("returns 400 with a descriptive error when paymentScreenshotUrl is missing", async () => {
+describe("POST /api/orders — screenshot no longer required (gateway era)", () => {
+  it("creates the order when no screenshot is provided", async () => {
     const { paymentScreenshotUrl: _omitted, ...payloadWithoutScreenshot } = VALID_PAYLOAD;
 
     const res = await request(app)
@@ -148,36 +151,27 @@ describe("POST /api/orders — screenshot guard", () => {
       .send(payloadWithoutScreenshot)
       .set("Content-Type", "application/json");
 
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      error: expect.stringContaining("Payment screenshot is required"),
-    });
+    expect(res.status).toBe(201);
+    expect(res.body).toMatchObject({ orderNumber: expect.any(String) });
   });
 
-  it("returns 400 with a descriptive error when paymentScreenshotUrl is an empty string", async () => {
-    const res = await request(app)
-      .post("/api/orders")
-      .send({ ...VALID_PAYLOAD, paymentScreenshotUrl: "   " })
-      .set("Content-Type", "application/json");
-
-    expect(res.status).toBe(400);
-    expect(res.body).toMatchObject({
-      error: expect.stringContaining("Payment screenshot is required"),
-    });
-  });
-
-  it("returns 201 when a valid payload including a screenshot URL is submitted", async () => {
+  it("accepts a legacy payload with a screenshot URL but never stores it", async () => {
     const res = await request(app)
       .post("/api/orders")
       .send(VALID_PAYLOAD)
       .set("Content-Type", "application/json");
 
     expect(res.status).toBe(201);
-    expect(res.body).toMatchObject({
-      orderNumber: expect.any(String),
-      customerName: "Test Customer",
-      paymentScreenshotUrl: expect.any(String),
-    });
+
+    // The route must discard the screenshot: online payments are confirmed by
+    // the gateway now, so nothing user-supplied lands in that column.
+    const { db } = await import("@workspace/db");
+    const insertMock = db.insert as unknown as (
+      table: unknown,
+    ) => { values: { mock: { calls: Array<[Record<string, unknown>]> } } };
+    const lastCall = insertMock({}).values.mock.calls.at(-1);
+    if (!lastCall) throw new Error("no insert call captured");
+    expect(lastCall[0]["paymentScreenshotUrl"]).toBeNull();
   });
 });
 
@@ -402,5 +396,40 @@ describe("PATCH /api/orders/:id/customer-info — admin corrects customer detail
       .send(VALID_CUSTOMER_INFO)
       .set("Authorization", `Bearer ${makeAdminToken()}`);
     expect(res.status).toBe(404);
+  });
+});
+
+// With manual verification removed there is no staff path to settle a payment,
+// so no unpaid order — gateway OR legacy — may ever finish submission and look
+// "queued" while it would never be printed.
+describe("POST /api/orders/:orderNumber/submit — unpaid orders cannot finish", () => {
+  function mockOrderRow(row: Record<string, unknown>) {
+    return import("@workspace/db").then(({ db }) => {
+      const selectChain = (db.select as unknown as () => { limit: { mockResolvedValueOnce: (v: unknown[]) => void } })();
+      selectChain.limit.mockResolvedValueOnce([row]);
+    });
+  }
+
+  it("blocks a still-pending legacy screenshot-era order and points at support", async () => {
+    // The default mocked order is paymentMethod "upi", paymentStatus "pending".
+    const res = await request(app).post("/api/orders/TEST000001/submit").send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/earlier payment process/i);
+    expect(res.body.error).toMatch(/contact support/i);
+  });
+
+  it("blocks a rejected legacy order the same way", async () => {
+    await mockOrderRow({ id: 7, orderNumber: "TEST000007", paymentStatus: "rejected", paymentMethod: "upi" });
+    const res = await request(app).post("/api/orders/TEST000007/submit").send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/contact support/i);
+  });
+
+  it("blocks an unpaid gateway order with the pay-first message instead", async () => {
+    await mockOrderRow({ id: 8, orderNumber: "TEST000008", paymentStatus: "pending", paymentMethod: "cashfree" });
+    const res = await request(app).post("/api/orders/TEST000008/submit").send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/finish the payment first/i);
+    expect(res.body.error).not.toMatch(/contact support/i);
   });
 });

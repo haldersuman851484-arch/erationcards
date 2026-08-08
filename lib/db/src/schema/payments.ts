@@ -1,7 +1,12 @@
 import { mysqlTable, text, int, timestamp, mysqlEnum } from "drizzle-orm/mysql-core";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod/v4";
 
+/**
+ * Historical audit rows from the manual (screenshot) payment-verification
+ * era. That process was removed once the Cashfree gateway became the only
+ * payment path — nothing writes here anymore. The table is kept read-only
+ * so the permanent-record archive export still includes the old records.
+ * Do NOT generate a drop migration for it.
+ */
 export const paymentVerificationsTable = mysqlTable("payment_verifications", {
   id: int("id").autoincrement().primaryKey(),
   orderId: int("order_id").notNull(),
@@ -13,10 +18,4 @@ export const paymentVerificationsTable = mysqlTable("payment_verifications", {
   verifiedAt: timestamp("verified_at").notNull().defaultNow(),
 });
 
-export const insertPaymentVerificationSchema = createInsertSchema(paymentVerificationsTable).omit({
-  id: true,
-  verifiedAt: true,
-});
-
-export type InsertPaymentVerification = z.infer<typeof insertPaymentVerificationSchema>;
 export type PaymentVerification = typeof paymentVerificationsTable.$inferSelect;

@@ -42,6 +42,9 @@ vi.mock("@google-cloud/storage", () => {
 const fakeOrder: Record<string, unknown> = {
   id: 1,
   orderNumber: "TEST000001",
+  // Legacy-confirmed order: the old payment era must still be allowed to upload.
+  paymentStatus: "confirmed",
+  paymentMethod: "upi",
   rationCardPdfs: [] as unknown[],
 };
 const updateSet = vi.fn().mockReturnThis();

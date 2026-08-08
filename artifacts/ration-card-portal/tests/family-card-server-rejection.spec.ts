@@ -24,9 +24,7 @@ function mockApis(page: Page, details: unknown) {
   return page.route("**/api/**", async (route, request) => {
     const { pathname } = new URL(request.url());
     const method = request.method();
-    if (pathname === "/api/payments/upi-config" && method === "GET") {
-      await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ merchantUpiId: "test@upi" }) });
-    } else if (pathname === "/api/orders" && method === "POST") {
+    if (pathname === "/api/orders" && method === "POST") {
       await route.fulfill({
         status: 400,
         contentType: "application/json",

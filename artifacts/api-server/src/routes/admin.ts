@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { LoginAdminBody, UpdateUpiSettingBody, UpdatePricingSettingBody, UpdateContactSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody, UpdateOperatorBody } from "@workspace/api-zod";
+import { LoginAdminBody, UpdatePricingSettingBody, UpdateContactSettingBody, VerifySettingsOtpBody, UpdateProcessingPasswordBody, UpdateOperatorBody } from "@workspace/api-zod";
 import { getAdminCredentials, verifyProcessingLogin, createAdminToken, parseStaffToken, requireAdmin, hashPassword, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import {
   getOtpGateStatus,
@@ -15,17 +15,14 @@ import {
 } from "../lib/settingsOtp";
 import { sendSettingsOtpEmail, sendSettingsChangedEmail, describeFetchError } from "../lib/email";
 import {
-  getMerchantUpiId,
   getPricingMatrix,
   getContactInfo,
   setSettingValue,
   getSettingValue,
-  MERCHANT_UPI_SETTING_KEY,
   PRICING_SETTING_KEY,
   CONTACT_SETTING_KEY,
   PROCESSING_PASSWORD_SETTING_KEY,
   PROCESSING_PASSWORD_CHANGED_AT_SETTING_KEY,
-  UPI_ID_REGEX,
 } from "../lib/settings";
 import { CONTACT_FIELDS, CONTACT_FIELD_LABELS, contactFieldError, type ContactInfo } from "@workspace/contact";
 import { ORDERS_CLEANUP_HISTORY_FIELD, toCsvBuffer, iso, istReadable } from "../lib/orderArchive";
@@ -36,7 +33,7 @@ function formatContactForEmail(c: ContactInfo): string {
   return CONTACT_FIELDS.map((f) => `${CONTACT_FIELD_LABELS[f]}: ${c[f]}`).join("\n");
 }
 import { db } from "@workspace/db";
-import { paymentVerificationsTable, operatorsTable, settingsChangeHistoryTable, ordersTable } from "@workspace/db";
+import { operatorsTable, settingsChangeHistoryTable, ordersTable } from "@workspace/db";
 import { desc, sql, eq, and, ne } from "drizzle-orm";
 
 const router = Router();
@@ -55,38 +52,6 @@ function formatPricingForEmail(pricing: {
     line("Special multi", pricing.special.multi),
   ].join("\n");
 }
-
-// GET /admin/verifications
-router.get("/admin/verifications", async (req: Request, res: Response) => {
-  try {
-    const admin = await requireAdmin(req, res);
-    if (!admin) return;
-
-    const page = Math.max(1, parseInt(String(req.query.page)) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit)) || 20));
-    const offset = (page - 1) * limit;
-
-    const [verifications, [{ count }]] = await Promise.all([
-      db.select().from(paymentVerificationsTable)
-        .orderBy(desc(paymentVerificationsTable.verifiedAt))
-        .limit(limit).offset(offset),
-      db.select({ count: sql<number>`count(*)` }).from(paymentVerificationsTable),
-    ]);
-
-    res.json({
-      verifications: verifications.map((v) => ({
-        ...v,
-        verifiedAt: v.verifiedAt instanceof Date ? v.verifiedAt.toISOString() : String(v.verifiedAt),
-      })),
-      total: Number(count),
-      page,
-      limit,
-    });
-  } catch (err) {
-    req.log.error({ err }, "Failed to list verifications");
-    res.status(500).json({ error: "Failed to list verifications" });
-  }
-});
 
 // PATCH /admin/operators/:id/status
 router.patch("/admin/operators/:id/status", async (req: Request, res: Response) => {
@@ -336,74 +301,6 @@ router.post("/admin/logout", (_req: Request, res: Response) => {
   res.json({ success: true, message: "Logged out" });
 });
 
-// ── Payment settings (merchant UPI ID) ──────────────────────────────────────
-
-// GET /admin/settings/upi — current UPI ID + whether it's admin-saved or the env default
-router.get("/admin/settings/upi", async (req: Request, res: Response) => {
-  try {
-    const admin = await requireAdmin(req, res);
-    if (!admin) return;
-    if (!hasSettingsUnlock(req)) {
-      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
-      return;
-    }
-
-    res.json(await getMerchantUpiId());
-  } catch (err) {
-    req.log.error({ err }, "Failed to load UPI setting");
-    res.status(500).json({ error: "Failed to load UPI setting" });
-  }
-});
-
-// PUT /admin/settings/upi — save a new merchant UPI ID (shown to customers immediately)
-router.put("/admin/settings/upi", async (req: Request, res: Response) => {
-  try {
-    const admin = await requireAdmin(req, res);
-    if (!admin) return;
-    if (!hasSettingsUnlock(req)) {
-      res.status(403).json({ error: "Settings are locked. Verify the emailed codes first.", code: "SETTINGS_LOCKED" });
-      return;
-    }
-
-    const parsed = UpdateUpiSettingBody.safeParse(req.body);
-    const candidate = parsed.success ? parsed.data.merchantUpiId.trim() : "";
-    if (!candidate || !UPI_ID_REGEX.test(candidate)) {
-      res.status(400).json({ error: "Enter a valid UPI ID like yourname@bank" });
-      return;
-    }
-
-    // Effective value before the save (env default included) for the audit trail.
-    const { merchantUpiId: previousUpiId } = await getMerchantUpiId();
-
-    await setSettingValue(MERCHANT_UPI_SETTING_KEY, candidate);
-    await db.insert(settingsChangeHistoryTable).values({
-      field: MERCHANT_UPI_SETTING_KEY,
-      oldValue: previousUpiId,
-      newValue: candidate,
-      changedBy: admin.email,
-    });
-    req.log.info({ adminEmail: admin.email, merchantUpiId: candidate }, "Merchant UPI ID updated");
-
-    // Notify both partners — fire-and-forget so email issues never block the save.
-    void sendSettingsChangedEmail(
-      getPartnerEmails(),
-      {
-        fieldLabel: "UPI ID",
-        oldValue: previousUpiId,
-        newValue: candidate,
-        changedBy: admin.email,
-        changedAt: new Date(),
-      },
-      req.log,
-    ).catch(() => {});
-
-    res.json({ merchantUpiId: candidate, source: "custom" as const });
-  } catch (err) {
-    req.log.error({ err }, "Failed to update UPI setting");
-    res.status(500).json({ error: "Failed to update UPI setting" });
-  }
-});
-
 // ── Support contact details (footer, Contact page, FAQ, policy pages) ──────
 
 // GET /admin/settings/contact — current contact details + whether they're admin-saved or the built-in defaults
@@ -605,7 +502,7 @@ router.put("/admin/settings/processing-password", async (req: Request, res: Resp
   }
 });
 
-// GET /admin/settings/history — read-only audit trail of UPI/price changes
+// GET /admin/settings/history — read-only audit trail of settings changes
 router.get("/admin/settings/history", async (req: Request, res: Response) => {
   try {
     const admin = await requireAdmin(req, res);
@@ -625,7 +522,7 @@ router.get("/admin/settings/history", async (req: Request, res: Response) => {
       changes: rows.map((r) => ({
         id: r.id,
         field:
-          r.field === MERCHANT_UPI_SETTING_KEY ? ("upi" as const) :
+          r.field === "merchant_upi_id" ? ("upi" as const) : // history rows from the manual-payment era
           r.field === PROCESSING_PASSWORD_SETTING_KEY ? ("processing_password" as const) :
           r.field === CONTACT_SETTING_KEY ? ("contact" as const) :
           r.field === ORDERS_CLEANUP_HISTORY_FIELD ? ("orders_cleanup" as const) :
@@ -655,7 +552,7 @@ const NET_CHECK_ENV_KEYS = [
   "DELHIVERY_RETURN_NAME", "DELHIVERY_RETURN_PHONE", "DELHIVERY_RETURN_ADD",
   "DELHIVERY_RETURN_PIN", "DELHIVERY_RETURN_CITY", "DELHIVERY_RETURN_STATE",
   "MYSQL_DATABASE_URL", "SESSION_SECRET", "ADMIN_EMAIL", "ADMIN_PASSWORD",
-  "MERCHANT_UPI_ID", "PORT", "UPLOADS_DIR", "NODE_ENV",
+  "PORT", "UPLOADS_DIR", "NODE_ENV",
 ] as const;
 
 type ProbeResult =

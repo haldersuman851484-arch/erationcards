@@ -1,5 +1,12 @@
 import { test, expect } from "@playwright/test";
 
+/**
+ * Manual payment verification was removed: staff can no longer confirm or
+ * reject payments, and payment screenshots are no longer shown anywhere.
+ * These tests pin down the new read-only behavior for both legacy
+ * (screenshot-era) orders and Cashfree gateway orders.
+ */
+
 const MOCK_ADMIN = { id: 1, email: "admin@test.com", role: "admin" };
 
 const MOCK_STATS = {
@@ -52,13 +59,7 @@ type OrderShape = ReturnType<typeof makeOrder>;
 
 async function setupMocks(
   page: import("@playwright/test").Page,
-  {
-    orders,
-    onPaymentUpdate,
-  }: {
-    orders: OrderShape[];
-    onPaymentUpdate?: (id: number, body: Record<string, unknown>) => void;
-  }
+  { orders }: { orders: OrderShape[] }
 ) {
   await page.addInitScript(() => {
     localStorage.setItem("adminToken", "test-admin-token");
@@ -101,68 +102,15 @@ async function setupMocks(
         contentType: "application/json",
         body: JSON.stringify(order),
       });
-    } else if (/^\/api\/orders\/\d+\/payment-status$/.test(pathname) && method === "PATCH") {
-      const id = parseInt(pathname.split("/")[3]);
-      const body = JSON.parse(request.postData() ?? "{}");
-      onPaymentUpdate?.(id, body);
-      const original = orders.find((o) => o.id === id) ?? orders[0];
-      const updated = { ...original, ...body };
-      const idx = orders.findIndex((o) => o.id === id);
-      if (idx !== -1) Object.assign(orders[idx], body);
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify(updated),
-      });
     } else {
       await route.continue();
     }
   });
 }
 
-test.describe("Payment confirmation", () => {
-  test("Confirm button disappears after confirming payment and shows confirmed badge", async ({ page }) => {
+test.describe("Payment status display — manual verification removed", () => {
+  test("legacy screenshot order shows its status read-only: no confirm/reject buttons, no screenshot link", async ({ page }) => {
     const orders = [makeOrder()];
-
-    await setupMocks(page, {
-      orders,
-      onPaymentUpdate: (_id, body) => { Object.assign(orders[0], body); },
-    });
-
-    await page.goto("/processing");
-    await expect(page.getByTestId("button-confirm-payment-42")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByTestId("button-reject-payment-42")).toBeVisible();
-
-    await page.getByTestId("button-confirm-payment-42").click();
-
-    await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible({ timeout: 8000 });
-    await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
-
-    await expect(page.getByText("confirmed").first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test("Reject button disappears after rejecting payment and shows rejected badge", async ({ page }) => {
-    const orders = [makeOrder()];
-
-    await setupMocks(page, {
-      orders,
-      onPaymentUpdate: (_id, body) => { Object.assign(orders[0], body); },
-    });
-
-    await page.goto("/processing");
-    await expect(page.getByTestId("button-reject-payment-42")).toBeVisible({ timeout: 10000 });
-
-    await page.getByTestId("button-reject-payment-42").click();
-
-    await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible({ timeout: 8000 });
-    await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
-
-    await expect(page.getByText("rejected").first()).toBeVisible({ timeout: 5000 });
-  });
-
-  test("already-confirmed order shows no Confirm or Reject buttons", async ({ page }) => {
-    const orders = [makeOrder({ paymentStatus: "confirmed" })];
-
     await setupMocks(page, { orders });
 
     await page.goto("/processing");
@@ -170,15 +118,44 @@ test.describe("Payment confirmation", () => {
 
     await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible();
     await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
+    await expect(page.getByTestId("button-view-screenshot-42")).not.toBeVisible();
+    // A legacy order never shows the Cashfree awaiting badge — just its plain status.
+    await expect(page.getByTestId("badge-awaiting-payment-42")).not.toBeVisible();
+  });
+
+  test("legacy order detail dialog has no screenshot viewer and no confirm/reject actions", async ({ page }) => {
+    const orders = [makeOrder()];
+    await setupMocks(page, { orders });
+
+    await page.goto("/processing");
+    await expect(page.locator("text=PVCPAY001")).toBeVisible({ timeout: 10000 });
+
+    await page.getByTestId("button-view-order-42").click();
+    await expect(page.getByText("Order Details")).toBeVisible({ timeout: 5000 });
+
+    await expect(page.getByTestId("button-dialog-screenshot")).not.toBeVisible();
+    await expect(page.getByTestId("button-dialog-confirm-payment")).not.toBeVisible();
+    await expect(page.getByTestId("button-dialog-reject-payment")).not.toBeVisible();
+    // The awaiting-payment note is Cashfree-only — a legacy order must not show it.
+    await expect(page.getByTestId("dialog-awaiting-payment-note")).not.toBeVisible();
+  });
+
+  test("already-confirmed legacy order shows confirmed status with no controls", async ({ page }) => {
+    const orders = [makeOrder({ paymentStatus: "confirmed" })];
+    await setupMocks(page, { orders });
+
+    await page.goto("/processing");
+    await expect(page.locator("text=PVCPAY001")).toBeVisible({ timeout: 10000 });
 
     await expect(page.getByText("confirmed").first()).toBeVisible();
+    await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible();
+    await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
   });
 
   test("cashfree order awaiting payment shows amber badge and no Confirm/Reject buttons", async ({ page }) => {
     const orders = [
       makeOrder({ paymentMethod: "cashfree", paymentStatus: "pending", paymentScreenshotUrl: null }),
     ];
-
     await setupMocks(page, { orders });
 
     await page.goto("/processing");
@@ -188,5 +165,10 @@ test.describe("Payment confirmation", () => {
     await expect(page.getByTestId("badge-awaiting-payment-42")).toBeVisible();
     await expect(page.getByTestId("button-confirm-payment-42")).not.toBeVisible();
     await expect(page.getByTestId("button-reject-payment-42")).not.toBeVisible();
+
+    // The detail dialog explains the automatic status instead of offering buttons.
+    await page.getByTestId("button-view-order-42").click();
+    await expect(page.getByTestId("dialog-awaiting-payment-note")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByTestId("button-dialog-confirm-payment")).not.toBeVisible();
   });
 });

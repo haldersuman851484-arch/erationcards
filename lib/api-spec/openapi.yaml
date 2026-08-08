@@ -228,37 +228,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  /orders/{id}/payment-status:
-    patch:
-      operationId: updateOrderPaymentStatus
-      tags: [orders]
-      summary: Confirm or reject a payment (admin)
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/PaymentStatusUpdate"
-      responses:
-        "200":
-          description: Payment status updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaymentStatusUpdateResponse"
-        "404":
-          description: Order not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   /orders/{id}/assign:
     patch:
       operationId: assignOrderToOperator
@@ -335,7 +304,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
         "409":
-          description: Order cannot take an online payment (legacy screenshot order under manual verification)
+          description: Order cannot take an online payment (order from the earlier payment process)
           content:
             application/json:
               schema:
@@ -371,19 +340,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
-  /payments/upi-config:
-    get:
-      operationId: getUpiConfig
-      tags: [orders]
-      summary: Get merchant UPI ID for display and QR code generation
-      responses:
-        "200":
-          description: UPI configuration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UpiConfig"
 
   /pricing/config:
     get:
@@ -446,46 +402,6 @@ paths:
                 $ref: "#/components/schemas/PricingSetting"
         "400":
           description: Invalid prices (must be whole rupees between 1 and 10000)
-        "401":
-          description: Not authenticated
-        "403":
-          description: Settings locked — both partners' emailed codes must be verified first
-
-  /admin/settings/upi:
-    get:
-      operationId: getUpiSetting
-      tags: [dashboard]
-      summary: Get the merchant UPI ID setting (admin)
-      responses:
-        "200":
-          description: Current merchant UPI ID and whether it is admin-saved or the server default
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UpiSetting"
-        "401":
-          description: Not authenticated
-        "403":
-          description: Settings locked — both partners' emailed codes must be verified first
-    put:
-      operationId: updateUpiSetting
-      tags: [dashboard]
-      summary: Update the merchant UPI ID (admin)
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpiSettingUpdate"
-      responses:
-        "200":
-          description: Setting saved; customers see the new UPI ID immediately
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UpiSetting"
-        "400":
-          description: Invalid UPI ID format
         "401":
           description: Not authenticated
         "403":
@@ -975,29 +891,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  # ── Admin ─────────────────────────────────────────────────────────────────────
-  /admin/verifications:
-    get:
-      operationId: listPaymentVerifications
-      tags: [dashboard]
-      summary: List payment verification history (admin)
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-        - in: query
-          name: limit
-          schema:
-            type: integer
-      responses:
-        "200":
-          description: Payment verification records
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PaymentVerificationListResponse"
-
   # ── Reviews ──────────────────────────────────────────────────────────────────
   /reviews:
     get:
@@ -1393,14 +1286,6 @@ components:
         - quantity
         - amount
 
-    UpiConfig:
-      type: object
-      properties:
-        merchantUpiId:
-          type: string
-      required:
-        - merchantUpiId
-
     CashfreeSessionRequest:
       type: object
       properties:
@@ -1445,19 +1330,6 @@ components:
           description: Raw Cashfree order_status (ACTIVE, PAID, EXPIRED, TERMINATED) when the gateway was reachable
       required:
         - paymentStatus
-
-    UpiSetting:
-      type: object
-      properties:
-        merchantUpiId:
-          type: string
-        source:
-          type: string
-          enum: [custom, default]
-          description: custom = saved by admin in the settings table, default = MERCHANT_UPI_ID env fallback
-      required:
-        - merchantUpiId
-        - source
 
     PriceTierPrices:
       type: object
@@ -1589,16 +1461,6 @@ components:
           $ref: "#/components/schemas/ContactInfo"
       required:
         - contact
-
-    UpiSettingUpdate:
-      type: object
-      properties:
-        merchantUpiId:
-          type: string
-          minLength: 3
-          maxLength: 120
-      required:
-        - merchantUpiId
 
     ProcessingPasswordUpdate:
       type: object
@@ -1733,26 +1595,6 @@ components:
       required:
         - unlockToken
         - expiresInSeconds
-
-    PaymentStatusUpdate:
-      type: object
-      properties:
-        paymentStatus:
-          type: string
-          enum: ["confirmed", "rejected", "pending"]
-      required:
-        - paymentStatus
-
-    PaymentStatusUpdateResponse:
-      type: object
-      properties:
-        id:
-          type: integer
-        paymentStatus:
-          type: string
-      required:
-        - id
-        - paymentStatus
 
     OrderStatusUpdate:
       type: object
@@ -2100,33 +1942,6 @@ components:
         - email
         - status
 
-    PaymentVerification:
-      type: object
-      properties:
-        id:
-          type: integer
-        orderId:
-          type: integer
-        orderNumber:
-          type: string
-        action:
-          type: string
-        adminEmail:
-          type: string
-        screenshotUrl:
-          type: ["string", "null"]
-        notes:
-          type: ["string", "null"]
-        verifiedAt:
-          type: string
-      required:
-        - id
-        - orderId
-        - orderNumber
-        - action
-        - adminEmail
-        - verifiedAt
-
     # ── Review Schemas ─────────────────────────────────────────────────────────
     Review:
       type: object
@@ -2195,25 +2010,6 @@ components:
           enum: [approved, rejected]
       required:
         - status
-
-    PaymentVerificationListResponse:
-      type: object
-      properties:
-        verifications:
-          type: array
-          items:
-            $ref: "#/components/schemas/PaymentVerification"
-        total:
-          type: integer
-        page:
-          type: integer
-        limit:
-          type: integer
-      required:
-        - verifications
-        - total
-        - page
-        - limit
 
     OrdersArchiveFilter:
       type: object

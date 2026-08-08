@@ -1,10 +1,9 @@
 import { Router, Request, Response } from "express";
 import { db } from "@workspace/db";
-import { ordersTable, paymentVerificationsTable } from "@workspace/db";
+import { ordersTable } from "@workspace/db";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { parseStaffToken } from "../lib/auth";
-import { getMerchantUpiId, getPricingMatrix, getContactInfo } from "../lib/settings";
+import { getPricingMatrix, getContactInfo } from "../lib/settings";
 import {
   getCashfreeConfig,
   createCashfreeOrder,
@@ -18,10 +17,6 @@ import {
   type CashfreeOrderInfo,
 } from "../lib/cashfree";
 
-const PaymentStatusUpdateBody = z.object({
-  paymentStatus: z.enum(["confirmed", "rejected", "pending"]),
-});
-
 const CashfreeSessionBody = z.object({
   orderNumber: z.string().min(4).max(64),
   // SPA path Cashfree sends the customer back to after a redirect checkout.
@@ -30,16 +25,6 @@ const CashfreeSessionBody = z.object({
 });
 
 const router = Router();
-
-router.get("/payments/upi-config", async (req: Request, res: Response) => {
-  try {
-    const { merchantUpiId } = await getMerchantUpiId();
-    res.json({ merchantUpiId });
-  } catch (err) {
-    req.log.error({ err }, "Failed to load UPI config");
-    res.status(500).json({ error: "Failed to load UPI config" });
-  }
-});
 
 // Public: live price matrix for order forms, FAQ copy and receipts.
 router.get("/pricing/config", async (req: Request, res: Response) => {
@@ -122,12 +107,12 @@ router.post("/payments/cashfree/session", async (req: Request, res: Response) =>
       return;
     }
 
-    // Legacy screenshot orders are verified manually — never invite a second
-    // payment for money that may already have been sent.
+    // Orders from the earlier (pre-gateway) payment process must never be
+    // invited to pay online — money may already have been sent for them.
     if (order.paymentMethod === "upi" && order.paymentScreenshotUrl) {
       res.status(409).json({
         error:
-          "This order was placed with the old screenshot method and our team is checking it manually. Please do not pay again — contact support if you need help.",
+          "This order was placed with our earlier payment process, so online payment is not used for it. Please do not pay again — if you have any question about your payment, contact support.",
       });
       return;
     }
@@ -421,59 +406,6 @@ router.post("/payments/cashfree/webhook", async (req: Request, res: Response) =>
   } catch (err) {
     req.log.error({ err, orderNumber }, "Cashfree webhook processing failed");
     res.status(500).json({ error: "Webhook processing failed" });
-  }
-});
-
-// PATCH /orders/:id/payment-status — manual admin override. Kept for legacy
-// screenshot orders and for rare gateway disputes; every confirm/reject is
-// logged to the payment verification audit table.
-router.patch("/orders/:id/payment-status", async (req: Request, res: Response) => {
-  const admin = await parseStaffToken(req);
-  if (!admin) {
-    res.status(401).json({ error: "Admin authentication required" });
-    return;
-  }
-  try {
-    const id = parseInt(String(req.params.id));
-    if (isNaN(id)) {
-      res.status(400).json({ error: "Invalid order ID" });
-      return;
-    }
-    const body = PaymentStatusUpdateBody.parse(req.body);
-    const [order] = await db.select().from(ordersTable).where(eq(ordersTable.id, id)).limit(1);
-    if (!order) {
-      res.status(404).json({ error: "Order not found" });
-      return;
-    }
-    // Online payments are confirmed by the gateway (webhook + status sync).
-    // A manual override could mark an unpaid order as ready to print or
-    // reject a genuinely paid one, so Cashfree orders are read-only here.
-    if (order.paymentMethod === "cashfree") {
-      res.status(409).json({
-        error:
-          "This order uses Cashfree online payment — its payment status is set automatically by the gateway and cannot be changed manually.",
-      });
-      return;
-    }
-    await db
-      .update(ordersTable)
-      .set({ paymentStatus: body.paymentStatus as any, updatedAt: new Date() })
-      .where(eq(ordersTable.id, id));
-
-    if (body.paymentStatus === "confirmed" || body.paymentStatus === "rejected") {
-      await db.insert(paymentVerificationsTable).values({
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        action: body.paymentStatus,
-        adminEmail: admin.email,
-        screenshotUrl: order.paymentScreenshotUrl ?? null,
-      });
-    }
-
-    res.json({ id: order.id, paymentStatus: body.paymentStatus });
-  } catch (err) {
-    req.log.error({ err }, "Failed to update payment status");
-    res.status(400).json({ error: "Invalid request" });
   }
 });
 

@@ -198,15 +198,18 @@ async function run() {
     pass(`GET /orders → 200 (${orders.length} orders)`);
   }
 
-  // ── 12. Update payment status (write to MySQL) ────────────────────────────
+  // ── 12. Manual payment verification stays removed ─────────────────────────
+  // Payments are confirmed by the Cashfree gateway only. The old staff
+  // endpoint must not exist in the deployed build — if it answers anything
+  // but 404, an old build is running.
   {
-    const { status, body } = await patch(
+    const { status } = await patch(
       `/orders/${orderId}/payment-status`,
       { paymentStatus: "confirmed" },
       adminToken
     );
-    assert.equal(status, 200, `payment-status: got ${JSON.stringify(body)}`);
-    pass(`PATCH /orders/${orderId}/payment-status → 200 (confirmed)`);
+    assert.equal(status, 404, `payment-status endpoint should be gone: got ${status}`);
+    pass(`PATCH /orders/${orderId}/payment-status → 404 (manual verification removed)`);
   }
 
   // ── 13. Update order status (write to MySQL) ──────────────────────────────
