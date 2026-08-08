@@ -124,7 +124,7 @@ Do you run a Xerox, mobile-recharge, CSC or online-seva shop in West Bengal? Pri
 
 Operator rates (registration is free):
 ✅ Ration card — single: ₹${opRationSingle}, 2 or more: ₹${opRationMulti} per card
-✅ ABHA / E-SHRAM / General — single: ₹${opSpecialSingle}, 2 or more: ₹${opSpecialMulti} per card
+✅ Other PVC cards (ABHA, Aadhaar, Voter ID, PAN & more) — single: ₹${opSpecialSingle}, 2 or more: ₹${opSpecialMulti} per card
 ✅ Order online from your shop — we print and deliver anywhere in West Bengal
 ✅ Track every order from your own operator dashboard
 
@@ -147,7 +147,7 @@ _Note: We are a private printing service, not a government website. Ration cards
 
 অপারেটর রেট (রেজিস্ট্রেশন বিনামূল্যে):
 ✅ রেশন কার্ড — একটি: ₹${opRationSingle}, ২টি বা বেশি: প্রতি কার্ড ₹${opRationMulti}
-✅ ABHA / E-SHRAM / General — একটি: ₹${opSpecialSingle}, ২টি বা বেশি: প্রতি কার্ড ₹${opSpecialMulti}
+✅ অন্যান্য PVC কার্ড (ABHA, আধার, ভোটার আইডি, PAN ইত্যাদি) — একটি: ₹${opSpecialSingle}, ২টি বা বেশি: প্রতি কার্ড ₹${opSpecialMulti}
 ✅ দোকান থেকেই অনলাইনে অর্ডার — প্রিন্ট ও ডেলিভারি আমাদের দায়িত্ব
 ✅ নিজের অপারেটর ড্যাশবোর্ড থেকে প্রতিটি অর্ডার ট্র্যাক করুন
 

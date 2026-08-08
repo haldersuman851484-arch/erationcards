@@ -206,8 +206,10 @@ const CARD_TYPES = [
   },
 ];
 
-// The 3 non-ration PVC card products — pricing comes from @workspace/pricing
-// so this section always matches the order form and the server.
+// Featured non-ration PVC card products with their own landing pages. The
+// order form's "Other PVC Cards" group has more types (see the note under the
+// grid) — pricing comes from @workspace/pricing so this section always
+// matches the order form and the server.
 const SPECIAL_CARD_PRODUCTS = [
   {
     code: "ABHA",
@@ -632,7 +634,7 @@ export default function Home() {
                       <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.ration.multi.public}</td>
                     </tr>
                     <tr className="border-t border-slate-100">
-                      <td className="px-4 py-3 text-slate-700">ABHA / E-SHRAM / GENERAL card</td>
+                      <td className="px-4 py-3 text-slate-700">Other PVC card (ABHA, E-SHRAM, Aadhaar, Voter ID, PAN and more)</td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.single.public}</td>
                       <td className="px-4 py-3 text-right font-semibold text-slate-900">₹{PRICING.special.multi.public}</td>
                     </tr>
@@ -772,7 +774,7 @@ export default function Home() {
           </p>
         </div>
       </section>
-      {/* NEW: ABHA / E-SHRAM / GENERAL PVC cards */}
+      {/* NEW: Other PVC cards (ABHA / E-SHRAM / GENERAL + 8 more types) */}
       <section className="py-20 bg-gradient-to-br from-primary/5 via-white to-cyan-50 border-y border-slate-100">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
@@ -780,9 +782,9 @@ export default function Home() {
               <CreditCard className="w-4 h-4" />
               New Services
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-4"> We Are Also Printing ABHA, E-SHRAM & GENERAL Cards</h2>
+            <h2 className="text-3xl font-bold text-slate-900 mb-4"> We Are Also Printing ABHA, E-SHRAM, Aadhaar, Voter ID & More</h2>
             <p className="text-slate-600 max-w-2xl mx-auto">
-              Get the same premium PVC print for your ABHA health card, E-SHRAM labour card, or any other card — with doorstep delivery across West Bengal.
+              Get the same premium PVC print for your ABHA health card, E-SHRAM labour card, Aadhaar, Voter ID, PAN, Driving Licence, Ayushman Bharat, APAAR ID, membership or custom ID card — with doorstep delivery across West Bengal.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
@@ -801,6 +803,9 @@ export default function Home() {
               </div>
             ))}
           </div>
+          <p className="text-center text-slate-600 text-sm mt-6 max-w-3xl mx-auto" data-testid="text-more-special-types">
+            Also on the order form: AYUSHMAN BHARAT · AADHAAR · VOTER ID · PAN · APAAR ID · DRIVING LICENCE · BJP MEMBERSHIP CARD · CUSTOM ID CARD — all at the same Other-PVC price.
+          </p>
           <div className="text-center mt-6">
             <Link href="/order">
               <Button className="bg-primary hover:bg-primary/90 px-8">Order Now</Button>
@@ -954,7 +959,7 @@ export default function Home() {
             আপনার ই-রেশন কার্ডকে একটি টেকসই PVC কার্ডে রূপান্তর করুন — সাশ্রয়ী মূল্যে।
             পশ্চিমবঙ্গের ২৩টি জেলায় দ্রুত ডেলিভারি। জলরোধী, টেকসই এবং ওয়ালেট সাইজের কার্ড।
             AAY, PHH, SPHH, RKSY-I এবং RKSY-II — সমস্ত ধরনের রেশন কার্ড সমর্থিত।
-            এখন ABHA, E-SHRAM এবং GENERAL কার্ডও PVC প্রিন্ট করা যায়।
+            এখন ABHA, E-SHRAM, আধার, ভোটার আইডি, PAN, ড্রাইভিং লাইসেন্স সহ আরও অনেক কার্ডও PVC প্রিন্ট করা যায়।
           </p>
           <p className="text-white/70 text-sm mb-8">
             এটি একটি বেসরকারি মুদ্রণ পরিষেবা। পশ্চিমবঙ্গ সরকারের সাথে সম্পর্কিত নয়।

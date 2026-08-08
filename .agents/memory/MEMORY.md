@@ -27,3 +27,4 @@
 - [Cashfree payments](cashfree-payments.md) — prod-looking keys w/o CASHFREE_ENV=production are REFUSED; __cashfreeTestFactory seam in specs; tsx smoke test works with DB down; go-live checklist
 - [Endpoint-removal sweep](endpoint-removal-sweep.md) — kill routes in openapi paths+schemas, lib index re-exports, auth-matrix spec, smoke-test string routes, SPA route list; orval wipes gen dirs on bad $ref
 - [Local practice MariaDB](local-practice-mariadb.md) — throwaway 3311 DB when Hostinger denies dev box; MariaDB not MySQL8 (UNIQUE on TEXT, strict enums = stale `as any` seeds explode); test-api now green against it
+- [Radix Select overflow](radix-select-viewport-overflow.md) — 10+ option lists need per-usage max-h + overflow-y-auto; Playwright smell: endless "outside of the viewport" retries; fix the app, not the spec

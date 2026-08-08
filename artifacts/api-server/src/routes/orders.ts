@@ -327,7 +327,7 @@ router.post("/orders", async (req: Request, res: Response) => {
     }
     const operatorId = opToken.kind === "live" ? opToken.operatorId : null;
     const isOperator = operatorId !== null;
-    // Group-aware pricing: ration categories vs ABHA/E-SHRAM/GENERAL have
+    // Group-aware pricing: ration categories vs Other PVC Cards (ABHA, Aadhaar, Voter ID …) have
     // different rates, and the single/multi tier is decided by the order's
     // total card count. Prices come from the admin-editable settings table
     // (falling back to the launch defaults). Client-sent amount is ignored.

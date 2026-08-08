@@ -33,7 +33,7 @@ export interface CardTypeInfo {
   /** Full scheme/card name. */
   fullName: string;
   bengali: string;
-  /** Which price family applies (ration vs ABHA/E-SHRAM/GENERAL). */
+  /** Which price family applies (ration vs Other PVC Cards). */
   category: "ration" | "special";
   badge: string;
   chip: string;
@@ -265,7 +265,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     chip: "bg-slate-50 border-slate-300 text-slate-700",
     scheme: "Your own already-issued card or document, printed on bank-card grade PVC.",
     whatIs:
-      "A GENERAL PVC card is any other personal card or document you already hold, printed on durable, wallet-size PVC — the same material, print quality and delivery as our ration card prints. Popular examples are health-scheme cards, ID-style certificates and office or membership cards.",
+      "A GENERAL PVC card is any other personal card or document you already hold, printed on durable, wallet-size PVC — the same material, print quality and delivery as our ration card prints. Cards like Aadhaar, Voter ID, PAN, Driving Licence, Ayushman Bharat and APAAR ID now have their own options on the order form — GENERAL covers everything else, such as ID-style certificates and office or membership cards.",
     whoFor: "Anyone who wants a durable, wallet-size PVC copy of a personal card or document they already have.",
     officialName: "your own PDF or clear scan",
     officialNote:
@@ -273,7 +273,7 @@ export const CARD_TYPE_PAGES: Record<string, CardTypeInfo> = {
     extraFaqs: () => [
       {
         q: "Which cards or documents can you print as a GENERAL PVC card?",
-        a: "Personal cards and documents that belong to you — for example health-scheme cards, membership or office cards, and card-size certificates. We print them exactly as uploaded, without editing the content. We do not print anything unlawful, altered, or belonging to another person.",
+        a: "Personal cards and documents that belong to you and don't have their own option on the order form — for example membership or office cards and card-size certificates. (Aadhaar, Voter ID, PAN, Driving Licence, Ayushman Bharat and APAAR ID each have their own card type now.) We print them exactly as uploaded, without editing the content. We do not print anything unlawful, altered, or belonging to another person.",
       },
       {
         q: "What file quality do I need to upload?",
@@ -290,7 +290,7 @@ function buildCommonFaqs(info: CardTypeInfo, P: PricingMatrix): FaqEntry[] {
   const priceFamily =
     info.category === "ration"
       ? "Every ration card type — AAY, PHH, SPHH, RKSY-I and RKSY-II — costs the same"
-      : "ABHA, E-SHRAM and GENERAL cards share the same PVC pricing";
+      : "All Other PVC Cards — ABHA, E-SHRAM, GENERAL, Aadhaar, Voter ID, PAN and more — share the same PVC pricing";
   return [
     {
       q: `How much does a ${info.titleName} PVC print cost?`,
@@ -394,7 +394,7 @@ export default function CardTypePage() {
         <main className="min-h-screen flex flex-col items-center justify-center px-4 py-20 text-center">
           <h1 className="text-2xl font-bold text-slate-800 mb-4">Card type not found</h1>
           <p className="text-slate-600 mb-8 max-w-md">
-            We print AAY, PHH, SPHH, RKSY-I and RKSY-II ration cards plus ABHA, E-SHRAM and General PVC cards.
+            We print AAY, PHH, SPHH, RKSY-I and RKSY-II ration cards plus Other PVC Cards — ABHA, E-SHRAM, Aadhaar, Voter ID, PAN and more.
             Please check the URL or start from the home page.
           </p>
           <Link href="/">
@@ -587,7 +587,7 @@ export default function CardTypePage() {
               Printing, packaging and Speed Post doorstep delivery included — no hidden charges.{" "}
               {isRation
                 ? "Same price for every ration category: AAY, PHH, SPHH, RKSY-I, RKSY-II."
-                : "Same price for ABHA, E-SHRAM and GENERAL cards."}
+                : "Same price for every Other PVC Card — ABHA, E-SHRAM, Aadhaar, Voter ID, PAN and more."}
             </p>
           </div>
         </section>

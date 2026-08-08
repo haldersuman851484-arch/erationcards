@@ -35,7 +35,7 @@ export default function About() {
   const contact = useContact();
   useSeo({
     title: "About Us — Online PVC Card Printing Service in India | PVC Card Portal",
-    description: "Trusted online PVC card printing service in India: WB e-Ration Card PVC print, ABHA, E-SHRAM, Voter ID, school & corporate ID cards — durable, waterproof, delivered to your door.",
+    description: "Trusted online PVC card printing service in India: WB e-Ration Card PVC print, ABHA, E-SHRAM, Aadhaar, Voter ID, PAN, school & corporate ID cards — durable, waterproof, delivered to your door.",
     canonical: "https://erationcards.in/about",
   });
 
@@ -49,15 +49,15 @@ export default function About() {
     },
     {
       q: "Which PVC cards do you print?",
-      a: "West Bengal e-Ration Cards (AAY, PHH, SPHH, RKSY-I, RKSY-II), Ayushman Bharat ABHA health cards, E-SHRAM cards, and — as GENERAL cards — Voter ID, Driving Licence, PAN and similar personal documents printed from your own PDF. We also take bulk orders for school student ID cards, corporate identity cards, plastic business cards and QR-code smart cards.",
+      a: "West Bengal e-Ration Cards (AAY, PHH, SPHH, RKSY-I, RKSY-II) and a full range of other PVC cards: ABHA health cards, E-SHRAM cards, Ayushman Bharat cards, Aadhaar, Voter ID, PAN, APAAR ID, Driving Licence, membership cards and custom ID cards — each printed from your own PDF, with a GENERAL option for any similar document. We also take bulk orders for school student ID cards, corporate identity cards, plastic business cards and QR-code smart cards.",
       bnQ: "কোন কোন PVC কার্ড প্রিন্ট করেন?",
-      bnA: "পশ্চিমবঙ্গের e-Ration Card (AAY, PHH, SPHH, RKSY-I, RKSY-II), আয়ুষ্মান ভারত ABHA হেলথ কার্ড, E-SHRAM কার্ড, আর GENERAL হিসেবে ভোটার আইডি, ড্রাইভিং লাইসেন্স, PAN ইত্যাদি — আপনার নিজের PDF থেকে। স্কুল আইডি, কর্পোরেট আইডি, প্লাস্টিক বিজনেস কার্ড ও QR স্মার্ট কার্ডের বাল্ক অর্ডারও নিই।",
+      bnA: "পশ্চিমবঙ্গের e-Ration Card (AAY, PHH, SPHH, RKSY-I, RKSY-II), সাথে আরও অনেক PVC কার্ড: ABHA হেলথ কার্ড, E-SHRAM কার্ড, আয়ুষ্মান ভারত কার্ড, আধার, ভোটার আইডি, PAN, APAAR ID, ড্রাইভিং লাইসেন্স, মেম্বারশিপ ও কাস্টম আইডি কার্ড — সবই আপনার নিজের PDF থেকে (অন্য যেকোনো নথির জন্য GENERAL অপশন)। স্কুল আইডি, কর্পোরেট আইডি, প্লাস্টিক বিজনেস কার্ড ও QR স্মার্ট কার্ডের বাল্ক অর্ডারও নিই।",
     },
     {
       q: "What is the PVC card printing price with delivery?",
-      a: `A single ration card PVC print costs ₹${PRICING.ration.single.public}; two or more in one order cost ₹${PRICING.ration.multi.public} per card. ABHA, E-SHRAM and GENERAL cards (Voter ID, Driving Licence, PAN) cost ₹${PRICING.special.single.public} for one and ₹${PRICING.special.multi.public} per card for two or more. Printing, packaging and doorstep delivery are all included — no hidden charges.`,
+      a: `A single ration card PVC print costs ₹${PRICING.ration.single.public}; two or more in one order cost ₹${PRICING.ration.multi.public} per card. Other PVC cards — ABHA, E-SHRAM, Aadhaar, Voter ID, PAN, Driving Licence and more — cost ₹${PRICING.special.single.public} for one and ₹${PRICING.special.multi.public} per card for two or more. Printing, packaging and doorstep delivery are all included — no hidden charges.`,
       bnQ: "ডেলিভারি সহ PVC কার্ড প্রিন্টের দাম কত?",
-      bnA: `একটি রেশন কার্ড ₹${PRICING.ration.single.public}, একসাথে দুটি বা বেশি হলে প্রতিটি ₹${PRICING.ration.multi.public}। ABHA, E-SHRAM ও GENERAL কার্ড (ভোটার আইডি, ড্রাইভিং লাইসেন্স, PAN) একটি ₹${PRICING.special.single.public}, দুটি বা বেশি হলে প্রতিটি ₹${PRICING.special.multi.public}। প্রিন্টিং, প্যাকেজিং, বাড়িতে ডেলিভারি — সব দামের মধ্যেই, লুকানো খরচ নেই।`,
+      bnA: `একটি রেশন কার্ড ₹${PRICING.ration.single.public}, একসাথে দুটি বা বেশি হলে প্রতিটি ₹${PRICING.ration.multi.public}। অন্যান্য PVC কার্ড — ABHA, E-SHRAM, আধার, ভোটার আইডি, PAN, ড্রাইভিং লাইসেন্স ইত্যাদি — একটি ₹${PRICING.special.single.public}, দুটি বা বেশি হলে প্রতিটি ₹${PRICING.special.multi.public}। প্রিন্টিং, প্যাকেজিং, বাড়িতে ডেলিভারি — সব দামের মধ্যেই, লুকানো খরচ নেই।`,
     },
     {
       q: "Why should I choose PVC Card Portal for PVC card printing?",
@@ -73,9 +73,9 @@ export default function About() {
     },
     {
       q: "Can you print an Aadhaar PVC card from my PDF?",
-      a: "For Aadhaar we recommend the official route: UIDAI prints its own Aadhaar PVC card with government security features for a small official fee at uidai.gov.in, and that version is the one banks and offices trust most. We would rather give you that honest answer than charge you for a copy the government does better.",
+      a: "Yes — choose the AADHAAR card type on our order form and upload your downloaded e-Aadhaar PDF; we print it on the same durable PVC as every other card. Good to know: UIDAI also prints its own official Aadhaar PVC card with government security features for a small official fee at uidai.gov.in. That remains the official version — ours is a durable everyday copy of the PDF you already have.",
       bnQ: "আমার PDF থেকে কি আধার PVC কার্ড ছাপাতে পারবেন?",
-      bnA: "আধারের জন্য আমরা অফিসিয়াল পথই বলি: UIDAI নিজেই uidai.gov.in-এ সামান্য সরকারি ফি-তে বিশেষ সিকিউরিটি ফিচার সহ আধার PVC কার্ড ছাপে — সেটিই সবচেয়ে নির্ভরযোগ্য, আর সেটিই অর্ডার করার পরামর্শ দিই।",
+      bnA: "হ্যাঁ — অর্ডার ফর্মে AADHAAR কার্ড টাইপ বেছে নিয়ে আপনার ডাউনলোড করা e-Aadhaar PDF আপলোড করুন, আমরা একই মজবুত PVC-তে প্রিন্ট করি। জেনে রাখুন: UIDAI নিজেও uidai.gov.in-এ সামান্য সরকারি ফি-তে বিশেষ সিকিউরিটি ফিচার সহ অফিসিয়াল আধার PVC কার্ড ছাপে — সেটিই অফিসিয়াল সংস্করণ; আমাদেরটা আপনার PDF-এর টেকসই দৈনন্দিন কপি।",
     },
     {
       q: "I run a shop — how do I become an operator?",
@@ -233,32 +233,35 @@ export default function About() {
               People searching <em>voter ID card PVC print online</em>,{" "}
               <em>driving license PVC card print online</em> or <em>PVC PAN card</em> want the
               same thing: a clean, durable plastic copy of a document they already hold, printed
-              from the PDF they downloaded from the official portal. We print these under our
-              GENERAL card option — same waterproof PVC, same doorstep delivery anywhere in
-              India. Your original remains your official document; our card is the everyday copy
-              that saves it from wear and tear.
+              from the PDF they downloaded from the official portal. Each of these now has its
+              own option on our order form — VOTER ID, DRIVING LICENCE and PAN — same waterproof
+              PVC, same doorstep delivery anywhere in India. Your original remains your official
+              document; our card is the everyday copy that saves it from wear and tear.
             </p>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
-              ভোটার আইডি, ড্রাইভিং লাইসেন্স, PAN কার্ড — অফিসিয়াল পোর্টাল থেকে ডাউনলোড করা PDF থেকে আমরা
-              GENERAL কার্ড হিসেবে প্রিন্ট করি। আপনার আসল নথিই অফিসিয়াল থাকে; আমাদের কার্ডটা রোজকার
-              ব্যবহারের মজবুত কপি।
+              ভোটার আইডি, ড্রাইভিং লাইসেন্স, PAN কার্ড — অফিসিয়াল পোর্টাল থেকে ডাউনলোড করা PDF থেকে প্রিন্ট
+              করি; অর্ডার ফর্মে এখন প্রতিটির নিজস্ব অপশন আছে। আপনার আসল নথিই অফিসিয়াল থাকে; আমাদের
+              কার্ডটা রোজকার ব্যবহারের মজবুত কপি।
             </p>
 
             <h3 className="text-lg font-bold text-slate-900 mt-6 mb-2">
               A honest note about Aadhaar PVC cards
             </h3>
             <p className="text-slate-600 leading-relaxed mb-4">
-              Searching for <em>Aadhaar card PVC print from PDF</em>? Here is the honest answer
-              you will not find on every printing website: the Government of India's UIDAI prints
-              its own official Aadhaar PVC card, with security features only they can print, for
-              a small official fee on uidai.gov.in — and that is the version we recommend you
-              order. We would rather point you to the right place than sell you something the
-              government does better. That honesty is how we run this whole service.
+              Searching for <em>Aadhaar card PVC print from PDF</em>? You can now order it here —
+              choose the AADHAAR option on our order form and upload your downloaded e-Aadhaar
+              PDF. And here is the honest note we still stand by: the Government of India's UIDAI
+              prints its own official Aadhaar PVC card, with security features only they can
+              print, for a small official fee on uidai.gov.in. That version remains the official
+              one — our print is a durable everyday copy of the PDF you already have, and your
+              original always stays your official document. That honesty is how we run this
+              whole service.
             </p>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
-              আধার নিয়ে সৎ কথা: ভারত সরকারের UIDAI নিজেই অফিসিয়াল আধার PVC কার্ড ছাপে (uidai.gov.in-এ,
-              সামান্য সরকারি ফি-তে) — বিশেষ সিকিউরিটি ফিচার সহ। আমরা সেটাই অর্ডার করার পরামর্শ দিই — এই
-              সততাই আমাদের গোটা পরিষেবার ভিত্তি।
+              এখন আমাদের অর্ডার ফর্মে AADHAAR অপশন বেছে নিয়ে e-Aadhaar PDF থেকে আধার PVC কার্ড
+              ছাপাতে পারেন। সাথে সৎ কথাটাও বলি: ভারত সরকারের UIDAI নিজেই অফিসিয়াল আধার PVC কার্ড
+              ছাপে (uidai.gov.in-এ, সামান্য সরকারি ফি-তে) — বিশেষ সিকিউরিটি ফিচার সহ, সেটিই অফিসিয়াল
+              সংস্করণ। আমাদেরটা রোজকার ব্যবহারের টেকসই কপি — এই সততাই আমাদের গোটা পরিষেবার ভিত্তি।
             </p>
 
             <h3 className="text-lg font-bold text-slate-900 mt-6 mb-2">
@@ -324,8 +327,8 @@ export default function About() {
               No hidden charges, no "delivery extra" surprise at checkout. A single ration card
               PVC print costs ₹{PRICING.ration.single.public} including printing, packaging and
               doorstep delivery. Ordering for the whole family? Two or more cards in one order
-              drop to ₹{PRICING.ration.multi.public} per card. ABHA, E-SHRAM and GENERAL cards
-              (voter ID, driving licence, PAN and similar) are ₹{PRICING.special.single.public}{" "}
+              drop to ₹{PRICING.ration.multi.public} per card. Other PVC cards — ABHA, E-SHRAM,
+              Aadhaar, voter ID, PAN, driving licence and more — are ₹{PRICING.special.single.public}{" "}
               for a single card and ₹{PRICING.special.multi.public} per card for two or more.
               Every price you see on this website is the live, current price — the same amount
               our server charges when you order. Full details are on our{" "}
@@ -333,7 +336,7 @@ export default function About() {
             </p>
             <p lang="bn" className="text-slate-600 leading-relaxed mb-4">
               দাম একদম স্বচ্ছ: একটি রেশন কার্ড ₹{PRICING.ration.single.public}, দুটি বা বেশি হলে প্রতিটি
-              ₹{PRICING.ration.multi.public}। ABHA, E-SHRAM ও GENERAL কার্ড একটি হলে ₹{PRICING.special.single.public},
+              ₹{PRICING.ration.multi.public}। অন্যান্য PVC কার্ড (ABHA, E-SHRAM, আধার, ভোটার আইডি, PAN ইত্যাদি) একটি হলে ₹{PRICING.special.single.public},
               দুটি বা বেশি হলে প্রতিটি ₹{PRICING.special.multi.public}। প্রিন্টিং, প্যাকেজিং, বাড়িতে ডেলিভারি — সব
               এই দামের মধ্যেই, কোনো লুকানো খরচ নেই।
             </p>
@@ -402,7 +405,7 @@ export default function About() {
               operator programme lets you offer PVC card printing as your own service. Operators
               get a dedicated dashboard to place and track customer orders in bulk, plus
               wholesale rates — for example ₹{PRICING.ration.multi.operator} per ration card and
-              ₹{PRICING.special.multi.operator} per ABHA/E-SHRAM/GENERAL card on multi-card
+              ₹{PRICING.special.multi.operator} per Other PVC Card (ABHA, Aadhaar, Voter ID etc.) on multi-card
               orders — so the margin you earn on every customer is yours to keep. More than
               1,500 operators across West Bengal already use it as a steady side income. To
               register, sign up directly on the{" "}

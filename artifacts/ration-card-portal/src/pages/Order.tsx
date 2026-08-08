@@ -85,7 +85,7 @@ const WB_DISTRICTS = [
 // Pricing lives in @workspace/pricing — shared with the API server, which
 // recomputes the amount authoritatively when the order is created.
 
-/** Card-type options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+/** Card-type options grouped as ration vs Other PVC Cards. */
 function CardTypeOptions() {
   return (
     <>
@@ -110,7 +110,7 @@ export default function Order() {
   const CONTACT = useContact();
   useSeo({
     title: `Apply for PVC Ration Card Online | From ₹${PRICING.ration.multi.public} Per Card`,
-    description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM or GENERAL card printed and delivered to your door. All West Bengal districts served.",
+    description: "Fill out a simple form and get your PVC ration card, ABHA, E-SHRAM, Aadhaar, Voter ID, PAN or other PVC card printed and delivered to your door. All West Bengal districts served.",
     canonical: "https://erationcards.in/order",
   });
   const [step, setStep] = useState(1);
@@ -560,11 +560,11 @@ export default function Order() {
                           <span className="text-yellow-900 text-sm font-extrabold">₹{PRICING.ration.multi.public} each</span>
                         </div>
                       </div>
-                      {/* ABHA / E-SHRAM / GENERAL pricing */}
+                      {/* Other PVC Cards pricing */}
                       <div className="flex flex-wrap items-center gap-2" data-testid="hero-special-pricing">
                         <span className="w-full sm:w-52">
                           <span className="block text-white/90 text-[13px] font-bold uppercase tracking-wide">Other PVC Cards</span>
-                          <span className="block text-white/60 text-[11px] leading-tight" data-testid="hero-special-types">{SPECIAL_CARD_TYPES.join(" · ")}</span>
+                          <span className="block text-white/60 text-[11px] leading-tight" data-testid="hero-special-types">{`${SPECIAL_CARD_TYPES.slice(0, 3).join(" · ")} + ${SPECIAL_CARD_TYPES.length - 3} more`}</span>
                         </span>
                         <div className="flex items-center gap-1.5 bg-white/20 border border-white/30 rounded-full px-3 py-1">
                           <span className="text-white/80 text-xs font-medium">1 card</span>
@@ -604,7 +604,8 @@ export default function Order() {
                           <FormLabel>Card Type *</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
-                            <SelectContent>
+                            {/* 16 card types now — cap the height so the list scrolls instead of overflowing small screens */}
+                            <SelectContent className="max-h-60 overflow-y-auto">
                               <CardTypeOptions />
                             </SelectContent>
                           </Select>
@@ -686,7 +687,7 @@ export default function Order() {
                         <label className="text-sm font-medium text-slate-700">Card Type *</label>
                         <Select value={subCard.cardType} onValueChange={(v) => setSubCard((s) => ({ ...s, cardType: v }))}>
                           <SelectTrigger data-testid="select-family-card-type"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="max-h-60 overflow-y-auto">
                             <CardTypeOptions />
                           </SelectContent>
                         </Select>

@@ -186,7 +186,7 @@ export default function RationCardTypes() {
           No. Every ration card type — AAY, PHH, SPHH, RKSY-I, RKSY-II — costs the same to print: ₹
           {PRICING.ration.single.public} for a single card or ₹{PRICING.ration.multi.public} per card for 2 or more,
           printing and Speed Post delivery included. Each category keeps its official card design and colour. We
-          also print ABHA, E-SHRAM and other general cards at ₹{PRICING.special.single.public} single / ₹
+          also print Other PVC Cards — ABHA, Aadhaar, Voter ID, PAN and more — at ₹{PRICING.special.single.public} single / ₹
           {PRICING.special.multi.public} each for 2+.
         </p>
       </section>

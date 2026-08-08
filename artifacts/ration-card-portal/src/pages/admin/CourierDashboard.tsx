@@ -26,7 +26,7 @@ const COURIER_OPTIONS = [
   { value: "xpressbees", label: "XpressBees" },
 ];
 
-// All orderable categories (ration + ABHA/E-SHRAM/GENERAL) — shared source of truth.
+// All orderable categories (ration + Other PVC Cards) — shared source of truth.
 const CARD_TYPES = ALLOWED_CARD_TYPES;
 const COURIER_STORAGE_KEY = "courierDashboard_selectedCourier";
 

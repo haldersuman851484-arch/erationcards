@@ -49,9 +49,9 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "How much does a PVC ration card cost in West Bengal?",
-    a: `A PVC ration card costs ₹${PRICING.ration.single.public} for a single card, or ₹${PRICING.ration.multi.public} per card when you order 2 or more together — printing and doorstep delivery included (prices as of July 2026). ABHA, E-SHRAM and GENERAL PVC cards cost ₹${PRICING.special.single.public} for a single card, or ₹${PRICING.special.multi.public} per card for 2 or more.`,
+    a: `A PVC ration card costs ₹${PRICING.ration.single.public} for a single card, or ₹${PRICING.ration.multi.public} per card when you order 2 or more together — printing and doorstep delivery included (prices as of July 2026). Other PVC cards (ABHA, E-SHRAM, Aadhaar, Voter ID, PAN and more) cost ₹${PRICING.special.single.public} for a single card, or ₹${PRICING.special.multi.public} per card for 2 or more.`,
     bnQ: "পশ্চিমবঙ্গে PVC রেশন কার্ডের দাম কত?",
-    bnA: `পশ্চিমবঙ্গে একটি PVC রেশন কার্ডের দাম ₹${PRICING.ration.single.public}। একসাথে ২টি বা তার বেশি কার্ড অর্ডার করলে প্রতি কার্ড ₹${PRICING.ration.multi.public}। প্রিন্টিং ও বাড়িতে ডেলিভারি — সব খরচ এই দামের মধ্যেই ধরা (জুলাই ২০২৬-এর দাম)। ABHA, E-SHRAM ও GENERAL কার্ডের দাম একটি হলে ₹${PRICING.special.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.special.multi.public}।`,
+    bnA: `পশ্চিমবঙ্গে একটি PVC রেশন কার্ডের দাম ₹${PRICING.ration.single.public}। একসাথে ২টি বা তার বেশি কার্ড অর্ডার করলে প্রতি কার্ড ₹${PRICING.ration.multi.public}। প্রিন্টিং ও বাড়িতে ডেলিভারি — সব খরচ এই দামের মধ্যেই ধরা (জুলাই ২০২৬-এর দাম)। অন্যান্য PVC কার্ডের (ABHA, E-SHRAM, আধার, ভোটার আইডি, PAN ইত্যাদি) দাম একটি হলে ₹${PRICING.special.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.special.multi.public}।`,
   },
   {
     q: "Are there any hidden charges or delivery fees?",
@@ -73,9 +73,9 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "Can you print ABHA, E-SHRAM or other cards on PVC?",
-    a: `Yes. Besides ration cards, we print ABHA health cards, E-SHRAM cards and other GENERAL cards on durable PVC. These cost ₹${PRICING.special.single.public} for one card or ₹${PRICING.special.multi.public} per card for 2 or more, printing and delivery included.`,
+    a: `Yes. Besides ration cards, we print ABHA health cards, E-SHRAM cards, Ayushman Bharat cards, Aadhaar, Voter ID, PAN, APAAR ID, Driving Licence, BJP membership cards and custom ID cards on durable PVC — plus a GENERAL option for any other document. These cost ₹${PRICING.special.single.public} for one card or ₹${PRICING.special.multi.public} per card for 2 or more, printing and delivery included.`,
     bnQ: "ABHA, E-SHRAM বা অন্য কার্ডও কি PVC-তে প্রিন্ট করা যায়?",
-    bnA: `হ্যাঁ। রেশন কার্ড ছাড়াও আমরা ABHA হেলথ কার্ড, E-SHRAM কার্ড ও অন্যান্য GENERAL কার্ড টেকসই PVC-তে প্রিন্ট করি। দাম একটি কার্ডে ₹${PRICING.special.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.special.multi.public} — প্রিন্টিং ও ডেলিভারি ধরা।`,
+    bnA: `হ্যাঁ। রেশন কার্ড ছাড়াও আমরা ABHA হেলথ কার্ড, E-SHRAM কার্ড, আয়ুষ্মান ভারত কার্ড, আধার, ভোটার আইডি, PAN, APAAR ID, ড্রাইভিং লাইসেন্স, মেম্বারশিপ ও কাস্টম আইডি কার্ড টেকসই PVC-তে প্রিন্ট করি — অন্য যেকোনো নথির জন্য GENERAL অপশন তো আছেই। দাম একটি কার্ডে ₹${PRICING.special.single.public}, ২টি বা বেশি হলে প্রতি কার্ড ₹${PRICING.special.multi.public} — প্রিন্টিং ও ডেলিভারি ধরা।`,
   },
   {
     q: "What documents do I need to place an order?",
@@ -103,9 +103,9 @@ const buildFaqs = (PRICING: PricingMatrix, contact: { phone: string; email: stri
   },
   {
     q: "How do I place an order?",
-    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card type (AAY / PHH / SPHH / RKSY-I / RKSY-II — or ABHA / E-SHRAM / GENERAL for other PVC cards), pay securely online (UPI, debit card or net banking), and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
+    a: "Click on 'Order PVC Card' from the home page, fill in your personal details, ration card number, and delivery address. Select your card type (AAY / PHH / SPHH / RKSY-I / RKSY-II — or an Other PVC Card type such as ABHA, E-SHRAM, Aadhaar, Voter ID, PAN), pay securely online (UPI, debit card or net banking), and upload your e-Ration Card PDF. We'll take care of printing and delivery.",
     bnQ: "কীভাবে PVC রেশন কার্ড অর্ডার করব?",
-    bnA: "হোম পেজ থেকে 'Order PVC Card'-এ ক্লিক করুন। নাম, রেশন কার্ড নম্বর ও ডেলিভারির ঠিকানা লিখুন, কার্ডের ক্যাটাগরি বেছে নিন (AAY / PHH / SPHH / RKSY-I / RKSY-II — অন্য কার্ডের জন্য ABHA / E-SHRAM / GENERAL), অনলাইনে পেমেন্ট সেরে আপনার e-Ration Card PDF আপলোড করুন। প্রিন্টিং আর ডেলিভারির দায়িত্ব আমাদের।",
+    bnA: "হোম পেজ থেকে 'Order PVC Card'-এ ক্লিক করুন। নাম, রেশন কার্ড নম্বর ও ডেলিভারির ঠিকানা লিখুন, কার্ডের ক্যাটাগরি বেছে নিন (AAY / PHH / SPHH / RKSY-I / RKSY-II — অন্য PVC কার্ডের জন্য ABHA, E-SHRAM, আধার, ভোটার আইডি, PAN ইত্যাদি), অনলাইনে পেমেন্ট সেরে আপনার e-Ration Card PDF আপলোড করুন। প্রিন্টিং আর ডেলিভারির দায়িত্ব আমাদের।",
   },
   {
     q: "What payment methods are accepted?",
@@ -163,7 +163,7 @@ export default function FAQ() {
   const FAQS = buildFaqs(pricing, contact);
   useSeo({
     title: "FAQ — PVC Ration Card Printing | AAY PHH SPHH RKSY West Bengal",
-    description: `Answers to common questions about PVC ration card printing: legality, card size (85.6mm×54mm), card types (AAY, PHH, SPHH, RKSY-I, RKSY-II, ABHA, E-SHRAM, GENERAL), district delivery, pricing from ₹${pricing.ration.multi.public}, and more.`,
+    description: `Answers to common questions about PVC ration card printing: legality, card size (85.6mm×54mm), card types (AAY, PHH, SPHH, RKSY-I, RKSY-II, plus ABHA, E-SHRAM, Aadhaar, Voter ID, PAN and more), district delivery, pricing from ₹${pricing.ration.multi.public}, and more.`,
     canonical: "https://erationcards.in/faq",
   });
   useJsonLd("faq-page-ld", {

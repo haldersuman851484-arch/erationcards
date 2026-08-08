@@ -138,7 +138,7 @@ test.describe("Public order form — mixed card pricing", () => {
     await expect(rationLine).toBeVisible({ timeout: 5000 });
     await expect(rationLine).toContainText("Ration Card — 1 × ₹50");
     await expect(rationLine).toContainText("₹50");
-    await expect(specialLine).toContainText("ABHA / E-SHRAM / GENERAL — 1 × ₹75");
+    await expect(specialLine).toContainText("Other PVC Cards — 1 × ₹75");
     await expect(specialLine).toContainText("₹75");
     await expect(page.getByTestId("text-amount-to-pay")).toHaveText("₹125");
 
@@ -193,7 +193,7 @@ test.describe("Operator order form — mixed card pricing", () => {
 
     // Live price summary on step 1 uses operator multi-tier rates
     await expect(page.getByTestId("price-line-ration")).toContainText("Ration Card: 1 card × ₹40");
-    await expect(page.getByTestId("price-line-special")).toContainText("ABHA / E-SHRAM / GENERAL: 1 card × ₹70");
+    await expect(page.getByTestId("price-line-special")).toContainText("Other PVC Cards: 1 card × ₹70");
     await expect(page.getByText("₹110 total")).toBeVisible();
 
     await page.getByRole("button", { name: /Next: Delivery Address/ }).click();

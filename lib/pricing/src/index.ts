@@ -15,7 +15,9 @@
  * Pricing model:
  *   - Every card type belongs to a price group:
  *       "ration"  → AAY, PHH, SPHH, RKSY-I, RKSY-II
- *       "special" → ABHA, E-SHRAM, GENERAL
+ *       "special" → "Other PVC Cards": ABHA, E-SHRAM, GENERAL, AYUSHMAN
+ *                   BHARAT, AADHAAR, VOTER ID, PAN, APAAR ID, DRIVING
+ *                   LICENCE, BJP MEMBERSHIP CARD, CUSTOM ID CARD
  *   - The tier (single vs multi) is decided by the TOTAL number of cards in
  *     the order. Each card is then charged its own group's rate at that tier.
  *     Example (public): 1 PHH + 1 ABHA → 2 cards → multi tier
@@ -23,7 +25,19 @@
  */
 
 export const RATION_CARD_TYPES = ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II"] as const;
-export const SPECIAL_CARD_TYPES = ["ABHA", "E-SHRAM", "GENERAL"] as const;
+export const SPECIAL_CARD_TYPES = [
+  "ABHA",
+  "E-SHRAM",
+  "GENERAL",
+  "AYUSHMAN BHARAT",
+  "AADHAAR",
+  "VOTER ID",
+  "PAN",
+  "APAAR ID",
+  "DRIVING LICENCE",
+  "BJP MEMBERSHIP CARD",
+  "CUSTOM ID CARD",
+] as const;
 
 /** All orderable card types, ration types first. */
 export const ALLOWED_CARD_TYPES = [...RATION_CARD_TYPES, ...SPECIAL_CARD_TYPES] as const;
@@ -85,7 +99,7 @@ export function isValidPricingMatrix(value: unknown): value is PricingMatrix {
 /** Human label for each price group, for order summaries and receipts. */
 export const PRICE_GROUP_LABELS: Record<PriceGroup, string> = {
   ration: "Ration Card",
-  special: "ABHA / E-SHRAM / GENERAL",
+  special: "Other PVC Cards",
 };
 
 const SPECIAL_SET: ReadonlySet<string> = new Set(SPECIAL_CARD_TYPES);
@@ -195,7 +209,7 @@ export const TOKEN_PRICING = {
 
 export interface PriceLine {
   group: PriceGroup;
-  /** e.g. "Ration Card" or "ABHA / E-SHRAM / GENERAL" */
+  /** e.g. "Ration Card" or "Other PVC Cards" */
   label: string;
   count: number;
   unitPrice: number;

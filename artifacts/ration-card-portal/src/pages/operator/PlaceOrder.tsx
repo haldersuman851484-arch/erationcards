@@ -49,7 +49,7 @@ const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 // Card types & operator pricing come from @workspace/pricing — shared
 // with the API server, which recomputes the amount when the order is created.
 
-/** Card-type options grouped as ration vs ABHA/E-SHRAM/GENERAL. */
+/** Card-type options grouped as ration vs Other PVC Cards. */
 function CardTypeOptions() {
   return (
     <>
@@ -109,9 +109,9 @@ function getAuthHeader() {
 /** Pricing rows shown to the operator before they start filling the form. */
 function OperatorPricingBanner() {
   const PRICING = usePricing();
-  const rows: Array<{ group: string; label: string; types: readonly string[]; typesColor: string; single: number; multi: number }> = [
-    { group: "ration", label: "RATION CARD", types: RATION_CARD_TYPES, typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
-    { group: "special", label: "OTHER PVC CARDS", types: SPECIAL_CARD_TYPES, typesColor: "text-[#c5e6eb]", single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
+  const rows: Array<{ group: string; label: string; typesLabel: string; typesColor: string; single: number; multi: number }> = [
+    { group: "ration", label: "RATION CARD", typesLabel: RATION_CARD_TYPES.join(" · "), typesColor: "text-[#f2f9ffb5]", single: PRICING.ration.single.operator, multi: PRICING.ration.multi.operator },
+    { group: "special", label: "OTHER PVC CARDS", typesLabel: `${SPECIAL_CARD_TYPES.slice(0, 3).join(" · ")} + ${SPECIAL_CARD_TYPES.length - 3} more`, typesColor: "text-[#c5e6eb]", single: PRICING.special.single.operator, multi: PRICING.special.multi.operator },
   ];
   return (
     <div className="rounded-xl border border-primary/15 from-primary/5 to-sky-50 p-4 mb-4 bg-[#038ffff2] text-[#ffffff]">
@@ -122,7 +122,7 @@ function OperatorPricingBanner() {
             <span className="w-44 shrink-0">
               <span className="block font-semibold text-background text-[14px]">{row.label}</span>
               <span className={`block ${row.typesColor} text-[12px]`} data-testid={`pricing-types-${row.group}`}>
-                {row.types.join(" · ")}
+                {row.typesLabel}
               </span>
             </span>
             {/* Single pill */}
@@ -531,7 +531,7 @@ export default function PlaceOrder() {
                     <FormItem><FormLabel>Card Type *</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl><SelectTrigger data-testid="select-card-type-operator"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
-                        <SelectContent><CardTypeOptions /></SelectContent>
+                        <SelectContent className="max-h-60 overflow-y-auto"><CardTypeOptions /></SelectContent>
                       </Select>
                       <FormMessage /></FormItem>
                   )} />
@@ -919,7 +919,7 @@ export default function PlaceOrder() {
               <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Type *</label>
               <Select value={subCard.cardType} onValueChange={v => setSubCard(p => ({ ...p, cardType: v }))}>
                 <SelectTrigger data-testid="select-family-card-type-operator"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
-                <SelectContent><CardTypeOptions /></SelectContent>
+                <SelectContent className="max-h-60 overflow-y-auto"><CardTypeOptions /></SelectContent>
               </Select>
             </div>
             <div>

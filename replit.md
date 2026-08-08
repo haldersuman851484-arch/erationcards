@@ -48,7 +48,7 @@ A web application for ordering PVC ration cards online — customers fill in det
 
 - **Card products & pricing** — two price groups, defined in `@workspace/pricing` (`lib/pricing`):
   - Ration cards (AAY, PHH, SPHH, RKSY-I, RKSY-II): public ₹70 single / ₹50 each for 2+; operator ₹70 single / ₹40 each for 2+.
-  - ABHA / E-SHRAM / GENERAL: public ₹100 single / ₹75 each for 2+; operator ₹85 single / ₹70 each for 2+.
+  - Other PVC Cards (ABHA, E-SHRAM, GENERAL, AYUSHMAN BHARAT, AADHAAR, VOTER ID, PAN, APAAR ID, DRIVING LICENCE, BJP MEMBERSHIP CARD, CUSTOM ID CARD): public ₹100 single / ₹75 each for 2+; operator ₹85 single / ₹70 each for 2+.
   - Mixed orders: the single-vs-multi tier is decided by the TOTAL card count in the order; each card is then billed at its own group's rate for that tier (e.g. public 1 PHH + 1 ABHA = ₹50 + ₹75 = ₹125).
   - The server recomputes the amount on order creation (client-sent `amount` is ignored). To change prices, edit `lib/pricing/src/index.ts` only — forms, receipts, FAQ/SEO copy, and the API all read from it.
   - `artifacts/ration-card-portal/index.html` (static meta tags + JSON-LD) carries `%%PRICE_*%%` / `%%CONTACT_*%%` tokens that the API server substitutes live in production serving; only the visible meta description text still states prices literally.

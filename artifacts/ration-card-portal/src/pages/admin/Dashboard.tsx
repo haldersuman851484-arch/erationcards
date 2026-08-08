@@ -110,7 +110,7 @@ function describeHistoryChange(entry: { field: "upi" | "pricing" | "processing_p
           const b = before?.[group]?.[tier]?.[audience];
           const a = after?.[group]?.[tier]?.[audience];
           if (b !== a) {
-            const groupLabel = group === "ration" ? "Ration" : "ABHA/E-SHRAM/General";
+            const groupLabel = group === "ration" ? "Ration" : "Other PVC Cards";
             const tierLabel = tier === "single" ? "1 card" : "2+ cards";
             const audLabel = audience === "public" ? "Customer" : "Operator";
             parts.push(`${groupLabel} · ${tierLabel} · ${audLabel}: ₹${b ?? "?"} → ₹${a}`);
@@ -1038,7 +1038,7 @@ export default function AdminDashboard() {
                       </div>
                       {([
                         { group: "ration" as const, title: "Ration Card (AAY · PHH · SPHH · RKSY-I · RKSY-II)" },
-                        { group: "special" as const, title: "ABHA / E-SHRAM / GENERAL" },
+                        { group: "special" as const, title: "Other PVC Cards (ABHA · E-SHRAM · GENERAL & 8 more)" },
                       ]).map(({ group, title }) => (
                         <div key={group} className="border border-slate-200 rounded-lg p-4">
                           <p className="text-sm font-semibold text-slate-800 mb-3">{title}</p>

@@ -14,6 +14,8 @@ describe("shared pricing — card types", () => {
   it("includes the 5 ration categories and the 3 special products", () => {
     expect([...ALLOWED_CARD_TYPES]).toEqual([
       "AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II", "ABHA", "E-SHRAM", "GENERAL",
+      "AYUSHMAN BHARAT", "AADHAAR", "VOTER ID", "PAN", "APAAR ID",
+      "DRIVING LICENCE", "BJP MEMBERSHIP CARD", "CUSTOM ID CARD",
     ]);
   });
 });
@@ -35,6 +37,10 @@ describe("computeOrderAmount — public orders", () => {
   it("mixed order 1 PHH + 1 ABHA = ₹50 + ₹75 = ₹125", () => {
     expect(computeOrderAmount(["PHH", "ABHA"], false)).toBe(125);
   });
+  it("new special types price like ABHA: single AADHAAR ₹100, VOTER ID + PAN ₹75 each", () => {
+    expect(computeOrderAmount(["AADHAAR"], false)).toBe(100);
+    expect(computeOrderAmount(["VOTER ID", "PAN"], false)).toBe(150);
+  });
 });
 
 describe("computeOrderAmount — operator orders", () => {
@@ -53,6 +59,10 @@ describe("computeOrderAmount — operator orders", () => {
   it("mixed order 1 RKSY-I + 1 GENERAL = ₹40 + ₹70 = ₹110", () => {
     expect(computeOrderAmount(["RKSY-I", "GENERAL"], true)).toBe(110);
   });
+  it("new special types use operator rates: single VOTER ID ₹85, DL + CUSTOM ₹70 each", () => {
+    expect(computeOrderAmount(["VOTER ID"], true)).toBe(85);
+    expect(computeOrderAmount(["DRIVING LICENCE", "CUSTOM ID CARD"], true)).toBe(140);
+  });
 });
 
 describe("perCardPrice / priceBreakdown", () => {
@@ -62,12 +72,12 @@ describe("perCardPrice / priceBreakdown", () => {
   it("splits a mixed public order into ration + special lines", () => {
     expect(priceBreakdown(["PHH", "ABHA"], false)).toEqual([
       { group: "ration", label: "Ration Card", count: 1, unitPrice: 50, subtotal: 50 },
-      { group: "special", label: "ABHA / E-SHRAM / GENERAL", count: 1, unitPrice: 75, subtotal: 75 },
+      { group: "special", label: "Other PVC Cards", count: 1, unitPrice: 75, subtotal: 75 },
     ]);
   });
   it("yields a single line when only one group is present", () => {
     expect(priceBreakdown(["ABHA", "GENERAL"], false)).toEqual([
-      { group: "special", label: "ABHA / E-SHRAM / GENERAL", count: 2, unitPrice: 75, subtotal: 150 },
+      { group: "special", label: "Other PVC Cards", count: 2, unitPrice: 75, subtotal: 150 },
     ]);
   });
 });

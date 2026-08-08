@@ -71,7 +71,7 @@ vi.mock("@workspace/db", () => {
     FamilyCardsSchema: {
       safeParse: (v: unknown) => ({ success: true, data: v ?? [] }),
     },
-    ALLOWED_CARD_TYPES: ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II", "ABHA", "E-SHRAM", "GENERAL"],
+    ALLOWED_CARD_TYPES: ["AAY", "PHH", "SPHH", "RKSY-I", "RKSY-II", "ABHA", "E-SHRAM", "GENERAL", "AYUSHMAN BHARAT", "AADHAAR", "VOTER ID", "PAN", "APAAR ID", "DRIVING LICENCE", "BJP MEMBERSHIP CARD", "CUSTOM ID CARD"],
   };
 });
 
