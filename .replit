@@ -28,6 +28,10 @@ args = "test-api"
 task = "workflow.run"
 args = "browser-tests"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "local-mysql"
+
 [[workflows.workflow]]
 name = "typecheck"
 author = "agent"
@@ -61,6 +65,17 @@ args = "cd artifacts/ration-card-portal && npx playwright test"
 [workflows.workflow.metadata]
 isValidation = true
 
+[[workflows.workflow]]
+name = "local-mysql"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash scripts/local-mysql.sh"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
 [agent]
 stack = "PNPM_WORKSPACE"
 expertMode = true
@@ -79,6 +94,7 @@ EMAIL_FROM = "PVC Card Portal <orders@erationcards.in>"
 PROCESSING_EMAIL = "help@erationcards.in"
 
 [userenv.development]
+MYSQL_DATABASE_URL = "mysql://app:e1ee10f56b3e05327b96f181@127.0.0.1:3311/rationcards_test"
 
 [objectStorage]
 defaultBucketID = "replit-objstore-1385b690-cb6e-4577-a122-1280056f167b"
