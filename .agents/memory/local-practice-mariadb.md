@@ -15,3 +15,9 @@ Hard-won specifics:
 - Cashfree sandbox is fully journey-testable: testing agent paid via UPI VPA `testsuccess@gocash`; GET /payments/cashfree/status is the dev sync path (no webhook in dev).
 
 **How to apply:** dev testing only; afterwards delete the workflow, the development env var, and `.local-mysql/` (script + package stay). Restarting api-server then points back at Hostinger and will 500 on DB routes until their allowlist actually works.
+
+## Strict mode exposes stale test seeds (2026-08-08)
+First full test-api run against the practice DB failed 12 specs — none were real app bugs:
+- Integration specs seeded pre-migration enum values hidden behind `as any` casts (e.g. orders.payment_status 'verified', which left the enum long ago). MariaDB strict mode hard-errors with WARN_DATA_TRUNCATED where permissive MySQL sql_modes may silently truncate. Treat WARN_DATA_TRUNCATED in tests as stale seed data, not DB breakage.
+- Auth specs minted operator tokens for made-up ids; operator auth now verifies the row exists (terminated-account hardening), so such tokens 401. Integration tests must seed real operator rows and clean them up.
+Both fixed; test-api is green against the practice DB, so full validation (typecheck + test-api + browser-tests) now runs locally.

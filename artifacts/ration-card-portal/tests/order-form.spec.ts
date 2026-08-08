@@ -115,7 +115,16 @@ async function setupOrderMocks(page: Page, opts: MockOptions = {}): Promise<Coun
   return counters;
 }
 
+async function pickCardType(page: Page, testId: string, type: string) {
+  await page.getByTestId(testId).click();
+  const option = page.getByRole("option", { name: type, exact: true });
+  await expect(option).toBeVisible({ timeout: 5000 });
+  await option.click();
+}
+
 async function fillStep1(page: Page) {
+  // Card type starts unselected — every flow must actively choose one.
+  await pickCardType(page, "select-card-type-step1", "AAY");
   await page.getByTestId("input-customer-name").fill("Rajesh Kumar");
   await page.getByTestId("input-ration-card-number").fill("WB01234567890");
   await page.getByTestId("button-next-step1").click();
@@ -182,6 +191,27 @@ test.describe("Order form — online payment", () => {
 
     await expect(page.getByTestId("input-customer-name")).toBeVisible();
     await expect(page.getByTestId("input-delivery-name")).not.toBeVisible();
+  });
+
+  test("blocks Next with a friendly message until a card type is chosen", async ({ page }) => {
+    await installCashfreeFake(page);
+    await setupOrderMocks(page);
+
+    await page.goto("/order");
+    // Fill everything on step 1 EXCEPT the card type.
+    await page.getByTestId("input-customer-name").fill("Rajesh Kumar");
+    await page.getByTestId("input-ration-card-number").fill("WB01234567890");
+    await page.getByTestId("button-next-step1").click();
+
+    await expect(page.getByText("Please select your card type")).toBeVisible();
+    // Neither the family-member dialog nor step 2 may open.
+    await expect(page.getByTestId("dialog-family-member")).not.toBeVisible();
+    await expect(page.getByTestId("input-delivery-name")).not.toBeVisible();
+
+    // Choosing a type clears the block.
+    await pickCardType(page, "select-card-type-step1", "PHH");
+    await page.getByTestId("button-next-step1").click();
+    await expect(page.getByTestId("dialog-family-member")).toBeVisible({ timeout: 5000 });
   });
 
   test("order API 500 keeps the customer on step 3 and never opens the payment modal", async ({

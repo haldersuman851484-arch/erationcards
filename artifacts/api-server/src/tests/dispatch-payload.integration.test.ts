@@ -34,7 +34,7 @@ async function seedPrintedOrder(overrides: Record<string, unknown> = {}) {
     cardType: "PHH",
     quantity: 1,
     amount: "70.00",
-    paymentStatus: "verified" as any,
+    paymentStatus: "confirmed" as any,
     status: "printed" as any,
     ...overrides,
   } as any);

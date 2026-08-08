@@ -56,11 +56,20 @@ async function assertRowHighlighted(page: Page, message: string) {
   await expect(page.getByText("Please fix family member card 2", { exact: true })).toBeVisible();
 }
 
+/** Card type selects start unselected — every flow must actively choose one. */
+async function pickCardType(page: Page, trigger: ReturnType<Page["locator"]>, type: string) {
+  await trigger.click();
+  const option = page.getByRole("option", { name: type, exact: true });
+  await expect(option).toBeVisible({ timeout: 5000 });
+  await option.click();
+}
+
 /* ─────────────────────────── Public /order form ─────────────────────────── */
 
 async function publicAddFamilyCard(page: Page, name: string, cardNumber: string) {
   await page.getByTestId("button-add-another").click();
   await expect(page.getByTestId("input-family-name")).toBeVisible({ timeout: 5000 });
+  await pickCardType(page, page.getByTestId("select-family-card-type"), "PHH");
   await page.getByTestId("input-family-name").fill(name);
   await page.getByTestId("input-family-number").fill(cardNumber);
   await page.getByTestId("button-family-save").click();
@@ -70,6 +79,7 @@ async function publicAddFamilyCard(page: Page, name: string, cardNumber: string)
 async function publicSubmitWithTwoFamilyCards(page: Page) {
   await page.goto("/order");
   // Step 1: main card + two family cards.
+  await pickCardType(page, page.getByTestId("select-card-type-step1"), "AAY");
   await page.getByTestId("input-customer-name").fill("Rajesh Kumar");
   await page.getByTestId("input-ration-card-number").fill("WB01234567890");
   await publicAddFamilyCard(page, "Sunita Devi", "WB09876543210");
@@ -123,6 +133,7 @@ async function operatorAddFamilyCard(page: Page, name: string, cardNumber: strin
   await page.getByRole("button", { name: "Add Family Card" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible({ timeout: 5000 });
+  await pickCardType(page, dialog.getByTestId("select-family-card-type-operator"), "PHH");
   await dialog.getByPlaceholder("Full name").fill(name);
   await dialog.getByPlaceholder("Card number").fill(cardNumber);
   await dialog.getByRole("button", { name: "Save Card" }).click();
@@ -135,6 +146,7 @@ async function operatorSubmitWithTwoFamilyCards(page: Page) {
 
   // Step 1: customer + card details, plus two family cards.
   await expect(page.getByPlaceholder("Full name on ration card")).toBeVisible({ timeout: 10000 });
+  await pickCardType(page, page.getByTestId("select-card-type-operator"), "AAY");
   await page.getByPlaceholder("Full name on ration card").fill("Rajesh Kumar");
   await page.getByPlaceholder("10-digit mobile").fill("9876543210");
   await page.getByPlaceholder("Card number").fill("WB01234567890");
@@ -166,6 +178,28 @@ async function operatorSubmitWithTwoFamilyCards(page: Page) {
 }
 
 test.describe("Operator place-order form: family-card server rejection", () => {
+  test("blocks Next with a friendly message until a card type is chosen", async ({ page }) => {
+    await mockApis(page, ABSOLUTE_DETAILS);
+    await page.addInitScript(() => localStorage.setItem("operatorToken", "test-token"));
+    await page.goto("/operator/order");
+
+    // Fill everything on step 1 EXCEPT the card type.
+    await expect(page.getByPlaceholder("Full name on ration card")).toBeVisible({ timeout: 10000 });
+    await page.getByPlaceholder("Full name on ration card").fill("Rajesh Kumar");
+    await page.getByPlaceholder("10-digit mobile").fill("9876543210");
+    await page.getByPlaceholder("Card number").fill("WB01234567890");
+    await page.getByRole("button", { name: /Next: Delivery Address/ }).click();
+
+    await expect(page.getByText("Please select your card type")).toBeVisible();
+    // Still on step 1 — step 2's delivery inputs must not appear.
+    await expect(page.getByPlaceholder("Name for delivery")).not.toBeVisible();
+
+    // Choosing a type clears the block.
+    await pickCardType(page, page.getByTestId("select-card-type-operator"), "PHH");
+    await page.getByRole("button", { name: /Next: Delivery Address/ }).click();
+    await expect(page.getByPlaceholder("Name for delivery")).toBeVisible({ timeout: 5000 });
+  });
+
   test('400 with path ["familyCards", 1, "customerName"] highlights row 1 and returns to step 1', async ({ page }) => {
     await mockApis(page, ABSOLUTE_DETAILS);
     await operatorSubmitWithTwoFamilyCards(page);

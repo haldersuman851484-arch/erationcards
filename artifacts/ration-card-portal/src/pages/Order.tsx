@@ -52,7 +52,7 @@ const orderSchema = z.object({
   state: z.string().min(1, "Select your state"),
   district: z.string().min(2, "Enter your district"),
   pincode: z.string().length(6, "Pincode must be 6 digits"),
-  cardType: z.enum(ALLOWED_CARD_TYPES),
+  cardType: z.enum(ALLOWED_CARD_TYPES, { errorMap: () => ({ message: "Please select your card type" }) }),
   quantity: z.coerce.number().min(1).max(10),
 });
 
@@ -132,7 +132,7 @@ export default function Order() {
   const [showFamilyDialog, setShowFamilyDialog] = useState(false);
   const [addCardView, setAddCardView] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
-  const [subCard, setSubCard] = useState<FamilyCardEntry>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+  const [subCard, setSubCard] = useState<FamilyCardEntry>({ customerName: "", rationCardNumber: "", cardType: "" });
   const [subError, setSubError] = useState("");
   // Server-rejected family-card entries: index in familyCards → message.
   const [familyCardErrors, setFamilyCardErrors] = useState<Record<number, string>>({});
@@ -159,7 +159,7 @@ export default function Order() {
       setSubCard(familyCards[index]);
       setEditIndex(index);
     } else {
-      setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+      setSubCard({ customerName: "", rationCardNumber: "", cardType: "" });
       setEditIndex(null);
     }
     setSubError("");
@@ -167,6 +167,7 @@ export default function Order() {
   }
 
   function saveSubCard() {
+    if (!subCard.cardType) { setSubError("Please select card type"); return; }
     if (subCard.customerName.trim().length < 2) { setSubError("Enter card holder name"); return; }
     if (subCard.rationCardNumber.trim().length < 5) { setSubError("Enter a valid ration card number"); return; }
     setFamilyCards((prev) => {
@@ -204,14 +205,17 @@ export default function Order() {
       state: "West Bengal",
       district: "",
       pincode: "",
-      cardType: "AAY",
+      // Deliberately unselected — the customer must actively choose a card type.
+      cardType: "" as OrderForm["cardType"],
       quantity: 1,
     },
   });
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
+  // filter(Boolean): an unselected ("") card type must not count toward the
+  // live total — the pricing helper would otherwise treat it as a ration card.
+  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)].filter(Boolean);
   const amount = computeOrderAmount(allCardTypes, false, PRICING);
   const breakdown = priceBreakdown(allCardTypes, false, PRICING);
 
@@ -488,7 +492,7 @@ export default function Order() {
                   setFamilyCards([]);
                   setAddCardView(false);
                   setEditIndex(null);
-                  setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+                  setSubCard({ customerName: "", rationCardNumber: "", cardType: "" });
                   setSubError("");
                   setFamilyCardErrors({});
                   setShowFamilyDialog(false);
@@ -598,7 +602,7 @@ export default function Order() {
                       <FormField control={form.control} name="cardType" render={({ field }) => (
                         <FormItem>
                           <FormLabel>Card Type *</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl><SelectTrigger data-testid="select-card-type-step1"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
                             <SelectContent>
                               <CardTypeOptions />

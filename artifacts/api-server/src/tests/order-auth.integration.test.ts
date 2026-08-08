@@ -10,7 +10,7 @@ import { describe, it, expect, afterAll } from "vitest";
 import request from "supertest";
 import app from "../app";
 import { createAdminToken, createOperatorToken } from "../lib/auth";
-import { db, ordersTable } from "@workspace/db";
+import { db, ordersTable, operatorsTable } from "@workspace/db";
 import { eq, inArray } from "drizzle-orm";
 
 const ADMIN = () => `Bearer ${createAdminToken("auth-tests@printpvccard.in", "admin")}`;
@@ -44,9 +44,41 @@ async function seedOrder(overrides: Record<string, unknown> = {}) {
   return row!;
 }
 
+const seededOperatorEmails: string[] = [];
+
+/**
+ * Operator tokens are only honoured while the operator's row still exists
+ * (terminated accounts get 401), so these tests must seed real operators.
+ */
+async function seedOperator(): Promise<number> {
+  const email = `auth-op-${Date.now()}-${Math.floor(Math.random() * 1e6)}@test.local`;
+  seededOperatorEmails.push(email);
+  await db.insert(operatorsTable).values({
+    name: "Auth Test Operator",
+    email,
+    phone: "9000054321",
+    passwordHash: "not-a-real-hash",
+    shopName: "Auth Test Shop",
+    address: "1 Test Road",
+    state: "West Bengal",
+    district: "Kolkata",
+    pincode: "700001",
+    status: "active",
+  });
+  const [row] = await db
+    .select({ id: operatorsTable.id })
+    .from(operatorsTable)
+    .where(eq(operatorsTable.email, email))
+    .limit(1);
+  return row!.id;
+}
+
 afterAll(async () => {
   if (seededOrderNumbers.length > 0) {
     await db.delete(ordersTable).where(inArray(ordersTable.orderNumber, seededOrderNumbers));
+  }
+  if (seededOperatorEmails.length > 0) {
+    await db.delete(operatorsTable).where(inArray(operatorsTable.email, seededOperatorEmails));
   }
 });
 
@@ -78,7 +110,7 @@ describe("order route auth guards", () => {
 
   it("forbids an operator from touching an order not assigned to them", async () => {
     const order = await seedOrder(); // operatorId null — belongs to no operator
-    const foreignOperator = `Bearer ${createOperatorToken(999_999_999)}`;
+    const foreignOperator = `Bearer ${createOperatorToken(await seedOperator())}`;
 
     const read = await request(app)
       .get(`/api/orders/${order.id}`)
@@ -117,7 +149,7 @@ describe("order route auth guards", () => {
   });
 
   it("lets the assigned operator read their own order, but blocks their status updates (admin-only)", async () => {
-    const operatorId = 987_654_321; // plain int column, no FK — token id just has to match
+    const operatorId = await seedOperator(); // must be a live operator row
     const order = await seedOrder({ operatorId });
     const ownOperator = `Bearer ${createOperatorToken(operatorId)}`;
 

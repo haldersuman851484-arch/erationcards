@@ -175,8 +175,8 @@ test.describe("Operator order form — mixed card pricing", () => {
     await page.getByPlaceholder("Full name on ration card").fill("Rajesh Kumar");
     await page.getByPlaceholder("10-digit mobile").fill("9876543210");
     await page.getByPlaceholder("Card number").fill("WB01234567890");
-    // Card type select shows the default "AAY" (no placeholder)
-    await pickCardType(page, page.getByRole("combobox").filter({ hasText: "AAY" }), "PHH");
+    // Card type starts unselected — pick it from the placeholder select.
+    await pickCardType(page, page.getByTestId("select-card-type-operator"), "PHH");
 
     // Add a family ABHA card via the dialog
     await page.getByRole("button", { name: /Add Family Card/ }).click();

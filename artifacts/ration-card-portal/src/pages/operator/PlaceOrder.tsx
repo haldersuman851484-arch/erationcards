@@ -81,7 +81,7 @@ const orderSchema = z.object({
   postOffice: z.string().min(2, "Post office required"),
   district: z.string().min(1, "Select district"),
   pincode: z.string().length(6, "6-digit pincode required"),
-  cardType: z.enum(ALLOWED_CARD_TYPES),
+  cardType: z.enum(ALLOWED_CARD_TYPES, { errorMap: () => ({ message: "Please select your card type" }) }),
   quantity: z.coerce.number().min(1),
 });
 type OrderForm = z.infer<typeof orderSchema>;
@@ -175,7 +175,7 @@ export default function PlaceOrder() {
   const [familyCards, setFamilyCards] = useState<FamilyCard[]>([]);
   const [familyDialog, setFamilyDialog] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
-  const [subCard, setSubCard] = useState<FamilyCard>({ customerName: "", rationCardNumber: "", cardType: "AAY" });
+  const [subCard, setSubCard] = useState<FamilyCard>({ customerName: "", rationCardNumber: "", cardType: "" });
   const [subError, setSubError] = useState("");
   // Server-rejected family-card entries: index in familyCards → message.
   const [familyCardErrors, setFamilyCardErrors] = useState<Record<number, string>>({});
@@ -210,13 +210,16 @@ export default function PlaceOrder() {
     defaultValues: {
       customerName: "", customerPhone: "", customerEmail: "", rationCardNumber: "",
       deliveryName: "", address: "", postOffice: "",
-      district: "", pincode: "", cardType: "AAY", quantity: 1,
+      // Deliberately unselected — the operator must actively choose a card type.
+      district: "", pincode: "", cardType: "" as OrderForm["cardType"], quantity: 1,
     },
   });
 
   const cardType = form.watch("cardType");
   const totalCards = 1 + familyCards.length;
-  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)];
+  // filter(Boolean): an unselected ("") card type must not count toward the
+  // live total — the pricing helper would otherwise treat it as a ration card.
+  const allCardTypes = [cardType, ...familyCards.map((c) => c.cardType)].filter(Boolean);
   const amount = computeOrderAmount(allCardTypes, true, PRICING);
   const breakdown = priceBreakdown(allCardTypes, true, PRICING);
 
@@ -339,11 +342,12 @@ export default function PlaceOrder() {
 
   function openAddFamily(idx: number | null = null) {
     if (idx !== null) { setSubCard(familyCards[idx]); setEditIdx(idx); }
-    else { setSubCard({ customerName: "", rationCardNumber: "", cardType: "AAY" }); setEditIdx(null); }
+    else { setSubCard({ customerName: "", rationCardNumber: "", cardType: "" }); setEditIdx(null); }
     setSubError(""); setFamilyDialog(true);
   }
 
   function saveFamilyCard() {
+    if (!subCard.cardType) { setSubError("Please select card type"); return; }
     if (subCard.customerName.trim().length < 2) { setSubError("Enter card holder name"); return; }
     if (subCard.rationCardNumber.trim().length < 5) { setSubError("Enter valid ration card number"); return; }
     setFamilyCards(prev => {
@@ -523,6 +527,14 @@ export default function PlaceOrder() {
                     <h2 className="font-semibold text-slate-800 text-sm">Customer & Card Details</h2>
                   </div>
 
+                  <FormField control={form.control} name="cardType" render={({ field }) => (
+                    <FormItem><FormLabel>Card Type *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger data-testid="select-card-type-operator"><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
+                        <SelectContent><CardTypeOptions /></SelectContent>
+                      </Select>
+                      <FormMessage /></FormItem>
+                  )} />
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="customerName" render={({ field }) => (
                       <FormItem><FormLabel>Card Holder Name *</FormLabel>
@@ -537,14 +549,6 @@ export default function PlaceOrder() {
                     <FormField control={form.control} name="rationCardNumber" render={({ field }) => (
                       <FormItem><FormLabel>Card Number *</FormLabel>
                         <FormControl><Input placeholder="Card number" {...field} /></FormControl>
-                        <FormMessage /></FormItem>
-                    )} />
-                    <FormField control={form.control} name="cardType" render={({ field }) => (
-                      <FormItem><FormLabel>Card Type *</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select Card Type" /></SelectTrigger></FormControl>
-                          <SelectContent><CardTypeOptions /></SelectContent>
-                        </Select>
                         <FormMessage /></FormItem>
                     )} />
                   </div>
@@ -591,7 +595,7 @@ export default function PlaceOrder() {
                       ))}
                       <p className="text-sm font-bold text-primary">₹{amount} total</p>
                     </div>
-                    <Badge variant="outline" className="border-primary/30 text-primary text-xs">{cardType}</Badge>
+                    {cardType && <Badge variant="outline" className="border-primary/30 text-primary text-xs">{cardType}</Badge>}
                   </div>
 
                   <Button type="button" className="w-full gap-2" onClick={() => form.trigger(["customerName","customerPhone","rationCardNumber","cardType"]).then(ok => ok && setStep(2))}>
@@ -912,19 +916,19 @@ export default function PlaceOrder() {
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <div>
+              <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Type *</label>
+              <Select value={subCard.cardType} onValueChange={v => setSubCard(p => ({ ...p, cardType: v }))}>
+                <SelectTrigger data-testid="select-family-card-type-operator"><SelectValue placeholder="Select Card Type" /></SelectTrigger>
+                <SelectContent><CardTypeOptions /></SelectContent>
+              </Select>
+            </div>
+            <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Holder Name *</label>
               <Input placeholder="Full name" value={subCard.customerName} onChange={e => setSubCard(p => ({ ...p, customerName: e.target.value }))} />
             </div>
             <div>
               <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Number *</label>
               <Input placeholder="Card number" value={subCard.rationCardNumber} onChange={e => setSubCard(p => ({ ...p, rationCardNumber: e.target.value }))} />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-slate-700 block mb-1.5">Card Type *</label>
-              <Select value={subCard.cardType} onValueChange={v => setSubCard(p => ({ ...p, cardType: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent><CardTypeOptions /></SelectContent>
-              </Select>
             </div>
             {subError && <p className="text-sm text-red-500">{subError}</p>}
             <div className="flex gap-3">
