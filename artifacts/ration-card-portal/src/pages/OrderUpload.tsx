@@ -373,11 +373,11 @@ export default function OrderUpload() {
             </div>
           </div>
         ) : (
-          <div className="bg-slate-100 rounded-xl p-4 flex items-start gap-2.5">
+          <div className="bg-slate-100 rounded-xl p-4 flex items-start gap-2.5" data-testid="note-legacy-payment">
             <Clock className="w-4 h-4 text-slate-500 shrink-0 mt-0.5" />
             <div className="text-xs text-slate-600">
-              <p className="font-semibold mb-0.5">Payment verification pending</p>
-              <p>Our team is reviewing your payment. Your card will be printed once payment is confirmed and all PDFs are uploaded. Delivery in 5–7 working days.</p>
+              <p className="font-semibold mb-0.5">Placed with our earlier payment process</p>
+              <p>This order was placed with our earlier payment process and its payment was never confirmed, so printing cannot start. Please contact our support team and they will sort this out for you.</p>
             </div>
           </div>
         )}

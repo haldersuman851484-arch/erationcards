@@ -73,13 +73,13 @@ async function run() {
     pass("GET /healthz → 200 {status:'ok'}");
   }
 
-  // ── 2. Stats (read from MySQL) ────────────────────────────────────────────
+  // ── 2. Stats are staff-only ───────────────────────────────────────────────
+  // Order counts and revenue must never be readable without a staff login.
+  // (The authenticated read happens in step 14, after admin login.)
   {
-    const { status, body } = await get("/orders/stats");
-    assert.equal(status, 200, "stats: expected 200");
-    assert.ok(typeof body.totalOrders === "number", "stats: totalOrders missing");
-    assert.ok(typeof body.totalRevenue === "number", "stats: totalRevenue missing");
-    pass(`GET /orders/stats → 200 (totalOrders=${body.totalOrders}, revenue=${body.totalRevenue})`);
+    const { status } = await get("/orders/stats");
+    assert.equal(status, 401, "stats without login: expected 401");
+    pass("GET /orders/stats (no login) → 401 (staff-only)");
   }
 
   // ── 3. Admin login — valid credentials ───────────────────────────────────
@@ -168,9 +168,10 @@ async function run() {
         pincode: "411001",
         cardType: "AAY",
         familyCards: [],
+        // amount/quantity are required by the API schema but recomputed
+        // server-side; paymentMethod is server-managed (always cashfree).
         quantity: 1,
         amount: 70,
-        paymentMethod: "upi",
       },
       operatorToken
     );
@@ -223,12 +224,13 @@ async function run() {
     pass(`PATCH /orders/${orderId} → 200 (processing)`);
   }
 
-  // ── 14. Final stats reflect new data ─────────────────────────────────────
+  // ── 14. Final stats reflect new data (admin sees revenue) ────────────────
   {
-    const { status, body } = await get("/orders/stats");
+    const { status, body } = await get("/orders/stats", adminToken);
     assert.equal(status, 200, "final stats: expected 200");
-    assert.ok(body.totalOrders >= 1);
-    pass(`GET /orders/stats → 200 (totalOrders=${body.totalOrders}, revenue=${body.totalRevenue})`);
+    assert.ok(body.totalOrders >= 1, "final stats: totalOrders missing");
+    assert.ok(typeof body.totalRevenue === "number", "final stats: totalRevenue missing for admin");
+    pass(`GET /orders/stats (admin) → 200 (totalOrders=${body.totalOrders}, revenue=${body.totalRevenue})`);
   }
 
   // ── 15. Homepage SEO prices (post-deploy check) ───────────────────────────
