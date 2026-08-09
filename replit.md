@@ -2,6 +2,14 @@
 
 A web application for ordering PVC ration cards online — customers fill in details, pay via UPI, and operators track/dispatch orders through an admin dashboard.
 
+## Replit Dev Setup
+
+- **Frontend** (`artifacts/ration-card-portal: web` workflow) — Vite dev server, hot-reload
+- **API server** (`artifacts/api-server: API Server` workflow) — Express, esbuild-bundled, auto-restarts on workflow restart
+- **Local MySQL** (`local-mysql` workflow) — MariaDB 10.11 on `127.0.0.1:3311`; data lives in `.local-mysql/` (gitignored)
+- First-run DB setup: `mariadb --socket=.local-mysql/mysql.sock -u root` then create the `app` user + `rationcards_test` DB, then `pnpm --filter @workspace/scripts run migrate`
+- `lib/pricing` must be built (`tsc --build` inside `lib/pricing/`) before starting the frontend — its JS output is required by `vite.config.ts`
+
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port assigned by workflow)

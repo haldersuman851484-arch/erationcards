@@ -92,6 +92,17 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // In dev the Express API server runs separately; proxy API and upload
+    // requests so relative /api/… and /uploads/… paths resolve correctly.
+    proxy: process.env.API_SERVER_URL
+      ? {
+          "/api": { target: process.env.API_SERVER_URL, changeOrigin: true },
+          "/uploads": {
+            target: process.env.API_SERVER_URL,
+            changeOrigin: true,
+          },
+        }
+      : undefined,
   },
   preview: {
     port,
