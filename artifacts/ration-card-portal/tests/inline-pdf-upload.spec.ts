@@ -1,14 +1,15 @@
 import { test, expect, type Page } from "@playwright/test";
 
 /**
- * Step-1 inline PDF upload + post-payment auto-attach.
+ * Step-1 inline PDF upload + post-payment auto-attach (3-step flow).
  *
  * Customers can attach the e-ration-card PDF for each card while typing its
  * details on step 1. The files are held in the browser and pushed through
- * POST /api/orders/:orderNumber/upload-card-pdf automatically after payment;
- * if every card was covered and every upload succeeded the order submits
- * itself. Any failure falls back to the manual step-4 flow, where "Retry
- * upload" re-sends the held file.
+ * POST /api/orders/:orderNumber/upload-card-pdf automatically after payment.
+ * Payment is the last step: the success screen always appears right after it
+ * (the submit call only reports whether the confirmation email went out).
+ * Missing or failed PDFs never block anything — the success screen points
+ * the customer to the Track Order page to upload or replace them.
  *
  * The Cashfree SDK never loads: window.__cashfreeTestFactory swaps in a fake
  * whose checkout() resolves immediately, and the status endpoint reports
@@ -195,7 +196,7 @@ test.describe("Step-1 inline PDF upload", () => {
     await fillStep2(page);
     await payOnStep3(page);
 
-    // Both uploads run and the order submits itself — no clicks needed.
+    // Both uploads run and the success screen appears — no clicks needed.
     await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
     expect(counters.uploadPosts).toBe(2);
     expect(counters.uploads).toEqual([
@@ -203,6 +204,9 @@ test.describe("Step-1 inline PDF upload", () => {
       { cardIndex: "1", filename: "card1.pdf" },
     ]);
     expect(counters.submitPosts).toBe(1);
+    // All PDFs made it — the note says they can be replaced via Track Order.
+    await expect(page.getByTestId("note-pdf-attached")).toBeVisible();
+    await expect(page.getByTestId("note-pdf-pending")).toHaveCount(0);
   });
 
   test("dropzone appears only when details are complete, rejects non-PDFs, and remove restores it", async ({ page }) => {
@@ -236,7 +240,7 @@ test.describe("Step-1 inline PDF upload", () => {
     await expect(page.getByTestId("pdf-dropzone-0")).toBeVisible();
   });
 
-  test("with no PDFs attached, step 4 stays fully manual", async ({ page }) => {
+  test("with no PDFs attached, the success screen shows straight after payment and points to Track Order", async ({ page }) => {
     await installCashfreeFake(page);
     const counters = await setupMocks(page, { orderBody: mockOrder([], "70") });
     await page.goto("/order");
@@ -246,27 +250,19 @@ test.describe("Step-1 inline PDF upload", () => {
     await fillStep2(page);
     await payOnStep3(page);
 
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
     expect(counters.uploadPosts).toBe(0);
-    expect(counters.submitPosts).toBe(0);
-    await expect(page.getByTestId("button-upload-pdf-0")).toHaveText(/Upload PDF/);
-    await expect(page.getByTestId("step4-pending-hint")).toBeVisible();
-    await expect(page.getByTestId("button-final-submit")).toBeDisabled();
-
-    // Manual upload through the step-4 row still works end to end.
-    await page.getByTestId("card-step4-upload").locator('input[type="file"]').first().setInputFiles(pdfFile("late.pdf"));
-    await expect(page.getByTestId("text-pdf-name-0")).toContainText("late.pdf");
-    await expect(page.getByTestId("button-final-submit")).toBeEnabled();
-    await page.getByTestId("button-final-submit").click();
-    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
     expect(counters.submitPosts).toBe(1);
+    // The PDF is still missing — the note points to the Track Order page.
+    await expect(page.getByTestId("note-pdf-pending")).toBeVisible();
+    await expect(page.getByTestId("note-pdf-attached")).toHaveCount(0);
   });
 
-  test("a failed auto-upload keeps the held file for Retry and never auto-submits", async ({ page }) => {
+  test("a failed auto-upload never blocks the success screen — a toast points to Track Order", async ({ page }) => {
     await installCashfreeFake(page);
     const counters = await setupMocks(page, {
       orderBody: mockOrder([], "70"),
-      uploadStatusSeq: [500, 200],
+      uploadStatusSeq: [500],
     });
     await page.goto("/order");
 
@@ -277,20 +273,12 @@ test.describe("Step-1 inline PDF upload", () => {
     await fillStep2(page);
     await payOnStep3(page);
 
-    // Auto-upload fails once → warning toast, Retry button, submit stays locked.
+    // Auto-upload fails → friendly toast, but the order is done regardless.
     await expect(page.getByText("One PDF could not be attached").first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByTestId("button-upload-pdf-0")).toHaveText(/Retry upload/);
-    await expect(page.getByTestId("button-final-submit")).toBeDisabled();
-    expect(counters.submitPosts).toBe(0);
-
-    // Retry re-sends the held file — no file chooser involved.
-    await page.getByTestId("button-upload-pdf-0").click();
-    await expect(page.getByTestId("text-pdf-name-0")).toContainText("card0.pdf");
-    expect(counters.uploadPosts).toBe(2);
-    await expect(page.getByTestId("button-final-submit")).toBeEnabled();
-    await page.getByTestId("button-final-submit").click();
-    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
+    expect(counters.uploadPosts).toBe(1);
     expect(counters.submitPosts).toBe(1);
+    await expect(page.getByTestId("note-pdf-pending")).toBeVisible();
   });
 
   test("deleting a card re-keys held PDFs so each file reaches the right card", async ({ page }) => {
@@ -322,14 +310,12 @@ test.describe("Step-1 inline PDF upload", () => {
     await fillStep2(page);
     await payOnStep3(page);
 
-    // Only B's PDF uploads, to cardIndex 1; the uncovered primary card blocks
-    // auto-submit, so the customer lands on the manual step-4 screen.
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 15000 });
-    await expect(page.getByTestId("text-pdf-name-1")).toContainText("cardB.pdf");
+    // Only B's PDF uploads, to cardIndex 1; the primary card's PDF is still
+    // missing, so the success note points to the Track Order page.
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
     expect(counters.uploads).toEqual([{ cardIndex: "1", filename: "cardB.pdf" }]);
-    expect(counters.submitPosts).toBe(0);
-    await expect(page.getByTestId("button-upload-pdf-0")).toHaveText(/Upload PDF/);
-    await expect(page.getByTestId("button-final-submit")).toBeDisabled();
+    expect(counters.submitPosts).toBe(1);
+    await expect(page.getByTestId("note-pdf-pending")).toBeVisible();
   });
 
   test("editing a family card keeps its PDF when unchanged and drops it when the details change", async ({ page }) => {
@@ -418,13 +404,12 @@ test.describe("Step-1 inline PDF upload", () => {
     await expect(page.getByText("Attached PDF removed").first()).toBeVisible();
     await expect(page.getByTestId("input-delivery-name")).toBeVisible();
 
-    // After payment nothing auto-uploads or auto-submits — step 4 is manual.
+    // After payment nothing auto-uploads — the success note points to Track Order.
     await fillStep2(page);
     await payOnStep3(page);
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
     expect(counters.uploadPosts).toBe(0);
-    expect(counters.submitPosts).toBe(0);
-    await expect(page.getByTestId("button-upload-pdf-0")).toHaveText(/Upload PDF/);
-    await expect(page.getByTestId("button-final-submit")).toBeDisabled();
+    expect(counters.submitPosts).toBe(1);
+    await expect(page.getByTestId("note-pdf-pending")).toBeVisible();
   });
 });

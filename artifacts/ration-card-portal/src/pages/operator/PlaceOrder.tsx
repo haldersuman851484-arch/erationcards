@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -18,9 +18,9 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import {
-  CheckCircle2, Download, Upload, Plus, Pencil, Trash2,
+  CheckCircle2, Download, Plus, Pencil, Trash2,
   User, MapPin, CreditCard, IndianRupee, ChevronRight, ChevronLeft,
-  FileText, ExternalLink, Loader2, Lock, Mail,
+  FileText, Loader2, Lock, Mail,
 } from "lucide-react";
 import {
   RATION_CARD_TYPES,
@@ -43,7 +43,6 @@ const WB_DISTRICTS = [
   "Purba Bardhaman", "Purba Medinipur", "Purulia", "South 24 Parganas", "Uttar Dinajpur",
 ];
 
-const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 // Card types & operator pricing come from @workspace/pricing — shared
@@ -145,7 +144,7 @@ function OperatorPricingBanner() {
 }
 
 function StepIndicator({ step }: { step: number }) {
-  const steps = ["Card Details", "Delivery", "Payment", "Upload PDF"];
+  const steps = ["Card Details", "Delivery", "Payment"];
   return (
     <div className="flex items-center gap-2 mb-6">
       {steps.map((label, i) => {
@@ -187,11 +186,8 @@ export default function PlaceOrder() {
   >("idle");
   const [success, setSuccess] = useState<{ orderNumber: string } | null>(null);
   const [createdOrder, setCreatedOrder] = useState<{ orderNumber: string } | null>(null);
-  const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
-  const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
-  const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const { data: operator, error: opError } = useGetCurrentOperator({
     query: { queryKey: getGetCurrentOperatorQueryKey() },
@@ -223,78 +219,37 @@ export default function PlaceOrder() {
   const amount = computeOrderAmount(allCardTypes, true, PRICING);
   const breakdown = priceBreakdown(allCardTypes, true, PRICING);
 
-  // Step 4 (after the order exists): one row per card in the order.
-  const step4Cards = [
-    { cardIndex: 0, name: form.getValues("customerName"), rationCardNumber: form.getValues("rationCardNumber"), cardType: form.getValues("cardType") as string },
-    ...familyCards.map((fc, i) => ({ cardIndex: i + 1, name: fc.customerName, rationCardNumber: fc.rationCardNumber, cardType: fc.cardType })),
-  ];
-  const allPdfsUploaded = step4Cards.every((c) => !!cardPdfs[c.cardIndex]);
-
-  async function handleCardPdfUpload(cardIndex: number, file: File) {
-    if (!createdOrder) return;
-    const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-    if (!isPdf) {
-      toast({ title: "Only PDF files allowed", description: "Please choose the e-ration card PDF file — photos or images cannot be used.", variant: "destructive" });
-      return;
-    }
-    setUploadingPdfIdx(cardIndex);
-    try {
-      const fd = new FormData();
-      fd.append("pdf", file);
-      fd.append("cardIndex", String(cardIndex));
-      const res = await fetch(`${BASE}/api/orders/${encodeURIComponent(createdOrder.orderNumber)}/upload-card-pdf`, {
-        method: "POST",
-        body: fd,
-      });
-      if (!res.ok) {
-        let msg = "Could not upload the PDF. Try again.";
-        try {
-          const j = await res.json();
-          if (j?.error) msg = j.error;
-        } catch { /* non-JSON error body */ }
-        throw new Error(msg);
-      }
-      const { pdfUrl, originalFilename } = await res.json();
-      setCardPdfs((prev) => ({ ...prev, [cardIndex]: { pdfUrl, originalFilename } }));
-    } catch (err) {
-      toast({ title: "Upload failed", description: err instanceof Error ? err.message : "Could not upload the PDF. Try again.", variant: "destructive" });
-    } finally {
-      setUploadingPdfIdx(null);
-    }
-  }
-
-  function handleFinalSubmit() {
-    if (!createdOrder) return;
+  /**
+   * Payment is the last step: show the success screen straight away. The
+   * server finalized the order when the payment confirmed (submittedAt +
+   * confirmation email) — the legacy submit call only reads the email
+   * outcome, so its failure never hides the success screen.
+   */
+  function finishToSuccess(orderNumber: string) {
     submitOrder.mutate(
-      { orderNumber: createdOrder.orderNumber },
+      { orderNumber },
       {
-        onSuccess: (result) => {
-          setEmailSent(result.emailSent);
-          setSuccess({ orderNumber: createdOrder.orderNumber });
-          window.scrollTo(0, 0);
-        },
-        onError: () => {
-          toast({ title: "Submission failed", description: "Try again. The order and uploaded PDFs are saved.", variant: "destructive" });
-        },
+        onSuccess: (result) => setEmailSent(result.emailSent),
+        onError: () => setEmailSent(null),
       },
     );
+    setSuccess({ orderNumber });
+    window.scrollTo(0, 0);
   }
 
   const payBusy =
     createOrder.isPending || payPhase === "opening" || payPhase === "paying" || payPhase === "checking";
 
-  function onPaid() {
+  function onPaid(orderNumber: string) {
     setPayPhase("idle");
-    toast({ title: "Payment received", description: "Payment confirmed. Upload the customer's card PDF(s) to finish." });
-    setStep(4);
-    window.scrollTo(0, 0);
+    finishToSuccess(orderNumber);
   }
 
   /** Re-check with the server whether the money actually arrived. */
   async function checkPaymentNow(orderNumber: string, attempts: number, intervalMs: number) {
     setPayPhase("checking");
     const status = await pollPaymentStatus(orderNumber, attempts, intervalMs);
-    if (status === "paid") onPaid();
+    if (status === "paid") onPaid(orderNumber);
     else if (status === "failed") setPayPhase("failed");
     else setPayPhase("unconfirmed");
   }
@@ -322,7 +277,7 @@ export default function PlaceOrder() {
       return;
     }
     if (session.alreadyPaid) {
-      onPaid();
+      onPaid(orderNumber);
       return;
     }
     if (!session.paymentSessionId) {
@@ -377,7 +332,6 @@ export default function PlaceOrder() {
       {
         onSuccess: (order) => {
           setCreatedOrder({ orderNumber: order.orderNumber });
-          setCardPdfs({});
           // Straight into payment — the order stays "pending" until paid.
           void startPayment(order.orderNumber);
         },
@@ -446,7 +400,7 @@ export default function PlaceOrder() {
 
   function resetOrder() {
     setSuccess(null); setStep(1); setFamilyCards([]); setFamilyCardErrors({}); setConsentChecked(false); setPayPhase("idle");
-    setCreatedOrder(null); setCardPdfs({}); setEmailSent(null);
+    setCreatedOrder(null); setEmailSent(null);
     form.reset();
   }
 
@@ -455,7 +409,7 @@ export default function PlaceOrder() {
       <OperatorLayout operatorName={operator?.name} shopName={operator?.shopName} district={operator?.district} onLogout={handleLogout}>
         <div className="p-4 md:p-6 max-w-md mx-auto">
           <style>{`@keyframes popIn{0%{opacity:0;transform:scale(0.9) translateY(12px)}100%{opacity:1;transform:none}}`}</style>
-          <div className="text-center space-y-5 py-8" style={{ animation: "popIn 0.4s ease both" }}>
+          <div className="text-center space-y-5 py-8" style={{ animation: "popIn 0.4s ease both" }} data-testid="order-success-card">
             <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto">
               <CheckCircle2 className="w-10 h-10 text-emerald-500" />
             </div>
@@ -482,6 +436,10 @@ export default function PlaceOrder() {
             <div className="bg-emerald-50 rounded-xl p-3 border border-emerald-200 text-left" data-testid="note-payment-received">
               <p className="text-xs text-emerald-800 font-semibold flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Payment received</p>
               <p className="text-xs text-emerald-700 mt-1">Paid securely online via Cashfree — no manual verification needed. Delivery in 5–7 working days.</p>
+            </div>
+            <div className="bg-sky-50 rounded-xl p-3 border border-sky-200 flex items-start gap-2 text-left" data-testid="note-pdf-pending">
+              <FileText className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+              <p className="text-xs text-sky-800"><span className="font-semibold">Next:</span> upload the customer's e-ration card PDF from <strong>Track Order</strong> using this order number. It can be added or changed any time.</p>
             </div>
             <Button
               variant="outline"
@@ -814,96 +772,6 @@ export default function PlaceOrder() {
               </div>
             )}
 
-            {/* ── Step 4: Upload PDF ── */}
-            {step === 4 && createdOrder && (
-              <div className="space-y-4">
-                <Card className="border-0 shadow-sm bg-white" data-testid="card-step4-upload">
-                  <CardContent className="pt-5 space-y-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FileText className="w-4 h-4 text-primary" />
-                      <h2 className="font-semibold text-slate-800 text-sm">Upload e-Ration Card PDF</h2>
-                    </div>
-
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-emerald-800">Order created — {createdOrder.orderNumber}</p>
-                        <p className="text-xs text-emerald-700 mt-0.5">Upload the PDF for every card and press Submit to finish the order.</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      {step4Cards.map((card) => {
-                        const uploaded = !!cardPdfs[card.cardIndex];
-                        const isUploadingPdf = uploadingPdfIdx === card.cardIndex;
-                        return (
-                          <div key={card.cardIndex} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3" data-testid={`step4-card-${card.cardIndex}`}>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-slate-800 truncate">{card.name}</p>
-                              <p className="text-xs text-slate-500 font-mono">{card.rationCardNumber} · {card.cardType}</p>
-                              {uploaded && (
-                                <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5 min-w-0" data-testid={`text-pdf-name-${card.cardIndex}`}><CheckCircle2 className="w-3 h-3 shrink-0" /> <span className="truncate">{cardPdfs[card.cardIndex]?.originalFilename ?? "PDF uploaded"}</span></p>
-                              )}
-                            </div>
-                            <input
-                              ref={(el) => { pdfFileRefs.current[card.cardIndex] = el; }}
-                              type="file"
-                              accept=".pdf,application/pdf"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleCardPdfUpload(card.cardIndex, file);
-                                e.target.value = "";
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              data-testid={`button-upload-pdf-${card.cardIndex}`}
-                              className={`h-9 shrink-0 text-xs font-semibold ${uploaded ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary hover:bg-primary/90 text-white"}`}
-                              disabled={isUploadingPdf}
-                              onClick={() => pdfFileRefs.current[card.cardIndex]?.click()}
-                            >
-                              {isUploadingPdf ? (
-                                <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Uploading…</>
-                              ) : uploaded ? (
-                                "Re-upload"
-                              ) : (
-                                <><Upload className="w-3.5 h-3.5 mr-1" /> Upload PDF</>
-                              )}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="bg-slate-50 rounded-xl p-3 border border-slate-200">
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        <span className="font-semibold">Don't have the PDF?</span> Download the customer's e-Ration card from the official WB government website. Do not rename or edit the file.
-                      </p>
-                      <a href={GOVT_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-semibold mt-1.5 hover:underline">
-                        Open wbpds.wb.gov.in <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-
-                    {!allPdfsUploaded && (
-                      <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="step4-pending-hint">
-                        <span>⚠️</span> Upload the PDF for every card above to enable Submit.
-                      </p>
-                    )}
-                    <Button
-                      type="button"
-                      data-testid="button-final-submit"
-                      className="w-full bg-primary hover:bg-primary/90 h-11"
-                      disabled={!allPdfsUploaded || submitOrder.isPending}
-                      onClick={handleFinalSubmit}
-                    >
-                      {submitOrder.isPending ? "Submitting…" : "Submit"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
           </form>
         </Form>
       </div>

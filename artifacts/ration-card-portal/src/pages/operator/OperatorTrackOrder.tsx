@@ -13,7 +13,12 @@ import {
   useLogoutOperator,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, Package, Printer, Truck, CheckCircle, Clock } from "lucide-react";
+import { Search, Package, Printer, Truck, CheckCircle, Clock, Upload, FileCheck } from "lucide-react";
+import { useRef } from "react";
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+type PdfEntry = { cardIndex: number; pdfUrl: string; originalFilename?: string };
 
 const STATUS_STEPS = [
   { key: "pending",    label: "Order Placed",  icon: Clock,       color: "text-amber-500" },
@@ -55,6 +60,46 @@ export default function OperatorTrackOrder() {
     searchParams ?? {},
     { query: { enabled: !!searchParams, queryKey: getTrackOrderQueryKey(searchParams ?? {}) } }
   );
+
+  // Per-card PDF upload/replace — PDFs are attached after payment now, so the
+  // operator adds or fixes them here (mirrors the public Track Order page).
+  const [localPdfs, setLocalPdfs] = useState<PdfEntry[]>([]);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const fileRefs = useRef<Record<number, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    if (order) {
+      setLocalPdfs(((order as any).rationCardPdfs ?? []) as PdfEntry[]);
+      setUploadError(null);
+    }
+  }, [order]);
+
+  async function handlePdfUpload(cardIndex: number, file: File) {
+    if (!order) return;
+    setUploadingIdx(cardIndex);
+    setUploadError(null);
+    const fd = new FormData();
+    fd.append("pdf", file);
+    fd.append("cardIndex", String(cardIndex));
+    try {
+      const res = await fetch(`${BASE}/api/orders/${encodeURIComponent(order.orderNumber)}/upload-card-pdf`, { method: "POST", body: fd });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        setUploadError((body as any).error ?? "Upload failed. Please try again.");
+      } else {
+        const data: PdfEntry = await res.json();
+        setLocalPdfs((prev) => [
+          ...prev.filter((p) => p.cardIndex !== cardIndex),
+          data,
+        ].sort((a, b) => a.cardIndex - b.cardIndex));
+      }
+    } catch {
+      setUploadError("Upload failed. Please check the connection and try again.");
+    } finally {
+      setUploadingIdx(null);
+    }
+  }
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -197,6 +242,77 @@ export default function OperatorTrackOrder() {
                 )}
               </CardContent>
             </Card>
+
+            {(() => {
+              const allCards = [
+                { cardIndex: 0, name: order.customerName, cardType: order.cardType },
+                ...(((order as any).familyCards ?? []) as { customerName: string; cardType: string }[]).map((fc, i) => ({
+                  cardIndex: i + 1,
+                  name: fc.customerName,
+                  cardType: fc.cardType,
+                })),
+              ];
+              const anyMissing = allCards.some(c => !localPdfs.some(p => p.cardIndex === c.cardIndex));
+              return (
+                <Card className={`shadow-sm ${anyMissing ? "border-amber-200 bg-amber-50" : "border-0 bg-white"}`} data-testid="pdf-upload-section">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-semibold text-slate-700 flex items-center gap-2">
+                      <Upload className={`w-4 h-4 ${anyMissing ? "text-amber-600" : "text-primary"}`} />
+                      {anyMissing ? "Upload e-Ration Card PDF" : "e-Ration Card PDFs"}
+                    </CardTitle>
+                    <p className="text-xs text-slate-500">
+                      {anyMissing
+                        ? "The customer's original e-Ration card PDF is needed for printing. Upload it for each card below."
+                        : "All PDFs attached. Wrong file? Replace it below."}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="pt-0 space-y-2">
+                    {allCards.map((card) => {
+                      const uploaded = localPdfs.some(p => p.cardIndex === card.cardIndex);
+                      const isUploading = uploadingIdx === card.cardIndex;
+                      return (
+                        <div key={card.cardIndex} className={`flex items-center justify-between gap-3 bg-white rounded-lg px-3 py-2.5 border ${anyMissing ? "border-amber-100" : "border-slate-200"}`}>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-slate-900 truncate">{card.name}</p>
+                            <p className="text-xs text-slate-500">{card.cardType}</p>
+                            {uploaded && (
+                              <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5" data-testid={`text-pdf-uploaded-${card.cardIndex}`}>
+                                <FileCheck className="w-3.5 h-3.5 shrink-0" /> Uploaded
+                              </p>
+                            )}
+                          </div>
+                          <input
+                            type="file"
+                            accept=".pdf,application/pdf"
+                            className="hidden"
+                            ref={(el) => { fileRefs.current[card.cardIndex] = el; }}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handlePdfUpload(card.cardIndex, file);
+                              e.target.value = "";
+                            }}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className={`shrink-0 ${uploaded ? "border-slate-300 text-slate-600 hover:bg-slate-100" : "border-amber-300 text-amber-700 hover:bg-amber-100"}`}
+                            disabled={isUploading}
+                            onClick={() => fileRefs.current[card.cardIndex]?.click()}
+                            data-testid={`button-upload-pdf-${card.cardIndex}`}
+                          >
+                            <Upload className="w-3.5 h-3.5 mr-1.5" />
+                            {isUploading ? "Uploading…" : uploaded ? "Replace PDF" : "Upload PDF"}
+                          </Button>
+                        </div>
+                      );
+                    })}
+                    {uploadError && (
+                      <p className="text-sm text-red-600 pt-1" data-testid="pdf-upload-error">{uploadError}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             <Card className="border-0 shadow-sm bg-white">
               <CardHeader className="pb-3"><CardTitle className="text-sm font-semibold text-slate-700">Order Progress</CardTitle></CardHeader>

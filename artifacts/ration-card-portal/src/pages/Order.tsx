@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useCreateOrder, useSubmitOrder, useCreateCashfreePaymentSession } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, CheckCircle2, CreditCard, Download, ExternalLink, FileText, Loader2, Lock, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, X } from "lucide-react";
+import { ArrowRight, CheckCircle2, CreditCard, Download, FileText, Loader2, Lock, Mail, MapPin, MessageCircle, Play, Plus, Pencil, Trash2, ShieldCheck, User, Upload, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { useSeo } from "@/hooks/use-seo";
 import {
@@ -31,7 +31,6 @@ import { openCashfreeCheckout, pollPaymentStatus } from "@/lib/cashfreeCheckout"
 
 type FamilyCardEntry = { customerName: string; rationCardNumber: string; cardType: string };
 
-const GOVT_DOWNLOAD_URL = "https://wbpds.wb.gov.in/E_Card_Download.aspx";
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 const SIDEBAR_FAQS = [
@@ -119,7 +118,7 @@ export default function Order() {
   const FUNNEL_STEP_EVENTS: Record<number, string> = {
     2: "begin_checkout",     // step 1 (card details) completed
     3: "add_shipping_info",  // step 2 (address) completed
-    4: "add_payment_info",   // step 3 (online payment) completed
+    // add_payment_info fires in onPaid — payment is the final step now.
   };
   function advanceToStep(next: number) {
     const eventName = FUNNEL_STEP_EVENTS[next];
@@ -145,7 +144,6 @@ export default function Order() {
   >("idle");
   const [createdOrder, setCreatedOrder] = useState<{ orderNumber: string } | null>(null);
   const [cardPdfs, setCardPdfs] = useState<Record<number, { pdfUrl: string; originalFilename?: string }>>({});
-  const [uploadingPdfIdx, setUploadingPdfIdx] = useState<number | null>(null);
   // PDFs attached inline at step 1, keyed by cardIndex (0 = the primary card,
   // i + 1 = familyCards[i]). No order exists during step 1, so the File
   // objects are held in browser memory and uploaded automatically through the
@@ -155,14 +153,9 @@ export default function Order() {
   // edited afterwards the file is dropped instead of silently riding along to
   // someone else's card.
   const [pendingPdfs, setPendingPdfs] = useState<Record<number, { file: File; boundTo: string }>>({});
-  // Post-payment auto-upload lifecycle: idle → running → done. "done" with a
-  // still-pending file means that card's auto-upload failed (Retry shown).
-  const [autoUploadState, setAutoUploadState] = useState<"idle" | "running" | "done">("idle");
   const autoUploadRan = useRef(false);
-  const autoSubmitFired = useRef(false);
   const [emailSent, setEmailSent] = useState<boolean | null>(null);
   const [invoiceBusy, setInvoiceBusy] = useState(false);
-  const pdfFileRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const stepOnePdfRefs = useRef<Record<number, HTMLInputElement | null>>({});
   const createOrder = useCreateOrder();
   const submitOrder = useSubmitOrder();
@@ -291,12 +284,11 @@ export default function Order() {
   const amount = computeOrderAmount(allCardTypes, false, PRICING);
   const breakdown = priceBreakdown(allCardTypes, false, PRICING);
 
-  // Step 4 (after the order exists): one row per card in the order.
-  const step4Cards = [
+  // One row per card in the order — used by the post-payment auto-upload run.
+  const orderCards = [
     { cardIndex: 0, name: form.getValues("customerName"), rationCardNumber: form.getValues("rationCardNumber"), cardType: form.getValues("cardType") as string },
     ...familyCards.map((fc, i) => ({ cardIndex: i + 1, name: fc.customerName, rationCardNumber: fc.rationCardNumber, cardType: fc.cardType })),
   ];
-  const allPdfsUploaded = step4Cards.every((c) => !!cardPdfs[c.cardIndex]);
 
   // ----- Step-1 inline card panels -----
   // The optional PDF dropzone appears once the active panel's three details
@@ -435,8 +427,7 @@ export default function Order() {
 
   /**
    * Upload one card PDF to the order. Returns null on success or a
-   * user-readable error message. Shared by the manual step-4 buttons and the
-   * post-payment auto-upload run.
+   * user-readable error message. Used by the post-payment auto-upload run.
    */
   async function uploadCardPdfCore(orderNumber: string, cardIndex: number, file: File): Promise<string | null> {
     try {
@@ -463,29 +454,6 @@ export default function Order() {
     } catch {
       return "Could not upload the PDF. Please check your connection and try again.";
     }
-  }
-
-  async function handleCardPdfUpload(cardIndex: number, file: File) {
-    if (!createdOrder) return;
-    const problem = pdfFileProblem(file);
-    if (problem) {
-      toast({ ...problem, variant: "destructive" });
-      return;
-    }
-    setUploadingPdfIdx(cardIndex);
-    const error = await uploadCardPdfCore(createdOrder.orderNumber, cardIndex, file);
-    setUploadingPdfIdx(null);
-    if (error) toast({ title: "Upload failed", description: error, variant: "destructive" });
-  }
-
-  /** Step 4 "Retry upload": re-send the file still held from step 1. */
-  async function retryHeldUpload(cardIndex: number) {
-    const held = pendingPdfs[cardIndex];
-    if (!held || !createdOrder) return;
-    setUploadingPdfIdx(cardIndex);
-    const error = await uploadCardPdfCore(createdOrder.orderNumber, cardIndex, held.file);
-    setUploadingPdfIdx(null);
-    if (error) toast({ title: "Upload failed", description: error, variant: "destructive" });
   }
 
   /** Optional PDF dropzone / attached-file chip inside a step-1 card panel. */
@@ -536,33 +504,28 @@ export default function Order() {
   }
 
   /**
-   * `orderNumberArg` matters when this runs from the payment-polling chain:
-   * those closures may predate `setCreatedOrder`, so `createdOrder` can still
-   * be null inside them even though the order exists.
+   * Show the success screen for a paid order. The server already finalized
+   * the order when the payment confirmed (submittedAt + confirmation email),
+   * so the legacy submit call here is only a read of the email outcome — its
+   * failure must never hide the success screen.
    */
-  function handleFinalSubmit(orderNumberArg?: string) {
-    const orderNumber = orderNumberArg ?? createdOrder?.orderNumber;
-    if (!orderNumber) return;
+  function finishToSuccess(orderNumber: string) {
     submitOrder.mutate(
       { orderNumber },
       {
-        onSuccess: (result) => {
-          setEmailSent(result.emailSent);
-          setSuccess({ orderNumber });
-          // GA4 conversion: silent no-op unless analytics is configured.
-          trackEvent("purchase", {
-            transaction_id: orderNumber,
-            value: amount,
-            currency: "INR",
-            items: [{ item_name: "PVC Card Print", quantity: totalCards }],
-          });
-          window.scrollTo(0, 0);
-        },
-        onError: () => {
-          toast({ title: "Submission failed", description: "Please try again. Your order and uploaded PDFs are saved.", variant: "destructive" });
-        },
+        onSuccess: (result) => setEmailSent(result.emailSent),
+        onError: () => setEmailSent(null),
       },
     );
+    setSuccess({ orderNumber });
+    // GA4 conversion: silent no-op unless analytics is configured.
+    trackEvent("purchase", {
+      transaction_id: orderNumber,
+      value: amount,
+      currency: "INR",
+      items: [{ item_name: "PVC Card Print", quantity: totalCards }],
+    });
+    window.scrollTo(0, 0);
   }
 
   const payBusy =
@@ -570,52 +533,34 @@ export default function Order() {
 
   /**
    * After payment: push every PDF attached at step 1 through the per-card
-   * upload endpoint, one at a time. If every card in the order was covered
-   * and every upload succeeded, submit the order automatically — the customer
-   * has nothing left to do. Any skipped card or failed upload falls back to
-   * the manual step-4 flow (Retry keeps using the held file).
+   * upload endpoint, one at a time. Returns the number of uploads attempted
+   * and how many succeeded. A failed or skipped card is not a problem — the
+   * customer adds or replaces PDFs any time from the Track Order page.
    */
-  async function runAutoUploads(orderNumber: string) {
-    if (autoUploadRan.current) return;
+  async function runAutoUploads(orderNumber: string): Promise<{ attempted: number; uploaded: number }> {
+    if (autoUploadRan.current) return { attempted: 0, uploaded: 0 };
     autoUploadRan.current = true;
     const heldEntries = Object.entries(pendingPdfs)
       .map(([k, h]) => [Number(k), h] as const)
       .sort((a, b) => a[0] - b[0]);
-    if (heldEntries.length === 0) return;
-    setAutoUploadState("running");
-    const uploadedNow = new Set<number>();
-    let failures = 0;
+    if (heldEntries.length === 0) return { attempted: 0, uploaded: 0 };
+    let attempted = 0;
+    let uploaded = 0;
     for (const [cardIndex, held] of heldEntries) {
       // Last line of defence: the commit/next gates should already have
       // dropped any file whose identity binding went stale — never let one
       // through to a card with different details.
-      const card = step4Cards.find((c) => c.cardIndex === cardIndex);
+      const card = orderCards.find((c) => c.cardIndex === cardIndex);
       if (!card || held.boundTo !== identityKey(card.cardType, card.name, card.rationCardNumber)) {
         console.error(`Held PDF for card ${cardIndex + 1} no longer matches that card's details — not uploading it.`);
         removePendingPdf(cardIndex);
         continue;
       }
-      setUploadingPdfIdx(cardIndex);
+      attempted += 1;
       const error = await uploadCardPdfCore(orderNumber, cardIndex, held.file);
-      if (error) failures += 1;
-      else uploadedNow.add(cardIndex);
+      if (!error) uploaded += 1;
     }
-    setUploadingPdfIdx(null);
-    setAutoUploadState("done");
-    if (failures > 0) {
-      toast({
-        title: failures === 1 ? "One PDF could not be attached" : `${failures} PDFs could not be attached`,
-        description: "Your file is still here — press Retry next to that card below.",
-        variant: "destructive",
-      });
-      return;
-    }
-    // Decide off the local success set — React state updates land later.
-    const everyCardCovered = step4Cards.every((c) => uploadedNow.has(c.cardIndex));
-    if (everyCardCovered && !autoSubmitFired.current) {
-      autoSubmitFired.current = true;
-      handleFinalSubmit(orderNumber);
-    }
+    return { attempted, uploaded };
   }
 
   /**
@@ -623,19 +568,26 @@ export default function Order() {
    * payment closures created before `setCreatedOrder` re-rendered, where the
    * `createdOrder` state is still null (guarding on it here silently skipped
    * the auto-upload).
+   *
+   * Payment is the last step: attach any PDFs held from step 1, then go
+   * straight to the success screen — the server finalizes the order itself.
    */
-  function onPaid(orderNumber: string) {
-    setPayPhase("idle");
+  async function onPaid(orderNumber: string) {
+    trackEvent("add_payment_info", { checkout_step: 3 });
     const heldCount = Object.keys(pendingPdfs).length;
-    toast({
-      title: "Payment received",
-      description: heldCount > 0
-        ? "Your payment is confirmed. Attaching your card PDF(s) now…"
-        : "Your payment is confirmed. One last step — upload your card PDF(s).",
-    });
-    advanceToStep(4);
-    window.scrollTo(0, 0);
-    void runAutoUploads(orderNumber);
+    if (heldCount > 0) {
+      // Keep the spinner up while the held files are attached.
+      setPayPhase("checking");
+      const { attempted, uploaded } = await runAutoUploads(orderNumber);
+      if (attempted > uploaded) {
+        toast({
+          title: attempted - uploaded === 1 ? "One PDF could not be attached" : `${attempted - uploaded} PDFs could not be attached`,
+          description: "No problem — you can upload it any time from the Track Order page using your order number.",
+        });
+      }
+    }
+    setPayPhase("idle");
+    finishToSuccess(orderNumber);
   }
 
   /** Re-check with the server whether the money actually arrived. */
@@ -820,6 +772,19 @@ export default function Order() {
                 <p className="text-sm text-emerald-800 font-medium mb-1">✅ Payment received</p>
                 <p className="text-xs text-emerald-700">Your payment was completed securely online through Cashfree — no manual verification needed. Your card will be printed and delivered within <strong>5–7 working days</strong>.</p>
               </div>
+              {orderCards.some((c) => !cardPdfs[c.cardIndex]) ? (
+                <div className="bg-sky-50 rounded-lg p-3 border border-sky-200 flex items-start gap-2 text-left" data-testid="note-pdf-pending">
+                  <FileText className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-sky-800">
+                    <span className="font-semibold">One more thing (any time):</span> upload the e-ration card PDF for your card{orderCards.length > 1 ? "s" : ""} from the <strong>Track Order</strong> page using your order number. You can also change an uploaded PDF there.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-sky-50 rounded-lg p-3 border border-sky-200 flex items-start gap-2 text-left" data-testid="note-pdf-attached">
+                  <FileText className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+                  <p className="text-xs text-sky-800">Your card PDF{orderCards.length > 1 ? "s were" : " was"} attached successfully. Need to change one? You can replace it any time from the <strong>Track Order</strong> page.</p>
+                </div>
+              )}
               <Button
                 variant="outline"
                 className="w-full gap-2 border-primary/30 text-primary hover:bg-primary/5 hover:text-primary"
@@ -847,10 +812,7 @@ export default function Order() {
                   setCreatedOrder(null);
                   setCardPdfs({});
                   setPendingPdfs({});
-                  setAutoUploadState("idle");
                   autoUploadRan.current = false;
-                  autoSubmitFired.current = false;
-                  setUploadingPdfIdx(null);
                   setEmailSent(null);
                 }}>New Order</Button>
               </div>
@@ -871,13 +833,13 @@ export default function Order() {
           <h1 className="text-2xl font-bold text-slate-900">Order PVC Printed Card</h1>
           <p className="text-slate-600 mt-1">Fill in your details below to order a high-quality PVC ration card.</p>
           <div className="flex items-center gap-2 mt-4">
-            {[1, 2, 3, 4].map((s) => (
+            {[1, 2, 3].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold border-2 transition-colors ${step >= s ? "bg-primary border-primary text-white" : "bg-white border-slate-300 text-slate-400"}`}>{s}</div>
-                {s < 4 && <div className={`h-0.5 w-12 transition-colors ${step > s ? "bg-primary" : "bg-slate-200"}`} />}
+                {s < 3 && <div className={`h-0.5 w-12 transition-colors ${step > s ? "bg-primary" : "bg-slate-200"}`} />}
               </div>
             ))}
-            <span className="ml-2 text-sm text-slate-500">Step {step} of 4</span>
+            <span className="ml-2 text-sm text-slate-500">Step {step} of 3</span>
           </div>
         </div>
       </div>
@@ -1370,110 +1332,6 @@ export default function Order() {
                 </Card>
               )}
 
-              {step === 4 && createdOrder && (
-                <Card className="border-slate-200 shadow-sm" data-testid="card-step4-upload">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><FileText className="w-5 h-5 text-primary" /> Upload e-Ration Card PDF</CardTitle>
-                    <CardDescription>Last step — upload the PDF for each card below, then press Submit.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <div>
-                        <p className="text-sm font-semibold text-emerald-800">Order created — {createdOrder.orderNumber}</p>
-                        <p className="text-xs text-emerald-700 mt-0.5">Do not close this page yet. Upload the PDF for every card and press Submit to finish your order.</p>
-                      </div>
-                    </div>
-
-                    {autoUploadState === "running" && (
-                      <div className="bg-sky-50 border border-sky-200 rounded-lg p-3 flex items-center gap-2" data-testid="auto-upload-progress">
-                        <Loader2 className="w-4 h-4 text-sky-600 animate-spin shrink-0" />
-                        <p className="text-sm text-sky-800 font-medium">Attaching your PDFs automatically — please keep this page open.</p>
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      {step4Cards.map((card) => {
-                        const uploaded = !!cardPdfs[card.cardIndex];
-                        const isUploadingPdf = uploadingPdfIdx === card.cardIndex;
-                        const canRetryHeld = !uploaded && !!pendingPdfs[card.cardIndex] && autoUploadState !== "running";
-                        return (
-                          <div key={card.cardIndex} className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4" data-testid={`step4-card-${card.cardIndex}`}>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-slate-900 text-sm truncate">{card.name}</p>
-                              <p className="text-xs text-slate-500 mt-0.5">Card No: <span className="font-mono">{card.rationCardNumber}</span> · {card.cardType}</p>
-                              {uploaded && (
-                                <p className="flex items-center gap-1 text-xs text-emerald-600 mt-1 min-w-0" data-testid={`text-pdf-name-${card.cardIndex}`}><CheckCircle2 className="w-3 h-3 shrink-0" /> <span className="truncate">{cardPdfs[card.cardIndex]?.originalFilename ?? "PDF uploaded"}</span></p>
-                              )}
-                              {canRetryHeld && !isUploadingPdf && (
-                                <button type="button" className="text-xs text-primary underline mt-1" data-testid={`button-pick-different-${card.cardIndex}`} onClick={() => pdfFileRefs.current[card.cardIndex]?.click()}>
-                                  choose a different file
-                                </button>
-                              )}
-                            </div>
-                            <input
-                              ref={(el) => { pdfFileRefs.current[card.cardIndex] = el; }}
-                              type="file"
-                              accept=".pdf,application/pdf"
-                              className="hidden"
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handleCardPdfUpload(card.cardIndex, file);
-                                e.target.value = "";
-                              }}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              data-testid={`button-upload-pdf-${card.cardIndex}`}
-                              className={`shrink-0 ${uploaded ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-primary hover:bg-primary/90 text-white"}`}
-                              disabled={isUploadingPdf || autoUploadState === "running"}
-                              onClick={() => {
-                                if (canRetryHeld) retryHeldUpload(card.cardIndex);
-                                else pdfFileRefs.current[card.cardIndex]?.click();
-                              }}
-                            >
-                              {isUploadingPdf ? (
-                                <><Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> Uploading…</>
-                              ) : uploaded ? (
-                                "Re-upload"
-                              ) : canRetryHeld ? (
-                                <><Upload className="w-3.5 h-3.5 mr-1" /> Retry upload</>
-                              ) : (
-                                <><Upload className="w-3.5 h-3.5 mr-1" /> Upload PDF</>
-                              )}
-                            </Button>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <div className="bg-slate-50 rounded-lg p-3 border border-slate-200">
-                      <p className="text-xs text-slate-600 leading-relaxed">
-                        <span className="font-semibold">Don't have the PDF?</span> Download your e-Ration card from the official WB government website, then upload it here. Do not rename or edit the file.
-                      </p>
-                      <a href={GOVT_DOWNLOAD_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-primary font-semibold mt-1.5 hover:underline">
-                        Open wbpds.wb.gov.in <ExternalLink className="w-3 h-3" />
-                      </a>
-                    </div>
-
-                    {!allPdfsUploaded && autoUploadState !== "running" && (
-                      <p className="text-xs text-amber-600 flex items-center gap-1.5" data-testid="step4-pending-hint">
-                        <span>⚠️</span> Upload the PDF for every card above to enable Submit.
-                      </p>
-                    )}
-                    <Button
-                      type="button"
-                      data-testid="button-final-submit"
-                      className="w-full bg-primary hover:bg-primary/90 h-11"
-                      disabled={!allPdfsUploaded || submitOrder.isPending || autoUploadState === "running"}
-                      onClick={() => handleFinalSubmit()}
-                    >
-                      {submitOrder.isPending ? "Submitting…" : "Submit"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
               </form>
             </Form>
           </div>

@@ -153,7 +153,7 @@ async function reachStep3(page: Page) {
 }
 
 test.describe("Order form — online payment", () => {
-  test("pays online and lands on the PDF upload step", async ({ page }) => {
+  test("pays online and lands on the success screen", async ({ page }) => {
     await installCashfreeFake(page);
     const counters = await setupOrderMocks(page, { statusSequence: ["paid"] });
 
@@ -168,8 +168,8 @@ test.describe("Order form — online payment", () => {
     await expect(page.getByTestId("button-pay-now")).toBeEnabled();
     await page.getByTestId("button-pay-now").click();
 
-    // Modal opened once, order created once, and we advanced to step 4.
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 15000 });
+    // Modal opened once, order created once, and the success screen appeared.
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
     expect(counters.orderPosts).toBe(1);
     const checkoutCalls = await page.evaluate(
       () => (window as unknown as { __checkoutCalls: number }).__checkoutCalls,
@@ -277,7 +277,7 @@ test.describe("Order form — online payment", () => {
 
     await expect(page.getByTestId("pay-unconfirmed-note")).toBeVisible({ timeout: 15000 });
     await page.getByTestId("button-check-status").click();
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 15000 });
   });
 
   test("failed payment shows the money-returns note and offers to try again", async ({

@@ -16,6 +16,7 @@ import {
   isOrderAlreadyExistsError,
   type CashfreeOrderInfo,
 } from "../lib/cashfree";
+import { finalizeOrderOnPayment } from "../lib/orderFinalize";
 
 const CashfreeSessionBody = z.object({
   orderNumber: z.string().min(4).max(64),
@@ -97,6 +98,9 @@ router.post("/payments/cashfree/session", async (req: Request, res: Response) =>
     const cfg = getCashfreeConfig();
 
     if (order.paymentStatus === "paid" || order.paymentStatus === "confirmed") {
+      // Self-heal: if a crash after the paid-status update left the order
+      // unfinalized, repair it on this read path (idempotent, never throws).
+      await finalizeOrderOnPayment(order, req.log);
       res.json({
         alreadyPaid: true,
         paymentSessionId: null,
@@ -137,6 +141,7 @@ router.post("/payments/cashfree/session", async (req: Request, res: Response) =>
             .set({ paymentStatus: "paid" as any, paymentMethod: "cashfree", updatedAt: new Date() })
             .where(eq(ordersTable.id, order.id));
           req.log.info({ orderNumber: order.orderNumber, cfOrderId }, "Cashfree order already paid; synced during session request");
+          await finalizeOrderOnPayment(order, req.log);
           res.json({
             alreadyPaid: true,
             paymentSessionId: null,
@@ -238,6 +243,10 @@ router.get("/payments/cashfree/status", async (req: Request, res: Response) => {
     }
 
     if (order.paymentStatus === "paid" || order.paymentStatus === "confirmed" || !order.cfOrderId) {
+      if (order.paymentStatus === "paid" || order.paymentStatus === "confirmed") {
+        // Self-heal any paid-but-unfinalized order on this read path too.
+        await finalizeOrderOnPayment(order, req.log);
+      }
       res.json({ paymentStatus: order.paymentStatus, cashfreeStatus: null });
       return;
     }
@@ -266,6 +275,7 @@ router.get("/payments/cashfree/status", async (req: Request, res: Response) => {
         .set({ paymentStatus: "paid" as any, paymentMethod: "cashfree", updatedAt: new Date() })
         .where(eq(ordersTable.id, order.id));
       req.log.info({ orderNumber }, "Cashfree payment confirmed via status poll");
+      await finalizeOrderOnPayment(order, req.log);
     } else if (mapped === "failed" && order.paymentStatus === "pending") {
       paymentStatus = "failed";
       await db
@@ -382,6 +392,7 @@ router.post("/payments/cashfree/webhook", async (req: Request, res: Response) =>
             ),
           );
         req.log.info({ orderNumber, cfOrderId }, "Cashfree webhook: payment marked paid");
+        await finalizeOrderOnPayment(order, req.log);
       } else {
         req.log.info(
           { orderNumber, paymentStatus: order.paymentStatus },

@@ -17,6 +17,12 @@ vi.mock("../lib/email", () => ({
 }));
 
 import jwt from "jsonwebtoken";
+
+// The login route needs admin credentials configured (same pattern as the
+// sibling processing-auth spec) — without these every login throws → 400.
+process.env["ADMIN_EMAIL"] ||= "admin@test.com";
+process.env["ADMIN_PASSWORD"] ||= "admin-test-password";
+
 import app from "../app";
 import { createAdminToken, invalidateProcessingPasswordChangedAtCache } from "../lib/auth";
 import { createSettingsUnlockToken } from "../lib/settingsOtp";

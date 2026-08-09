@@ -67,6 +67,9 @@ ${buildEmailHeader()}
       order.paymentReceived
         ? `<div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px; font-size: 13px; color: #065f46; margin-bottom: 16px;">
       Payment received &#10003; &mdash; your payment was completed securely online. Your card will be printed and delivered within 5&ndash;7 working days.
+    </div>
+    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; padding: 12px; font-size: 13px; color: #075985; margin-bottom: 16px;">
+      Still need to add your e-ration card PDF? Open the Track Order page below, enter your order number and upload it there &mdash; you can also replace an uploaded PDF any time.
     </div>`
         : `<div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 12px; font-size: 13px; color: #92400e; margin-bottom: 16px;">
       Our team is now verifying your payment. Your card will be printed after verification and delivered within 5&ndash;7 working days.
@@ -89,7 +92,7 @@ function buildText(order: OrderEmailData): string {
     `Amount paid: Rs ${order.amount}`,
     ``,
     order.paymentReceived
-      ? `Payment received - your payment was completed securely online. Your card will be printed and delivered within 5-7 working days.`
+      ? `Payment received - your payment was completed securely online. Your card will be printed and delivered within 5-7 working days.\n\nStill need to add your e-ration card PDF? Open the Track Order page below, enter your order number and upload it there - you can also replace an uploaded PDF any time.`
       : `Our team is now verifying your payment. Your card will be printed after verification and delivered within 5-7 working days.`,
     ``,
     `Track your order: ${TRACK_URL}`,

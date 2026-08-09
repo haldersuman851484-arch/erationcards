@@ -150,9 +150,9 @@ test.describe("Public order form — mixed card pricing", () => {
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    // Success advances to the in-page step 4 (card PDF upload)
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Order created — PVCMIX001")).toBeVisible();
+    // Payment is the last step — the success screen appears straight away
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("order-success-card")).toContainText("PVCMIX001");
 
     // The submitted amount matches the on-screen total
     expect(captured.body).not.toBeNull();
@@ -223,9 +223,9 @@ test.describe("Operator order form — mixed card pricing", () => {
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    // Success advances to the in-page step 4 (card PDF upload)
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Order created — PVCMIX001")).toBeVisible();
+    // Payment is the last step — the success screen appears straight away
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("order-success-card")).toContainText("PVCMIX001");
 
     expect(captured.body).not.toBeNull();
     expect(Number(captured.body.amount)).toBe(110);

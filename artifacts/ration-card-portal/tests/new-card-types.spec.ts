@@ -148,8 +148,8 @@ test.describe("Public order form — new card types", () => {
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Order created — PVCNEW001")).toBeVisible();
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("order-success-card")).toContainText("PVCNEW001");
 
     expect(captured.body).not.toBeNull();
     expect(captured.body.cardType).toBe("AADHAAR");
@@ -206,8 +206,8 @@ test.describe("Operator order form — new card types", () => {
     await expect(submit).toBeEnabled({ timeout: 5000 });
     await submit.click();
 
-    await expect(page.getByTestId("card-step4-upload")).toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("Order created — PVCNEW001")).toBeVisible();
+    await expect(page.getByTestId("order-success-card")).toBeVisible({ timeout: 10000 });
+    await expect(page.getByTestId("order-success-card")).toContainText("PVCNEW001");
 
     expect(captured.body).not.toBeNull();
     expect(captured.body.cardType).toBe("VOTER ID");

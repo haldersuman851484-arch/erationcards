@@ -515,17 +515,18 @@ export default function TrackOrder() {
                   })),
                 ];
                 const missing = allCards.filter(c => !localPdfs.some(p => p.cardIndex === c.cardIndex));
-                if (missing.length === 0) return null;
+                const anyMissing = missing.length > 0;
                 return (
-                  <Card className="border-amber-200 bg-amber-50 shadow-sm" data-testid="pdf-upload-section">
+                  <Card className={`shadow-sm ${anyMissing ? "border-amber-200 bg-amber-50" : "border-slate-200"}`} data-testid="pdf-upload-section">
                     <CardHeader className="pb-3">
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Upload className="w-4 h-4 text-amber-600" />
-                        Upload Your e-Ration Card PDF
+                        <Upload className={`w-4 h-4 ${anyMissing ? "text-amber-600" : "text-primary"}`} />
+                        {anyMissing ? "Upload Your e-Ration Card PDF" : "Your e-Ration Card PDFs"}
                       </CardTitle>
                       <p className="text-xs text-slate-600 mt-0.5">
-                        We need your original e-Ration Card PDF (downloaded from food.wb.gov.in) to print your PVC card.
-                        {allCards.length > 1 && " Upload a PDF for each card holder below."}
+                        {anyMissing
+                          ? <>We need your original e-Ration Card PDF (downloaded from food.wb.gov.in) to print your PVC card.{allCards.length > 1 && " Upload a PDF for each card holder below."}</>
+                          : "All PDFs are attached. Uploaded the wrong file? You can replace it below."}
                       </p>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -533,42 +534,38 @@ export default function TrackOrder() {
                         const uploaded = localPdfs.some(p => p.cardIndex === card.cardIndex);
                         const isUploading = uploadingIdx === card.cardIndex;
                         return (
-                          <div key={card.cardIndex} className="flex items-center justify-between gap-3 bg-white rounded-lg px-3 py-2.5 border border-amber-100">
+                          <div key={card.cardIndex} className={`flex items-center justify-between gap-3 bg-white rounded-lg px-3 py-2.5 border ${anyMissing ? "border-amber-100" : "border-slate-200"}`}>
                             <div className="min-w-0 flex-1">
                               <p className="text-sm font-medium text-slate-900 truncate">{card.name}</p>
                               <p className="text-xs text-slate-500">{card.cardType}</p>
+                              {uploaded && (
+                                <p className="flex items-center gap-1 text-xs text-emerald-600 mt-0.5" data-testid={`text-pdf-uploaded-${card.cardIndex}`}>
+                                  <FileCheck className="w-3.5 h-3.5 shrink-0" /> Uploaded
+                                </p>
+                              )}
                             </div>
-                            {uploaded ? (
-                              <div className="flex items-center gap-1.5 text-emerald-600 shrink-0">
-                                <FileCheck className="w-4 h-4" />
-                                <span className="text-xs font-medium">Uploaded</span>
-                              </div>
-                            ) : (
-                              <>
-                                <input
-                                  type="file"
-                                  accept=".pdf,image/jpeg,image/png,image/webp"
-                                  className="hidden"
-                                  ref={(el) => { fileRefs.current[card.cardIndex] = el; }}
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) handlePdfUpload(card.cardIndex, file);
-                                    e.target.value = "";
-                                  }}
-                                />
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="shrink-0 border-amber-300 text-amber-700 hover:bg-amber-100"
-                                  disabled={isUploading}
-                                  onClick={() => fileRefs.current[card.cardIndex]?.click()}
-                                  data-testid={`button-upload-pdf-${card.cardIndex}`}
-                                >
-                                  <Upload className="w-3.5 h-3.5 mr-1.5" />
-                                  {isUploading ? "Uploading…" : "Upload PDF"}
-                                </Button>
-                              </>
-                            )}
+                            <input
+                              type="file"
+                              accept=".pdf,application/pdf"
+                              className="hidden"
+                              ref={(el) => { fileRefs.current[card.cardIndex] = el; }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handlePdfUpload(card.cardIndex, file);
+                                e.target.value = "";
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className={`shrink-0 ${uploaded ? "border-slate-300 text-slate-600 hover:bg-slate-100" : "border-amber-300 text-amber-700 hover:bg-amber-100"}`}
+                              disabled={isUploading}
+                              onClick={() => fileRefs.current[card.cardIndex]?.click()}
+                              data-testid={`button-upload-pdf-${card.cardIndex}`}
+                            >
+                              <Upload className="w-3.5 h-3.5 mr-1.5" />
+                              {isUploading ? "Uploading…" : uploaded ? "Replace PDF" : "Upload PDF"}
+                            </Button>
                           </div>
                         );
                       })}

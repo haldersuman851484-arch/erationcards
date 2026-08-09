@@ -14,7 +14,8 @@ import { ZodError } from "zod";
 import { generateOrderNumber, parseLiveOperatorToken, parseStaffToken } from "../lib/auth";
 import { computeOrderAmount } from "@workspace/pricing";
 import { getPricingMatrix } from "../lib/settings";
-import { sendOrderConfirmationEmail, sendOrderDispatchedEmail } from "../lib/email";
+import { sendOrderDispatchedEmail } from "../lib/email";
+import { finalizeOrderOnPayment } from "../lib/orderFinalize";
 
 // ── Delhivery tracking in-memory cache ──────────────────────────────────────
 interface DelhiveryScan {
@@ -449,42 +450,11 @@ router.post("/orders/:orderNumber/submit", async (req: Request, res: Response) =
       return;
     }
 
-    // Idempotency guard: atomically claim the submission. Only the first
-    // submit for an order sends the email — replays (double-clicks, network
-    // retries, or abuse of this public endpoint) report the stored outcome
-    // without re-sending anything.
-    const [claim] = await db
-      .update(ordersTable)
-      .set({ submittedAt: new Date(), updatedAt: new Date() })
-      .where(and(eq(ordersTable.id, order.id), isNull(ordersTable.submittedAt)));
-    if (claim.affectedRows === 0) {
-      res.json({ success: true, emailSent: order.confirmationEmailSentAt != null });
-      return;
-    }
-
-    let emailSent = false;
-    if (order.customerEmail) {
-      emailSent = await sendOrderConfirmationEmail(
-        {
-          orderNumber: order.orderNumber,
-          customerName: order.customerName,
-          customerEmail: order.customerEmail,
-          amount: String(order.amount),
-          quantity: order.quantity,
-          paymentReceived: order.paymentStatus === "paid" || order.paymentStatus === "confirmed",
-        },
-        req.log,
-      );
-      if (emailSent) {
-        await db
-          .update(ordersTable)
-          .set({ confirmationEmailSentAt: new Date() })
-          .where(eq(ordersTable.id, order.id));
-      }
-    } else {
-      req.log.warn({ orderNumber }, "Order submitted without customerEmail; skipping email");
-    }
-
+    // Legacy endpoint: since the wizard became 3 steps, payment confirmation
+    // finalizes the order server-side. This stays for older clients and as a
+    // client-driven fallback; the shared finalizer's atomic submittedAt claim
+    // guarantees at most one confirmation email either way.
+    const { emailSent } = await finalizeOrderOnPayment(order, req.log);
     res.json({ success: true, emailSent });
   } catch (err) {
     req.log.error({ err }, "Failed to submit order");
