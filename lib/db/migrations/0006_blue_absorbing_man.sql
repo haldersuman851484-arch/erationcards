@@ -1,0 +1,1 @@
+ALTER TABLE `orders` ADD `cf_order_id` text;
