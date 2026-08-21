@@ -21,6 +21,14 @@ description: Lessons from migrating drizzle-orm from PostgreSQL to MySQL for Hos
 
 **How to apply:** Any new schema file must use mysql-core imports. Any new route doing insert/update must fetch the result with a follow-up select, not .returning().
 
+## Migration journal and SQL statement boundaries
+
+The MySQL migrator applies only files listed in its journal and treats each migration file as a single SQL statement. Combine compatible `ALTER TABLE` changes into one statement or place them in separate migration files. If a historical migration was omitted from the journal, its restored entry must be newer than the database’s latest recorded migration timestamp for existing databases to receive it.
+
+**Why:** An apparently successful migrate run can silently leave schema columns absent when the journal omits their file; multiple statements in one file fail under the mysql2-backed runner.
+
+**How to apply:** When application code reports a missing column, compare the schema, migration files, journal, and migration ledger. Repair the journal first, use a single-statement migration, then verify both an existing local database upgrade and a fresh migration path.
+
 ## External DB IP allowlist (July 31, 2026)
 Hostinger remote MySQL can reject the workspace with ER_ACCESS_DENIED_ERROR when the workspace's egress IP changes (remote-access allowlist is per-IP). When the whole API test suite fails with access denied on every query, verify with a bare mysql2 connection first (`curl ifconfig.me` for current egress IP) — it's an environment issue, not a code regression.
 

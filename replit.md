@@ -4,10 +4,10 @@ A web application for ordering PVC ration cards online — customers fill in det
 
 ## Replit Dev Setup
 
-- **Frontend** (`artifacts/ration-card-portal: web` workflow) — Vite dev server, hot-reload
-- **API server** (`artifacts/api-server: API Server` workflow) — Express, esbuild-bundled, auto-restarts on workflow restart
+- **Frontend** (`artifacts/ration-card-portal: web` workflow) — managed Vite dev server with hot reload; proxies `/api` and `/uploads` to the local API server
+- **API server** (`artifacts/api-server: API Server` workflow) — managed Express server on port 8080, backed by the local MariaDB development database
 - **Local MySQL** (`local-mysql` workflow) — MariaDB 10.11 on `127.0.0.1:3311`; data lives in `.local-mysql/` (gitignored)
-- First-run DB setup: `mariadb --socket=.local-mysql/mysql.sock -u root` then create the `app` user + `rationcards_test` DB, then `pnpm --filter @workspace/scripts run migrate`
+- First-run DB setup is automatic: `local-mysql` creates the `app` user and `rationcards_test` database, applies tracked migrations, and writes a readiness signal before the API workflow starts.
 - `lib/pricing` must be built (`tsc --build` inside `lib/pricing/`) before starting the frontend — its JS output is required by `vite.config.ts`
 
 ## Run & Operate

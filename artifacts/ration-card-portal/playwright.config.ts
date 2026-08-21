@@ -13,6 +13,9 @@ function systemChromium(): string | undefined {
 }
 
 const executablePath = systemChromium();
+const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000";
+const parsedBaseURL = new URL(baseURL);
+const port = parsedBaseURL.port || (parsedBaseURL.protocol === "https:" ? "443" : "80");
 
 export default defineConfig({
   testDir: "./tests",
@@ -20,8 +23,17 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: "list",
+  webServer: {
+    command: "pnpm run dev",
+    url: baseURL,
+    reuseExistingServer: false,
+    env: {
+      ...process.env,
+      PORT: port,
+    },
+  },
   use: {
-    baseURL: "http://localhost:80",
+    baseURL,
     trace: "on-first-retry",
   },
   projects: [

@@ -6,15 +6,18 @@ id = "NztUK_LQz9UTODg2dwtLL"
 uri = "file://erationcards-hostinger.zip"
 type = "unspecified"
 title = "Website package with Google verification file"
+logical_id = "0f76550b-ef17-42eb-888f-25f123e159be"
 
 [[outputs]]
 id = "419G1Adl7JkkVwHkvoWIt"
 uri = "file://artifacts/ration-card-portal/public/erationcards-hostinger-v8.zip"
 type = "unspecified"
 title = "erationcards-hostinger-v8.zip (speed update)"
+logical_id = "2e83cfb9-1896-4e96-9009-f02aae010e3e"
 
 [[outputs]]
 id = "FtYiPUv_tmL0A4AzLxuxo"
 uri = "file://erationcards-hostinger-v9.zip"
 type = "unspecified"
 title = "erationcards-hostinger-v9.zip (CSS inlined — faster first paint)"
+logical_id = "95295947-9818-4de1-8330-d1ba53e154eb"

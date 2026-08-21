@@ -18,19 +18,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "typecheck"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "test-api"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "browser-tests"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
 args = "local-mysql"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/api-server: API Server"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/ration-card-portal: web"
 
 [[workflows.workflow]]
 name = "typecheck"

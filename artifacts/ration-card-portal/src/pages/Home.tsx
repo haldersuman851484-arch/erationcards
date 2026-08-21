@@ -366,7 +366,7 @@ export default function Home() {
   });
 
   const { data: liveReviews } = useListApprovedReviews();
-  const testimonials = liveReviews && liveReviews.length > 0
+  const testimonials = Array.isArray(liveReviews) && liveReviews.length > 0
     ? liveReviews.map((r, idx) => ({
         name: r.customerName,
         initials: getInitials(r.customerName),
